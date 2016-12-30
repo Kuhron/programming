@@ -23,6 +23,7 @@ MorseCode/
 Minecraft/mcedit2/
 Weather/OpenWeatherMap_data/
 
+.gitignore
 SelfBettingRecord.csv
 Series56Questions.txt
 Series56Study.py
