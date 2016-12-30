@@ -9,9 +9,9 @@ DEFAULT_OCTAVE = 4
 
 
 def parse_note(note, last_note=None):
-    assert type(note) is str and len(note) > 0
+    assert type(note) is str and 0 < len(note)
     assert note[0] in structure.PITCH_CLASSES, "invalid pitch class {}".format(repr(note[0]))
-    # assert note[1] in structure.OCTAVES
+    # assert note[1] in structure.OCTAVES, "invalid octave {}".format((note[1]))
 
     pitch_class = note[0]
     # octave = int(note[1])
@@ -31,7 +31,9 @@ def parse_note(note, last_note=None):
 
 
 def modify(modifier, pitch_class, octave, duration):
-    if modifier == "+":
+    if modifier in structure.OCTAVES:
+        octave = int(modifier)
+    elif modifier == "+":
         octave += 1
     elif modifier == "-":
         octave -= 1
@@ -89,7 +91,6 @@ def parse_word(word, last_note=None):
     notes.append(current_note)
 
     res = []
-    last_note = None
     for note in notes:
         parsed = parse_note(note, last_note)
         res.append(parsed)
@@ -123,6 +124,8 @@ def parse_text(text):
 def parse_file(filepath):
     with open(filepath) as f:
         lines = f.readlines()
+
+    lines = [line.strip() for line in lines]
 
     new_text = "|".join(filter((lambda x: x[0] != "#"), lines))
 
