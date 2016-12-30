@@ -1,0 +1,13 @@
+"helloworld-acc print-imp
+
+"a-nom "a-acc equal-hyp
+#2-acc print-cond
+
+t-hyp
+#4-nom $a-acc assign-cond
+
+$a-acc print-imp
+
+any words without hyphens are ignored
+
+$7-acc ()-imp
