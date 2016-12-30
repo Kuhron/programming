@@ -12,7 +12,7 @@ EPSILON = 1e-9
 class Note:
     def __init__(self, name, duration):
         self.name = name
-        assert len(self.name) == 2
+        assert len(self.name) == 2, "invalid name {}".format(self.name)
         self.pitch_class = self.name[0]
         assert self.pitch_class in PITCH_CLASSES
         self.octave = int(self.name[1])

@@ -1,7 +1,6 @@
 ./
 ../
 __pycache__/
-*/__pycache__/
 *.class
 *.docx
 *.exe
@@ -9,6 +8,7 @@ __pycache__/
 *.html
 *.lnk
 *.log
+*.mid
 *.o
 *.pdf
 *.png
