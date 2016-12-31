@@ -1,20 +1,20 @@
 ./
 ../
-__pycache__/
-*.class
-*.docx
-*.exe
-*.hi
-*.html
-*.lnk
-*.log
-*.mid
-*.o
-*.pdf
-*.png
-*.wav
-*.whl
-*.xlsx
+**__pycache__/
+**.class
+**.docx
+**.exe
+**.hi
+**.html
+**.lnk
+**.log
+**.mid
+**.o
+**.pdf
+**.png
+**.wav
+**.whl
+**.xlsx
 
 _old_Git/
 DataScience/
@@ -23,7 +23,7 @@ MorseCode/
 Minecraft/mcedit2/
 Weather/OpenWeatherMap_data/
 
-.gitignore
+**.gitignore
 SelfBettingRecord.csv
 Series56Questions.txt
 Series56Study.py
