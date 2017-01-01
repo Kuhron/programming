@@ -182,4 +182,6 @@ if __name__ == "__main__":
         market_maker.trader.expire_all_positions()
         feedcode = input("feedcode to trade: ")
         contract = get_contract_from_feedcode(feedcode)
+        if contract is None:
+            continue
         trade_contract(contract, user, market_maker)
