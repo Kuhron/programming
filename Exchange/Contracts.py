@@ -143,7 +143,8 @@ def get_contract_from_feedcode(feedcode):
     elif contract_type == "PF":
         return PutFly(underlying, multiplier, strikes, expiration_dt)
     else:
-        raise Exception("unknown contract type {}".format(contract_type))
+        print("unknown contract type {}".format(contract_type))
+        return None
 
 
 class Contract:
