@@ -1,3 +1,5 @@
+# from https://benkurtovic.com/2014/06/01/obfuscating-hello-world.html
+
 (lambda _, __, ___, ____, _____, ______, _______, ________:
     getattr(
         __import__(True.__class__.__name__[_] + [].__class__.__name__[__]),
