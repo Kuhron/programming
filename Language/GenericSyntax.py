@@ -7,24 +7,39 @@
 # in the case of music, can use MusicParser.py to create sound file from this
 # will dramatically improve conlanging ability
 
-# initial idea: use function syntax to represent trees
 
-# the man eats a red apple
-_sentence (
-    _def (
-        "man",
-    ),
-    _arg (
-        _tma (
-            "eat",
-            "_present",
-        ),
-        _indef (
-            _mod (
-                "apple",
-                "red",
-            )
-        )
-    )
-)
+import nltk
 
+grammar = nltk.CFG.fromstring("""
+S -> NP VP
+NP -> N | N "yang" VP | Pro | PropN | NP AP | NP Det | "bahwa" S
+VP -> V NP | VP PP | "adalah" AP
+AP -> A | PP | A AP
+A -> "besar" | "kecil" | "merah" | "kuning" | "hijau" | "biru"
+Pro -> "saya" | "kamu" | "dia" | "kita" | "kami" | "anda" | "mereka"
+Det -> "ini" | "itu" | Pro
+N -> "orang" | "kucing" | "mobil" | "rumah"
+PropN -> "Jakarta" | "Indonesia"
+V -> "lihat" | "suka" | "makan" | "jalan" | "perlu" | "bilang"
+PP -> P NP
+P -> "di" | "dalam" | "dengan"
+""")
+
+parser = nltk.ChartParser(grammar)
+# parser = nltk.ChartParser(grammar, trace=1)
+
+sents = [
+    "saya suka kucing merah itu",
+    # "orang ini bilang bahwa mobil kuning kita adalah dalam rumah besar hijau dia di Jakarta",
+]
+
+for sent in sents:
+    words = sent.split()
+    print("parsing: {}".format(sent))
+    trees = list(parser.parse(words))
+    print("found {} readings".format(len(trees)))
+    for tree in trees:
+        print(tree)
+        print(tree[0])
+        print(tree[1][0])
+        tree.draw()
