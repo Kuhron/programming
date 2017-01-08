@@ -1,0 +1,118 @@
+*wikipedia_climate_table. Go on Wikipedia article for the city and copy the values out of the climate table. Ideally can automate use of NOAA data or whatever else is used to construct these tables, but manual for now. Could also just scrape HTML table. Beware though that the table is not exactly the same on pages for different cities (e.g. there are no snow rows for New Orleans).
+
+jan_low_temp_degf. *wikipedia_climate_table. Average Low.
+jan_high_temp_degf. *wikipedia_climate_table. Average High.
+feb_low_temp_degf. *wikipedia_climate_table. Average Low.
+feb_high_temp_degf. *wikipedia_climate_table. Average High.
+mar_low_temp_degf. *wikipedia_climate_table. Average Low.
+mar_high_temp_degf. *wikipedia_climate_table. Average High.
+apr_low_temp_degf. *wikipedia_climate_table. Average Low.
+apr_high_temp_degf. *wikipedia_climate_table. Average High.
+may_low_temp_degf. *wikipedia_climate_table. Average Low.
+may_high_temp_degf. *wikipedia_climate_table. Average High.
+jun_low_temp_degf. *wikipedia_climate_table. Average Low.
+jun_high_temp_degf. *wikipedia_climate_table. Average High.
+jul_low_temp_degf. *wikipedia_climate_table. Average Low.
+jul_high_temp_degf. *wikipedia_climate_table. Average High.
+aug_low_temp_degf. *wikipedia_climate_table. Average Low.
+aug_high_temp_degf. *wikipedia_climate_table. Average High.
+sep_low_temp_degf. *wikipedia_climate_table. Average Low.
+sep_high_temp_degf. *wikipedia_climate_table. Average High.
+oct_low_temp_degf. *wikipedia_climate_table. Average Low.
+oct_high_temp_degf. *wikipedia_climate_table. Average High.
+nov_low_temp_degf. *wikipedia_climate_table. Average Low.
+nov_high_temp_degf. *wikipedia_climate_table. Average High.
+dec_low_temp_degf. *wikipedia_climate_table. Average Low.
+dec_high_temp_degf. *wikipedia_climate_table. Average High.
+
+jan_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+feb_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+mar_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+apr_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+may_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+jun_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+jul_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+aug_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+sep_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+oct_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+nov_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+dec_precipitation_in. *wikipedia_climate_table. Precipitation Inches.
+
+jan_snow_in. *wikipedia_climate_table. Snow Inches.
+feb_snow_in. *wikipedia_climate_table. Snow Inches.
+mar_snow_in. *wikipedia_climate_table. Snow Inches.
+apr_snow_in. *wikipedia_climate_table. Snow Inches.
+may_snow_in. *wikipedia_climate_table. Snow Inches.
+jun_snow_in. *wikipedia_climate_table. Snow Inches.
+jul_snow_in. *wikipedia_climate_table. Snow Inches.
+aug_snow_in. *wikipedia_climate_table. Snow Inches.
+sep_snow_in. *wikipedia_climate_table. Snow Inches.
+oct_snow_in. *wikipedia_climate_table. Snow Inches.
+nov_snow_in. *wikipedia_climate_table. Snow Inches.
+dec_snow_in. *wikipedia_climate_table. Snow Inches.
+
+jan_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+feb_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+mar_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+apr_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+may_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+jun_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+jul_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+aug_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+sep_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+oct_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+nov_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+dec_precipitation_days. *wikipedia_climate_table. Precipitation Days.
+
+jan_snow_days. *wikipedia_climate_table. Snow Days.
+feb_snow_days. *wikipedia_climate_table. Snow Days.
+mar_snow_days. *wikipedia_climate_table. Snow Days.
+apr_snow_days. *wikipedia_climate_table. Snow Days.
+may_snow_days. *wikipedia_climate_table. Snow Days.
+jun_snow_days. *wikipedia_climate_table. Snow Days.
+jul_snow_days. *wikipedia_climate_table. Snow Days.
+aug_snow_days. *wikipedia_climate_table. Snow Days.
+sep_snow_days. *wikipedia_climate_table. Snow Days.
+oct_snow_days. *wikipedia_climate_table. Snow Days.
+nov_snow_days. *wikipedia_climate_table. Snow Days.
+dec_snow_days. *wikipedia_climate_table. Snow Days.
+
+jan_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+feb_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+mar_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+apr_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+may_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+jun_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+jul_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+aug_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+sep_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+oct_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+nov_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+dec_sun_hours. *wikipedia_climate_table. Mean monthly sunshine hours.
+
+jan_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+feb_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+mar_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+apr_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+may_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+jun_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+jul_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+aug_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+sep_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+oct_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+nov_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+dec_sun_percent. *wikipedia_climate_table. Percent possible sunshine.
+
+jan_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+feb_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+mar_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+apr_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+may_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+jun_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+jul_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+aug_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+sep_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+oct_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+nov_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+dec_relative_humidity. *wikipedia_climate_table. Relative humidity percent.
+

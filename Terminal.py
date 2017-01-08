@@ -21,7 +21,7 @@ class Terminal:
 
     def add_command(self, flag, func, help):
         if flag in self.commands:
-            raise Exception("tried to add already-existing command {0}".format(flag))
+            raise Exception("tried to add already-existing command {}".format(flag))
         self.commands[flag] = TerminalCommand(flag, func, help)
 
     def process_command(self, command):
@@ -37,7 +37,7 @@ class Terminal:
 
     def show_help(self):
         for flag, command in sorted(self.commands.items()):
-            print("{0:4s} {1}".format(flag, command.help))
+            print("{:4s} {1}".format(flag, command.help))
         print()
 
     def quit(self):
