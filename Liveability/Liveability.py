@@ -1,3 +1,7 @@
+import datetime
+import requests
+import traceback
+import pydap.client as client
 import pandas as pd
 import numpy as np
 
@@ -31,7 +35,7 @@ def get_score(score_df):
     return score_df.sum(axis=1)
 
 
-if __name__ == "__main__":
+def test_scoring():
     d = {
         "name": "Anytown",
         "average_low_temp_january": 20,
@@ -48,14 +52,7 @@ if __name__ == "__main__":
     print(score)
 
 
-    # dump of test code
-
-    import datetime
-    import requests
-    import traceback
-    from pydap.client import open_url
-
-    dt = datetime.datetime(2014, 7, 1, 0, 0, 0)
+def get_noaa_climate_data(dt):
     ym_str = dt.strftime("%Y%m")
     ymd_str = dt.strftime("%Y%m%d")
 
@@ -66,21 +63,53 @@ if __name__ == "__main__":
     # url = 'http://nomads.ncdc.noaa.gov/thredds/dodsC/nam218/201111/20111102/nam_218_20111102_0000_000.grb'  # doctype, because returns an error page
     # url = "http://nomads.ncep.noaa.gov:9090/dods/nam/nam20111206/nam1hr_00z"  # error page
 
-
     try:
-        data = open_url(url)
-        # print(type(data))
+        data = client.open_url(url)
     except Exception as e:
         traceback.print_tb(e.__traceback__)
+        print("Exception raised during pydap opening of url {}:".format(url))
+        print(type(e), e)
         print("----")
         page = requests.get(url)
         print(page)
         print(page.text[:1000])
+        print("----")
+        raise
 
-    # print(data.keys())
+    return data
+
+
+def gather_climate_data(replace=False):
+    start_dt = datetime.datetime(2010, 1, 1, 0, 0, 0)
+    end_dt   = datetime.datetime(2014, 7, 1, 0, 0, 0)
+    dt = start_dt
+    while dt <= end_dt:
+        gather_climate_data_one_day(dt, replace=replace)
+        dt += datetime.timedelta(days=1)
+
+
+def gather_climate_data_one_day(dt, replace=False):
+    raise
+    ymd_str = dt.strftime("%Y%m%d")
+    filename = "Liveability/NoaaClimateData/{}.pickle".format(ymd_str)
+    if os.path.exists(filename):
+        if replace:
+            print("overwriting existing data for {}".format(ymd_str))
+            # ?
+        else:
+            print("skipping data because file already exists for {}".format(ymd_str))
+    else:
+        print("getting data for {} (no existing file)".format(ymd_str))
+
+
+def test_climate_data():
+    dt = datetime.datetime(2014, 7, 1, 0, 0, 0)
+    data = get_noaa_climate_data(dt)
+
     tmp2m = data['tmp2m']
-    # print(type(tmp2m))
-    # print(tmp2m.keys())
     a = tmp2m[:, 0, 0]
-    print(a)
-    print(dir(a))
+
+
+if __name__ == "__main__":
+    # test_scoring()
+    gather_climate_data()

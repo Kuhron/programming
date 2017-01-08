@@ -1,0 +1,49 @@
+Start off by evaluating the following cities:
+Chicago
+Memphis
+San Francisco
+Seattle
+New Orleans
+
+Later extend to more cities. Make it clear in code/text how you get the necessary data, so you can scale to more cities. Some of the data will have to be gathered manually, but if you need to refresh it often enough, try to automate it (e.g. Google Maps API for public transit times). Can start off by just hacking up getting data, or doing it manually for the starter cities, but just document exactly how you are getting it. For now just go get it without worrying about cleaning up the procedure.
+
+Data to include:
+- climate
+  - temperature in different months
+  - precipitation (rain, snow)
+  - sunshine
+- population
+  - population density
+  - public transit useability
+  - commute times
+  - number of people driving
+- distance from Memphis
+  - driving time
+  - flight cost
+- AreaVibes.com score/data
+- availability of green space
+  - parks
+  - nature nearby, e.g. mountains, lakes
+- amenities
+  - grocery variety (could measure the incidence of certain chains that are good)
+  - ethnic food
+  - library selection
+- jobs
+  - salary level
+  - availability of jobs in our fields (tech, data, finance, general research, teaching)
+- cost of living
+  - apartment rent
+  - grocery price level
+  - other price levels for basic things (gas, restaurants, movies)
+- crime
+  - violent crime rate
+  - property crime rate
+
+
+Store the data as features in a Pandas DataFrame (file storage can just be CSV since this will not be a ton of data). Each city should be a row, and each separate feature should be a column. Do not be afraid of having a lot of features (e.g. low/mean/high temp for each month, or even more granular than that, cost of various means of transportation).
+
+Document the features. As mentioned above, your exact method for getting them, but also document the exact column name and definition, along with any comment on how you want to use it. E.g. "housing_cost. Averaged first five 1-bedroom apartment rents I found on Zillow on 2017-01-07. Lower is better unless too cheap, indicating undesirable area.".
+
+Construct criteria functions from the data (just start with simple stuff for now, and get a score and ranking for the cities). To begin, just construct a "{}_score".format(column_name) column for each thing individually. You can have a simple helper like a "short straddle" function around a hardcoded ideal value, just to make scoring lots of features easy. Make it complicated later; just start simple and get the ball rolling.
+
+Longer term could try fitting a machine learning model for the ranking yourself, based on your and Tessa's preferences. For now though, don't.
