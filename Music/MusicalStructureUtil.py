@@ -282,8 +282,8 @@ def add_interval_to_note_name(name, interval):
 
 
 PITCH_CLASSES = "CKDHEFXGLAMB"
-MIN_OCTAVE = 3
-MAX_OCTAVE = 6
+MIN_OCTAVE = 4
+MAX_OCTAVE = 5
 OCTAVES = [str(i) for i in range(MIN_OCTAVE, MAX_OCTAVE + 1)]
 
 
