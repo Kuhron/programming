@@ -17,10 +17,8 @@ class DataFrameEditorTerminal(Terminal):
         self.save_status = True
         
     def initialize_commands(self):
-        self.commands = {}
-
-        self.add_command("h", self.show_help, "Show help.")
-        self.add_command("q", self.quit, "Quit.")
+        super().initialize_commands()
+        
         self.add_command("f", self.process_filepath_input, "Change filepath to arg if given, else show current filepath.")
         self.add_command("s", self.change_save_status, "Turn on saving to file if arg is 1, else turn off if arg is 0.")
         self.add_command("i", self.process_index_input, "Change DataFrame index being edited if arg given, else show current.")
