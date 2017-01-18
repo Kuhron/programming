@@ -2,7 +2,7 @@ import Music.MusicalStructureUtil as structure
 import Music.WavUtil as wav
 
 
-TEMPO = 20
+TEMPO = 150
 WORD_GAP = structure.Rest(structure.Duration(0, TEMPO))
 SENTENCE_GAP = structure.Rest(structure.Duration(1, TEMPO))
 DEFAULT_OCTAVE = 4

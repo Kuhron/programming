@@ -15,17 +15,22 @@ def get_note():
 def get_chord(n_notes):
     notes = []
 
-    while len(notes) < n_notes:
+    limiter = 0
+    limit = 1000
+    while limiter < limit and len(notes) < n_notes:
+        limiter += 1
         new_note = get_note()
         if new_note not in notes:
             notes.append(new_note)
+    if limiter >= limit:
+        print("reached limit of {} tries when looking for note not in chord".format(limit))
 
     s = "(" + "".join(notes) + ")"
     return s
 
 
 def get_note_or_chord():
-    if random.random() < 0:
+    if random.random() < 0.5:
         return get_note()
     else:
         n = random.randint(2, 5)
