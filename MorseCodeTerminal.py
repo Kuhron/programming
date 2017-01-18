@@ -74,10 +74,8 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.play_status = True
 
     def initialize_commands(self):
-        self.commands = {}
-
-        self.add_command("h", self.show_help, "Show help.")
-        self.add_command("q", self.quit, "Quit.")
+        super().initialize_commands()
+        
         self.add_command("wpm", self.process_wpm_input, "Change wpm to arg if given, else show current wpm.")
         self.add_command("s", self.change_save_status, "Turn on saving to file if arg is 1, else turn off if arg is 0.")
         self.add_command("c", self.change_initial_click, "Turn on initial click on each beep if arg is 1, else turn off if arg is 0.")

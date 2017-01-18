@@ -19,6 +19,12 @@ class Terminal:
         if output is not None:
             print(output)
 
+    def initialize_commands(self):
+        self.commands = {}
+
+        self.add_command("h", self.show_help, "Show help.")
+        self.add_command("q", self.quit, "Quit.")
+
     def add_command(self, flag, func, help):
         if flag in self.commands:
             raise Exception("tried to add already-existing command {}".format(flag))
@@ -56,9 +62,16 @@ class Terminal:
 
     def run(self):
         while True:
-            user_input = self.get_input()
-            output = self.process_input(user_input)
-            self.display_output(output)
+            try:
+                user_input = self.get_input()
+                output = self.process_input(user_input)
+                self.display_output(output)
+            except KeyboardInterrupt:
+                print("\nInterrupted. Enter :q to quit.")
+                continue
+            except EOFError:
+                print("EOF. Enter :q to quit.")
+                continue
 
 
 class TerminalCommand:

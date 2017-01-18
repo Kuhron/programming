@@ -7,10 +7,15 @@ RATE = 44100
 MAX_AMPLITUDE = 32767
 
 
-def get_signal_from_freq(freq, seconds, initial_click=False):
+def get_signal_from_freq(freq, seconds, initial_click=False, truncate=True):
     n_frames = RATE * seconds
-    n_frames_truncated_at_phase_zero = n_frames - (n_frames % (RATE / freq))
-    xs = np.arange(n_frames_truncated_at_phase_zero)
+
+    if truncate:
+        n_frames_truncated_at_phase_zero = n_frames - (n_frames % (RATE / freq))
+        xs = np.arange(n_frames_truncated_at_phase_zero)
+    else:
+        xs = np.arange(n_frames)
+        
     ys = np.sin(freq * 2*np.pi / RATE * xs) * 10
 
     if initial_click:

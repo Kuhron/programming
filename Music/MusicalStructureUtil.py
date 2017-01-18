@@ -20,24 +20,60 @@ class Note:
         self.frequency = get_frequency_from_pitch_number(self.pitch_number)
         self.duration = duration
 
-    def get_wav_signal(self):
-        return wav.get_signal_from_freq(self.frequency, self.duration.duration_seconds, initial_click=False)
+    def get_wav_signal(self, truncate=True):
+        return wav.get_signal_from_freq(self.frequency, self.duration.duration_seconds, initial_click=False, truncate=truncate)
 
     def __add__(self, other):
         if type(other) is Interval:
             new_name = add_interval_to_note_name(self.name, other)
             return Note(new_name, self.duration)
+        elif type(other) is Note:
+            new_names = [self.name, other.name]
+            return Chord(new_names, self.duration)
+        elif type(other) is Chord:
+            new_names = [self.name] + other.names
+            return Chord(new_names, self.duration)
         return NotImplemented
 
     def __sub__(self, other):
         if type(other) is Interval:
             neg = Interval(-other.step)
-            new_name = add_interval_to_note_name(self.name, neg)
-            return Note(new_name, self.duration)
+            return self + neg
         return NotImplemented
 
     def __repr__(self):
         return "{0}_{1}".format(self.name, self.duration)
+
+
+class Chord:
+    def __init__(self, names, duration):
+        self.names = list(np.unique(names))
+        self.duration = duration
+        self.notes = [Note(name, duration) for name in self.names]
+
+    def get_wav_signal(self):
+        return sum(note.get_wav_signal(truncate=False) for note in self.notes)
+
+    def __add__(self, other):
+        if type(other) is Interval:
+            new_names = [add_interval_to_note_name(name, other) for name in self.names]
+            return Chord(new_names, self.duration)
+        elif type(other) is Note:
+            new_names = self.names + [other.name]
+            return Chord(new_names, self.duration)
+        elif type(other) is Chord:
+            new_names = self.names + other.names
+            return Chord(new_names, self.duration)
+        return NotImplemented
+
+    def __sub__(self, other):
+        if type(other) is Interval:
+            neg = Interval(-other.step)
+            return self + neg
+        return NotImplemented
+
+    def __repr__(self):
+        return "+".join(sorted(repr(x) for x in self.notes))
 
 
 class Rest:
@@ -246,7 +282,9 @@ def add_interval_to_note_name(name, interval):
 
 
 PITCH_CLASSES = "CKDHEFXGLAMB"
-OCTAVES = "0123456789"
+MIN_OCTAVE = 3
+MAX_OCTAVE = 6
+OCTAVES = [str(i) for i in range(MIN_OCTAVE, MAX_OCTAVE + 1)]
 
 
 class INTERVALS:
