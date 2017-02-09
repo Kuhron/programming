@@ -1,0 +1,94 @@
+alpine,tx
+anchorage,ak
+asheville,nc
+atlanta,ga
+augusta,ga
+austin,tx
+bakersfield,ca
+baltimore,md
+baton rouge,la
+beckley,wv
+berkeley,ca
+beverly hills,ca
+birmingham,al
+boston,ma
+boulder,co
+bozeman,mt
+buffalo,ny
+carlsbad,ca
+charleston,sc
+charlotte,nc
+chattanooga,tn
+chicago,il
+cincinnati,oh
+cleveland,oh
+collierville,tn
+colorado springs,co
+columbia,sc
+dallas,tx
+denver,co
+detroit,mi
+elkins,wv
+fargo,nd
+fayetteville,ar
+flint,mi
+fort collins,co
+fort myers,fl
+fort worth,tx
+germantown,tn
+greenville,sc
+higginsville,mo
+hilo,hi
+honolulu,hi
+hot springs,ar
+houston,tx
+huntsville,al
+indianapolis,in
+jackson,ms
+jacksonville,fl
+johnson city,tn
+kansas city,mo
+knoxville,tn
+lafayette,la
+las vegas,nv
+little rock,ar
+los angeles,ca
+louisville,ky
+malvern,ar
+memphis,tn
+miami,fl
+milwaukee,wi
+minneapolis,mn
+missoula,mt
+nashville,tn
+new orleans,la
+new york,ny
+oakland,ca
+omaha,ne
+orlando,fl
+palm springs,ca
+philadelphia,pa
+phoenix,az
+pittsburgh,pa
+portland,or
+raleigh,nc
+reno,nv
+richmond,va
+rochester,ny
+salem,or
+salt lake city,ut
+san antonio,tx
+san diego,ca
+san francisco,ca
+san jose,ca
+santa fe,nm
+savannah,ga
+seattle,wa
+sioux falls,sd
+st. louis,mo
+springfield,il
+springfield,mo
+tampa,fl
+toledo,oh
+tucson,az
+washington,dc
