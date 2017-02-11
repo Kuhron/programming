@@ -1,3 +1,4 @@
+import Music.MidiUtil as mu
 import Music.MusicalStructureUtil as structure
 import Music.WavUtil as wav
 
@@ -223,9 +224,13 @@ def parse_file(filepath):
 
 
 if __name__ == "__main__":
-    # res = parse_file("Music\\MusicParserTestInput.txt")
-    res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
+    res = parse_file("Music\\MusicParserTestInput.txt")
+    # res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
     # print(res)
     signal = wav.get_signal_from_notes(res)
     # wav.send_signal_to_audio_out(signal)
-    wav.write_signal_to_wav(signal, "Music\\MusicOutput.wav")
+    # wav.write_signal_to_wav(signal, "Music\\MusicOutput.wav")
+    midi_input, midi_output = mu.get_input_and_output_devices()
+    mu.send_notes_to_midi_out(res, midi_output)
+    midi_input.close()
+    midi_output.close()
