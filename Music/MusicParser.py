@@ -224,8 +224,8 @@ def parse_file(filepath):
 
 
 if __name__ == "__main__":
-    res = parse_file("Music\\MusicParserTestInput.txt")
-    # res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
+    # res = parse_file("Music\\MusicParserTestInput.txt")
+    res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
     # print(res)
     signal = wav.get_signal_from_notes(res)
     # wav.send_signal_to_audio_out(signal)
