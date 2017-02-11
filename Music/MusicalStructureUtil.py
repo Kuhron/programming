@@ -31,8 +31,9 @@ class Note:
         if stop:
             self.stop_output_to_midi(midi_output)
 
-    def stop_output_to_midi(self, midi_output):
-        time.sleep(self.duration.duration_seconds)
+    def stop_output_to_midi(self, midi_output, sleep=True):
+        if sleep:
+            time.sleep(self.duration.duration_seconds)
         midi_output.note_off(self.midi_pitch_number, self.midi_loudness)
 
     def __add__(self, other):
@@ -69,8 +70,9 @@ class Chord:
     def output_to_midi(self, midi_output):
         for note in self.notes:
             note.output_to_midi(midi_output, stop=False)
-        for note in self.notes:
-            note.stop_output_to_midi(midi_output)
+        for i, note in enumerate(self.notes):
+            sleep = i == 0
+            note.stop_output_to_midi(midi_output, sleep=sleep)
 
     def __add__(self, other):
         if type(other) is Interval:
