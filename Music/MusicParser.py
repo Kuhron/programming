@@ -225,9 +225,10 @@ def parse_file(filepath):
 
 if __name__ == "__main__":
     # res = parse_file("Music\\MusicParserTestInput.txt")
-    res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
+    # res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
+    res = parse_file("Music\\MusicOutput.txt")
     # print(res)
-    signal = wav.get_signal_from_notes(res)
+    # signal = wav.get_signal_from_notes(res)
     # wav.send_signal_to_audio_out(signal)
     # wav.write_signal_to_wav(signal, "Music\\MusicOutput.wav")
     midi_input, midi_output = mu.get_input_and_output_devices()

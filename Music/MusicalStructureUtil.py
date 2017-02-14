@@ -8,12 +8,14 @@ import Music.WavUtil as wav
 
 
 EPSILON = 1e-9
+MIDI_MIN_LOUDNESS = 0
+MIDI_MAX_LOUDNESS = 127
 
 
 class Note:
     def __init__(self, name, duration):
         self.name = name
-        assert len(self.name) == 2, "invalid name {}".format(self.name)
+        assert self.name[1:] in OCTAVES, "invalid name {}".format(self.name)
         self.pitch_class = self.name[0]
         assert self.pitch_class in PITCH_CLASSES
         self.octave = int(self.name[1])
@@ -21,7 +23,7 @@ class Note:
         self.midi_pitch_number = get_midi_pitch_number_from_note_name(self.name)
         self.frequency = get_frequency_from_pitch_number(self.pitch_number)
         self.duration = duration
-        self.midi_loudness = 127
+        self.midi_loudness = int(MIDI_MAX_LOUDNESS / 3)
 
     def get_wav_signal(self, truncate=True):
         return wav.get_signal_from_freq(self.frequency, self.duration.duration_seconds, initial_click=False, truncate=truncate)
@@ -266,8 +268,8 @@ def get_pitch_number_from_note_name(s):
     if any([i not in "AMBCKDHEFXGL#b0123456789" for i in s]) or len(s) > 3:
         raise ValueError("Invalid note name {0}".format(s))
 
-    n = s[:-1]
-    o = s[-1]
+    n = s[:1]
+    o = s[1:]
     v = PITCH_CLASSES.index(n[0])
     if len(n) > 1:
         assert n[0] not in "MKHXL"
@@ -310,8 +312,8 @@ def add_interval_to_note_name(name, interval):
 
 
 PITCH_CLASSES = "CKDHEFXGLAMB"
-MIN_OCTAVE = 0
-MAX_OCTAVE = 10
+MIN_OCTAVE = 4
+MAX_OCTAVE = 5
 OCTAVES = [str(i) for i in range(MIN_OCTAVE, MAX_OCTAVE + 1)]
 
 
