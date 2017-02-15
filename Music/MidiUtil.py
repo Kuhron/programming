@@ -39,21 +39,18 @@ def get_input_and_output_devices():
 
 
 def send_data_to_midi_out(data, midi_output):
-    pygame_time_ms = pygame.midi.time()
-    print(pygame_time_ms)
+    pygame_time_ms = midi.time()
     transform = lambda lst, timestamp: [lst, timestamp + pygame_time_ms + 1000]
     data = [transform(*x) for x in data]
-    print(data)
 
-    for x in data:
-        while pygame.midi.time() < x[1]:
-            pass
-        print("writing {}".format(x))
-        midi_output.write([x])
+    final_timestamp = data[-1][-1]
 
     # kill time so program doesn't end before midi is done playing
 
-    # midi_output.write(data)
+    midi_output.write(data)
+
+    while midi.time() < final_timestamp:
+        time.sleep(0.1)
 
 
 def send_notes_to_midi_out(notes, midi_output):
@@ -64,10 +61,11 @@ def send_notes_to_midi_out(notes, midi_output):
         note.output_to_midi(midi_output)
 
 
-def read_data_from_midi_in(midi_input, timeout_seconds):
+def read_data_from_midi_in(midi_input, max_silence_seconds):
     data = []
     t0 = time.time()
-    while time.time() - t0 < timeout_seconds:
+    last_time = None
+    while True:
         if midi_input.poll():
             new_data = midi_input.read(1)
             assert len(new_data) == 1
@@ -75,11 +73,15 @@ def read_data_from_midi_in(midi_input, timeout_seconds):
             data.append(new_data)
             print(new_data)
             lst, timestamp_ms = new_data
+            last_time = timestamp_ms
             status, data1, data2, data3 = lst
             pitch = data1
             event = data2
             event_name = "note_on" if data2 == 75 else "note_off" if data2 == 0 else "unknown_event"
             # ? = data3
+        elif last_time is not None and midi.time() - last_time > max_silence_seconds * 1000:
+            print("data collection timed out")
+            break
     return data
 
 
@@ -108,7 +110,7 @@ def load_random_data():
 
 
 if __name__ == "__main__":
-    timeout_seconds = 5
+    max_silence_seconds = 5
 
     try:
         inp, outp = get_input_and_output_devices()
@@ -116,11 +118,11 @@ if __name__ == "__main__":
 
         # notes = read_notes_from_midi_in(inp, timeout_seconds)
 
-        data = read_data_from_midi_in(inp, timeout_seconds)
-        # dump_data(data)
+        data = read_data_from_midi_in(inp, max_silence_seconds)
+        dump_data(data)
 
         # data = load_random_data()
-        send_data_to_midi_out(data, outp)
+        # send_data_to_midi_out(data, outp)
 
     except:
         raise
