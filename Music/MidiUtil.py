@@ -118,11 +118,11 @@ if __name__ == "__main__":
 
         # notes = read_notes_from_midi_in(inp, timeout_seconds)
 
-        data = read_data_from_midi_in(inp, max_silence_seconds)
-        dump_data(data)
+        # data = read_data_from_midi_in(inp, max_silence_seconds)
+        # dump_data(data)
 
-        # data = load_random_data()
-        # send_data_to_midi_out(data, outp)
+        data = load_random_data()
+        send_data_to_midi_out(data, outp)
 
     except:
         raise
