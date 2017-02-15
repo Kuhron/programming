@@ -40,12 +40,19 @@ def get_input_and_output_devices():
 
 def send_data_to_midi_out(data, midi_output):
     pygame_time_ms = pygame.midi.time()
+    print(pygame_time_ms)
     transform = lambda lst, timestamp: [lst, timestamp + pygame_time_ms + 1000]
     data = [transform(*x) for x in data]
     print(data)
+
     for x in data:
+        while pygame.midi.time() < x[1]:
+            pass
         print("writing {}".format(x))
         midi_output.write([x])
+
+    # kill time so program doesn't end before midi is done playing
+
     # midi_output.write(data)
 
 
