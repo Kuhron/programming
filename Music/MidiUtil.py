@@ -32,16 +32,21 @@ def get_input_and_output_devices():
         elif name == CASIO_KEYBOARD_OTHER_NAME:
             alt_device_id = device_id
 
-    # print(input_device_id, output_device_id)
-
     inp = midi.Input(input_device_id)
-    outp = midi.Output(output_device_id)
+    outp = midi.Output(output_device_id, latency=1)  # if latency is 0 then timestamps are ignored by pygame
 
     return inp, outp
 
 
 def send_data_to_midi_out(data, midi_output):
-    midi_output.write(data)
+    pygame_time_ms = pygame.midi.time()
+    transform = lambda lst, timestamp: [lst, timestamp + pygame_time_ms + 1000]
+    data = [transform(*x) for x in data]
+    print(data)
+    for x in data:
+        print("writing {}".format(x))
+        midi_output.write([x])
+    # midi_output.write(data)
 
 
 def send_notes_to_midi_out(notes, midi_output):
@@ -52,10 +57,9 @@ def send_notes_to_midi_out(notes, midi_output):
         note.output_to_midi(midi_output)
 
 
-def read_data_from_midi_in(midi_input):
+def read_data_from_midi_in(midi_input, timeout_seconds):
     data = []
     t0 = time.time()
-    timeout_seconds = 1
     while time.time() - t0 < timeout_seconds:
         if midi_input.poll():
             new_data = midi_input.read(1)
@@ -63,7 +67,7 @@ def read_data_from_midi_in(midi_input):
             new_data = new_data[0]
             data.append(new_data)
             print(new_data)
-            lst, timestamp = new_data
+            lst, timestamp_ms = new_data
             status, data1, data2, data3 = lst
             pitch = data1
             event = data2
@@ -72,15 +76,16 @@ def read_data_from_midi_in(midi_input):
     return data
 
 
-def read_notes_from_midi_in(midi_input):
-    data = read_data_from_midi_in(midi_input)
+def read_notes_from_midi_in(midi_input, timeout_seconds):
+    data = read_data_from_midi_in(midi_input, timeout_seconds)
     # TODO: parse data
     raise NotImplementedError
 
 
 def dump_data(data):
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    with open("Music\\midi_input_{}.pickle".format(now_str), "wb") as f:
+    filepath = "Music\\midi_input_{}.pickle".format(now_str)
+    with open(filepath, "wb") as f:
         pickle.dump(data, f)
 
 
@@ -88,7 +93,7 @@ def load_random_data():
     data_dir = "Music\\"
     ls = os.listdir(data_dir)
     choices = [x for x in filter(lambda x: x.startswith("midi_input_"), ls)]
-    print(choices)
+    # print(choices)
     choice = random.choice(choices)
     with open(data_dir + choice, "rb") as f:
         data = pickle.load(f)
@@ -96,16 +101,18 @@ def load_random_data():
 
 
 if __name__ == "__main__":
+    timeout_seconds = 5
+
     try:
         inp, outp = get_input_and_output_devices()
         print(inp, outp)
 
-        # notes = read_notes_from_midi_in(inp)
+        # notes = read_notes_from_midi_in(inp, timeout_seconds)
 
-        # data = read_data_from_midi_in(inp)
+        data = read_data_from_midi_in(inp, timeout_seconds)
         # dump_data(data)
 
-        data = load_random_data()
+        # data = load_random_data()
         send_data_to_midi_out(data, outp)
 
     except:
