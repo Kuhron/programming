@@ -47,7 +47,12 @@ def send_data_to_midi_out(data, midi_output):
 
     # kill time so program doesn't end before midi is done playing
 
-    midi_output.write(data)
+    i = 0
+    MAX_OUTPUT_LENGTH = 1024  # due to pypm
+    while i < len(data):
+        sub_data = data[i: i + MAX_OUTPUT_LENGTH]
+        midi_output.write(sub_data)
+        i += MAX_OUTPUT_LENGTH
 
     while midi.time() < final_timestamp:
         time.sleep(0.1)
@@ -65,6 +70,7 @@ def read_data_from_midi_in(midi_input, max_silence_seconds):
     data = []
     t0 = time.time()
     last_time = None
+    note_imbalance = 0
     while True:
         if midi_input.poll():
             new_data = midi_input.read(1)
@@ -75,11 +81,17 @@ def read_data_from_midi_in(midi_input, max_silence_seconds):
             lst, timestamp_ms = new_data
             last_time = timestamp_ms
             status, data1, data2, data3 = lst
+            status_name = "note" if status == 144 else "instrument" if status == 192 else "unknown_status"
             pitch = data1
             event = data2
-            event_name = "note_on" if data2 == 75 else "note_off" if data2 == 0 else "unknown_event"
+            if status_name == "note":
+                event_name = "note_on" if data2 == 75 else "note_off" if data2 == 0 else "unknown_event"
+            else:
+                event_name = "N/A"
+            note_imbalance += 1 if event_name == "note_on" else -1 if event_name == "note_off" else 0
             # ? = data3
-        elif last_time is not None and midi.time() - last_time > max_silence_seconds * 1000:
+            print("notes on:", note_imbalance)
+        elif note_imbalance == 0 and last_time is not None and midi.time() - last_time > max_silence_seconds * 1000:
             print("data collection timed out")
             break
     return data
@@ -110,7 +122,7 @@ def load_random_data():
 
 
 if __name__ == "__main__":
-    max_silence_seconds = 5
+    max_silence_seconds = 15
 
     try:
         inp, outp = get_input_and_output_devices()
