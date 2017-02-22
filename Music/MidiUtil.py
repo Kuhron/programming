@@ -11,6 +11,24 @@ midi.init()
 import Music.MusicalStructureUtil as structure
 
 
+class MidiEvent:
+    def __init__(self, status, pitch, event, data3, timestamp):
+        self.status = status
+        self.pitch = pitch
+        self.event = event
+        self.data3 = data3
+        self.timestamp = timestamp
+
+    def to_raw_data(self):
+        return [[self.status, self.pitch, self.event, self.data3], self.timestamp]
+
+    @staticmethod
+    def from_raw_data(data):
+        lst, timestamp = data
+        args = lst + [timestamp]
+        return MidiEvent(*args)
+
+
 def get_input_and_output_devices():
     # Casio LK-43
     CASIO_KEYBOARD_NAME = b"UM-2"  # two inputs, each with this name, 
@@ -105,13 +123,13 @@ def read_notes_from_midi_in(midi_input, timeout_seconds):
 
 def dump_data(data):
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filepath = "Music\\midi_input_{}.pickle".format(now_str)
+    filepath = "Music/midi_input_{}.pickle".format(now_str)
     with open(filepath, "wb") as f:
         pickle.dump(data, f)
 
 
 def load_random_data():
-    data_dir = "Music\\"
+    data_dir = "Music/"
     ls = os.listdir(data_dir)
     choices = [x for x in filter(lambda x: x.startswith("midi_input_"), ls)]
     # print(choices)
@@ -119,6 +137,23 @@ def load_random_data():
     with open(data_dir + choice, "rb") as f:
         data = pickle.load(f)
     return data
+
+
+def load_data_from_datetime_string(s):
+    filepath = "Music/midi_input_{}.pickle".format(s)
+    with open(filepath, "rb") as f:
+        data = pickle.load(f)
+    return data
+
+
+def invert_data(data, pivot):
+    # stuff like this makes me want to implement a class; do it if there is too much hacking around with lists like this
+    def invert_pitch(datum):
+        lst, t = datum
+        res = [lst[0]] + [pivot + (pivot - lst[1])] + lst[2:]
+        return [res, t]
+
+    return [invert_pitch(x) for x in data]
 
 
 if __name__ == "__main__":
@@ -133,7 +168,11 @@ if __name__ == "__main__":
         # data = read_data_from_midi_in(inp, max_silence_seconds)
         # dump_data(data)
 
-        data = load_random_data()
+        # data = load_random_data()
+        # data = invert_data(data, 66)
+
+        datetime_str = "20170220-010435"
+        data = load_data_from_datetime_string(datetime_str)
         send_data_to_midi_out(data, outp)
 
     except:
