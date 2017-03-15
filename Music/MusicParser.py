@@ -4,12 +4,10 @@ import Music.WavUtil as wav
 
 
 TEMPO = 150
-WORD_GAP = structure.Rest(structure.Duration(0, TEMPO))
-SENTENCE_GAP = structure.Rest(structure.Duration(1, TEMPO))
 DEFAULT_OCTAVE = 4
 
 
-def parse_note(note, last_note=None):
+def parse_note(note, last_note=None, tempo=TEMPO):
     assert type(note) is str and 0 < len(note), "Invalid input: {}".format(repr(note))
     assert note[0] in structure.PITCH_CLASSES, "invalid pitch class: {}".format(repr(note[0]))
     # assert note[1] in structure.OCTAVES, "invalid octave {}".format((note[1]))
@@ -21,7 +19,7 @@ def parse_note(note, last_note=None):
 
     modifiers = note[1:]
 
-    duration = structure.Duration(0.5, TEMPO)  # default
+    duration = structure.Duration(0.5, tempo)
 
     for modifier in modifiers:
         pitch_class, octave, duration = modify(modifier, pitch_class, octave, duration)
@@ -102,18 +100,18 @@ def get_notes_from_cluster(word):
     return notes
 
 
-def parse_notes_from_list(notes, last_note):
+def parse_notes_from_list(notes, last_note, tempo):
     res = []
     for note in notes:
         if note == "":
             continue
-        parsed = parse_note(note, last_note)
+        parsed = parse_note(note, last_note, tempo)
         res.append(parsed)
         last_note = parsed
     return res, last_note
 
 
-def parse_word(word, last_note=None):
+def parse_word(word, last_note=None, tempo=TEMPO):
     parsed = []
 
     split_left_paren = word.split("(")
@@ -130,8 +128,8 @@ def parse_word(word, last_note=None):
         in_chord_notes = get_notes_from_cluster(in_chord)
         out_of_chord_notes = get_notes_from_cluster(out_of_chord)
 
-        in_chord_parsed, last_note = parse_notes_from_list(in_chord_notes, last_note)
-        out_of_chord_parsed, last_note = parse_notes_from_list(out_of_chord_notes, last_note)
+        in_chord_parsed, last_note = parse_notes_from_list(in_chord_notes, last_note, tempo)
+        out_of_chord_parsed, last_note = parse_notes_from_list(out_of_chord_notes, last_note, tempo)
 
         if in_chord != "":
             chord_names = [x.name for x in in_chord_parsed]
@@ -151,30 +149,33 @@ def parse_word(word, last_note=None):
     # return res
 
 
-def parse_sentence(s):
+def parse_sentence(s, tempo):
     words = [x for x in s.split(" ") if x != ""]
+    WORD_GAP = structure.Rest(structure.Duration(0, tempo))
 
     res = []
     last_note = None
     for word in words:
-        parsed = parse_word(word, last_note)
+        parsed = parse_word(word, last_note, tempo)
         res.append(parsed + [WORD_GAP])
         last_note = parsed[-1]
     # res = [parse_word(w) + [WORD_GAP] for w in words]
     return [item for lst in res for item in lst]
 
 
-def parse_text(text):
+def parse_text(text, tempo):
     # text = add_octaves_to_text(text)
     # print(text)
 
+    SENTENCE_GAP = structure.Rest(structure.Duration(0.5, tempo))
+
     # don't let last-note dependence persist across sentences; just ignore all previous information
     sentences = [x for x in text.split("|") if x.replace(" ", "") != ""]
-    res = [parse_sentence(s) + [SENTENCE_GAP] for s in sentences]
+    res = [parse_sentence(s, tempo) + [SENTENCE_GAP] for s in sentences]
     return [item for lst in res for item in lst]
 
 
-def parse_file(filepath):
+def parse_file(filepath, tempo):
     with open(filepath) as f:
         lines = f.readlines()
 
@@ -182,7 +183,7 @@ def parse_file(filepath):
 
     new_text = "|".join(filter((lambda x: x[0] != "#"), lines))
 
-    return parse_text(new_text)
+    return parse_text(new_text, tempo)
 
 
 # def add_octaves_to_text(text):
@@ -226,7 +227,7 @@ def parse_file(filepath):
 if __name__ == "__main__":
     # res = parse_file("Music\\MusicParserTestInput.txt")
     # res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
-    res = parse_file("Music\\MusicOutput.txt")
+    res = parse_file("Music\\MusicOutput.txt", TEMPO)
     # print(res)
     # signal = wav.get_signal_from_notes(res)
     # wav.send_signal_to_audio_out(signal)
