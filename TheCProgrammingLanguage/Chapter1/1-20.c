@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define MAX_INPUT_LENGTH 5
+#define MAX_INPUT_LENGTH 5  // FIXME why does the program not fail due to this with long input?
 
 
 void print_char_array(char s[]) {
@@ -14,9 +14,13 @@ void detab(int tab_length) {
     int i = 0;
 
     while ((c = getchar()) != EOF) {
-        // if (c != '\n')
-        //     printf("%c\n", c);
-        // fflush(stdout);
+        if (c != '\n')
+            if (c == '\t') {
+                printf("tab\n");
+            } else {
+                printf("%c\n", c);
+            }
+        fflush(stdout);
 
         if (c == '\t') {
             int tab_i = i % tab_length;
@@ -33,7 +37,8 @@ void detab(int tab_length) {
     }
     result[i] = '\0';
 
-    print_char_array(result);
+    // print_char_array(result);
+    printf("%s\n", result);
 }
 
 int main() {
