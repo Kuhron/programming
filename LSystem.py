@@ -73,7 +73,7 @@ if __name__ == "__main__":
     turtle_dict = {
         "L": lambda: turtle.left(60),
         "R": lambda: turtle.right(120),
-        "F": lambda: turtle.forward(2),
+        "F": lambda: turtle.forward(1),
     }
     system = LSystem(koch_curve_rule_dict, turtle_dict)
 
