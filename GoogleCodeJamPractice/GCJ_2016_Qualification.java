@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.lang.Integer;
 import java.util.Arrays;
 import java.util.List;
@@ -62,19 +63,9 @@ class GCJ_2016_Qualification {
         return digitsSeen;
     }
 
-    public static void main(String[] args) throws FileNotFoundException {
-        File file = new File("GCJ_2016_Qualification_input.txt");
-        Scanner scanner = new Scanner(file);
-        int[] numbers = getNumbers(scanner);
-        int nCases = numbers[0];
-        String[] output = new String[nCases];
-        for (int i = 1; i < numbers.length; i++) {
-            String newOutput = getOutputForNumber(numbers[i]);
-            output[i - 1] = String.format("Case #%d: %s", i, newOutput);
-        }
-
+    public static void validateOutput(String[] output) throws FileNotFoundException {
         File expectedOutputFile = new File("GCJ_2016_Qualification_expected.txt");
-        scanner = new Scanner(expectedOutputFile);
+        Scanner scanner = new Scanner(expectedOutputFile);
         int lineIndex = 0;
         while (scanner.hasNextLine()) {
             String expectedLine = scanner.nextLine();
@@ -84,5 +75,29 @@ class GCJ_2016_Qualification {
             }
             lineIndex++;
         }
+    }
+
+    public static void writeOutput(String[] output) throws FileNotFoundException {
+        PrintWriter writer = new PrintWriter(new File("GCJ_2016_Qualification_output.txt"));
+        for (String s : output) {
+            writer.println(s);
+        }
+        writer.flush();
+    }
+
+    public static void main(String[] args) throws FileNotFoundException {
+        // File file = new File("GCJ_2016_Qualification_input.txt");
+        File file = new File("GCJ_2016_Qualification_A-large-practice.in");
+        Scanner scanner = new Scanner(file);
+        int[] numbers = getNumbers(scanner);
+        int nCases = numbers[0];
+        String[] output = new String[nCases];
+        for (int i = 1; i < numbers.length; i++) {
+            String newOutput = getOutputForNumber(numbers[i]);
+            output[i - 1] = String.format("Case #%d: %s", i, newOutput);
+        }
+
+        // validateOutput(output);
+        writeOutput(output);
     }
 }
