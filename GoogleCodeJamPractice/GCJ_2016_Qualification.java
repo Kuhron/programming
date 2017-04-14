@@ -1,6 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.lang.Integer;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -55,8 +56,9 @@ class GCJ_2016_Qualification {
         String s = Integer.toString(newNum);
         for (int i = 0; i < s.length(); i++) {
             int digit = Character.getNumericValue(s.charAt(i));
-            digitsSeen[i] = true;
+            digitsSeen[digit] = true;
         }
+        System.out.println(Arrays.toString(digitsSeen));
         return digitsSeen;
     }
 
@@ -67,6 +69,7 @@ class GCJ_2016_Qualification {
         int nCases = numbers[0];
         String[] output = new String[nCases];
         for (int i = 1; i < numbers.length; i++) {
+            System.out.println(numbers[i]);
             String newOutput = getOutputForNumber(numbers[i]);
             output[i - 1] = newOutput;
         }
