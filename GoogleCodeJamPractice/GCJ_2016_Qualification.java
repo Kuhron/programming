@@ -58,7 +58,6 @@ class GCJ_2016_Qualification {
             int digit = Character.getNumericValue(s.charAt(i));
             digitsSeen[digit] = true;
         }
-        System.out.println(Arrays.toString(digitsSeen));
         return digitsSeen;
     }
 
@@ -71,8 +70,19 @@ class GCJ_2016_Qualification {
         for (int i = 1; i < numbers.length; i++) {
             System.out.println(numbers[i]);
             String newOutput = getOutputForNumber(numbers[i]);
-            output[i - 1] = newOutput;
+            output[i - 1] = String.format("Case #%d: %s", i, newOutput);
         }
 
+        File expectedOutputFile = new File("GCJ_2016_Qualification_expected.txt");
+        scanner = new Scanner(expectedOutputFile);
+        int lineIndex = 0;
+        while (scanner.hasNextLine()) {
+            String expectedLine = scanner.nextLine();
+            String gotLine = output[lineIndex];
+            if (!expectedLine.equals(gotLine)) {
+                throw new RuntimeException(String.format("incorrect output! expected \"%s\"; got \"%s\"", expectedLine, gotLine));
+            }
+            lineIndex++;
+        }
     }
 }
