@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 
-class GCJ_2016_Qualification {
+class GCJ_2016_Qualification_A {
     static int[] getNumbers(Scanner scanner) {
         List<Integer> result = new ArrayList<>();
         while (scanner.hasNextInt()) {
@@ -64,7 +64,7 @@ class GCJ_2016_Qualification {
     }
 
     public static void validateOutput(String[] output) throws FileNotFoundException {
-        File expectedOutputFile = new File("GCJ_2016_Qualification_expected.txt");
+        File expectedOutputFile = new File("expected.txt");
         Scanner scanner = new Scanner(expectedOutputFile);
         int lineIndex = 0;
         while (scanner.hasNextLine()) {
@@ -78,7 +78,7 @@ class GCJ_2016_Qualification {
     }
 
     public static void writeOutput(String[] output) throws FileNotFoundException {
-        PrintWriter writer = new PrintWriter(new File("GCJ_2016_Qualification_output.txt"));
+        PrintWriter writer = new PrintWriter(new File("output.txt"));
         for (String s : output) {
             writer.println(s);
         }
@@ -86,9 +86,9 @@ class GCJ_2016_Qualification {
     }
 
     public static void main(String[] args) throws FileNotFoundException {
-        // File file = new File("GCJ_2016_Qualification_input.txt");
-        File file = new File("GCJ_2016_Qualification_A-large-practice.in");
-        Scanner scanner = new Scanner(file);
+        String inputFilePath = args[0];
+        File inputFile = new File(inputFilePath);
+        Scanner scanner = new Scanner(inputFile);
         int[] numbers = getNumbers(scanner);
         int nCases = numbers[0];
         String[] output = new String[nCases];
