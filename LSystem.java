@@ -47,7 +47,7 @@ class RuleSet {
         Rule[] result = new Rule[strings.length];
         for (int i = 0; i < strings.length; i++) {
             String s = strings[i];
-            System.err.println("new string: " + s);  // why doesn't this print anything?
+            System.err.println("new string: " + s);
             String[] split = s.split(SEPARATOR);
             if (split.length != 2) {
                 String errorMsg = String.format("%s does not contain the %s separator", s, SEPARATOR);
