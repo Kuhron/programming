@@ -27,10 +27,11 @@ class GCJ_2016_Qualification {
         }
         
         boolean[] digitsSeen = new boolean[10];
-        int lastNum = n;
+        int lastNum = 0;
         while (!allTrue(digitsSeen)) {
             lastNum += n;
             digitsSeen = copyNewDigits(lastNum, digitsSeen);
+            // System.out.println(String.format("next number %d gives array %s", lastNum, Arrays.toString(digitsSeen)));
         }
 
         return Integer.toString(lastNum);
@@ -68,7 +69,6 @@ class GCJ_2016_Qualification {
         int nCases = numbers[0];
         String[] output = new String[nCases];
         for (int i = 1; i < numbers.length; i++) {
-            System.out.println(numbers[i]);
             String newOutput = getOutputForNumber(numbers[i]);
             output[i - 1] = String.format("Case #%d: %s", i, newOutput);
         }
