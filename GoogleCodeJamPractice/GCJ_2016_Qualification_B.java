@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +14,7 @@ class GCJ_2016_Qualification_B {
             String line = scanner.nextLine();
             lines.add(line);
         }
-        boolean[][] result = new boolean[lines.size()][];  // leave sizes of second elements unspecified, and allocate them later
+        boolean[][] result = new boolean[lines.size() - 1][];  // leave sizes of second elements unspecified, and allocate them later
         String acceptableChars = "+-";
         for (int i = 0; i < lines.size() - 1; i++) {
             String line = lines.get(i + 1);
@@ -36,7 +37,7 @@ class GCJ_2016_Qualification_B {
             return 0;
         }
         boolean[] strippedStack = getStrippedStack(stack);
-        return 1 + getNumSignChanges(stack);
+        return 1 + getNumSignChanges(strippedStack);
     }
 
     static boolean allPluses(boolean[] stack) {
@@ -75,9 +76,27 @@ class GCJ_2016_Qualification_B {
         return count;
     }
 
+    static void writeOutput(int[] output) throws FileNotFoundException {
+        PrintWriter writer = new PrintWriter(new File("output.txt"));
+        for (int i = 0; i < output.length; i++) {
+            int x = output[i];
+            writer.println(String.format("Case #%d: %s", i + 1, x));
+        }
+        writer.flush();
+    }
+
     public static void main(String[] args) throws FileNotFoundException {
         String inputFilepath = args[0];
         Scanner scanner = new Scanner(new File(inputFilepath));
         boolean[][] stackArrays = getStackArrays(scanner);
+        // System.out.println(Arrays.deepToString(stackArrays));
+        int[] output = new int[stackArrays.length];
+        for (int i = 0; i < stackArrays.length; i++) {
+            boolean[] stack = stackArrays[i];
+            int numFlips = getNumFlips(stack);
+            output[i] = numFlips;
+            // System.out.println(numFlips);
+        }
+        writeOutput(output);
     }
 }
