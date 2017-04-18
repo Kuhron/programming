@@ -45,7 +45,7 @@ class GCJ_2016_Qualification_C {
         for (int i = 0; i < coin.length; i++) {
             boolean bit = coin[coin.length - i - 1];
             int power = i;
-            result += (Math.pow(base, power));
+            result += bit ? (Math.pow(base, power)) : 0;
         }
         return result;
     }
