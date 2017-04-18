@@ -106,32 +106,31 @@ class GCJ_2016_Qualification_C {
     static String[] getOutput(int coinLength, int nCoins, PrimeNumbers primes) {
         String[] result = new String[nCoins];
         List<String> seenCoins = new ArrayList<>();
-        // for (int i = 0; i < nCoins; i++) {
-            boolean[] coin;
-            int[] values;
-            int[] divisors;
-            int i = 0;
-            while (true) {
-                coin = getRandomCoin(coinLength);
-                values = null;
-                divisors = null;  // was not being overwritten for some reason
-                String s = convertCoinToString(coin);
-                boolean coinSeen = seenCoins.contains(s);
-                if (coinSeen) continue;
-                seenCoins.add(s);
-                values = getBaseValues(coin);
-                divisors = getNonTrivialDivisors(values, primes);
-                if (divisors == null) continue;
-                for (int divisor : divisors) {
-                    s += String.format(" %d", divisor);
-                }
-                
-                System.out.println(i + ". found new coin: " + s);
-                result[i] = s;
-                i++;
-                if (i >= nCoins) break;
+        int nCoinsSeen = 0;
+        int nCoinsPossible = (int) Math.pow(2, Math.max(0, coinLength - 2));
+        int i = 0;
+        while (true) {
+            if (nCoinsSeen >= nCoinsPossible) {
+                throw new RuntimeException("saw all possible coins but didn't get enough to return!");
             }
-        // }
+            boolean[] coin = getRandomCoin(coinLength);
+            String s = convertCoinToString(coin);
+            boolean coinSeen = seenCoins.contains(s);  // TODO: make trie structure to store coins rather than linearly searching list
+            if (coinSeen) continue;
+            seenCoins.add(s);
+            nCoinsSeen++;
+            int[] values = getBaseValues(coin);
+            int[] divisors = getNonTrivialDivisors(values, primes);
+            if (divisors == null) continue;
+            for (int divisor : divisors) {
+                s += String.format(" %d", divisor);
+            }
+            
+            System.out.println(i + ". found new coin: " + s);
+            result[i] = s;
+            i++;
+            if (i >= nCoins) break;
+        }
         return result;
     }
 
