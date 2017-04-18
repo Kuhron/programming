@@ -107,17 +107,20 @@ class GCJ_2016_Qualification_C {
         String[] result = new String[nCoins];
         List<String> seenCoins = new ArrayList<>();
         // for (int i = 0; i < nCoins; i++) {
-            // boolean[] coin;
-            // int[] divisors;
+            boolean[] coin;
+            int[] values;
+            int[] divisors;
             int i = 0;
             while (true) {
-                boolean[] coin = getRandomCoin(coinLength);
+                coin = getRandomCoin(coinLength);
+                values = null;
+                divisors = null;  // was not being overwritten for some reason
                 String s = convertCoinToString(coin);
                 boolean coinSeen = seenCoins.contains(s);
                 if (coinSeen) continue;
                 seenCoins.add(s);
-                int[] values = getBaseValues(coin);
-                int[] divisors = getNonTrivialDivisors(values, primes);
+                values = getBaseValues(coin);
+                divisors = getNonTrivialDivisors(values, primes);
                 if (divisors == null) continue;
                 for (int divisor : divisors) {
                     s += String.format(" %d", divisor);
