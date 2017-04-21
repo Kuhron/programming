@@ -1,4 +1,5 @@
 import java.lang.Math;
+import java.math.BigInteger;
 import java.util.ArrayList; 
 import java.util.Arrays;
 import java.util.List;
@@ -6,29 +7,29 @@ import java.util.Random;
 
 
 class PrimeNumbers {
-    private static List<Integer> knownPrimes = new ArrayList<>(Arrays.asList(2, 3));
-    private static Integer biggestKnownPrime = 3;
+    private static List<BigInteger> knownPrimes = new ArrayList<BigInteger>(Arrays.asList(new BigInteger("2"), new BigInteger("3")));
+    private static BigInteger biggestKnownPrime = new BigInteger("3");
 
     public PrimeNumbers() {}
 
-    public int getLowestPrimeFactor(int n) {
+    public BigInteger getLowestPrimeFactor(BigInteger n) {
         // don't calculate more primes unnecessarily; if can find a divisor in the known list, return it
         // but if finish known list and haven't reached sqrt(n), iterate over next odd numbers,
             // first checking if they're prime (if they are, add to list and then check if they divide n)
 
-        for (Integer p : this.knownPrimes) {
-            if (n % p == 0) {
+        for (BigInteger p : this.knownPrimes) {
+            if (n.mod(p).equals(BigInteger.ZERO)) {
                 return p;
             }
         }
 
-        int nextPrimeCandidate = this.biggestKnownPrime;
-        while (Math.sqrt(n) > this.biggestKnownPrime) {
-            nextPrimeCandidate += 2;
-            if (getLowestPrimeFactor(nextPrimeCandidate) == nextPrimeCandidate) {
+        BigInteger nextPrimeCandidate = this.biggestKnownPrime;
+        while (BigIntMath.getCeilingSqrt(n) > this.biggestKnownPrime) {
+            nextPrimeCandidate = nextPrimeCandidate.add(new BigInteger("2"));
+            if (getLowestPrimeFactor(nextPrimeCandidate).equals(nextPrimeCandidate)) {
                 this.knownPrimes.add(nextPrimeCandidate);
                 this.biggestKnownPrime = nextPrimeCandidate;
-                if (n % nextPrimeCandidate == 0) {
+                if (n.mod(nextPrimeCandidate).equals(BigInteger.ZERO)) {
                     return nextPrimeCandidate;
                 }
             }
@@ -39,13 +40,20 @@ class PrimeNumbers {
     }
 }
 
+class BigIntMath {
+    public static BigInteger getCeilingSqrt(BigInteger x) {
+        ;
+    }
+}
+
 class GCJ_2016_Qualification_C {
-    static int convertToBase(boolean[] coin, int base) {
-        int result = 0;
+    static BigInteger convertToBase(boolean[] coin, int base) {
+        BigInteger result = BigInteger.ZERO;
         for (int i = 0; i < coin.length; i++) {
             boolean bit = coin[coin.length - i - 1];
             int power = i;
-            result += bit ? (Math.pow(base, power)) : 0;
+            BigInteger addend = bit ? BigInteger.valueOf((int) Math.pow(base, power)) : BigInteger.ZERO;
+            result = result.add(addend);
         }
         return result;
     }
@@ -70,21 +78,21 @@ class GCJ_2016_Qualification_C {
         return result;
     }
 
-    static int[] getBaseValues(boolean[] coin) {
-        int[] result = new int[9];
+    static BigInteger[] getBaseValues(boolean[] coin) {
+        BigInteger[] result = new BigInteger[9];
         for (int i = 2; i < 11; i++) {
-            int n = convertToBase(coin, i);
+            BigInteger n = convertToBase(coin, i);
             result[i - 2] = n;
         }
         return result;
     }
 
-    static int[] getNonTrivialDivisors(int[] coinValues, PrimeNumbers primes) {
-        int[] result = new int[9];
+    static BigInteger[] getNonTrivialDivisors(BigInteger[] coinValues, PrimeNumbers primes) {
+        BigInteger[] result = new BigInteger[9];
         for (int i = 0; i < 9; i++) {
-            int val = coinValues[i];
-            int divisor = primes.getLowestPrimeFactor(val);
-            if (divisor == val) {
+            BigInteger val = coinValues[i];
+            BigInteger divisor = primes.getLowestPrimeFactor(val);
+            if (divisor.equals(val)) {
                 // not a jamcoin because value in one of the bases is prime
                 return null;
             }
@@ -119,10 +127,10 @@ class GCJ_2016_Qualification_C {
             if (coinSeen) continue;
             seenCoins.add(s);
             nCoinsSeen++;
-            int[] values = getBaseValues(coin);
-            int[] divisors = getNonTrivialDivisors(values, primes);
+            BigInteger[] values = getBaseValues(coin);
+            BigInteger[] divisors = getNonTrivialDivisors(values, primes);
             if (divisors == null) continue;
-            for (int divisor : divisors) {
+            for (BigInteger divisor : divisors) {
                 s += String.format(" %d", divisor);
             }
             
