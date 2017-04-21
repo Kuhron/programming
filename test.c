@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 int main() {
-    main();
-    int a;  // garbage value if uninitialized
-    printf("%d\n", a);
+    char * a = NULL;
+    *a = 0;
 }
