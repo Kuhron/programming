@@ -187,5 +187,13 @@ class TornadoField {
         };
 
         RadialVectorField radialVectorField = RadialVectorField.fromArray(nexradArray);
+
+        // TODO:
+        // - get VectorField (extrapolate using a simple rbf)
+        // - find points with high curl
+        // - learn how to plot in Java
+        //   - plot color-coded magnitude of points
+        //   - plot vectors as arrows
+        //   - plot curl
     }
 }
