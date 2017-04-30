@@ -33,6 +33,11 @@ class Point {
         }
     }
 
+    public double getX() { return this.xy[0]; }
+    public double getY() { return this.xy[1]; }
+    public double getR() { return this.rt[0]; }
+    public double getTheta() { return this.rt[1]; }
+
     public static double[] cartesianToPolar(double[] xy) {
         verifyCoords(xy);
         double r = Math.sqrt(Math.pow(xy[0], 2) + Math.pow(xy[1], 2));
@@ -74,6 +79,17 @@ class Vector extends Point {
     public boolean isVector() {
         return true;
     }
+
+    public double getMagnitude() {
+        return this.getR();
+    }
+
+    public Vector scaleToMagnitude(double mag) {
+        double currentMagnitude = this.getMagnitude();
+        double factor = mag / currentMagnitude;
+        double[] components = new double[] {this.getX() * factor, this.getY() * factor};
+        return new Vector(components, Point.CARTESIAN);
+    }
 }
 
 
@@ -106,7 +122,8 @@ class RadialVectorField {
     // representation of Nexrad-style radial velocity data; really a scalar field with an implicit radial unit vector at each point
     // kept as an array of points with vectors
 
-    static double[] DEFAULT_CENTER = new double[] {0, 0};
+    static final Point DEFAULT_CENTER = new Point(new double[] {0, 0}, Point.CARTESIAN);
+    static final double DEFAULT_RADIUS_RESOLUTION = 1.0;
 
     VectorFieldMap vectorFieldMap;
 
@@ -122,18 +139,37 @@ class RadialVectorField {
             throw new RuntimeException("array must be nonempty in both dimensions");
         }
 
-        // double thetaResolutionDegrees = 360.0 / a[0].length;
+        final int nRows = a.length;
+        final int nCols = a[0].length;
+
+        final Point center = DEFAULT_CENTER;
+        final double radiusResolution = DEFAULT_RADIUS_RESOLUTION;
+        final double thetaResolutionDegrees = 360.0 / a[0].length;
 
         VectorFieldMap vectorFieldMap = new VectorFieldMap();
+
+        for (int i = 0; i < nRows; i++) {
+            if (a[i].length != nCols) {
+                throw new RuntimeException("cannot create RadialVectorField from array with differing row lengths");
+            }
+            for (int j = 0; j < nCols; j++) {
+                double mag = a[i][j];
+                double[] rt = new double[] {(i + 1) * radiusResolution, j * thetaResolutionDegrees};
+                Point p = new Point(rt, Point.POLAR);
+                Vector radialUnitVector = getRadialUnitVector(center, p);
+                Vector radialVector = radialUnitVector.scaleToMagnitude(mag);
+                vectorFieldMap.put(p, radialVector);
+            }
+        }
 
         return new RadialVectorField(vectorFieldMap);
     }
 
-    public static double[] getRadialUnitVector(double[] centerXY, double[] towardXY) {
-        double[] fullVector = new double[] {towardXY[0] - centerXY[0], towardXY[1] - centerXY[1]};
-        double magnitude = Math.sqrt(Math.pow(fullVector[0], 2) + Math.pow(fullVector[1], 2));
+    public static Vector getRadialUnitVector(Point center, Point towardPoint) {
+        double[] coords = new double[] {towardPoint.getX() - center.getX(), towardPoint.getY() - center.getY()};
+        Vector fullVector = new Vector(coords, Point.CARTESIAN);
 
-        return new double[] {fullVector[0] / magnitude, fullVector[1] / magnitude};
+        return fullVector.scaleToMagnitude(1);
     }
 }
 
