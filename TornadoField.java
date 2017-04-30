@@ -25,9 +25,11 @@ class Point {
             case CARTESIAN:
                 this.xy = coords;
                 this.rt = cartesianToPolar(coords);
+                break;
             case POLAR:
                 this.xy = polarToCartesian(coords);
                 this.rt = coords;
+                break;
             default:
                 throw new RuntimeException("invalid option for coordinate type; use Point.CARTESIAN or Point.POLAR");
         }
@@ -176,6 +178,14 @@ class RadialVectorField {
 
 class TornadoField {
     public static void main(String[] args) {
-        ;
+        double[][] nexradArray = new double[][] {
+            {  3.2,  2.7,  2.2,  1.4,  0.8},
+            {  2.8,  2.4,  1.6,  0.7,  0.1},
+            {  2.0,  1.3,  0.7, -0.1, -0.6},
+            {  1.0,  0.2, -0.4, -1.3, -1.8},
+            { -0.3, -1.5, -1.8, -2.9, -3.5},
+        };
+
+        RadialVectorField radialVectorField = RadialVectorField.fromArray(nexradArray);
     }
 }
