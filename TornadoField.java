@@ -17,8 +17,8 @@ class Point {
     public static final int CARTESIAN = 0;
     public static final int POLAR = 1;
 
-    double[] xy = new double[2];
-    double[] rt = new double[2];
+    private double[] xy = new double[2];
+    private double[] rt = new double[2];
 
     public Point(double[] coords, int coordinateType) {
         switch(coordinateType) {
@@ -87,7 +87,13 @@ class Vector extends Point {
     }
 
     public Vector scaleToMagnitude(double mag) {
+        if (mag < 0) {
+            throw new RuntimeException("cannot scale vector to negative magnitude");
+        }
         double currentMagnitude = this.getMagnitude();
+        if (currentMagnitude == 0 && mag != 0) {
+            throw new RuntimeException("cannot scale zero vector to nonzero magnitude");
+        }
         double factor = mag / currentMagnitude;
         double[] components = new double[] {this.getX() * factor, this.getY() * factor};
         return new Vector(components, Point.CARTESIAN);
@@ -95,16 +101,11 @@ class Vector extends Point {
 }
 
 
-class VectorField {
-
-}
-
-
 class VectorFieldMap {
-    Map<Point, Vector> map;
+    private Map<Point, Vector> map;
 
     public VectorFieldMap() {
-        this.map = new HashMap<Point, Vector>();  // just picked HashMap because whatever
+        this.map = new HashMap<Point, Vector>();
     }
     
     public VectorFieldMap(Map<Point, Vector> map) {
@@ -120,14 +121,50 @@ class VectorFieldMap {
 }
 
 
-class RadialVectorField {
+class VectorField {
+    // for now, just implement using VectorFieldMap and kernel for interpolation
+    // later, can try to pass functions that generate the components directly
+
+    private VectorFieldMap vectorFieldMap;
+
+    public VectorField(VectorFieldMap vectorFieldMap) {
+        this.vectorFieldMap = vectorFieldMap;
+    }
+
+    public Vector getVectorAtPoint(Point p) {
+        if (this.vectorFieldMap.containsKey(p)) {
+            return vectorFieldMap.get(p);
+        }
+
+        // currently using super hacky interpolation
+        // for better methods, see:
+        // - http://www.spc.noaa.gov/publications/schaefer/interpol.pdf
+        // - http://www.smpp.northwestern.edu/~smpp_pub/MussaIvaldiBiolCyb1992.pdf
+
+        ;
+    }
+
+    public double getCurlAtPoint(Point p) {
+        ;
+    }
+
+    private Point[] getNearestDataPointsToPoint(Point p, int nPoints) {
+        if (nPoints > this.vectorFieldMap.size()) {
+            ;
+        }
+        ;
+    }
+
+
+}
+
+
+class RadialVectorField extends VectorField {
     // representation of Nexrad-style radial velocity data; really a scalar field with an implicit radial unit vector at each point
     // kept as an array of points with vectors
 
-    static final Point DEFAULT_CENTER = new Point(new double[] {0, 0}, Point.CARTESIAN);
-    static final double DEFAULT_RADIUS_RESOLUTION = 1.0;
-
-    VectorFieldMap vectorFieldMap;
+    private static final Point DEFAULT_CENTER = new Point(new double[] {0, 0}, Point.CARTESIAN);
+    private static final double DEFAULT_RADIUS_RESOLUTION = 1.0;
 
     public RadialVectorField(VectorFieldMap vectorFieldMap) {
         this.vectorFieldMap = vectorFieldMap;
@@ -195,5 +232,6 @@ class TornadoField {
         //   - plot color-coded magnitude of points
         //   - plot vectors as arrows
         //   - plot curl
+        // - be able to handle null for points with no data
     }
 }
