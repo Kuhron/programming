@@ -44,7 +44,15 @@ def send_freq_to_stream(freq, seconds, stream, initial_click=False):
 
 
 def send_signal_to_stream(ys, stream):
-    stream.write(ys.astype("Int8").tobytes())
+    ys_bytes = ys.astype("Int8").tobytes()
+
+    # split into segments so it's not all sent at once, blocking the program from exiting with Ctrl-C
+    seg_length = 1024  # even a few-second wav signal is ~50k
+    while True:
+        stream.write(ys_bytes[:seg_length])
+        ys_bytes = ys_bytes[seg_length:]
+        if len(ys_bytes) == 0:
+            return
 
 
 def send_signal_to_audio_out(signal):
