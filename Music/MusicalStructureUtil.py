@@ -17,7 +17,7 @@ class Note:
         self.name = name
         assert self.name[1:] in OCTAVES, "invalid name {}".format(self.name)
         self.pitch_class = self.name[0]
-        assert self.pitch_class in PITCH_CLASSES
+        assert is_pitch_class(self.pitch_class)
         self.octave = int(self.name[1])
         self.pitch_number = get_pitch_number_from_note_name(self.name)
         self.midi_pitch_number = get_midi_pitch_number_from_note_name(self.name)
@@ -270,9 +270,9 @@ def get_pitch_number_from_note_name(s):
 
     n = s[:1]
     o = s[1:]
-    v = PITCH_CLASSES.index(n[0])
+    v = pitch_class_to_number(n[0])
     if len(n) > 1:
-        assert n[0] not in "MKHXL"
+        assert not is_black_key(n[0])
         v += (1 if n[1] == "#" else -1 if n[1] == "b" else ValueError)
 
     o = int(o) - 4
@@ -288,7 +288,7 @@ def get_note_name_from_pitch_number(n):
     # increment octave between B and C, according to https://en.wikipedia.org/wiki/Scientific_pitch_notation
     # (//) rounds toward negative infinity, true floor division
     o, v = divmod(n, 12)
-    pitch_class = PITCH_CLASSES[v]
+    pitch_class = number_to_pitch_class(v)
     octave = o + 4
     return pitch_class + str(octave)
 
@@ -311,7 +311,37 @@ def add_interval_to_note_name(name, interval):
     return get_note_name_from_pitch_number(n)
 
 
-PITCH_CLASSES = "CKDHEFXGLAMB"
+def is_black_key(pitch_class):
+    return PITCH_CLASS_TO_NUMBER[pitch_class] in [1, 3, 6, 8, 10]
+
+
+def is_pitch_class(x):
+    return x in PITCH_CLASS_TO_NUMBER
+
+
+def pitch_class_to_number(x):
+    return PITCH_CLASS_TO_NUMBER[x]
+
+
+def number_to_pitch_class(x):
+    return NUMBER_TO_PITCH_CLASS[x]
+
+
+PITCH_CLASS_TO_NUMBER = {
+    "C": 0,
+    "K": 1,
+    "D": 2,
+    "H": 3,
+    "E": 4,
+    "F": 5,
+    "X": 6,
+    "G": 7,
+    "L": 8, "J": 8,
+    "A": 9,
+    "M": 10, "R": 10,
+    "B": 11,
+}
+NUMBER_TO_PITCH_CLASS = "CKDHEFXGJARB"
 MIN_OCTAVE = 1
 MAX_OCTAVE = 8
 OCTAVES = [str(i) for i in range(MIN_OCTAVE, MAX_OCTAVE + 1)]
