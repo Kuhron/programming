@@ -49,4 +49,5 @@ def show_image_for_pitch_classes(pitch_classes):
 
 if __name__ == "__main__":
     pitch_classes = ["X"]
+    plt.show()
     show_image_for_pitch_classes(pitch_classes)
