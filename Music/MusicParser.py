@@ -9,7 +9,7 @@ DEFAULT_OCTAVE = 4
 
 def parse_note(note, last_note=None, tempo=TEMPO):
     assert type(note) is str and 0 < len(note), "Invalid input: {}".format(repr(note))
-    assert note[0] in structure.PITCH_CLASSES, "invalid pitch class: {}".format(repr(note[0]))
+    assert structure.is_pitch_class(note[0]), "invalid pitch class: {}".format(repr(note[0]))
     # assert note[1] in structure.OCTAVES, "invalid octave {}".format((note[1]))
 
     pitch_class = note[0]
@@ -58,8 +58,8 @@ def get_octave_from_pitch_class_and_last_note(pitch_class, last_note):
     last_pitch_class = last_note.pitch_class
     last_octave = last_note.octave
 
-    last_index = structure.PITCH_CLASSES.index(last_pitch_class)
-    current_index = structure.PITCH_CLASSES.index(pitch_class)
+    last_index = structure.pitch_class_to_number(last_pitch_class)
+    current_index = structure.pitch_class_to_number(pitch_class)
     distance_up = (current_index - last_index) % 12
     distance_down = (last_index - current_index) % 12
     if distance_up == distance_down == 0:
@@ -91,7 +91,7 @@ def get_notes_from_cluster(word):
     notes = []
     current_note = ""
     for char in word:
-        if char in structure.PITCH_CLASSES:
+        if structure.is_pitch_class(char):
             if current_note != "":
                 notes.append(current_note)
             current_note = ""
@@ -225,14 +225,14 @@ def parse_file(filepath, tempo):
 
 
 if __name__ == "__main__":
-    # res = parse_file("Music\\MusicParserTestInput.txt")
-    # res = parse_file("Music\\MusicParserTestInputAdvanced.txt")
-    res = parse_file("Music\\MusicOutput.txt", TEMPO)
+    res = parse_file("Music\\MusicParserTestInput.txt", TEMPO)
+    # res = parse_file("Music\\MusicParserTestInputAdvanced.txt", TEMPO)
+    # res = parse_file("Music\\MusicOutput.txt", TEMPO)
     # print(res)
-    # signal = wav.get_signal_from_notes(res)
-    # wav.send_signal_to_audio_out(signal)
+    signal = wav.get_signal_from_notes(res)
+    wav.send_signal_to_audio_out(signal)
     # wav.write_signal_to_wav(signal, "Music\\MusicOutput.wav")
-    midi_input, midi_output = mu.get_input_and_output_devices()
-    mu.send_notes_to_midi_out(res, midi_output)
-    midi_input.close()
-    midi_output.close()
+    # midi_input, midi_output = mu.get_input_and_output_devices()
+    # mu.send_notes_to_midi_out(res, midi_output)
+    # midi_input.close()
+    # midi_output.close()
