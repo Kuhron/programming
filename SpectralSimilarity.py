@@ -36,7 +36,7 @@ def compare_spectrograms(spectrogram1, spectrogram2, freqs1, freqs2):
     shorter, longer = sorted([spectrogram1, spectrogram2], key=len)
     r = len(longer) *1.0/ len(shorter)
     distances = []
-    n_observations = 100
+    n_observations = 100  # make this too high and it will overflow; 100 is good enough since a wav will have <1 distance to itself
     for i in range(len(shorter)):
         # line up the time axes by just dilating (no translating or dilating by a changing factor yet)
         # bootstrap some frequencies from each signal with probability=intensity
@@ -71,11 +71,11 @@ def get_distance_matrix(fps):
 
 if __name__ == "__main__":
     fps = [
-        "test.wav",
-        "test2.wav",
-        "test3.wav",
-        "test4.wav",
-        "test5.wav",
+        "test.wav",   # testing 1 2 3 a e i o u
+        "test2.wav",  # [same as test.wav, but just said again; should be very similar]
+        "test3.wav",  # [hitting microphone with fingernails]
+        "test4.wav",  # asdfasdfblabla different vowels not what I said before [should be much more similar to 1 and 2 than to 3 and 5]
+        "test5.wav",  # [blowing on microphone]
     ]
     # files = random.sample(fps, 2)  # OverflowError with certain files?
     # files = fps[:2]  # should work
@@ -84,3 +84,14 @@ if __name__ == "__main__":
     # print(similarity)
     np.set_printoptions(suppress=True)
     print(get_distance_matrix(fps))
+
+    # expected result:
+    # [[   0   low   high  lowish  high]
+    #  [         0   high  lowish  high]
+    #  [                0    high  high]
+    #  [                        0  high]
+    #  [                              0]]
+
+    # problems:
+    # - only dilates time axis by constant factor rather than "squishing" the durations of similar spectra (as with multiple people saying the same word)
+    # - sees different frequencies as dissimilar, so would reject speakers with different pitch of voice as dissimilar no matter what
