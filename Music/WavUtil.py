@@ -1,6 +1,7 @@
 import pyaudio
 import wave
 import numpy as np
+from scipy.io.wavfile import read as read_wav
 
 
 RATE = 44100
@@ -79,3 +80,8 @@ def write_signal_to_wav(signal, filepath):
         spf.setnframes(len(signal))
         signal *= (0.8 * MAX_AMPLITUDE) / max(abs(max(signal)), abs(min(signal)))
         spf.writeframes(signal.astype("Int16").tobytes())
+
+
+def read_wav_to_array(filepath):
+    f = read_wav(filepath)
+    return np.array(f[1], dtype=float)
