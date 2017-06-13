@@ -93,5 +93,7 @@ if __name__ == "__main__":
     #  [                              0]]
 
     # problems:
-    # - only dilates time axis by constant factor rather than "squishing" the durations of similar spectra (as with multiple people saying the same word)
+    # - only dilates time axis by constant factor rather than "squishing" the durations of similar spectra to match them up
+    #     (as with multiple people saying the same word, where length could resemble "aabbbcdd" vs. "abbbbccd", which should be deemed similar)
     # - sees different frequencies as dissimilar, so would reject speakers with different pitch of voice as dissimilar no matter what
+    #   - could get around this by normalizing dists (t score of the values)
