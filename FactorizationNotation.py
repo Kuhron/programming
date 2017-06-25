@@ -70,6 +70,16 @@ def get_top_level_groups(s):
     return groups
 
 
+def get_composite_n():
+    n = 1
+    for _ in range(100):
+        p = 2
+        while random.random() < 0.9:
+            p = sympy.ntheory.nextprime(p)
+        n *= p
+    return n
+
+
 def test():
     for _ in range(10):
         n = random.randint(1, 1e6)
@@ -126,15 +136,6 @@ if __name__ == "__main__":
     # system.plot(res)
 
     # generate random int of reasonable size and composite-ness, plot
-    def get_composite_n():
-        n = 1
-        for _ in range(100):
-            p = 2
-            while random.random() < 0.9:
-                p = sympy.ntheory.nextprime(p)
-            n *= p
-        return n
-
     n = get_composite_n()
     print(n)
     s = integer_to_factor_notation(n)
