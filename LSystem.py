@@ -29,8 +29,18 @@ class LSystem:
         turtle.speed(0)
 
         for x in s:
-            func = self.turtle_dict[x]
-            func()
+            instructions = self.turtle_dict[x]
+            for instruction in instructions:
+                code = instruction[0]
+                num = int(instruction[1:])
+                if code == "L":
+                    turtle.left(num)
+                elif code == "R":
+                    turtle.right(num)
+                elif code == "F":
+                    turtle.forward(num)
+                else:
+                    raise ValueError("invalid instruction code {}".format(code))
 
         turtle.exitonclick()
 
@@ -71,9 +81,9 @@ if __name__ == "__main__":
         "F": LSystemRule("F", {"FLFRFLF": 1, "F": 0}),
     }
     turtle_dict = {
-        "L": lambda: turtle.left(60),
-        "R": lambda: turtle.right(120),
-        "F": lambda: turtle.forward(1),
+        "L": ["L60", "F1"],
+        "R": ["R120", "F3"],
+        "F": ["R60", "F1", "L60"],
     }
     system = LSystem(koch_curve_rule_dict, turtle_dict)
 
