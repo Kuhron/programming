@@ -96,7 +96,7 @@ def practice():
                 acceptable = True
             except ValueError:
                 print("invalid answer! (use digits 0-6)")
-            answer = input("try again: ")
+                answer = input("try again: ")
         day = get_day_using_datetime(date)
         assert get_day_using_doomsday_algorithm(date) == day
         right = int(answer) == day
@@ -107,7 +107,7 @@ def practice():
             print("doh! The correct answer was {} ({}).".format(day, number_to_day(day)))
         total += 1
     t = time.time() - t0
-    print("final score: {} / {}; total time: {:.2f} seconds ({:.2f} average)".format(score, total, t, t / total))
+    print("final score: {} / {}; total time: {:.2f} seconds ({:.2f} average per right answer)".format(score, total, t, t / score))
 
 
 if __name__ == "__main__":
