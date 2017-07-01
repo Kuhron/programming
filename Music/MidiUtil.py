@@ -69,13 +69,14 @@ class MidiEvent:
         return str(self.to_raw_data())
 
 
-def get_input_and_output_devices():
+def get_input_and_output_devices(verbose=False):
     # Casio LK-43
     CASIO_KEYBOARD_NAME = b"UM-2"  # two inputs, each with this name, 
     CASIO_KEYBOARD_OTHER_NAME = b"MIDIOUT2 (UM-2)"
 
     infos = [midi.get_device_info(device_id) for device_id in range(midi.get_count())]
-    # print(infos)
+    if verbose:
+        print(infos)
 
     input_device_id = None
     output_device_id = None
@@ -218,26 +219,26 @@ if __name__ == "__main__":
     max_silence_seconds = 1
 
     try:
-        # inp, outp = get_input_and_output_devices()
-        # print(inp, outp)
+        inp, outp = get_input_and_output_devices()
+        print(inp, outp)
 
         # notes = read_notes_from_midi_in(inp, timeout_seconds)
 
-        # data = read_data_from_midi_in(inp, max_silence_seconds)
+        data = read_data_from_midi_in(inp, max_silence_seconds)
         # dump_data(data)
 
-        data = load_random_data()
+        # data = load_random_data()
         # data = invert_data(data, 66)
 
         # datetime_str = "20170220-010435"
         # data = load_data_from_datetime_string(datetime_str)
-        # send_data_to_midi_out(data, outp)
-        events = MidiEvent.from_data_list(data)
-        send_events_to_standard_out(events)
+        send_data_to_midi_out(data, outp)
+        # events = MidiEvent.from_data_list(data)
+        # send_events_to_standard_out(events)
 
     except:
         raise
     finally:
         pass
-        # inp.close()
-        # outp.close()
+        inp.close()
+        outp.close()
