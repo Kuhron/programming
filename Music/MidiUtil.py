@@ -73,7 +73,7 @@ def get_input_and_output_devices(verbose=False):
     # INTERFACE_NAME = b"UM-2"  # Edirol UM-2 EX
     INTERFACE_OTHER_NAME = b"MIDIOUT2 (UM-2)"
 
-    INTERFACE_NAME = b"US-1"  # Tascam US-144
+    INTERFACE_NAME = b"US-144"  # Tascam US-144
 
     infos = [midi.get_device_info(device_id) for device_id in range(midi.get_count())]
     if verbose:
@@ -224,19 +224,21 @@ if __name__ == "__main__":
 
     try:
         inp, outp = get_input_and_output_devices(verbose=True)
-        print(inp, outp)
 
-        # notes = read_notes_from_midi_in(inp, timeout_seconds)
-
-        data = read_data_from_midi_in(inp, max_silence_seconds)
-        dump_data(data)
+        if inp is not None:
+            # notes = read_notes_from_midi_in(inp, timeout_seconds)
+            data = read_data_from_midi_in(inp, max_silence_seconds)
+            dump_data(data)
 
         # data = load_random_data()
         # data = invert_data(data, 66)
 
         # datetime_str = "20170220-010435"
         # data = load_data_from_datetime_string(datetime_str)
-        # send_data_to_midi_out(data, outp)
+
+        if outp is not None:
+            send_data_to_midi_out(data, outp)
+
         # events = MidiEvent.from_data_list(data)
         # send_events_to_standard_out(events)
     except:
