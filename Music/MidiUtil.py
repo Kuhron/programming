@@ -70,9 +70,10 @@ class MidiEvent:
 
 
 def get_input_and_output_devices(verbose=False):
-    # Casio LK-43
-    CASIO_KEYBOARD_NAME = b"UM-2"  # two inputs, each with this name, 
-    CASIO_KEYBOARD_OTHER_NAME = b"MIDIOUT2 (UM-2)"
+    # INTERFACE_NAME = b"UM-2"  # Edirol UM-2 EX
+    INTERFACE_OTHER_NAME = b"MIDIOUT2 (UM-2)"
+
+    INTERFACE_NAME = b"US-1"  # Tascam US-144
 
     infos = [midi.get_device_info(device_id) for device_id in range(midi.get_count())]
     if verbose:
@@ -83,16 +84,19 @@ def get_input_and_output_devices(verbose=False):
     alt_device_id = None
     for device_id, info in enumerate(infos):
         interf, name, is_input, is_output, is_opened = info
-        if name == CASIO_KEYBOARD_NAME:
+        if name == INTERFACE_NAME:
             if is_input:
                 input_device_id = device_id
             elif is_output:
                 output_device_id = device_id
-        elif name == CASIO_KEYBOARD_OTHER_NAME:
+        elif name == INTERFACE_OTHER_NAME:
+            raise Exception("OTHER_NAME should not be used; check that input/output device names are as you expect")
             alt_device_id = device_id
 
-    inp = midi.Input(input_device_id)
-    outp = midi.Output(output_device_id, latency=1)  # if latency is 0 then timestamps are ignored by pygame
+    if input_device_id is None or output_device_id is None:
+        print("MIDI input and/or output could not be correctly identified. Result: input {}; output {}".format(input_device_id, output_device_id))
+    inp = midi.Input(input_device_id) if input_device_id is not None else None
+    outp = midi.Output(output_device_id, latency=1) if output_device_id is not None else None # if latency is 0 then timestamps are ignored by pygame
 
     return inp, outp
 
@@ -219,26 +223,27 @@ if __name__ == "__main__":
     max_silence_seconds = 1
 
     try:
-        inp, outp = get_input_and_output_devices()
+        inp, outp = get_input_and_output_devices(verbose=True)
         print(inp, outp)
 
         # notes = read_notes_from_midi_in(inp, timeout_seconds)
 
         data = read_data_from_midi_in(inp, max_silence_seconds)
-        # dump_data(data)
+        dump_data(data)
 
         # data = load_random_data()
         # data = invert_data(data, 66)
 
         # datetime_str = "20170220-010435"
         # data = load_data_from_datetime_string(datetime_str)
-        send_data_to_midi_out(data, outp)
+        # send_data_to_midi_out(data, outp)
         # events = MidiEvent.from_data_list(data)
         # send_events_to_standard_out(events)
-
     except:
         raise
     finally:
-        pass
-        inp.close()
-        outp.close()
+        # pass
+        if inp is not None:
+            inp.close()
+        if outp is not None:
+            outp.close()
