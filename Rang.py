@@ -28,7 +28,7 @@ def get_random_latitude_and_longitude(degrees=False,lat_range=real_range,lon_ran
     return (lat,lon)
 
 
-def get_populous_us_city():
+def get_populous_us_cities(n_cities):
     wikipedia_url = "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population"
     html = requests.get(wikipedia_url).text
     soup = BeautifulSoup(html, "html5lib")
@@ -47,17 +47,19 @@ def get_populous_us_city():
         cities.append(new_str)
 
     assert all(x in cities for x in ["New York, New York", "Chicago, Illinois", "Memphis, Tennessee"])
-    return random.choice(cities)
+    return random.sample(cities, n_cities)
 
 
 if __name__ == "__main__":
     mode = input("Select mode:\n"
         "1. World\n"
         "2. Continental US (approx.)\n"
-        "3. US city over 100,000 people\n")
+        "3. US cities over 100,000 people\n")
     if mode == "1":
         print(get_random_latitude_and_longitude(degrees=True))
     elif mode == "2":
         print(get_random_latitude_and_longitude(degrees=True,lat_range=(24.5,49.5),lon_range=(-125,-66)))
     elif mode == "3":
-        print(get_populous_us_city())
+        n_cities = int(input("How many cities? "))
+        for city in get_populous_us_cities(n_cities):
+            print(city)
