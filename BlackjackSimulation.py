@@ -40,6 +40,7 @@ class Hand:
 
     def update_values(self):
         self.hard_value, self.soft_value = self.get_values()
+        self.max_value = self.hard_value if self.soft_value is None else self.soft_value
 
     def is_soft(self):
         return self.soft_value is not None
@@ -85,6 +86,7 @@ class BasicStrategy:
 
     SOFT_MATRIX = {
         #    23456789TA
+        20: "SSSSSSSSSS",
         19: "SSSSSSSSSS",
         18: "SDDDDSSHHH",
         17: "HDDDDHHHHH",
@@ -153,6 +155,7 @@ class Player:
         self.bankroll = bankroll
         self.hand = Hand()
         self.current_bet = 0
+        self.running_count = 0
 
     def decide(self, dealer_card):
         return BasicStrategy.get_action(self.hand, dealer_card)
@@ -181,25 +184,60 @@ class Player:
         self.hand = Hand()
         self.current_bet = 0
 
+    def get_count_value(self, card):
+        n = card.get_blackjack_value()
+        if n <= 6:
+            return +1
+        elif n in [1, 10]:
+            return -1
+        return 0
+
+    def count(self, card):
+        self.running_count += self.get_count_value(card)
+
+    def get_true_count(self, shoe):
+        decks_dealt = shoe.n_cards_dealt / 52
+        decks_left = shoe.n_decks - decks_dealt
+        return self.running_count / decks_left
+
 
 class Dealer(Player):
     def __init__(self, stay_on_soft_17):
         self.stay_on_soft_17 = stay_on_soft_17
         self.hand = Hand()
 
-    def decide(self):
+    def decide(self, dealer_card):
+        # ignore dealer card
         hard_value, soft_value = self.hand.get_values()
-        if hard_value >= 17 or soft_value >= 18:
+        if hard_value >= 17 or (soft_value is not None and soft_value >= 18):
             return "S"
         elif self.stay_on_soft_17 and soft_value == 17:
             return "S"
-        else:
-            return "H"
+        return "H"
 
 
 def add_card(player, deck, is_face_up):
     card = BlackjackCard(next(deck), is_face_up)
     player.hand.add_card(card)
+
+
+def play_turn(player, shoe, dealer_card):
+    while True:
+        if player.hand.has_busted() or player.has_blackjack():
+            return
+        decision = player.decide(dealer_card)
+        if decision == "H":
+            add_card(player, shoe, is_face_up=True)
+        elif decision == "S":
+            return
+        elif decision == "D":
+            player.double_bet()
+            # one card after double
+            add_card(player, shoe, is_face_up=True)
+            return
+        else:
+            raise Exception("unhandled decision: {}".format(decision))
+
 
 def play_round(player, table, with_other_players=True):
     if with_other_players:
@@ -208,41 +246,61 @@ def play_round(player, table, with_other_players=True):
     else:
         other_players = []
     all_players = other_players + [player]
-    all_players += [None] * (6 - len(all_players))
     np.random.shuffle(all_players)  # mutates arg
 
+    shoe = table.shoe
+    dealer = table.dealer
+
     # initial deal
-    if table.shoe.is_dealt_out():
+    if shoe.is_dealt_out():
         table.shuffle_shoe()
 
     for i in range(2):
         for pl in all_players:
-            if pl is None:
-                continue
             is_face_up = i == 0 or table.cards_face_up
-            add_card(pl, table.shoe, is_face_up)
+            add_card(pl, shoe, is_face_up)
 
         # dealer
         is_face_up = i == 1
-        add_card(table.dealer, table.shoe, is_face_up)
+        add_card(dealer, shoe, is_face_up)
 
     is_face_up = True  # all cards that follow
-    dealer_card = table.dealer.hand.cards[1]
+    dealer_card = dealer.hand.cards[1]
 
     # player turns
     for pl in all_players:
-        if pl is None:
-            continue
+        play_turn(pl, shoe, dealer_card)
+        print("player {} has hand {}".format(pl, pl.hand.cards))
 
-        if pl.has_blackjack():
+    # dealer turn
+    # show cards
+    for card in dealer.hand.cards:
+        card.is_face_up = True
+        player.count(card)
+    play_turn(dealer, shoe, None)
+
+    if dealer.has_blackjack():
+        for pl in players:
+            pl.lose_turn()
+        return
+
+    dealer_hand_value = dealer.hand.max_value
+
+    # payoffs
+    for pl in all_players:
+        if pl.hand.has_busted():
+            pl.lose_turn()
+        elif pl.has_blackjack():
             pl.win_turn(pl.current_bet * table.blackjack_payoff_ratio)
-            continue
+        elif pl.hand.max_value > dealer_hand_value:
+            pl.win_turn(pl.current_bet * 2)
 
-        decision= pl.decide(dealer_card)
-        if decision == "H":
-            add_card(pl, table.shoe, is_face_up)
-            if pl.hand.has_busted():
-                pl.lose_turn()
+    # count remaining cards
+    for pl in all_players:
+        for card in pl.hand.cards:
+            if not card.is_face_up:
+                card.is_face_up = True  # pointless, but for consistency
+                player.count(card)
 
 
 
