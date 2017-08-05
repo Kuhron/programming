@@ -6,13 +6,13 @@ class Card:
 	SUITS = "SHDC"
 
 	def __init__(self, value, suit):
-		assert value.upper() in self.VALUES, "invalid card value"
+		assert value.upper() in Card.VALUES, "invalid card value"
 		self.value = value.upper()
-		assert suit.upper() in self.SUITS, "invalid suit"
+		assert suit.upper() in Card.SUITS, "invalid suit"
 		self.suit = suit.upper()
 		self.str = self.value + self.suit
 		self.color = "R" if self.suit in "HD" else "B"
-		self.number = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1][self.VALUES.index(self.value)]
+		self.number = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1][Card.VALUES.index(self.value)]
 
 	def __repr__(self):
 		return self.str
