@@ -35,6 +35,9 @@ class Hand:
             soft_value = None
 
         print(self.cards, hard_value, soft_value)
+        if len(self.cards) > 21:
+            # bug catcher
+            raise
 
         return hard_value, soft_value
 
@@ -86,6 +89,7 @@ class BasicStrategy:
 
     SOFT_MATRIX = {
         #    23456789TA
+        21: "SSSSSSSSSS",
         20: "SSSSSSSSSS",
         19: "SSSSSSSSSS",
         18: "SDDDDSSHHH",
@@ -167,8 +171,15 @@ class Player:
         self.current_bet += amount
         self.bankroll -= amount
 
+    def place_initial_bet(self, table):
+        return table.minimum_bet
+        # return min(table.maximum_bet, table.minimum_bet * min(1, 1 + self.get_true_count()))
+
     def double_bet(self):
         self.bet(self.current_bet)
+
+    def halve_bet(self):
+        self.bet(-0.5 * self.current_bet)
 
     def has_blackjack(self):
         return self.hand.is_blackjack()
@@ -226,6 +237,8 @@ def play_turn(player, shoe, dealer_card):
         if player.hand.has_busted() or player.has_blackjack():
             return
         decision = player.decide(dealer_card)
+        decision = "S" if decision == "P" else decision # TODO remove this and implement splitting
+        print("player {} has hand {} and decision {}".format(player, player.hand.cards, decision))
         if decision == "H":
             add_card(player, shoe, is_face_up=True)
         elif decision == "S":
@@ -234,6 +247,13 @@ def play_turn(player, shoe, dealer_card):
             player.double_bet()
             # one card after double
             add_card(player, shoe, is_face_up=True)
+            return
+        elif decision == "U":
+            # hack up surrender as reducing bet to half and replacing hand with a busted one, so this bet will be lost
+            # hopefully I don't implement counting in such a way as to screw it up here (player counting the bogus hand)
+            QUEEN_OF_SPADES = BlackjackCard(Card.Card("Q", "S"), is_face_up=NotImplemented)
+            player.halve_bet()
+            player.hand = Hand([QUEEN_OF_SPADES] * 3)
             return
         else:
             raise Exception("unhandled decision: {}".format(decision))
@@ -247,9 +267,14 @@ def play_round(player, table, with_other_players=True):
         other_players = []
     all_players = other_players + [player]
     np.random.shuffle(all_players)  # mutates arg
+    # DO NOT PUT DEALER IN all_players; treat them separately
 
     shoe = table.shoe
     dealer = table.dealer
+
+    # initial bet
+    for pl in all_players:
+        pl.place_initial_bet(table)
 
     # initial deal
     if shoe.is_dealt_out():
@@ -270,7 +295,6 @@ def play_round(player, table, with_other_players=True):
     # player turns
     for pl in all_players:
         play_turn(pl, shoe, dealer_card)
-        print("player {} has hand {}".format(pl, pl.hand.cards))
 
     # dealer turn
     # show cards
@@ -288,9 +312,9 @@ def play_round(player, table, with_other_players=True):
 
     # payoffs
     for pl in all_players:
-        if pl.hand.has_busted():
+        if pl.hand.has_busted():  # regardless of dealer outcome
             pl.lose_turn()
-        elif pl.has_blackjack():
+        elif pl.has_blackjack():  # remember, always show blackjack immediately if you are dealt it! (some tables will only pay even money otherwise)
             pl.win_turn(pl.current_bet * table.blackjack_payoff_ratio)
         elif pl.hand.max_value > dealer_hand_value:
             pl.win_turn(pl.current_bet * 2)
@@ -302,9 +326,10 @@ def play_round(player, table, with_other_players=True):
                 card.is_face_up = True  # pointless, but for consistency
                 player.count(card)
 
-
-
-
+    # reset everyone
+    for pl in all_players:
+        pl.reset()
+    dealer.reset()
 
 
 if __name__ == "__main__":
@@ -312,7 +337,7 @@ if __name__ == "__main__":
         doubleable_hard_values = [10, 11],
         minimum_bet = 5,
         maximum_bet = 200,
-        blackjack_payoff_ratio = 3/2,
+        blackjack_payoff_ratio = 1 + 3/2,
         insurance_payoff_ratio = 2/1,
         n_decks = 6,
         double_after_split = False,
@@ -324,11 +349,15 @@ if __name__ == "__main__":
     player = Player(60)
 
     bankrolls = [player.bankroll]
+    n_rounds = 0
     while True:
+        if n_rounds > 100:
+            break
         play_round(player, table, with_other_players=False)
         bankrolls.append(player.bankroll)
         if player.is_broke():
             break
+        n_rounds += 1
 
     plt.plot(bankrolls)
     plt.show()
