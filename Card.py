@@ -8,11 +8,12 @@ class Card:
 	def __init__(self, value, suit):
 		assert value.upper() in Card.VALUES, "invalid card value"
 		self.value = value.upper()
+		self.value_index = Card.VALUES.index(self.value)
 		assert suit.upper() in Card.SUITS, "invalid suit"
 		self.suit = suit.upper()
 		self.str = self.value + self.suit
 		self.color = "R" if self.suit in "HD" else "B"
-		self.number = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1][Card.VALUES.index(self.value)]
+		self.number = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1][self.value_index]
 
 	def __repr__(self):
 		return self.str
@@ -25,7 +26,11 @@ class Card:
 
 class DeckOfCards:
 	def __init__(self):
-		self.cards = [Card(value, suit) for value in Card.VALUES for suit in Card.SUITS]
+		self.cards = DeckOfCards.get_all_cards()
+
+	@staticmethod
+	def get_all_cards():
+		return [Card(value, suit) for value in Card.VALUES for suit in Card.SUITS]
 
 	def shuffle(self):
 		random.shuffle(self.cards)
@@ -36,6 +41,11 @@ class DeckOfCards:
 
 	def __iter__(self):
 		return self.deal()
+
+
+class ShoeOfCards(DeckOfCards):
+	def __init__(self, n_decks):
+		self.cards = DeckOfCards.get_all_cards() * n_decks
 
 
 class Player:
