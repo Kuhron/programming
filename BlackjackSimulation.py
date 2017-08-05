@@ -167,10 +167,11 @@ class Table:
 
 
 class Player:
-    def __init__(self, bankroll):
+    def __init__(self, bankroll, is_counting):
         self.name = str(np.random.randint(0, 10**9))
         self.bankroll = bankroll
         self.hands = [Hand()]
+        self.is_counting = is_counting
         self.running_count = 0
 
     def __repr__(self):
@@ -186,12 +187,13 @@ class Player:
         return self.bankroll <= 0
 
     def bet(self, hand, amount):
+        print("player {} bet on hand {}; bet {:.0f} -> {:.0f}. bankroll {:.0f} -> {:.0f}".format(
+            self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
         hand.current_bet += amount
         self.bankroll -= amount
 
     def get_initial_bet(self, table):
-        # return table.minimum_bet
-        return min(table.maximum_bet, table.minimum_bet * min(1, 1 + self.get_true_count(table.shoe)))
+        return min(table.maximum_bet, table.minimum_bet * max(1, 1 + self.get_true_count(table.shoe)))
 
     def place_initial_bet(self, hand, table):
         self.bet(hand, self.get_initial_bet(table))
@@ -204,10 +206,13 @@ class Player:
 
     def lose_on_hand(self):
         # forfeit hand.bet
+        print("player lost hand. new bankroll {:.0f}".format(self.bankroll))
         pass
 
     def win_on_hand(self, gross_payoff):
+        print("player won hand. bankroll {:.0f} -> {:.0f}".format(self.bankroll, self.bankroll + gross_payoff))
         self.bankroll += gross_payoff
+
 
     def reset(self):
         self.hands = [Hand()]
@@ -221,17 +226,20 @@ class Player:
         return 0
 
     def count(self, card):
-        self.running_count += self.get_count_value(card)
+        if self.is_counting:
+            self.running_count += self.get_count_value(card)
 
     def get_true_count(self, shoe):
-        decks_dealt = shoe.n_cards_dealt / 52
-        decks_left = shoe.n_decks - decks_dealt
-        return self.running_count / decks_left
+        if self.is_counting:
+            decks_dealt = shoe.n_cards_dealt / 52
+            decks_left = shoe.n_decks - decks_dealt
+            return self.running_count / decks_left
+        return 0
 
 
 class Dealer(Player):
     def __init__(self, stay_on_soft_17):
-        super().__init__(np.inf)
+        super().__init__(np.inf, False)
         self.stay_on_soft_17 = stay_on_soft_17
         self.hand = Hand()
 
@@ -300,7 +308,7 @@ def play_turn(player, shoe, dealer_card, counting_player):
 def play_round(player, table, with_other_players=True):
     if with_other_players:
         n_other_players = np.random.choice([0, 1, 2, 3, 4, 5])
-        other_players = [Player(table.minimum_bet * np.random.randint(1, 101)) for i in range(n_other_players)]
+        other_players = [Player(table.minimum_bet * np.random.randint(1, 101), is_counting=False) for i in range(n_other_players)]
     else:
         other_players = []
     all_players = other_players + [player]
@@ -388,12 +396,12 @@ if __name__ == "__main__":
         pay_blackjack_after_split = False,
     )
 
-    player = Player(60)
+    player = Player(60, is_counting=False)
 
     bankrolls = [player.bankroll]
     n_rounds = 0
     while True:
-        if n_rounds > 1000:
+        if n_rounds > 5:
             break
         play_round(player, table, with_other_players=False)
         bankrolls.append(player.bankroll)
