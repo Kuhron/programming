@@ -20,6 +20,9 @@ class Hand:
         self.update_values()
         self.current_bet = bet
 
+    def __repr__(self):
+        return "({} : {} {})".format(self.cards, self.hard_value, self.soft_value)
+
     def get_values(self):
         # note that there can only be one soft total (minimum hand of AA yields [2, 12, 22], of which only 2 are valid)
         has_ace = False
@@ -261,7 +264,7 @@ def play_turn(player, shoe, dealer_card, counting_player):
             if hand.has_busted() or hand.is_blackjack():
                 break
             decision = player.decide(hand, dealer_card)
-            print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand.cards, decision))
+            print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
             if decision == "H":
                 add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
             elif decision == "S":
@@ -280,14 +283,16 @@ def play_turn(player, shoe, dealer_card, counting_player):
                 player.hands.append(Hand([QUEEN_OF_SPADES] * 3))
                 break
             elif decision == "P":
+                assert hand in player.hands, "hand {} not in list:\n{}".format(hand, player.hands)
                 new_hands = hand.split()
                 player.hands.remove(hand)
                 for new_hand in new_hands:
                     add_card(new_hand, shoe, is_face_up=True, counting_player=counting_player)
+                    player.hands.append(new_hand)
                 play_turn(player, shoe, dealer_card, counting_player)  # replay on the resulting hands
+                break  # do not keep looping on old state (before split)
                 # TODO add restrictions on play after split, including staying on non-splittable hand and splitting another one after that
                 # e.g. dealt AA, split to A A, hit to A9 A, hit next hand to A9 AA, split to A9 A A, hit to A9 AT A, hit to A9 AT A2 (allowed to hit again?)
-                # TODO add option for whether blackjack pays 3:2 after split (often it is treated as just regular 21, so no)
             else:
                 raise Exception("unhandled decision: {}".format(decision))
 
