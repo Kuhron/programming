@@ -170,9 +170,12 @@ class Player:
         self.current_bet += amount
         self.bankroll -= amount
 
-    def place_initial_bet(self, table):
+    def get_initial_bet(self, table):
         return table.minimum_bet
         # return min(table.maximum_bet, table.minimum_bet * min(1, 1 + self.get_true_count()))
+
+    def place_initial_bet(self, table):
+        self.current_bet = self.get_initial_bet(table)
 
     def double_bet(self):
         self.bet(self.current_bet)
