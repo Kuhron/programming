@@ -36,8 +36,7 @@ class Hand:
 
         print(self.cards, hard_value, soft_value)
         if len(self.cards) > 21:
-            # bug catcher
-            raise
+            raise Exception("hand has grown out of control!")
 
         return hard_value, soft_value
 
