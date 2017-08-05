@@ -27,6 +27,7 @@ class Card:
 class DeckOfCards:
 	def __init__(self):
 		self.cards = DeckOfCards.get_all_cards()
+		self.generator = self.deal()
 
 	@staticmethod
 	def get_all_cards():
@@ -40,12 +41,27 @@ class DeckOfCards:
 			yield card
 
 	def __iter__(self):
-		return self.deal()
+		return self
+
+	def __next__(self):
+		return next(self.generator)
 
 
 class ShoeOfCards(DeckOfCards):
-	def __init__(self, n_decks):
+	def __init__(self, n_decks, ratio_dealt):
+		super().__init__()
 		self.cards = DeckOfCards.get_all_cards() * n_decks
+		self.n_cards = len(self.cards)
+		self.ratio_dealt = ratio_dealt
+		self.n_cards_dealt = 0
+
+	def deal(self):
+		for card in self.cards:
+			self.n_cards_dealt += 1
+			yield card
+
+	def is_dealt_out(self):
+		return self.n_cards_dealt >= self.ratio_dealt * self.n_cards
 
 
 class Player:
