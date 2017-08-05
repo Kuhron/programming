@@ -15,9 +15,10 @@ class BlackjackCard(Card.Card):
 
 
 class Hand:
-    def __init__(self, cards=None):
+    def __init__(self, cards=None, bet=0):
         self.cards = cards if cards is not None else []
         self.update_values()
+        self.current_bet = bet
 
     def get_values(self):
         # note that there can only be one soft total (minimum hand of AA yields [2, 12, 22], of which only 2 are valid)
@@ -59,6 +60,14 @@ class Hand:
     def add_card(self, card):
         self.cards.append(card)
         self.update_values()
+
+    def add_bet(self, amount):
+        self.current_bet += amount
+
+    def split(self):
+        assert len(self.cards) == 2
+        assert self.current_bet is not None and self.current_bet > 0
+        return [Hand([card], self.current_bet / 2) for card in self.cards]
 
 
 class BasicStrategy:
@@ -129,7 +138,7 @@ class BasicStrategy:
 
 class Table:
     def __init__(self, minimum_bet, maximum_bet, blackjack_payoff_ratio, insurance_payoff_ratio, n_decks,
-                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split, cards_face_up, stay_on_soft_17):
+                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split, cards_face_up, stay_on_soft_17, pay_blackjack_after_split):
         self.minimum_bet = minimum_bet
         self.maximum_bet = maximum_bet
         self.blackjack_payoff_ratio = blackjack_payoff_ratio
@@ -140,6 +149,7 @@ class Table:
         self.hit_more_than_once_after_split = hit_more_than_once_after_split
         self.cards_face_up = cards_face_up
         self.stay_on_soft_17 = stay_on_soft_17
+        self.pay_blackjack_after_split = pay_blackjack_after_split
 
         self.shoe = self.get_new_shoe()
         self.dealer = Dealer(self.stay_on_soft_17)
@@ -157,8 +167,7 @@ class Player:
     def __init__(self, bankroll):
         self.name = str(np.random.randint(0, 10**9))
         self.bankroll = bankroll
-        self.hand = Hand()
-        self.current_bet = 0
+        self.hands = [Hand()]
         self.running_count = 0
 
     def __repr__(self):
@@ -167,42 +176,38 @@ class Player:
     def is_dealer(self):
         return False
 
-    def decide(self, dealer_card):
-        return BasicStrategy.get_action(self.hand, dealer_card)
+    def decide(self, hand, dealer_card):
+        return BasicStrategy.get_action(hand, dealer_card)
 
     def is_broke(self):
         return self.bankroll <= 0
 
-    def bet(self, amount):
-        self.current_bet += amount
+    def bet(self, hand, amount):
+        hand.current_bet += amount
         self.bankroll -= amount
 
     def get_initial_bet(self, table):
-        return table.minimum_bet
-        # return min(table.maximum_bet, table.minimum_bet * min(1, 1 + self.get_true_count()))
+        # return table.minimum_bet
+        return min(table.maximum_bet, table.minimum_bet * min(1, 1 + self.get_true_count(table.shoe)))
 
-    def place_initial_bet(self, table):
-        self.bet(self.get_initial_bet(table))
+    def place_initial_bet(self, hand, table):
+        self.bet(hand, self.get_initial_bet(table))
 
-    def double_bet(self):
-        self.bet(self.current_bet)
+    def double_bet(self, hand):
+        self.bet(hand, hand.current_bet)
 
-    def halve_bet(self):
-        self.bet(-0.5 * self.current_bet)
+    def halve_bet(self, hand):
+        self.bet(hand, -0.5 * hand.current_bet)
 
-    def has_blackjack(self):
-        return self.hand.is_blackjack()
+    def lose_on_hand(self):
+        # forfeit hand.bet
+        pass
 
-    def lose_turn(self):
-        self.reset()
-
-    def win_turn(self, gross_payoff):
+    def win_on_hand(self, gross_payoff):
         self.bankroll += gross_payoff
-        self.reset()
 
     def reset(self):
-        self.hand = Hand()
-        self.current_bet = 0
+        self.hands = [Hand()]
 
     def get_count_value(self, card):
         n = card.get_blackjack_value()
@@ -230,8 +235,8 @@ class Dealer(Player):
     def is_dealer(self):
         return True
 
-    def decide(self, dealer_card):
-        # ignore dealer card
+    def decide(self, hand, dealer_card):
+        # ignore hand (since dealer cannot split so only has one hand) and dealer_card
         hard_value, soft_value = self.hand.hard_value, self.hand.soft_value
         if hard_value >= 17 or (soft_value is not None and soft_value >= 18):
             return "S"
@@ -239,37 +244,52 @@ class Dealer(Player):
             return "S"
         return "H"
 
+    def has_blackjack(self):
+        return self.hands[0].is_blackjack()
 
-def add_card(player, deck, is_face_up):
+
+def add_card(hand, deck, is_face_up, counting_player):
     card = BlackjackCard(next(deck), is_face_up)
-    player.hand.add_card(card)
+    hand.add_card(card)
+    if is_face_up:
+        counting_player.count(card)
 
 
-def play_turn(player, shoe, dealer_card):
-    while True:
-        if player.hand.has_busted() or player.has_blackjack():
-            return
-        decision = player.decide(dealer_card)
-        decision = "S" if decision == "P" else decision # TODO remove this and implement splitting
-        print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, player.hand.cards, decision))
-        if decision == "H":
-            add_card(player, shoe, is_face_up=True)
-        elif decision == "S":
-            return
-        elif decision == "D":
-            player.double_bet()
-            # one card after double
-            add_card(player, shoe, is_face_up=True)
-            return
-        elif decision == "U":
-            # hack up surrender as reducing bet to half and replacing hand with a busted one, so this bet will be lost
-            # hopefully I don't implement counting in such a way as to screw it up here (player counting the bogus hand)
-            QUEEN_OF_SPADES = BlackjackCard(Card.Card("Q", "S"), is_face_up=NotImplemented)
-            player.halve_bet()
-            player.hand = Hand([QUEEN_OF_SPADES] * 3)
-            return
-        else:
-            raise Exception("unhandled decision: {}".format(decision))
+def play_turn(player, shoe, dealer_card, counting_player):
+    for hand in player.hands:
+        while True:
+            if hand.has_busted() or hand.is_blackjack():
+                break
+            decision = player.decide(hand, dealer_card)
+            print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand.cards, decision))
+            if decision == "H":
+                add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
+            elif decision == "S":
+                break
+            elif decision == "D":
+                player.double_bet(hand)
+                # one card after double
+                add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
+                break
+            elif decision == "U":
+                # hack up surrender as reducing bet to half and replacing hand with a busted one, so this bet will be lost
+                # hopefully I don't implement counting in such a way as to screw it up here (player counting the bogus hand)
+                QUEEN_OF_SPADES = BlackjackCard(Card.Card("Q", "S"), is_face_up=NotImplemented)
+                player.halve_bet(hand)
+                player.hands.remove(hand)
+                player.hands.append(Hand([QUEEN_OF_SPADES] * 3))
+                break
+            elif decision == "P":
+                new_hands = hand.split()
+                player.hands.remove(hand)
+                for new_hand in new_hands:
+                    add_card(new_hand, shoe, is_face_up=True, counting_player=counting_player)
+                play_turn(player, shoe, dealer_card, counting_player)  # replay on the resulting hands
+                # TODO add restrictions on play after split, including staying on non-splittable hand and splitting another one after that
+                # e.g. dealt AA, split to A A, hit to A9 A, hit next hand to A9 AA, split to A9 A A, hit to A9 AT A, hit to A9 AT A2 (allowed to hit again?)
+                # TODO add option for whether blackjack pays 3:2 after split (often it is treated as just regular 21, so no)
+            else:
+                raise Exception("unhandled decision: {}".format(decision))
 
 
 def play_round(player, table, with_other_players=True):
@@ -287,7 +307,7 @@ def play_round(player, table, with_other_players=True):
 
     # initial bet
     for pl in all_players:
-        pl.place_initial_bet(table)
+        pl.place_initial_bet(pl.hands[0], table)
 
     # initial deal
     if shoe.is_dealt_out():
@@ -296,25 +316,25 @@ def play_round(player, table, with_other_players=True):
     for i in range(2):
         for pl in all_players:
             is_face_up = i == 0 or table.cards_face_up
-            add_card(pl, shoe, is_face_up)
+            add_card(pl.hands[0], shoe, is_face_up, player)
 
         # dealer
         is_face_up = i == 1
-        add_card(dealer, shoe, is_face_up)
+        add_card(dealer.hands[0], shoe, is_face_up, player)
 
     is_face_up = True  # all cards that follow
-    dealer_card = dealer.hand.cards[1]
+    dealer_card = dealer.hands[0].cards[1]
 
     # player turns
     for pl in all_players:
-        play_turn(pl, shoe, dealer_card)
+        play_turn(pl, shoe, dealer_card, player)
 
     # dealer turn
     # show cards
     for card in dealer.hand.cards:
         card.is_face_up = True
         player.count(card)
-    play_turn(dealer, shoe, None)
+    play_turn(dealer, shoe, None, player)
 
     if dealer.has_blackjack():
         for pl in players:
@@ -325,19 +345,22 @@ def play_round(player, table, with_other_players=True):
 
     # payoffs
     for pl in all_players:
-        if pl.hand.has_busted():  # regardless of dealer outcome
-            pl.lose_turn()
-        elif pl.has_blackjack():  # remember, always show blackjack immediately if you are dealt it! (some tables will only pay even money otherwise)
-            pl.win_turn(pl.current_bet * table.blackjack_payoff_ratio)
-        elif pl.hand.max_value > dealer_hand_value:
-            pl.win_turn(pl.current_bet * 2)
+        for hand in pl.hands:
+            if hand.has_busted():  # regardless of dealer outcome
+                pl.lose_on_hand()
+            elif hand.is_blackjack() and (len(pl.hands) == 1 or table.pay_blackjack_after_split):
+                # remember, always show blackjack immediately if you are dealt it! (some tables will only pay even money otherwise)
+                pl.win_on_hand(hand.current_bet * table.blackjack_payoff_ratio)
+            elif hand.max_value > dealer_hand_value:
+                pl.win_on_hand(hand.current_bet * 2)
 
     # count remaining cards
     for pl in all_players:
-        for card in pl.hand.cards:
-            if not card.is_face_up:
-                card.is_face_up = True  # pointless, but for consistency
-                player.count(card)
+        for hand in pl.hands:
+            for card in hand.cards:
+                if not card.is_face_up:
+                    card.is_face_up = True  # pointless, but for consistency
+                    player.count(card)
 
     # reset everyone
     for pl in all_players:
@@ -357,6 +380,7 @@ if __name__ == "__main__":
         hit_more_than_once_after_split = False,
         cards_face_up = True,
         stay_on_soft_17 = True,
+        pay_blackjack_after_split = False,
     )
 
     player = Player(60)
