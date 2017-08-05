@@ -34,7 +34,7 @@ class Hand:
         else:
             soft_value = None
 
-        print(self.cards, hard_value, soft_value)
+        # print(self.cards, hard_value, soft_value)
         if len(self.cards) > 21:
             raise Exception("hand has grown out of control!")
 
@@ -155,10 +155,17 @@ class Table:
 
 class Player:
     def __init__(self, bankroll):
+        self.name = str(np.random.randint(0, 10**9))
         self.bankroll = bankroll
         self.hand = Hand()
         self.current_bet = 0
         self.running_count = 0
+
+    def __repr__(self):
+        return self.name
+
+    def is_dealer(self):
+        return False
 
     def decide(self, dealer_card):
         return BasicStrategy.get_action(self.hand, dealer_card)
@@ -175,7 +182,7 @@ class Player:
         # return min(table.maximum_bet, table.minimum_bet * min(1, 1 + self.get_true_count()))
 
     def place_initial_bet(self, table):
-        self.current_bet = self.get_initial_bet(table)
+        self.bet(self.get_initial_bet(table))
 
     def double_bet(self):
         self.bet(self.current_bet)
@@ -216,12 +223,16 @@ class Player:
 
 class Dealer(Player):
     def __init__(self, stay_on_soft_17):
+        super().__init__(np.inf)
         self.stay_on_soft_17 = stay_on_soft_17
         self.hand = Hand()
 
+    def is_dealer(self):
+        return True
+
     def decide(self, dealer_card):
         # ignore dealer card
-        hard_value, soft_value = self.hand.get_values()
+        hard_value, soft_value = self.hand.hard_value, self.hand.soft_value
         if hard_value >= 17 or (soft_value is not None and soft_value >= 18):
             return "S"
         elif self.stay_on_soft_17 and soft_value == 17:
@@ -240,7 +251,7 @@ def play_turn(player, shoe, dealer_card):
             return
         decision = player.decide(dealer_card)
         decision = "S" if decision == "P" else decision # TODO remove this and implement splitting
-        print("player {} has hand {} and decision {}".format(player, player.hand.cards, decision))
+        print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, player.hand.cards, decision))
         if decision == "H":
             add_card(player, shoe, is_face_up=True)
         elif decision == "S":
@@ -353,7 +364,7 @@ if __name__ == "__main__":
     bankrolls = [player.bankroll]
     n_rounds = 0
     while True:
-        if n_rounds > 100:
+        if n_rounds > 1000:
             break
         play_round(player, table, with_other_players=False)
         bankrolls.append(player.bankroll)
