@@ -11,12 +11,12 @@ class BlackjackCard(Card.Card):
         self.is_face_up = is_face_up
 
     def get_blackjack_value(self):
-        return max(10, self.number)
+        return min(10, self.number)
 
 
 class Hand:
-    def __init__(self, cards):
-        self.cards = cards
+    def __init__(self, cards=None):
+        self.cards = cards if cards is not None else []
         self.update_values()
 
     def get_values(self):
@@ -34,6 +34,8 @@ class Hand:
         else:
             soft_value = None
 
+        print(self.cards, hard_value, soft_value)
+
         return hard_value, soft_value
 
     def update_values(self):
@@ -44,6 +46,12 @@ class Hand:
 
     def is_pair(self):
         return len(self.cards) == 2 and self.cards[0].value == self.cards[1].value
+
+    def is_blackjack(self):
+        return len(self.cards) == 2 and self.hard_value == 21
+
+    def has_busted(self):
+        return self.hard_value > 21
 
     def add_card(self, card):
         self.cards.append(card)
@@ -103,10 +111,10 @@ class BasicStrategy:
     @staticmethod
     def get_action(hand, dealer_card):
         is_pair, is_soft = hand.is_pair(), hand.is_soft()
-        strategy_matrix = BasicStrategy.PAIR_MATRIX if is_pair else SOFT_MATRIX if is_soft else HARD_MATRIX
+        strategy_matrix = BasicStrategy.PAIR_MATRIX if is_pair else BasicStrategy.SOFT_MATRIX if is_soft else BasicStrategy.HARD_MATRIX
         value = hand.soft_value if is_soft else hand.hard_value  # for AA, hard value = 2, which is the index in PAIR_MATRIX
         row = strategy_matrix[value]
-        col_index = DEALER_CARD_TO_INDEX[dealer_card.get_blackjack_value()]
+        col_index = BasicStrategy.DEALER_CARD_TO_INDEX[dealer_card.get_blackjack_value()]
         return row[col_index]
 
     @staticmethod
@@ -116,7 +124,7 @@ class BasicStrategy:
 
 class Table:
     def __init__(self, minimum_bet, maximum_bet, blackjack_payoff_ratio, insurance_payoff_ratio, n_decks,
-                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split, cards_face_up):
+                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split, cards_face_up, stay_on_soft_17):
         self.minimum_bet = minimum_bet
         self.maximum_bet = maximum_bet
         self.blackjack_payoff_ratio = blackjack_payoff_ratio
@@ -126,8 +134,10 @@ class Table:
         self.double_after_split = double_after_split
         self.hit_more_than_once_after_split = hit_more_than_once_after_split
         self.cards_face_up = cards_face_up
+        self.stay_on_soft_17 = stay_on_soft_17
 
         self.shoe = self.get_new_shoe()
+        self.dealer = Dealer(self.stay_on_soft_17)
 
     def get_new_shoe(self):
         shoe = Card.ShoeOfCards(n_decks=self.n_decks, ratio_dealt=np.random.uniform(0.6, 0.8))
@@ -141,14 +151,55 @@ class Table:
 class Player:
     def __init__(self, bankroll):
         self.bankroll = bankroll
-        self.hand = Hand([])
+        self.hand = Hand()
+        self.current_bet = 0
 
-    def decide(self):
-        return BasicStrategy.get_action(self.hand)
+    def decide(self, dealer_card):
+        return BasicStrategy.get_action(self.hand, dealer_card)
 
     def is_broke(self):
         return self.bankroll <= 0
 
+    def bet(self, amount):
+        self.current_bet += amount
+        self.bankroll -= amount
+
+    def double_bet(self):
+        self.bet(self.current_bet)
+
+    def has_blackjack(self):
+        return self.hand.is_blackjack()
+
+    def lose_turn(self):
+        self.reset()
+
+    def win_turn(self, gross_payoff):
+        self.bankroll += gross_payoff
+        self.reset()
+
+    def reset(self):
+        self.hand = Hand()
+        self.current_bet = 0
+
+
+class Dealer(Player):
+    def __init__(self, stay_on_soft_17):
+        self.stay_on_soft_17 = stay_on_soft_17
+        self.hand = Hand()
+
+    def decide(self):
+        hard_value, soft_value = self.hand.get_values()
+        if hard_value >= 17 or soft_value >= 18:
+            return "S"
+        elif self.stay_on_soft_17 and soft_value == 17:
+            return "S"
+        else:
+            return "H"
+
+
+def add_card(player, deck, is_face_up):
+    card = BlackjackCard(next(deck), is_face_up)
+    player.hand.add_card(card)
 
 def play_round(player, table, with_other_players=True):
     if with_other_players:
@@ -156,7 +207,6 @@ def play_round(player, table, with_other_players=True):
         other_players = [Player(table.minimum_bet * np.random.randint(1, 101)) for i in range(n_other_players)]
     else:
         other_players = []
-    player_index = np.random.randint(0, 6)
     all_players = other_players + [player]
     all_players += [None] * (6 - len(all_players))
     np.random.shuffle(all_players)  # mutates arg
@@ -170,9 +220,31 @@ def play_round(player, table, with_other_players=True):
             if pl is None:
                 continue
             is_face_up = i == 0 or table.cards_face_up
-            card = BlackjackCard(next(table.shoe), is_face_up)
-            player.hand.add_card(card)
-            print(card)
+            add_card(pl, table.shoe, is_face_up)
+
+        # dealer
+        is_face_up = i == 1
+        add_card(table.dealer, table.shoe, is_face_up)
+
+    is_face_up = True  # all cards that follow
+    dealer_card = table.dealer.hand.cards[1]
+
+    # player turns
+    for pl in all_players:
+        if pl is None:
+            continue
+
+        if pl.has_blackjack():
+            pl.win_turn(pl.current_bet * table.blackjack_payoff_ratio)
+            continue
+
+        decision= pl.decide(dealer_card)
+        if decision == "H":
+            add_card(pl, table.shoe, is_face_up)
+            if pl.hand.has_busted():
+                pl.lose_turn()
+
+
 
 
 
@@ -188,6 +260,7 @@ if __name__ == "__main__":
         double_after_split = False,
         hit_more_than_once_after_split = False,
         cards_face_up = True,
+        stay_on_soft_17 = True,
     )
 
     player = Player(60)
