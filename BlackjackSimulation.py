@@ -187,8 +187,8 @@ class Player:
         return self.bankroll <= 0
 
     def bet(self, hand, amount):
-        print("player {} bet on hand {}; bet {:.0f} -> {:.0f}. bankroll {:.0f} -> {:.0f}".format(
-            self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
+        # print("player {} bet on hand {}; bet {:.0f} -> {:.0f}. bankroll {:.0f} -> {:.0f}".format(
+        #     self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
         hand.current_bet += amount
         self.bankroll -= amount
 
@@ -206,11 +206,11 @@ class Player:
 
     def lose_on_hand(self):
         # forfeit hand.bet
-        print("player lost hand. new bankroll {:.0f}".format(self.bankroll))
+        # print("player lost hand. new bankroll {:.0f}".format(self.bankroll))
         pass
 
     def win_on_hand(self, gross_payoff):
-        print("player won hand. bankroll {:.0f} -> {:.0f}".format(self.bankroll, self.bankroll + gross_payoff))
+        # print("player won hand. bankroll {:.0f} -> {:.0f}".format(self.bankroll, self.bankroll + gross_payoff))
         self.bankroll += gross_payoff
 
 
@@ -241,14 +241,15 @@ class Dealer(Player):
     def __init__(self, stay_on_soft_17):
         super().__init__(np.inf, False)
         self.stay_on_soft_17 = stay_on_soft_17
-        self.hand = Hand()
+        self.hands = [Hand()]
 
     def is_dealer(self):
         return True
 
-    def decide(self, hand, dealer_card):
-        # ignore hand (since dealer cannot split so only has one hand) and dealer_card
-        hard_value, soft_value = self.hand.hard_value, self.hand.soft_value
+    def decide(self, hand_arg, dealer_card):
+        # ignore hand_arg (since dealer cannot split so only has one hand) and dealer_card
+        hand = self.hands[0]
+        hard_value, soft_value = hand.hard_value, hand.soft_value
         if hard_value >= 17 or (soft_value is not None and soft_value >= 18):
             return "S"
         elif self.stay_on_soft_17 and soft_value == 17:
@@ -269,10 +270,14 @@ def add_card(hand, deck, is_face_up, counting_player):
 def play_turn(player, shoe, dealer_card, counting_player):
     for hand in player.hands:
         while True:
-            if hand.has_busted() or hand.is_blackjack():
+            if hand.has_busted():
+                # print("{} {} busted with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
+                break
+            elif hand.is_blackjack():
+                # print("{} {} has blackjack with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
                 break
             decision = player.decide(hand, dealer_card)
-            print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
+            # print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
             if decision == "H":
                 add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
             elif decision == "S":
@@ -344,7 +349,7 @@ def play_round(player, table, with_other_players=True):
 
     # dealer turn
     # show cards
-    for card in dealer.hand.cards:
+    for card in dealer.hands[0].cards:
         card.is_face_up = True
         player.count(card)
     play_turn(dealer, shoe, None, player)
@@ -354,7 +359,7 @@ def play_round(player, table, with_other_players=True):
             pl.lose_turn()
         return
 
-    dealer_hand_value = dealer.hand.max_value
+    dealer_hand_value = dealer.hands[0].max_value
 
     # payoffs
     for pl in all_players:
@@ -382,6 +387,8 @@ def play_round(player, table, with_other_players=True):
 
 
 if __name__ == "__main__":
+    print("\n" * 100)
+
     table = Table(
         doubleable_hard_values = [10, 11],
         minimum_bet = 5,
@@ -396,12 +403,12 @@ if __name__ == "__main__":
         pay_blackjack_after_split = False,
     )
 
-    player = Player(60, is_counting=False)
+    player = Player(10000, is_counting=True)
 
     bankrolls = [player.bankroll]
     n_rounds = 0
     while True:
-        if n_rounds > 5:
+        if n_rounds > 10000:
             break
         play_round(player, table, with_other_players=False)
         bankrolls.append(player.bankroll)
@@ -411,3 +418,10 @@ if __name__ == "__main__":
 
     plt.plot(bankrolls)
     plt.show()
+
+    d_cash = np.diff(np.array(bankrolls))
+    plt.hist(d_cash)
+    plt.show()
+
+    ev = np.mean(d_cash)
+    print("EV {:.2f}".format(ev))
