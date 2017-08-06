@@ -21,8 +21,13 @@ class Hand:
         self.update_values()
         self.current_bet = bet
 
+    @staticmethod
+    def card_repr(card):
+        return ("" if card.is_face_up else "*") + repr(card)
+
     def __repr__(self):
-        return "({} : {} {})".format(self.cards, self.hard_value, self.soft_value)
+        card_reprs = "[" + " ".join(self.card_repr(card) for card in self.cards) + "]"
+        return "({} : {} {})".format(card_reprs, self.hard_value, self.soft_value)
 
     def get_values(self):
         # note that there can only be one soft total (minimum hand of AA yields [2, 12, 22], of which only 2 are valid)
@@ -352,6 +357,12 @@ def play_turn(player, table, dealer_card, counting_player):
                 raise Exception("unhandled decision: {}".format(decision))
 
 
+def reset_all_players(all_players, dealer):
+    for pl in all_players:
+        pl.reset()
+    dealer.reset()
+
+
 def play_round(player, table, with_other_players=True):
     vprint("\n---- new round ---")
     if with_other_players:
@@ -382,7 +393,7 @@ def play_round(player, table, with_other_players=True):
     # initial deal
     for i in range(2):
         for pl in all_players:
-            is_face_up = i == 0 or table.cards_face_up
+            is_face_up = i == 1 or table.cards_face_up
             add_card(pl.hands[0], shoe, is_face_up, player)
 
         # dealer
@@ -396,6 +407,7 @@ def play_round(player, table, with_other_players=True):
     if dealer.has_blackjack():
         for pl in all_players:
             pl.lose_on_hand()
+        reset_all_players(all_players, dealer)
         return
 
     # player turns
@@ -428,7 +440,6 @@ def play_round(player, table, with_other_players=True):
                 pl.win_on_hand(hand.current_bet)
             else:
                 pl.lose_on_hand()
-    vprint("427")
 
     # count remaining cards
     for pl in all_players:
@@ -438,12 +449,9 @@ def play_round(player, table, with_other_players=True):
                     card.is_face_up = True  # pointless, but for consistency
                     vprint("{} flipped over {}".format(pl, card))
                     player.count(card)
-    vprint("436")
 
     # reset everyone
-    for pl in all_players:
-        pl.reset()
-    dealer.reset()
+    reset_all_players(all_players, dealer)
 
 
 if __name__ == "__main__":
@@ -465,7 +473,7 @@ if __name__ == "__main__":
         max_hands_total = 4,  # limit splitting
         double_after_split = True,
         hit_more_than_once_after_split = False,
-        cards_face_up = True,
+        cards_face_up = False,
         stay_on_soft_17 = True,
         pay_blackjack_after_split = False,
     )
@@ -488,7 +496,7 @@ if __name__ == "__main__":
     d_cash = np.diff(np.array(bankrolls))
     ev = np.mean(d_cash)
     sd = np.std(d_cash)
-    print("EV {:.2f} , SD {:.2f}".format(ev, sd))
+    print("\n\nEV {:.2f} , SD {:.2f}".format(ev, sd))
 
     plt.plot(counts, c="r")
     ax2 = plt.gca().twinx()
