@@ -142,7 +142,8 @@ class BasicStrategy:
 
 class Table:
     def __init__(self, minimum_bet, maximum_bet, blackjack_payoff_ratio, insurance_payoff_ratio, n_decks,
-                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split, cards_face_up, stay_on_soft_17, pay_blackjack_after_split):
+                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split, split_more_than_once,
+                 cards_face_up, stay_on_soft_17, pay_blackjack_after_split):
         self.minimum_bet = minimum_bet
         self.maximum_bet = maximum_bet
         self.blackjack_payoff_ratio = blackjack_payoff_ratio
@@ -151,6 +152,7 @@ class Table:
         self.doubleable_hard_values = doubleable_hard_values
         self.double_after_split = double_after_split
         self.hit_more_than_once_after_split = hit_more_than_once_after_split
+        self.split_more_than_once = split_more_than_once
         self.cards_face_up = cards_face_up
         self.stay_on_soft_17 = stay_on_soft_17
         self.pay_blackjack_after_split = pay_blackjack_after_split
@@ -169,7 +171,7 @@ class Table:
 
 class Player:
     def __init__(self, bankroll, is_counting):
-        self.name = str(np.random.randint(0, 10**9))
+        self.name = None
         self.bankroll = bankroll
         self.hands = [Hand()]
         self.is_counting = is_counting
@@ -200,8 +202,9 @@ class Player:
     @staticmethod
     def get_bet_from_minimum_and_true_count(minimum, tc):
         def transform(tc):
-            # return tc
-            return tc ** 0.5
+            # return np.random.pareto(1 + 1/tc)
+            return tc
+            # return tc ** 0.5
             # return np.log(tc)
 
         return minimum * transform(tc) if tc > 0 else 0
@@ -215,6 +218,9 @@ class Player:
     def halve_bet(self, hand):
         self.bet(hand, -0.5 * hand.current_bet)
 
+    def has_already_split(self):
+        return len(self.hands) > 1
+
     def lose_on_hand(self):
         # forfeit hand.bet
         vprint("player lost hand. new bankroll {:.0f}".format(self.bankroll))
@@ -223,7 +229,6 @@ class Player:
     def win_on_hand(self, gross_payoff):
         vprint("player won hand. bankroll {:.0f} -> {:.0f}".format(self.bankroll, self.bankroll + gross_payoff))
         self.bankroll += gross_payoff
-
 
     def reset(self):
         self.hands = [Hand()]
@@ -239,7 +244,7 @@ class Player:
     def count(self, card):
         if self.is_counting:
             self.running_count += self.get_count_value(card)
-        vprint("player {} counted card {}; rc = {}".format(self, card, self.running_count))
+            vprint("player {} counted card {}; rc = {}".format(self, card, self.running_count))
 
     def get_true_count(self, shoe):
         if self.is_counting:
@@ -247,6 +252,9 @@ class Player:
             decks_left = shoe.n_decks - decks_dealt
             return self.running_count / decks_left
         return 0
+
+    def reset_count(self):
+        self.running_count = 0
 
 
 class Dealer(Player):
@@ -279,7 +287,8 @@ def add_card(hand, deck, is_face_up, counting_player):
         counting_player.count(card)
 
 
-def play_turn(player, shoe, dealer_card, counting_player):
+def play_turn(player, table, dealer_card, counting_player):
+    shoe = table.shoe
     for hand in player.hands:
         while True:
             if hand.has_busted():
@@ -289,16 +298,27 @@ def play_turn(player, shoe, dealer_card, counting_player):
                 vprint("{} {} has blackjack with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
                 break
             decision = player.decide(hand, dealer_card)
+
+            # restrictions
+            if decision == "D" and player.has_already_split() and not table.double_after_split:
+                decision = "H"
+            if decision == "P" and player.has_already_split() and not table.split_more_than_once:
+                decision = "H"  # TODO is this always true? probably not (e.g. 8s with a high count); treat it as HARD_MATRIX rather than PAIR_MATRIX
+
             vprint("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
+
             if decision == "H":
                 add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
+
             elif decision == "S":
                 break
+
             elif decision == "D":
                 player.double_bet(hand)
                 # one card after double
                 add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
                 break
+
             elif decision == "U":
                 # hack up surrender as reducing bet to half and replacing hand with a busted one, so this bet will be lost
                 # hopefully I don't implement counting in such a way as to screw it up here (player counting the bogus hand)
@@ -307,6 +327,7 @@ def play_turn(player, shoe, dealer_card, counting_player):
                 player.hands.remove(hand)
                 player.hands.append(Hand([QUEEN_OF_SPADES] * 3))
                 break
+
             elif decision == "P":
                 assert hand in player.hands, "hand {} not in list:\n{}".format(hand, player.hands)
                 new_hands = hand.split()
@@ -314,10 +335,11 @@ def play_turn(player, shoe, dealer_card, counting_player):
                 for new_hand in new_hands:
                     add_card(new_hand, shoe, is_face_up=True, counting_player=counting_player)
                     player.hands.append(new_hand)
-                play_turn(player, shoe, dealer_card, counting_player)  # replay on the resulting hands
+                play_turn(player, table, dealer_card, counting_player)  # replay on the resulting hands
                 break  # do not keep looping on old state (before split)
                 # TODO add restrictions on play after split, including staying on non-splittable hand and splitting another one after that
                 # e.g. dealt AA, split to A A, hit to A9 A, hit next hand to A9 AA, split to A9 A A, hit to A9 AT A, hit to A9 AT A2 (allowed to hit again?)
+
             else:
                 raise Exception("unhandled decision: {}".format(decision))
 
@@ -332,8 +354,12 @@ def play_round(player, table, with_other_players=True):
     np.random.shuffle(all_players)  # mutates arg
     # DO NOT PUT DEALER IN all_players; treat them separately
 
+    for i, pl in enumerate(all_players):
+        pl.name = str(i)
+
     shoe = table.shoe
     dealer = table.dealer
+    dealer.name = "d"
 
     # initial bet
     for pl in all_players:
@@ -342,6 +368,7 @@ def play_round(player, table, with_other_players=True):
     # initial deal
     if shoe.is_dealt_out():
         table.shuffle_shoe()
+        player.reset_count()
 
     for i in range(2):
         for pl in all_players:
@@ -357,7 +384,7 @@ def play_round(player, table, with_other_players=True):
 
     # player turns
     for pl in all_players:
-        play_turn(pl, shoe, dealer_card, player)
+        play_turn(pl, table, dealer_card, player)
 
     # dealer turn
     # show cards
@@ -365,7 +392,7 @@ def play_round(player, table, with_other_players=True):
         if not card.is_face_up:
             player.count(card)
             card.is_face_up = True
-    play_turn(dealer, shoe, None, player)
+    play_turn(dealer, table, None, player)
 
     if dealer.has_blackjack():
         for pl in players:
@@ -417,6 +444,7 @@ if __name__ == "__main__":
         n_decks = 6,
         double_after_split = False,
         hit_more_than_once_after_split = False,
+        split_more_than_once = False,
         cards_face_up = True,
         stay_on_soft_17 = True,
         pay_blackjack_after_split = False,
@@ -442,10 +470,10 @@ if __name__ == "__main__":
     sd = np.std(d_cash)
     print("EV {:.2f} , SD {:.2f}".format(ev, sd))
 
-    plt.plot(counts)
+    plt.plot(counts, c="r")
+    ax2 = plt.gca().twinx()
+    ax2.plot(bankrolls, c="g")
     plt.show()
 
-    plt.hist(d_cash)
+    plt.hist(d_cash, bins=50)
     plt.show()
-
-    
