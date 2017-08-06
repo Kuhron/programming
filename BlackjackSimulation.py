@@ -40,14 +40,15 @@ class Hand:
             soft_value = None
 
         # print(self.cards, hard_value, soft_value)
-        if len(self.cards) > 21:
-            raise Exception("hand has grown out of control!")
 
         return hard_value, soft_value
 
     def update_values(self):
         self.hard_value, self.soft_value = self.get_values()
         self.max_value = self.hard_value if self.soft_value is None else self.soft_value
+
+        assert len(self.cards) <= 21, "hand has grown out of control!"
+        assert self.hard_value <= 30 and (self.soft_value is None or self.soft_value <= 30), "impossible value for hand {}".format(self)
 
     def is_soft(self):
         return self.soft_value is not None
@@ -141,18 +142,18 @@ class BasicStrategy:
 
 
 class Table:
-    def __init__(self, minimum_bet, maximum_bet, blackjack_payoff_ratio, insurance_payoff_ratio, n_decks,
-                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split, split_more_than_once,
+    def __init__(self, minimum_bet, maximum_bet, blackjack_payoff_ratio, insurance_payoff_ratio, n_decks, max_hands_total,
+                 doubleable_hard_values, double_after_split, hit_more_than_once_after_split,
                  cards_face_up, stay_on_soft_17, pay_blackjack_after_split):
         self.minimum_bet = minimum_bet
         self.maximum_bet = maximum_bet
         self.blackjack_payoff_ratio = blackjack_payoff_ratio
         self.insurance_payoff_ratio = insurance_payoff_ratio
         self.n_decks = n_decks
+        self.max_hands_total = max_hands_total
         self.doubleable_hard_values = doubleable_hard_values
         self.double_after_split = double_after_split
         self.hit_more_than_once_after_split = hit_more_than_once_after_split
-        self.split_more_than_once = split_more_than_once
         self.cards_face_up = cards_face_up
         self.stay_on_soft_17 = stay_on_soft_17
         self.pay_blackjack_after_split = pay_blackjack_after_split
@@ -190,7 +191,8 @@ class Player:
         return self.bankroll <= 0
 
     def bet(self, hand, amount):
-        vprint("player {} bet on hand {}; bet {:.0f} -> {:.0f}. bankroll {:.0f} -> {:.0f}".format(
+        amount = min(amount, self.bankroll)
+        vprint("player {} bet on hand {}; bet {:.2f} -> {:.2f}. bankroll {:.2f} -> {:.2f}".format(
             self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
         hand.current_bet += amount
         self.bankroll -= amount
@@ -268,9 +270,12 @@ class Dealer(Player):
 
     def decide(self, hand_arg, dealer_card):
         # ignore hand_arg (since dealer cannot split so only has one hand) and dealer_card
+        assert len(self.hands) == 1
         hand = self.hands[0]
         hard_value, soft_value = hand.hard_value, hand.soft_value
-        if hard_value >= 17 or (soft_value is not None and soft_value >= 18):
+        if hard_value >= 17:
+            return "S"
+        elif soft_value is not None and soft_value >= 18:
             return "S"
         elif self.stay_on_soft_17 and soft_value == 17:
             return "S"
@@ -297,12 +302,13 @@ def play_turn(player, table, dealer_card, counting_player):
             elif hand.is_blackjack():
                 vprint("{} {} has blackjack with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
                 break
+
             decision = player.decide(hand, dealer_card)
 
             # restrictions
             if decision == "D" and player.has_already_split() and not table.double_after_split:
                 decision = "H"
-            if decision == "P" and player.has_already_split() and not table.split_more_than_once:
+            if decision == "P" and len(player.hands) >= table.max_hands_total:
                 decision = "H"  # TODO is this always true? probably not (e.g. 8s with a high count); treat it as HARD_MATRIX rather than PAIR_MATRIX
 
             vprint("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
@@ -361,15 +367,16 @@ def play_round(player, table, with_other_players=True):
     dealer = table.dealer
     dealer.name = "d"
 
+    # re-shuffle if necessary
+    if shoe.is_dealt_out():
+        table.shuffle_shoe()
+        player.reset_count()
+
     # initial bet
     for pl in all_players:
         pl.place_initial_bet(pl.hands[0], table)
 
     # initial deal
-    if shoe.is_dealt_out():
-        table.shuffle_shoe()
-        player.reset_count()
-
     for i in range(2):
         for pl in all_players:
             is_face_up = i == 0 or table.cards_face_up
@@ -381,6 +388,12 @@ def play_round(player, table, with_other_players=True):
 
     is_face_up = True  # all cards that follow
     dealer_card = dealer.hands[0].cards[1]
+    vprint("dealer shows {}".format(dealer_card))
+
+    if dealer.has_blackjack():
+        for pl in all_players:
+            pl.lose_on_hand()
+        return
 
     # player turns
     for pl in all_players:
@@ -394,11 +407,6 @@ def play_round(player, table, with_other_players=True):
             card.is_face_up = True
     play_turn(dealer, table, None, player)
 
-    if dealer.has_blackjack():
-        for pl in all_players:
-            pl.lose_on_hand()
-        return
-
     dealer_hand_value = dealer.hands[0].max_value
 
     # payoffs
@@ -411,6 +419,11 @@ def play_round(player, table, with_other_players=True):
                 pl.win_on_hand(hand.current_bet * table.blackjack_payoff_ratio)
             elif hand.max_value > dealer_hand_value:
                 pl.win_on_hand(hand.current_bet * 2)
+            elif hand.max_value == dealer_hand_value:
+                # push
+                pl.win_on_hand(hand.current_bet)
+            else:
+                pl.lose_on_hand()
 
     # count remaining cards
     for pl in all_players:
@@ -439,12 +452,12 @@ if __name__ == "__main__":
         doubleable_hard_values = [10, 11],
         minimum_bet = 5,
         maximum_bet = 200,
-        blackjack_payoff_ratio = 1000, # debug # 1 + 3/2,
+        blackjack_payoff_ratio = 1 + 3/2,
         insurance_payoff_ratio = 2/1,
         n_decks = 6,
+        max_hands_total = 4,  # limit splitting
         double_after_split = True,
         hit_more_than_once_after_split = False,
-        split_more_than_once = True,
         cards_face_up = True,
         stay_on_soft_17 = True,
         pay_blackjack_after_split = False,
@@ -479,3 +492,4 @@ if __name__ == "__main__":
     plt.show()
 
     # TODO: be able to reproduce the statistics table at https://wizardofodds.com/games/blackjack/card-counting/high-low/
+    # TODO: implement insurance when TC > +3
