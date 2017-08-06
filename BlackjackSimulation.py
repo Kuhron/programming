@@ -56,7 +56,7 @@ class Hand:
         return len(self.cards) == 2 and self.cards[0].value == self.cards[1].value
 
     def is_blackjack(self):
-        return len(self.cards) == 2 and self.hard_value == 21
+        return len(self.cards) == 2 and self.max_value == 21
 
     def has_busted(self):
         return self.hard_value > 21
@@ -395,8 +395,8 @@ def play_round(player, table, with_other_players=True):
     play_turn(dealer, table, None, player)
 
     if dealer.has_blackjack():
-        for pl in players:
-            pl.lose_turn()
+        for pl in all_players:
+            pl.lose_on_hand()
         return
 
     dealer_hand_value = dealer.hands[0].max_value
@@ -439,12 +439,12 @@ if __name__ == "__main__":
         doubleable_hard_values = [10, 11],
         minimum_bet = 5,
         maximum_bet = 200,
-        blackjack_payoff_ratio = 1 + 3/2,
+        blackjack_payoff_ratio = 1000, # debug # 1 + 3/2,
         insurance_payoff_ratio = 2/1,
         n_decks = 6,
-        double_after_split = False,
+        double_after_split = True,
         hit_more_than_once_after_split = False,
-        split_more_than_once = False,
+        split_more_than_once = True,
         cards_face_up = True,
         stay_on_soft_17 = True,
         pay_blackjack_after_split = False,
@@ -477,3 +477,5 @@ if __name__ == "__main__":
 
     plt.hist(d_cash, bins=50)
     plt.show()
+
+    # TODO: be able to reproduce the statistics table at https://wizardofodds.com/games/blackjack/card-counting/high-low/
