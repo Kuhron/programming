@@ -430,7 +430,7 @@ def play_round(player, table, with_other_players=True):
                 pl.lose_on_hand()
             elif hand.is_blackjack() and (len(pl.hands) == 1 or table.pay_blackjack_after_split):
                 # remember, always show blackjack immediately if you are dealt it! (some tables will only pay even money otherwise)
-                pl.win_on_hand(hand.current_bet * table.blackjack_payoff_ratio)
+                pl.win_on_hand(hand.current_bet * (1 + table.blackjack_payoff_ratio))
             elif hand.max_value > dealer_hand_value:
                 pl.win_on_hand(hand.current_bet * 2)
             elif hand.max_value == dealer_hand_value:
@@ -465,7 +465,7 @@ if __name__ == "__main__":
         doubleable_hard_values = [10, 11],
         minimum_bet = 5,
         maximum_bet = 200,
-        blackjack_payoff_ratio = 1 + 3/2,
+        blackjack_payoff_ratio = 3/2,
         insurance_payoff_ratio = 2/1,
         n_decks = 6,
         max_hands_total = 4,  # limit splitting
@@ -485,9 +485,10 @@ if __name__ == "__main__":
 
     def bet_function_of_tc(tc):
         def transform(tc):
+            return 0
             # return np.random.pareto(1 + 1/tc)
             # return tc
-            return tc ** 0.5
+            # return tc ** 0.5
             # return np.log(tc)
         return table.minimum_bet * transform(tc) if tc > 0 else 0
 
