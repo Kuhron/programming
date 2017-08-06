@@ -192,7 +192,7 @@ class Player:
 
     def bet(self, hand, amount):
         amount = min(amount, self.bankroll)
-        vprint("player {} bet on hand {}; bet {:.2f} -> {:.2f}. bankroll {:.2f} -> {:.2f}".format(
+        vprint("{} bet on hand {}; bet {:.2f} -> {:.2f}. bankroll {:.2f} -> {:.2f}".format(
             self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
         hand.current_bet += amount
         self.bankroll -= amount
@@ -225,11 +225,11 @@ class Player:
 
     def lose_on_hand(self):
         # forfeit hand.bet
-        vprint("player lost hand. new bankroll {:.0f}".format(self.bankroll))
+        vprint("{} lost hand. new bankroll {:.0f}".format(self, self.bankroll))
         pass
 
     def win_on_hand(self, gross_payoff):
-        vprint("player won hand. bankroll {:.0f} -> {:.0f}".format(self.bankroll, self.bankroll + gross_payoff))
+        vprint("{} won hand. bankroll {:.0f} -> {:.0f}".format(self, self.bankroll, self.bankroll + gross_payoff))
         self.bankroll += gross_payoff
 
     def reset(self):
@@ -246,7 +246,7 @@ class Player:
     def count(self, card):
         if self.is_counting:
             self.running_count += self.get_count_value(card)
-            vprint("player {} counted card {}; rc = {}".format(self, card, self.running_count))
+            vprint("{} counted card {}; rc = {}".format(self, card, self.running_count))
 
     def get_true_count(self, shoe):
         if self.is_counting:
@@ -289,18 +289,20 @@ def add_card(hand, deck, is_face_up, counting_player):
     card = BlackjackCard(next(deck), is_face_up)
     hand.add_card(card)
     if is_face_up:
+        vprint("new card in hand {}".format(hand))
         counting_player.count(card)
 
 
 def play_turn(player, table, dealer_card, counting_player):
+    vprint("-- playing turn for {}".format(player.name))
     shoe = table.shoe
     for hand in player.hands:
         while True:
             if hand.has_busted():
-                vprint("{} {} busted with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
+                vprint("{} busted with hand {}".format(player, hand))
                 break
             elif hand.is_blackjack():
-                vprint("{} {} has blackjack with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
+                vprint("{} has blackjack with hand {}".format(player, hand))
                 break
 
             decision = player.decide(hand, dealer_card)
@@ -311,7 +313,7 @@ def play_turn(player, table, dealer_card, counting_player):
             if decision == "P" and len(player.hands) >= table.max_hands_total:
                 decision = "H"  # TODO is this always true? probably not (e.g. 8s with a high count); treat it as HARD_MATRIX rather than PAIR_MATRIX
 
-            vprint("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
+            vprint("{} has hand {} and decision {}".format(player, hand, decision))
 
             if decision == "H":
                 add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
@@ -351,6 +353,7 @@ def play_turn(player, table, dealer_card, counting_player):
 
 
 def play_round(player, table, with_other_players=True):
+    vprint("\n---- new round ---")
     if with_other_players:
         n_other_players = np.random.choice([0, 1, 2, 3, 4, 5])
         other_players = [Player(table.minimum_bet * np.random.randint(1, 101), is_counting=False) for i in range(n_other_players)]
@@ -361,11 +364,11 @@ def play_round(player, table, with_other_players=True):
     # DO NOT PUT DEALER IN all_players; treat them separately
 
     for i, pl in enumerate(all_players):
-        pl.name = str(i)
+        pl.name = "main player" if pl is player else "other player {}".format(i)
 
     shoe = table.shoe
     dealer = table.dealer
-    dealer.name = "d"
+    dealer.name = "dealer"
 
     # re-shuffle if necessary
     if shoe.is_dealt_out():
@@ -403,6 +406,7 @@ def play_round(player, table, with_other_players=True):
     # show cards
     for card in dealer.hands[0].cards:
         if not card.is_face_up:
+            vprint("dealer flipped over {}".format(card))
             player.count(card)
             card.is_face_up = True
     play_turn(dealer, table, None, player)
@@ -424,6 +428,7 @@ def play_round(player, table, with_other_players=True):
                 pl.win_on_hand(hand.current_bet)
             else:
                 pl.lose_on_hand()
+    vprint("427")
 
     # count remaining cards
     for pl in all_players:
@@ -431,7 +436,9 @@ def play_round(player, table, with_other_players=True):
             for card in hand.cards:
                 if not card.is_face_up:
                     card.is_face_up = True  # pointless, but for consistency
+                    vprint("{} flipped over {}".format(pl, card))
                     player.count(card)
+    vprint("436")
 
     # reset everyone
     for pl in all_players:
@@ -471,7 +478,7 @@ if __name__ == "__main__":
     while True:
         if n_rounds > args.n_rounds:
             break
-        play_round(player, table, with_other_players=False)
+        play_round(player, table, with_other_players=True)
         bankrolls.append(player.bankroll)
         counts.append(player.running_count)
         if player.is_broke():
