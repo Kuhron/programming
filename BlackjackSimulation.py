@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -187,13 +188,23 @@ class Player:
         return self.bankroll <= 0
 
     def bet(self, hand, amount):
-        # print("player {} bet on hand {}; bet {:.0f} -> {:.0f}. bankroll {:.0f} -> {:.0f}".format(
-        #     self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
+        vprint("player {} bet on hand {}; bet {:.0f} -> {:.0f}. bankroll {:.0f} -> {:.0f}".format(
+            self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
         hand.current_bet += amount
         self.bankroll -= amount
 
     def get_initial_bet(self, table):
-        return min(table.maximum_bet, table.minimum_bet * max(1, 1 + self.get_true_count(table.shoe)))
+        ideal_bet = self.get_bet_from_minimum_and_true_count(table.minimum_bet, self.get_true_count(table.shoe))
+        return min(table.maximum_bet, max(table.minimum_bet, ideal_bet))
+
+    @staticmethod
+    def get_bet_from_minimum_and_true_count(minimum, tc):
+        def transform(tc):
+            # return tc
+            return tc ** 0.5
+            # return np.log(tc)
+
+        return minimum * transform(tc) if tc > 0 else 0
 
     def place_initial_bet(self, hand, table):
         self.bet(hand, self.get_initial_bet(table))
@@ -206,11 +217,11 @@ class Player:
 
     def lose_on_hand(self):
         # forfeit hand.bet
-        # print("player lost hand. new bankroll {:.0f}".format(self.bankroll))
+        vprint("player lost hand. new bankroll {:.0f}".format(self.bankroll))
         pass
 
     def win_on_hand(self, gross_payoff):
-        # print("player won hand. bankroll {:.0f} -> {:.0f}".format(self.bankroll, self.bankroll + gross_payoff))
+        vprint("player won hand. bankroll {:.0f} -> {:.0f}".format(self.bankroll, self.bankroll + gross_payoff))
         self.bankroll += gross_payoff
 
 
@@ -219,7 +230,7 @@ class Player:
 
     def get_count_value(self, card):
         n = card.get_blackjack_value()
-        if n <= 6:
+        if 2 <= n <= 6:
             return +1
         elif n in [1, 10]:
             return -1
@@ -228,6 +239,7 @@ class Player:
     def count(self, card):
         if self.is_counting:
             self.running_count += self.get_count_value(card)
+        vprint("player {} counted card {}; rc = {}".format(self, card, self.running_count))
 
     def get_true_count(self, shoe):
         if self.is_counting:
@@ -271,13 +283,13 @@ def play_turn(player, shoe, dealer_card, counting_player):
     for hand in player.hands:
         while True:
             if hand.has_busted():
-                # print("{} {} busted with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
+                vprint("{} {} busted with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
                 break
             elif hand.is_blackjack():
-                # print("{} {} has blackjack with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
+                vprint("{} {} has blackjack with hand {}".format(("dealer" if player.is_dealer() else "player"), player, hand))
                 break
             decision = player.decide(hand, dealer_card)
-            # print("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
+            vprint("{} {} has hand {} and decision {}".format(("dealer" if player.is_dealer() else "player"), player, hand, decision))
             if decision == "H":
                 add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
             elif decision == "S":
@@ -350,8 +362,9 @@ def play_round(player, table, with_other_players=True):
     # dealer turn
     # show cards
     for card in dealer.hands[0].cards:
-        card.is_face_up = True
-        player.count(card)
+        if not card.is_face_up:
+            player.count(card)
+            card.is_face_up = True
     play_turn(dealer, shoe, None, player)
 
     if dealer.has_blackjack():
@@ -389,6 +402,12 @@ def play_round(player, table, with_other_players=True):
 if __name__ == "__main__":
     print("\n" * 100)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-v", dest="verbose", action="store_true")
+    parser.add_argument("-n", dest="n_rounds", type=int, default=10**5)
+    args = parser.parse_args()
+    vprint = print if args.verbose else lambda *_, **__: None
+
     table = Table(
         doubleable_hard_values = [10, 11],
         minimum_bet = 5,
@@ -403,25 +422,30 @@ if __name__ == "__main__":
         pay_blackjack_after_split = False,
     )
 
-    player = Player(10000, is_counting=True)
+    player = Player(100 * args.n_rounds, is_counting=True)
 
     bankrolls = [player.bankroll]
+    counts = [0]
     n_rounds = 0
     while True:
-        if n_rounds > 10000:
+        if n_rounds > args.n_rounds:
             break
         play_round(player, table, with_other_players=False)
         bankrolls.append(player.bankroll)
+        counts.append(player.running_count)
         if player.is_broke():
             break
         n_rounds += 1
 
-    plt.plot(bankrolls)
+    d_cash = np.diff(np.array(bankrolls))
+    ev = np.mean(d_cash)
+    sd = np.std(d_cash)
+    print("EV {:.2f} , SD {:.2f}".format(ev, sd))
+
+    plt.plot(counts)
     plt.show()
 
-    d_cash = np.diff(np.array(bankrolls))
     plt.hist(d_cash)
     plt.show()
 
-    ev = np.mean(d_cash)
-    print("EV {:.2f}".format(ev))
+    
