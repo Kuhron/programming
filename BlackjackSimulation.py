@@ -176,11 +176,12 @@ class Table:
 
 
 class Player:
-    def __init__(self, bankroll, is_counting):
+    def __init__(self, bankroll, is_counting, counting_and_betting_system):
         self.name = None
         self.bankroll = bankroll
         self.hands = [Hand()]
         self.is_counting = is_counting
+        self.counting_and_betting_system = counting_and_betting_system
         self.running_count = 0
 
     def __repr__(self):
@@ -206,15 +207,8 @@ class Player:
         ideal_bet = self.get_bet_from_minimum_and_true_count(table.minimum_bet, self.get_true_count(table.shoe))
         return min(table.maximum_bet, max(table.minimum_bet, ideal_bet))
 
-    @staticmethod
-    def get_bet_from_minimum_and_true_count(minimum, tc):
-        def transform(tc):
-            # return np.random.pareto(1 + 1/tc)
-            return tc
-            # return tc ** 0.5
-            # return np.log(tc)
-
-        return minimum * transform(tc) if tc > 0 else 0
+    def get_bet_from_minimum_and_true_count(self, minimum, tc):
+        return self.counting_and_betting_system.get_bet_amount(tc) if self.is_counting else minimum
 
     def place_initial_bet(self, hand, table):
         self.bet(hand, self.get_initial_bet(table))
@@ -240,17 +234,9 @@ class Player:
     def reset(self):
         self.hands = [Hand()]
 
-    def get_count_value(self, card):
-        n = card.get_blackjack_value()
-        if 2 <= n <= 6:
-            return +1
-        elif n in [1, 10]:
-            return -1
-        return 0
-
     def count(self, card):
         if self.is_counting:
-            self.running_count += self.get_count_value(card)
+            self.running_count += self.counting_and_betting_system.get_count_value(card)
             vprint("{} counted card {}; rc = {}".format(self, card, self.running_count))
 
     def get_true_count(self, shoe):
@@ -266,7 +252,7 @@ class Player:
 
 class Dealer(Player):
     def __init__(self, stay_on_soft_17):
-        super().__init__(np.inf, False)
+        super().__init__(np.inf, False, None)
         self.stay_on_soft_17 = stay_on_soft_17
         self.hands = [Hand()]
 
@@ -288,6 +274,18 @@ class Dealer(Player):
 
     def has_blackjack(self):
         return self.hands[0].is_blackjack()
+
+
+class CountingAndBettingSystem:
+    def __init__(self, count_function_of_value, bet_function_of_tc):
+        self.count_function = count_function_of_value
+        self.bet_function_of_tc = bet_function_of_tc
+
+    def get_count_value(self, card):
+        return self.count_function(card.get_blackjack_value())
+
+    def get_bet_amount(self, tc):
+        return self.bet_function_of_tc(tc)
 
 
 def add_card(hand, deck, is_face_up, counting_player):
@@ -367,7 +365,7 @@ def play_round(player, table, with_other_players=True):
     vprint("\n---- new round ---")
     if with_other_players:
         n_other_players = np.random.choice([0, 1, 2, 3, 4, 5])
-        other_players = [Player(table.minimum_bet * np.random.randint(1, 101), is_counting=False) for i in range(n_other_players)]
+        other_players = [Player(table.minimum_bet * np.random.randint(1, 101), False, None) for i in range(n_other_players)]
     else:
         other_players = []
     all_players = other_players + [player]
@@ -478,7 +476,24 @@ if __name__ == "__main__":
         pay_blackjack_after_split = False,
     )
 
-    player = Player(100 * args.n_rounds, is_counting=True)
+    def count_function_of_value(n):
+        if 2 <= n <= 6:
+            return +1
+        elif n in [1, 10]:
+            return -1
+        return 0
+
+    def bet_function_of_tc(tc):
+        def transform(tc):
+            # return np.random.pareto(1 + 1/tc)
+            # return tc
+            return tc ** 0.5
+            # return np.log(tc)
+        return table.minimum_bet * transform(tc) if tc > 0 else 0
+
+    counting_and_betting_system = CountingAndBettingSystem(count_function_of_value, bet_function_of_tc)
+
+    player = Player(100 * args.n_rounds, is_counting=True, counting_and_betting_system=counting_and_betting_system)
 
     bankrolls = [player.bankroll]
     counts = [0]
