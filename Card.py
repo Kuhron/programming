@@ -18,6 +18,11 @@ class Card:
 	def __repr__(self):
 		return self.str
 
+	@staticmethod
+	def from_str(s):
+		assert len(s) == 2
+		return Card(s[0], s[1])  # tempted to write Card(*s)
+
 	def __eq__(self, other):
 		if isinstance(other, Card):
 			return self.str == other.str

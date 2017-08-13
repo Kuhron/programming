@@ -11,6 +11,11 @@ class BlackjackCard(Card.Card):
         super().__init__(card.value, card.suit)
         self.is_face_up = is_face_up
 
+    @staticmethod
+    def from_str(s):
+        card = Card.Card.from_str(s)
+        return BlackjackCard(card, True)
+
     def get_blackjack_value(self):
         return min(10, self.number)
 
@@ -20,6 +25,13 @@ class Hand:
         self.cards = cards if cards is not None else []
         self.update_values()
         self.current_bet = bet
+
+    @staticmethod
+    def from_str_list(lst):
+        cards = []
+        for s in lst:
+            cards.append(BlackjackCard.from_str(s))
+        return Hand(cards)
 
     @staticmethod
     def card_repr(card):
@@ -291,8 +303,8 @@ class CountingAndBettingSystem:
 def add_card(hand, deck, is_face_up, counting_player):
     card = BlackjackCard(next(deck), is_face_up)
     hand.add_card(card)
+    vprint("new card in hand {}".format(hand))
     if is_face_up:
-        vprint("new card in hand {}".format(hand))
         counting_player.count(card)
 
 
@@ -453,7 +465,7 @@ def play_round(player, table, with_other_players=True):
 
 
 if __name__ == "__main__":
-    print("\n" * 100)
+    print("\n" * 10)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", dest="verbose", action="store_true")
@@ -462,7 +474,7 @@ if __name__ == "__main__":
     vprint = print if args.verbose else lambda *_, **__: None
 
     table = Table(
-        doubleable_hard_values = [10, 11],
+        doubleable_hard_values = [9, 10, 11],
         minimum_bet = 5,
         maximum_bet = 200,
         blackjack_payoff_ratio = 3/2,
@@ -471,7 +483,7 @@ if __name__ == "__main__":
         max_hands_total = 4,  # limit splitting
         double_after_split = True,
         hit_more_than_once_after_split = False,
-        cards_face_up = False,
+        cards_face_up = True,
         stay_on_soft_17 = True,
         pay_blackjack_after_split = False,
     )
@@ -485,11 +497,12 @@ if __name__ == "__main__":
 
     def bet_function_of_tc(tc):
         def transform(tc):
-            return 0
+            # return 0
             # return np.random.pareto(1 + 1/tc)
             # return tc
             # return tc ** 0.5
             # return np.log(tc)
+            return 1 if tc <= 3 else tc
         return table.minimum_bet * transform(tc) if tc > 0 else 0
 
     counting_and_betting_system = CountingAndBettingSystem(count_function_of_value, bet_function_of_tc)
@@ -521,6 +534,8 @@ if __name__ == "__main__":
 
     plt.hist(d_cash, bins=50)
     plt.show()
+
+    # TODO: unit tests
 
     # TODO: be able to reproduce the statistics table at https://wizardofodds.com/games/blackjack/card-counting/high-low/
     # TODO: implement insurance when TC > +3
