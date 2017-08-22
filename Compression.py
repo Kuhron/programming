@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
 # attempt to implement some compression algorithms as well as ideas of my own
+
+import sys
 
 
 def lzw_compress(s):
@@ -30,21 +33,25 @@ def get_longest_repeated_substring(s):
     return result
 
 
-def ints():
-    i = 0
+def char_ints():
+    i = ord("0")
     while True:
         yield i
         i += 1
 
 
 def grammar_compress_one_stage(s, seen_chars):
+    substr = get_longest_repeated_substring(s)
+
+    if len(substr) <= 1:
+        return s, seen_chars
+
     try:
         current_char = next(c for c in seen_chars if c not in s)
     except StopIteration:
-        current_char = next(x for x in ints() if chr(x) not in s)
+        current_char = next(x for x in char_ints() if chr(x) not in s)
     new_symbol = chr(current_char)
     seen_chars.add(new_symbol)
-    substr = get_longest_repeated_substring(s)
 
     s_compressed = s.replace(substr, new_symbol)
     s_compressed += "\n{}={}".format(new_symbol, substr)
@@ -61,13 +68,16 @@ def grammar_compress(s):
     seen_chars = set(s)
     while True:
         s_compressed, seen_chars = grammar_compress_one_stage(s, seen_chars)
-        if len(s_compressed) >= len(s)
+        if len(s_compressed) >= len(s):
             return s
         s = s_compressed
 
 
 def evaluate_compression_function(func, s):
-    return 1 - len(func(s)) / len(s)
+    ls = len(s)
+    lc = len(func(s))
+    r = 100 * (1 - lc / ls)
+    print("original len {}, new len {} (decreased by {:.2f}%)".format(ls, lc, r))
 
 
 if __name__ == "__main__":
@@ -75,5 +85,8 @@ if __name__ == "__main__":
     # fp = "Compression.py"
     s = open(fp).read().lower()  # unicameral alphabet for now
     func = grammar_compress
-    # print(evaluate_compression_function(func, s))
-    print(func(s))
+
+    evaluate_compression_function(func, s)
+    output_fp = "CompressionOutput.txt"
+    with open(output_fp, "wb") as f:
+        f.write(func(s).encode("utf-8"))
