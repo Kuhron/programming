@@ -154,8 +154,9 @@ class BasicStrategy:
         return row[col_index]
 
     @staticmethod
-    def should_take_insurance():
-        return False  # unless incorporating card counting
+    def should_take_insurance(tc):
+        # return False  # unless incorporating card counting
+        return tc >= 3
 
 
 class Table:
@@ -374,7 +375,7 @@ def reset_all_players(all_players, dealer):
 
 
 def play_round(player, table, with_other_players=True):
-    vprint("\n---- new round ---")
+    vprint("\n---- new round ----")
     if with_other_players:
         n_other_players = np.random.choice([0, 1, 2, 3, 4, 5])
         other_players = [Player(table.minimum_bet * np.random.randint(1, 101), False, None) for i in range(n_other_players)]
@@ -414,9 +415,23 @@ def play_round(player, table, with_other_players=True):
     dealer_card = dealer.hands[0].cards[1]
     vprint("dealer shows {}".format(dealer_card))
 
-    if dealer.has_blackjack():
+    if dealer_card.value == "A":
         for pl in all_players:
-            pl.lose_on_hand()
+            # TODO: implement insurance here
+            # if pl.will_take_insurance():
+            #     ?
+            pass
+
+    if dealer.has_blackjack():
+        vprint("dealer has blackjack")
+        for pl in all_players:
+            assert len(pl.hands) == 1  # no one has had chance to split yet
+            hand = pl.hands[0]
+            if hand.is_blackjack():
+                # assume player declared blackjack immediately or cards are face up (some games will only pay even money otherwise)
+                pl.win_on_hand(hand.current_bet)
+            else:
+                pl.lose_on_hand()
         reset_all_players(all_players, dealer)
         return
 
@@ -465,20 +480,18 @@ def play_round(player, table, with_other_players=True):
 
 
 if __name__ == "__main__":
-    print("\n" * 10)
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-v", dest="verbose", action="store_true")
-    parser.add_argument("-n", dest="n_rounds", type=int, default=10**5)
+    parser.add_argument("-n", dest="n_rounds", type=int, default=100)
     args = parser.parse_args()
     vprint = print if args.verbose else lambda *_, **__: None
 
     table = Table(
-        doubleable_hard_values = [9, 10, 11],
-        minimum_bet = 5,
-        maximum_bet = 200,
-        blackjack_payoff_ratio = 3/2,
-        insurance_payoff_ratio = 2/1,
+        doubleable_hard_values = [9, 10, 11],  # (orig. [10, 11])
+        minimum_bet = 5,  # (orig. 5)
+        maximum_bet = np.inf,  # this may be the biggest factor limiting gains when the count is high (orig. 200)
+        blackjack_payoff_ratio = 3/2,  # (orig. 3/2)
+        insurance_payoff_ratio = 2/1,  # (orig. 2/1)
         n_decks = 6,
         max_hands_total = 4,  # limit splitting
         double_after_split = True,
@@ -502,7 +515,7 @@ if __name__ == "__main__":
             # return tc
             # return tc ** 0.5
             # return np.log(tc)
-            return 1 if tc <= 3 else tc
+            return tc**4
         return table.minimum_bet * transform(tc) if tc > 0 else 0
 
     counting_and_betting_system = CountingAndBettingSystem(count_function_of_value, bet_function_of_tc)
@@ -513,6 +526,7 @@ if __name__ == "__main__":
     counts = [0]
     n_rounds = 0
     while True:
+        vprint("\nround {}".format(n_rounds))
         if n_rounds > args.n_rounds:
             break
         play_round(player, table, with_other_players=True)
@@ -535,7 +549,5 @@ if __name__ == "__main__":
     plt.hist(d_cash, bins=50)
     plt.show()
 
-    # TODO: unit tests
-
     # TODO: be able to reproduce the statistics table at https://wizardofodds.com/games/blackjack/card-counting/high-low/
-    # TODO: implement insurance when TC > +3
+    # TODO: implement insurance when TC > +3 (players are not yet betting on it even though I put this in the function)
