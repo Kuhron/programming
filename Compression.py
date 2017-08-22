@@ -24,11 +24,12 @@ def get_longest_prefix(s, t):
 
 def get_longest_repeated_substring(s):
     # stolen from https://stackoverflow.com/questions/10355103/finding-the-longest-repeated-substring
+    # could improve by choosing substring with most total chars in text (len * n_occurrences)
     suffixes = sorted(s[i:] for i in range(len(s)))
     result = ""
     for s1, s2 in zip(suffixes[:-1], suffixes[1:]):
         prefix = get_longest_prefix(s1, s2)
-        if len(prefix) > len(result):
+        if len(prefix) > len(result) and "=" not in prefix:
             result = prefix
     return result
 
