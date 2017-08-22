@@ -37,25 +37,21 @@ def ints():
         i += 1
 
 
-def grammar_compress_one_stage(s, grammar):
-    # current_char = max(ord(c) for c in s) + 1
-    current_char = next(x for x in ints() if chr(x) not in s)
+def grammar_compress_one_stage(s, grammar, seen_chars):
+    try:
+        current_char = next(c for c in seen_chars if c not in s)
+    except StopIteration:
+        current_char = next(x for x in ints() if chr(x) not in s)
     new_symbol = chr(current_char)
+    seen_chars.add(new_symbol)
     substr = get_longest_repeated_substring(s)
 
-    # new_grammar = grammar + {new_symbol: substr}  # wrong syntax, and may I just say it's annoying that d.update(...) mutates and returns None
-    # new_grammar = {new_symbol: substr, **grammar}
-    # f this
     new_grammar = grammar.copy()
     new_grammar.update({new_symbol: substr})
 
     s_compressed = s.replace(substr, new_symbol)
 
-    # # not necessary if each stage is a separate function call
-    # while current_char in s_compressed:
-    #     current_char += 1
-
-    return s_compressed, new_grammar
+    return s_compressed, new_grammar, seen_chars
 
 
 def grammar_compress(s):
@@ -65,9 +61,10 @@ def grammar_compress(s):
     # in the final file, print the grammar for decoding (if this can be eliminated, it would probably save a lot of space)
 
     grammar = {}
+    seen_chars = set(s)
     length = len(s) + len(repr(grammar))
     while True:
-        s_compressed, new_grammar = grammar_compress_one_stage(s, grammar)
+        s_compressed, new_grammar, seen_chars = grammar_compress_one_stage(s, grammar, seen_chars)
         if len(s_compressed) + len(repr(new_grammar)) >= length:
             return s + "\n" + repr(grammar)
         s, grammar = s_compressed, new_grammar
