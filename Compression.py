@@ -55,7 +55,7 @@ def grammar_compress_one_stage(s, seen_chars):
     seen_chars.add(new_symbol)
 
     s_compressed = s.replace(substr, new_symbol)
-    s_compressed += "\n{}={}".format(new_symbol, substr)
+    s_compressed += "\n{}{}".format(new_symbol, substr)  # used to separate these with "=", but since it always begins with one char this is unnecessary
 
     return s_compressed, seen_chars
 
@@ -67,6 +67,7 @@ def grammar_compress(s):
     # in the final file, print the grammar for decoding (if this can be eliminated, it would probably save a lot of space)
 
     seen_chars = set(s)
+    s += "="  # mark end of ciphertext and beginning of grammar
     while True:
         s_compressed, seen_chars = grammar_compress_one_stage(s, seen_chars)
         if len(s_compressed) >= len(s):
@@ -84,7 +85,7 @@ def evaluate_compression_function(func, s):
 if __name__ == "__main__":
     fp = "LoremIpsum.txt"
     # fp = "Compression.py"
-    s = open(fp).read().lower()  # unicameral alphabet for now
+    s = open(fp).read()
     func = grammar_compress
 
     evaluate_compression_function(func, s)
