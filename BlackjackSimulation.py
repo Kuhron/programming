@@ -415,10 +415,9 @@ def play_round(player, table, with_other_players=True):
     # re-shuffle if necessary
     if shoe.is_dealt_out():
         table.shuffle_shoe()
+        shoe = table.shoe  # table.shuffle_shoe() changes table.shoe to a different object, so re-assign this reference
         player.reset_count()
     vprint("{:.2f} decks left in shoe".format(shoe.get_n_decks_left()))
-    # FIXME: shoe getting reshuffled mid-round sometimes, dealer is hitting their own hand out of a newly shuffled shoe
-    # in fact, dealer is playing turn with a different shoe on hands after which it should be reshuffled!
 
     # initial bet
     for pl in all_players:
@@ -476,15 +475,12 @@ def play_round(player, table, with_other_players=True):
 
     # dealer turn
     # show cards
-    vprint("debug: shoe has {:.2f} decks left".format(shoe.get_n_decks_left()))
     for card in dealer.hands[0].cards:
         if not card.is_face_up:
             vprint("dealer flipped over {}".format(card))
             player.count(card, shoe)
             card.is_face_up = True
-    vprint("debug: shoe has {:.2f} decks left".format(shoe.get_n_decks_left()))
     play_turn(dealer, table, None, player)
-    vprint("debug: shoe has {:.2f} decks left".format(shoe.get_n_decks_left()))
 
     dealer_hand_value = dealer.hands[0].max_value
 
