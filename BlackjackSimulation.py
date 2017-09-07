@@ -189,6 +189,7 @@ class Table:
         return shoe
 
     def shuffle_shoe(self):
+        vprint("shuffling new shoe")  # debug
         self.shoe = self.get_new_shoe()
 
 
@@ -256,19 +257,26 @@ class Player:
     def has_insurance(self):
         return self.insurance_bet > 0
 
+    def lose_insurance_bet(self):
+        self.bankroll -= self.insurance_bet
+        vprint("{} loses insurance bet of {:.2f}; bankroll -> {:.2f}".format(self, self.insurance_bet, self.bankroll))
+        self.insurance_bet = 0
+
     def reset(self):
         self.hands = [Hand()]
+        self.insurance_bet = 0
 
     def count(self, card, shoe):
         if self.is_counting:
             self.running_count += self.counting_and_betting_system.get_count_value(card)
             self.true_count = self.get_true_count(shoe)
-            vprint("{} counted card {}; rc = {}; tc = {}".format(self, card, self.running_count, self.true_count))
+            vprint("{} counted card {}; rc = {}; {:.2f} decks left => tc = {:.2f}".format(
+                self, card, self.running_count, shoe.get_n_decks_left(), self.true_count)
+            )
 
     def get_true_count(self, shoe):
         if self.is_counting:
-            decks_dealt = shoe.n_cards_dealt / 52
-            decks_left = shoe.n_decks - decks_dealt
+            decks_left = shoe.get_n_decks_left()
             return self.running_count / decks_left
         return 0
 
@@ -388,7 +396,6 @@ def reset_all_players(all_players, dealer):
 
 
 def play_round(player, table, with_other_players=True):
-    vprint("\n---- new round ----")
     if with_other_players:
         n_other_players = np.random.choice([0, 1, 2, 3, 4, 5])
         other_players = [Player(table.minimum_bet * np.random.randint(1, 101), False, None) for i in range(n_other_players)]
@@ -409,6 +416,9 @@ def play_round(player, table, with_other_players=True):
     if shoe.is_dealt_out():
         table.shuffle_shoe()
         player.reset_count()
+    vprint("{:.2f} decks left in shoe".format(shoe.get_n_decks_left()))
+    # FIXME: shoe getting reshuffled mid-round sometimes, dealer is hitting their own hand out of a newly shuffled shoe
+    # in fact, dealer is playing turn with a different shoe on hands after which it should be reshuffled!
 
     # initial bet
     for pl in all_players:
@@ -433,7 +443,9 @@ def play_round(player, table, with_other_players=True):
             # TODO: implement insurance here
             if pl.will_take_insurance():
                 assert len(pl.hands) == 1  # no one has had chance to split yet
-                pl.insurance_bet = pl.hands[0].current_bet / 2
+                pl.insurance_bet = pl.hands[0].current_bet / 2  # half of original bet always, as far as I know
+                vprint("{} takes insurance, betting {:.2f}".format(pl, pl.insurance_bet))
+                # raise; pl.bet(pl.hands[0], pl.insurance_bet)  # DON'T do this; the player will be overpaid if dealer has blackjack
 
     if dealer.has_blackjack():
         vprint("dealer has blackjack")
@@ -443,12 +455,20 @@ def play_round(player, table, with_other_players=True):
             if (not dealer_card.value == "A") and hand.is_blackjack():
                 # assume player declared blackjack immediately or cards are face up (some games will only pay even money otherwise)
                 pl.win_on_hand(hand.current_bet * (1 + table.blackjack_payoff_ratio))
-            elif dealer_card.value == "A" and pl.has_insurance():
-                pl.win_on_hand(hand.current_bet + pl.insurance_bet * (table.insurance_payoff_ratio))
+            # elif dealer_card.value == "A" and pl.has_insurance():  # redundant; can't take insurance unless dealer shows ace
+            elif pl.has_insurance():
+                pl.win_on_hand(pl.insurance_bet * (table.insurance_payoff_ratio))
+                # note do not win back current bet (it is lost since dealer has blackjack)
             else:
                 pl.lose_on_hand()
         reset_all_players(all_players, dealer)
         return
+    elif dealer_card.value == "A":
+        vprint("dealer does not have blackjack")
+
+    for pl in all_players:
+        if pl.has_insurance():
+            pl.lose_insurance_bet()
 
     # player turns
     for pl in all_players:
@@ -456,12 +476,15 @@ def play_round(player, table, with_other_players=True):
 
     # dealer turn
     # show cards
+    vprint("debug: shoe has {:.2f} decks left".format(shoe.get_n_decks_left()))
     for card in dealer.hands[0].cards:
         if not card.is_face_up:
             vprint("dealer flipped over {}".format(card))
             player.count(card, shoe)
             card.is_face_up = True
+    vprint("debug: shoe has {:.2f} decks left".format(shoe.get_n_decks_left()))
     play_turn(dealer, table, None, player)
+    vprint("debug: shoe has {:.2f} decks left".format(shoe.get_n_decks_left()))
 
     dealer_hand_value = dealer.hands[0].max_value
 
@@ -537,14 +560,14 @@ if __name__ == "__main__":
 
     counting_and_betting_system = CountingAndBettingSystem(count_function_of_value, bet_function_of_tc)
 
-    player = Player(100 * args.n_rounds, is_counting=True, counting_and_betting_system=counting_and_betting_system)
+    player = Player(2 * table.minimum_bet * args.n_rounds, is_counting=True, counting_and_betting_system=counting_and_betting_system)
 
     bankrolls = [player.bankroll]
     counts = [0]
     true_counts = [0]
     n_rounds = 0
     while True:
-        vprint("\nround {}".format(n_rounds))
+        vprint("\n---- round {} ----".format(n_rounds))
         if n_rounds > args.n_rounds:
             break
         play_round(player, table, with_other_players=True)
