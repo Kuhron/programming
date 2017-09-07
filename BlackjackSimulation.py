@@ -263,7 +263,7 @@ class Player:
         if self.is_counting:
             self.running_count += self.counting_and_betting_system.get_count_value(card)
             self.true_count = self.get_true_count(shoe)
-            vprint("{} counted card {}; rc = {}".format(self, card, self.running_count))
+            vprint("{} counted card {}; rc = {}; tc = {}".format(self, card, self.running_count, self.true_count))
 
     def get_true_count(self, shoe):
         if self.is_counting:
