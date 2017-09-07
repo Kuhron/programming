@@ -19,6 +19,10 @@ class BlackjackCard(Card.Card):
     def get_blackjack_value(self):
         return min(10, self.number)
 
+    def __repr__(self):
+        # omit suit
+        return self.value
+
 
 class Hand:
     def __init__(self, cards=None, bet=0):
@@ -196,6 +200,8 @@ class Player:
         self.is_counting = is_counting
         self.counting_and_betting_system = counting_and_betting_system
         self.running_count = 0
+        self.true_count = 0
+        self.insurance_bet = 0
 
     def __repr__(self):
         return self.name
@@ -217,7 +223,7 @@ class Player:
         self.bankroll -= amount
 
     def get_initial_bet(self, table):
-        ideal_bet = self.get_bet_from_minimum_and_true_count(table.minimum_bet, self.get_true_count(table.shoe))
+        ideal_bet = self.get_bet_from_minimum_and_true_count(table.minimum_bet, self.true_count)
         return min(table.maximum_bet, max(table.minimum_bet, ideal_bet))
 
     def get_bet_from_minimum_and_true_count(self, minimum, tc):
@@ -244,12 +250,19 @@ class Player:
         vprint("{} won hand. bankroll {:.0f} -> {:.0f}".format(self, self.bankroll, self.bankroll + gross_payoff))
         self.bankroll += gross_payoff
 
+    def will_take_insurance(self):
+        return BasicStrategy.should_take_insurance(self.true_count)
+
+    def has_insurance(self):
+        return self.insurance_bet > 0
+
     def reset(self):
         self.hands = [Hand()]
 
-    def count(self, card):
+    def count(self, card, shoe):
         if self.is_counting:
             self.running_count += self.counting_and_betting_system.get_count_value(card)
+            self.true_count = self.get_true_count(shoe)
             vprint("{} counted card {}; rc = {}".format(self, card, self.running_count))
 
     def get_true_count(self, shoe):
@@ -306,7 +319,7 @@ def add_card(hand, deck, is_face_up, counting_player):
     hand.add_card(card)
     vprint("new card in hand {}".format(hand))
     if is_face_up:
-        counting_player.count(card)
+        counting_player.count(card, deck)
 
 
 def play_turn(player, table, dealer_card, counting_player):
@@ -418,18 +431,20 @@ def play_round(player, table, with_other_players=True):
     if dealer_card.value == "A":
         for pl in all_players:
             # TODO: implement insurance here
-            # if pl.will_take_insurance():
-            #     ?
-            pass
+            if pl.will_take_insurance():
+                assert len(pl.hands) == 1  # no one has had chance to split yet
+                pl.insurance_bet = pl.hands[0].current_bet / 2
 
     if dealer.has_blackjack():
         vprint("dealer has blackjack")
         for pl in all_players:
             assert len(pl.hands) == 1  # no one has had chance to split yet
             hand = pl.hands[0]
-            if hand.is_blackjack():
+            if (not dealer_card.value == "A") and hand.is_blackjack():
                 # assume player declared blackjack immediately or cards are face up (some games will only pay even money otherwise)
-                pl.win_on_hand(hand.current_bet)
+                pl.win_on_hand(hand.current_bet * (1 + table.blackjack_payoff_ratio))
+            elif dealer_card.value == "A" and pl.has_insurance():
+                pl.win_on_hand(hand.current_bet + pl.insurance_bet * (table.insurance_payoff_ratio))
             else:
                 pl.lose_on_hand()
         reset_all_players(all_players, dealer)
@@ -444,7 +459,7 @@ def play_round(player, table, with_other_players=True):
     for card in dealer.hands[0].cards:
         if not card.is_face_up:
             vprint("dealer flipped over {}".format(card))
-            player.count(card)
+            player.count(card, shoe)
             card.is_face_up = True
     play_turn(dealer, table, None, player)
 
@@ -473,7 +488,7 @@ def play_round(player, table, with_other_players=True):
                 if not card.is_face_up:
                     card.is_face_up = True  # pointless, but for consistency
                     vprint("{} flipped over {}".format(pl, card))
-                    player.count(card)
+                    player.count(card, shoe)
 
     # reset everyone
     reset_all_players(all_players, dealer)
@@ -489,7 +504,7 @@ if __name__ == "__main__":
     table = Table(
         doubleable_hard_values = [9, 10, 11],  # (orig. [10, 11])
         minimum_bet = 5,  # (orig. 5)
-        maximum_bet = np.inf,  # this may be the biggest factor limiting gains when the count is high (orig. 200)
+        maximum_bet = 200,  # this may be the biggest factor limiting gains when the count is high (orig. 200)
         blackjack_payoff_ratio = 3/2,  # (orig. 3/2)
         insurance_payoff_ratio = 2/1,  # (orig. 2/1)
         n_decks = 6,
@@ -509,14 +524,16 @@ if __name__ == "__main__":
         return 0
 
     def bet_function_of_tc(tc):
+        threshold = 3
         def transform(tc):
             # return 0
             # return np.random.pareto(1 + 1/tc)
             # return tc
             # return tc ** 0.5
             # return np.log(tc)
-            return tc**4
-        return table.minimum_bet * transform(tc) if tc > 0 else 0
+            # return tc**4
+            return np.inf # will bet table max
+        return table.minimum_bet * transform(tc) if tc >= threshold else 0
 
     counting_and_betting_system = CountingAndBettingSystem(count_function_of_value, bet_function_of_tc)
 
@@ -524,6 +541,7 @@ if __name__ == "__main__":
 
     bankrolls = [player.bankroll]
     counts = [0]
+    true_counts = [0]
     n_rounds = 0
     while True:
         vprint("\nround {}".format(n_rounds))
@@ -532,6 +550,7 @@ if __name__ == "__main__":
         play_round(player, table, with_other_players=True)
         bankrolls.append(player.bankroll)
         counts.append(player.running_count)
+        true_counts.append(player.true_count)
         if player.is_broke():
             break
         n_rounds += 1
@@ -541,13 +560,15 @@ if __name__ == "__main__":
     sd = np.std(d_cash)
     print("\n\nEV {:.2f} , SD {:.2f}".format(ev, sd))
 
-    plt.plot(counts, c="r")
+    # plt.plot(counts, c="r")
+    plt.plot(true_counts, c="r")
+
     ax2 = plt.gca().twinx()
     ax2.plot(bankrolls, c="g")
     plt.show()
 
-    plt.hist(d_cash, bins=50)
-    plt.show()
+    # plt.hist(d_cash, bins=50)
+    # plt.show()
 
     # TODO: be able to reproduce the statistics table at https://wizardofodds.com/games/blackjack/card-counting/high-low/
     # TODO: implement insurance when TC > +3 (players are not yet betting on it even though I put this in the function)
