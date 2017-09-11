@@ -551,7 +551,7 @@ if __name__ == "__main__":
             # return tc ** 0.5
             # return np.log(tc)
             # return tc**4
-            return np.inf # will bet table max
+            return np.inf  # will bet table max
         return table.minimum_bet * transform(tc) if tc >= threshold else 0
 
     counting_and_betting_system = CountingAndBettingSystem(count_function_of_value, bet_function_of_tc)
