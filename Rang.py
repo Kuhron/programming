@@ -41,7 +41,7 @@ def get_populous_us_cities(n_cities):
         city_td = tds[1]
         city = city_td.find("a").text
         state_td = tds[2]
-        state = state_td.find("a").text
+        state = state_td.text.replace("\u00A0", "")  # remove &nbsp;
         new_str = u"{}, {}".format(city, state)
         # print(new_str.encode("utf-8"))
         cities.append(new_str)
