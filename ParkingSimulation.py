@@ -14,10 +14,12 @@ import matplotlib.pyplot as plt
 
 class Intersection:
     def __init__(self, x, y):
-        self.demand = random.random()
+        self.x = x
+        self.y = y
+        self.demand = np.random.random()
 
     def update(self):
-        self.demand += random.random()
+        self.demand += np.random.random()
 
 
 class IntersectionGrid:
@@ -38,13 +40,52 @@ class IntersectionGrid:
 
 
 class RoadSegment:
-    def __init__(self, p1, p2):
-        pass
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
+    def other_end_from_point(self, p):
+        if p == self.a:
+            return self.b
+        elif p == self.b:
+            return self.a
+        else:
+            raise ValueError("point not on this road segment")
+
+    def __eq__(self, other):
+        ours = (self.a, self.b)
+        theirs1 = (other.a, other.b)
+        theirs2 = (other.b, other.a)
+        return ours == theirs1 or ours == theirs2
 
 
 class RoadNetwork:
     def __init__(self, intersection_grid):
         self.intersection_grid = intersection_grid
+
+        segments = set()
+        points = set(intersection_grid.intersections)
+        point_coordinates = [np.array(p.x, p.y) for p in points]
+        points_left = {x for x in points}
+        points_reached = set()
+        start_point = np.random.choice(points_left)
+        points_reached.add(start_point)
+        while len(points_left) > 0:
+            a = np.random.choice(points_left)
+            # random walk until find another point in the grid, even if it is already in the network (not trying to create an acyclic graph)
+            p = np.array(a.x, a.y)
+            while p not in point_coordinates or p == (a.x, a.y):
+                d = np.random.choice((1, 0), (0, 1), (-1, 0), (0, -1))
+                p += np.array(d)
+            new_point = intersection_grid.get_intersection_at_coordinates(*p)
+            segments.add(RoadSegment(a, new_point))
+            points_reached.add(new_point)
+            points_left = points - points_reached  # setminus
+            # be careful not to mutate any of these objects that are references to intersection_grid's intersections or such
+
+        self.segments = segments
+
+
 
     def get_road_segment_from_point_toward_destination(origin, destination):
         if np.random.random() < 0.75:
@@ -75,12 +116,17 @@ class RoadNetwork:
 
     def get_most_direct_segment(self, origin, destination):
         options = self.get_segments_adjacent_to_point(origin)
-        best_option = min(x for x in options, key=lambda x: euclidean_distance(x.other_end_from_point(origin), destination))
+
+        def get_distance_if_taking_option(option):
+            return euclidean_distance(option.other_end_from_point(origin), destination)
+
+        best_option = min(options, key=get_distance_if_taking_option)
+        return best_option
 
 
 class City:
     def __init__(self, x_max, y_max):
-        self.intersections = City.intersections(x_max, y_max)
+        self.intersections = City.get_intersections(x_max, y_max)
         self.intersection_grid = IntersectionGrid(self.intersections)
         self.road_network = RoadNetwork(self.intersection_grid)
 
@@ -94,7 +140,8 @@ class City:
         return intersections
 
     def plot(self):
-        for intersection in self.intersections:
+        for p in self.intersections:
+            plt.scatter([p.x], [p.y], color=p.demand)
 
 
 class Agent:
