@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -16,26 +17,27 @@ class Intersection:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.demand = np.random.random()
+        self.demand = random.random()
 
     def update(self):
-        self.demand += np.random.random()
+        self.demand += random.random()
 
 
 class IntersectionGrid:
     def __init__(self, intersections):
+        self.intersections = intersections
         self.grid = IntersectionGrid.get_grid_from_intersections(intersections)
 
     @staticmethod
     def get_grid_from_intersections(intersections):
         x_max = max(p.x for p in intersections)
         y_max = max(p.y for p in intersections)
-        grid = np.full(shape=(x_max, y_max), fill_value=None)  # why are these args backwards
+        grid = np.full(shape=(x_max + 1, y_max + 1), fill_value=None)  # why are these args backwards
         for p in intersections:
             grid[p.x, p.y] = p
         return grid
 
-    def get_intersection_at_coordinates(x, y):
+    def get_intersection_at_coordinates(self, x, y):
         return self.grid[x, y]
 
 
@@ -58,6 +60,9 @@ class RoadSegment:
         theirs2 = (other.b, other.a)
         return ours == theirs1 or ours == theirs2
 
+    def __hash__(self):  # Python 3 requires this if you define __eq__
+        return hash((self.a, self.b))
+
 
 class RoadNetwork:
     def __init__(self, intersection_grid):
@@ -65,18 +70,18 @@ class RoadNetwork:
 
         segments = set()
         points = set(intersection_grid.intersections)
-        point_coordinates = [np.array(p.x, p.y) for p in points]
-        points_left = {x for x in points}
+        point_coordinates = [(p.x, p.y) for p in points]
         points_reached = set()
-        start_point = np.random.choice(points_left)
+        points_left = points - points_reached  # setminus
+        start_point = random.choice(list(points_left))
         points_reached.add(start_point)
         while len(points_left) > 0:
-            a = np.random.choice(points_left)
+            a = random.choice(list(points_left))
             # random walk until find another point in the grid, even if it is already in the network (not trying to create an acyclic graph)
-            p = np.array(a.x, a.y)
+            p = (a.x, a.y)
             while p not in point_coordinates or p == (a.x, a.y):
-                d = np.random.choice((1, 0), (0, 1), (-1, 0), (0, -1))
-                p += np.array(d)
+                d = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
+                p = (p[0] + d[0], p[1] + d[1])
             new_point = intersection_grid.get_intersection_at_coordinates(*p)
             segments.add(RoadSegment(a, new_point))
             points_reached.add(new_point)
@@ -88,10 +93,10 @@ class RoadNetwork:
 
 
     def get_road_segment_from_point_toward_destination(origin, destination):
-        if np.random.random() < 0.75:
+        if random.random() < 0.75:
             return self.get_most_direct_segment(origin, destination)
         else:
-            return np.random.choice(segments_from_point)
+            return random.choice(segments_from_point)
 
     def get_most_direct_segment_by_bearing(self, origin, destination):
         raise Exception("do not use")
@@ -99,7 +104,7 @@ class RoadNetwork:
         dy = destination.y - origin.y
         assert dx != 0 or dy != 0
         if abs(dx) == abs(dy):
-            dx += np.random.choice(-1, 1) * 1e-6  # hack to make it choose one of the two equally close directions
+            dx += random.choice(-1, 1) * 1e-6  # hack to make it choose one of the two equally close directions
         if abs(dx) > abs(dy):
             assert dx != 0
             if dx > 0:
@@ -135,13 +140,13 @@ class City:
         intersections = []
         for x in range(x_max):
             for y in range(y_max):
-                if np.random.random() < 0.3:
+                if random.random() < 1:#0.3:
                     intersections.append(Intersection(x, y))
         return intersections
 
     def plot(self):
         for p in self.intersections:
-            plt.scatter([p.x], [p.y], color=p.demand)
+            plt.scatter([p.x], [p.y]) # color=p.demand)  # somehow define a cmap later, but need bounds (could normalize all demands on each step)
 
 
 class Agent:
@@ -158,6 +163,7 @@ def euclidean_distance(p1, p2):
 
 
 if __name__ == "__main__":
-    city = City(10, 10)
+    city = City(1, 2)
 
     city.plot()
+    plt.show()
