@@ -22,6 +22,7 @@ class Intersection:
 
     def update(self):
         self.demand += random.random()
+        self.demand = max(0, self.demand)
 
     def __repr__(self):
         return "I({}, {})".format(self.x, self.y)
@@ -51,6 +52,8 @@ class RoadSegment:
     def __init__(self, a, b):
         self.a = a
         self.b = b
+        self.capacity = int(euclidean_distance(self.a, self.b) * 5)
+        self.n_cars = random.randint(1, self.capacity)  # no empty streets at first, so there will always be at least 1 car in existence
 
     def other_end_from_point(self, p):
         if p == self.a:
@@ -60,7 +63,17 @@ class RoadSegment:
         else:
             raise ValueError("point not on this road segment")
 
+    def is_full(self):
+        assert 0 <= self.n_cars <= self.capacity
+        return self.n_cars == self.capacity
+
+    def is_empty(self):
+        assert 0 <= self.n_cars <= self.capacity
+        return self.n_cars == 0
+
     def __eq__(self, other):
+        if type(other) is not RoadSegment:
+            raise TypeError("comparing RoadSegment to object of other type: {}".format(type(other)))
         ours = (self.a, self.b)
         theirs1 = (other.a, other.b)
         theirs2 = (other.b, other.a)
@@ -135,8 +148,12 @@ class RoadNetwork:
         def get_distance_if_taking_option(option):
             return euclidean_distance(option.other_end_from_point(origin), destination)
 
-        best_option = min(options, key=get_distance_if_taking_option)
+        # best_option = min(options, key=get_distance_if_taking_option)
+        best_option = random.choice(options)  # try this first
         return best_option
+
+    def get_segments_adjacent_to_point(self, p):
+        return [x for x in self.segments if x.a == p or x.b == p]
 
 
 class City:
@@ -159,24 +176,78 @@ class City:
         for p in self.intersections:
             plt.scatter([p.x], [p.y]) # color=p.demand)  # somehow define a cmap later, but need bounds (could normalize all demands on each step)
         for segment in self.road_network.segments:
-            plt.plot([segment.a.x, segment.b.x], [segment.a.y, segment.b.y])
+            plt.plot([segment.a.x, segment.b.x], [segment.a.y, segment.b.y])  # color = how full the parking is on that road
 
 
 class Agent:
-    def __init__(self):
-        pass
+    def __init__(self, start_segment, destination):
+        self.location = random.choice([start_segment.a, start_segment.b])
+        self.start_segment = start_segment
+        self.destination = destination
+        self.is_parked = False
+        self.start_segment.n_cars -= 1
+        self.blocks_since_destination = None
+
+    @staticmethod
+    def pick_start_segment(road_network):
+        assert len(road_network.segments) > 0
+        candidates = [x for x in road_network.segments if not x.is_empty()]
+        return random.choice(candidates)
+
+    @staticmethod
+    def pick_destination(intersections):
+        total_demand = sum(x.demand for x in intersections)
+        r = random.uniform(0, total_demand)
+        g = (x for x in intersections)
+        candidate = next(g)
+        while r >= candidate.demand:
+            r -= candidate.demand
+            candidate = next(g)
+        return candidate
+
+    def move_toward_destination(self, road_network):
+        segment = road_network.get_most_direct_segment(self.location, self.destination)
+        self.location = segment.other_end_from_point(self.location)
+        if self.location == self.destination:
+            self.blocks_since_destination = 0
+
+    def look_for_parking_nearby(self, road_network):
+        options = road_network.get_segments_adjacent_to_point(self.location)
+        choice = random.choice(options)
+        # have to go down the street to check for parking
+        self.location = choice.other_end_from_point(self.location)
+        self.blocks_since_destination += 1
+        if not choice.is_full():
+            self.park(choice)
+
+    def seek_parking(self, road_network):
+        if self.blocks_since_destination is None or self.blocks_since_destination > 3:
+            # destination has not been reached yet, or has moved too far looking for parking, so return to destination
+            self.move_toward_destination(road_network)
+        else:
+            self.look_for_parking_nearby(road_network)
+
+    def park(self, choice):
+        choice.n_cars += 1
+        self.is_parked = True
+        
 
 
 def euclidean_distance(p1, p2):
-    p1a = np.array(p1.x, p1.y)
-    p2a = np.array(p2.x, p2.y)
+    p1a = np.array([p1.x, p1.y])
+    p2a = np.array([p2.x, p2.y])
     d = p2a - p1a
     return np.sqrt(np.sum(d ** 2))
 
 
 
 if __name__ == "__main__":
-    city = City(20, 20)
+    city = City(10, 10)
 
     city.plot()
-    plt.show()
+    # plt.show()
+
+    while True:
+        agent = Agent(Agent.pick_start_segment(city.road_network), Agent.pick_destination(city.intersections))
+        while not agent.is_parked:
+            agent.seek_parking(city.road_network)
