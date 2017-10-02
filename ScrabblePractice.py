@@ -41,6 +41,7 @@ def print_letters(letters):
     for letter in letters:
         s1 += str(letter).rjust(3)
         s2 += str(get_value(letter)).rjust(3)
+    print()
     print(s1)
     print(s2)
 
@@ -73,5 +74,5 @@ if __name__ == "__main__":
                 else:
                     print("Unfortunately you cannot make it with your letters.")
             else:
-                print("That is not a real word. ", end="")
+                print("That is not a real word. ")
             print()
