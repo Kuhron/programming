@@ -1,4 +1,5 @@
 import random
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -22,23 +23,28 @@ class Intersection:
     def update(self):
         self.demand += random.random()
 
+    def __repr__(self):
+        return "I({}, {})".format(self.x, self.y)
+
 
 class IntersectionGrid:
     def __init__(self, intersections):
         self.intersections = intersections
-        self.grid = IntersectionGrid.get_grid_from_intersections(intersections)
+        self.x_max = max(p.x for p in intersections)
+        self.y_max = max(p.y for p in intersections)
+        self.grid = self.get_grid_from_intersections(intersections)
 
-    @staticmethod
-    def get_grid_from_intersections(intersections):
-        x_max = max(p.x for p in intersections)
-        y_max = max(p.y for p in intersections)
-        grid = np.full(shape=(x_max + 1, y_max + 1), fill_value=None)  # why are these args backwards
+    def get_grid_from_intersections(self, intersections):
+        grid = np.full(shape=(self.x_max + 1, self.y_max + 1), fill_value=None)  # why are these args backwards
         for p in intersections:
             grid[p.x, p.y] = p
         return grid
 
     def get_intersection_at_coordinates(self, x, y):
         return self.grid[x, y]
+
+    def contains(self, coords):
+        return 0 <= coords[0] <= self.x_max and 0 <= coords[1] <= self.y_max
 
 
 class RoadSegment:
@@ -67,30 +73,34 @@ class RoadSegment:
 class RoadNetwork:
     def __init__(self, intersection_grid):
         self.intersection_grid = intersection_grid
+        self.segments = self.get_segments()
 
+    def get_segments(self):
         segments = set()
-        points = set(intersection_grid.intersections)
+        points = set(self.intersection_grid.intersections)
         point_coordinates = [(p.x, p.y) for p in points]
         points_reached = set()
         points_left = points - points_reached  # setminus
         start_point = random.choice(list(points_left))
         points_reached.add(start_point)
+        a = start_point
         while len(points_left) > 0:
-            a = random.choice(list(points_left))
             # random walk until find another point in the grid, even if it is already in the network (not trying to create an acyclic graph)
             p = (a.x, a.y)
             while p not in point_coordinates or p == (a.x, a.y):
                 d = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
-                p = (p[0] + d[0], p[1] + d[1])
-            new_point = intersection_grid.get_intersection_at_coordinates(*p)
+                new_p = (p[0] + d[0], p[1] + d[1])
+                if self.intersection_grid.contains(new_p):
+                    p = new_p
+                    # else continue
+            new_point = self.intersection_grid.get_intersection_at_coordinates(*p)
             segments.add(RoadSegment(a, new_point))
             points_reached.add(new_point)
             points_left = points - points_reached  # setminus
+            a = new_point # start from this point next time, to speed up search so we are not just retracing old roads
             # be careful not to mutate any of these objects that are references to intersection_grid's intersections or such
 
-        self.segments = segments
-
-
+        return segments
 
     def get_road_segment_from_point_toward_destination(origin, destination):
         if random.random() < 0.75:
@@ -140,13 +150,16 @@ class City:
         intersections = []
         for x in range(x_max):
             for y in range(y_max):
-                if random.random() < 1:#0.3:
+                if random.random() < 0.3:
                     intersections.append(Intersection(x, y))
         return intersections
 
     def plot(self):
+        print("plot")
         for p in self.intersections:
             plt.scatter([p.x], [p.y]) # color=p.demand)  # somehow define a cmap later, but need bounds (could normalize all demands on each step)
+        for segment in self.road_network.segments:
+            plt.plot([segment.a.x, segment.b.x], [segment.a.y, segment.b.y])
 
 
 class Agent:
@@ -163,7 +176,7 @@ def euclidean_distance(p1, p2):
 
 
 if __name__ == "__main__":
-    city = City(1, 2)
+    city = City(20, 20)
 
     city.plot()
     plt.show()
