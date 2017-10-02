@@ -2,6 +2,7 @@ import random
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 
 # have a grid of points, joined randomly by streets (somehow ensure whole graph is connected)
@@ -21,7 +22,7 @@ class Intersection:
         self.demand = random.random()
 
     def update(self):
-        self.demand += random.random()
+        self.demand *= np.exp(random.random() - 0.5)
         self.demand = max(0, self.demand)
 
     def __repr__(self):
@@ -70,6 +71,9 @@ class RoadSegment:
     def is_empty(self):
         assert 0 <= self.n_cars <= self.capacity
         return self.n_cars == 0
+
+    def fullness(self):
+        return self.n_cars / self.capacity
 
     def __eq__(self, other):
         if type(other) is not RoadSegment:
@@ -167,16 +171,25 @@ class City:
         intersections = []
         for x in range(x_max):
             for y in range(y_max):
-                if random.random() < 0.3:
+                if random.random() < 0.9:
                     intersections.append(Intersection(x, y))
         return intersections
 
-    def plot(self):
-        print("plot")
+    def update(self):
         for p in self.intersections:
-            plt.scatter([p.x], [p.y]) # color=p.demand)  # somehow define a cmap later, but need bounds (could normalize all demands on each step)
+            p.update()
+        max_demand = max(p.demand for p in self.intersections)
+
+        # normalize demand to [0, 1]
+        for p in self.intersections:
+            p.demand /= max_demand
+
+    def plot(self):
+        colormap = cm.YlOrRd
         for segment in self.road_network.segments:
-            plt.plot([segment.a.x, segment.b.x], [segment.a.y, segment.b.y])  # color = how full the parking is on that road
+            plt.plot([segment.a.x, segment.b.x], [segment.a.y, segment.b.y], color=colormap(segment.fullness()))
+        for p in self.intersections:
+            plt.scatter([p.x], [p.y], c=colormap(p.demand))
 
 
 class Agent:
@@ -221,8 +234,8 @@ class Agent:
             self.park(choice)
 
     def seek_parking(self, road_network):
-        if self.blocks_since_destination is None or self.blocks_since_destination > 3:
-            # destination has not been reached yet, or has moved too far looking for parking, so return to destination
+        if self.blocks_since_destination is None:
+            # destination has not been reached yet
             self.move_toward_destination(road_network)
         else:
             self.look_for_parking_nearby(road_network)
@@ -231,7 +244,6 @@ class Agent:
         choice.n_cars += 1
         self.is_parked = True
         
-
 
 def euclidean_distance(p1, p2):
     p1a = np.array([p1.x, p1.y])
@@ -243,11 +255,18 @@ def euclidean_distance(p1, p2):
 
 if __name__ == "__main__":
     city = City(10, 10)
+    city.update()
 
+    plt.ion()
     city.plot()
-    # plt.show()
 
-    while True:
+    for i in range(1000):
         agent = Agent(Agent.pick_start_segment(city.road_network), Agent.pick_destination(city.intersections))
         while not agent.is_parked:
             agent.seek_parking(city.road_network)
+        city.update()
+
+        if i % 50 == 0:  # redrawing everything too often is the greatest performance hit
+            plt.gcf().clear()
+            city.plot()
+            plt.pause(0.01)
