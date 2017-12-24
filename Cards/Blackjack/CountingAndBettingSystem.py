@@ -1,0 +1,10 @@
+class CountingAndBettingSystem:
+    def __init__(self, count_function_of_value, bet_function_of_tc):
+        self.count_function = count_function_of_value
+        self.bet_function_of_tc = bet_function_of_tc
+
+    def get_count_value(self, card):
+        return self.count_function(card.get_blackjack_value())
+
+    def get_bet_amount(self, tc):
+        return self.bet_function_of_tc(tc)

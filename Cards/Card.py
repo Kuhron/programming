@@ -74,6 +74,9 @@ class ShoeOfCards(DeckOfCards):
         decks_left = self.n_decks - decks_dealt
         return decks_left
 
+    def get_n_cards_left(self):
+        return 52 * self.n_decks - self.n_cards_dealt
+
 
 class Player:
     def __init__(self):
