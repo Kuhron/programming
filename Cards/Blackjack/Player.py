@@ -1,3 +1,7 @@
+from Cards.Blackjack.BlackjackHand import BlackjackHand as Hand
+from Cards.Blackjack.BasicStrategy import BasicStrategy
+
+
 class Player:
     def __init__(self, bankroll, is_counting, counting_and_betting_system):
         self.name = None

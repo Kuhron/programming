@@ -1,3 +1,9 @@
+import numpy as np
+
+from Cards import Card
+from Cards.Blackjack.Dealer import Dealer
+
+
 class Table:
     def __init__(self, minimum_bet, maximum_bet, blackjack_payoff_ratio, insurance_payoff_ratio, n_decks, max_hands_total,
                  doubleable_hard_values, double_after_split, hit_more_than_once_after_split,

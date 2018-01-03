@@ -1,3 +1,9 @@
+import numpy as np
+
+from Cards.Blackjack.BlackjackHand import BlackjackHand as Hand
+from Cards.Blackjack.Player import Player
+
+
 class Dealer(Player):
     def __init__(self, stay_on_soft_17):
         super().__init__(np.inf, False, None)

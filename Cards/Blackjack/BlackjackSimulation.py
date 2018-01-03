@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 
 from Cards.Blackjack.BlackjackCard import BlackjackCard as Card
 from Cards.Blackjack.BlackjackHand import BlackjackHand as Hand
+from Cards.Blackjack.Player import Player
+from Cards.Blackjack.Dealer import Dealer
+from Cards.Blackjack.Table import Table
+from Cards.Blackjack.CountingAndBettingSystem import CountingAndBettingSystem
 
 # import everything else
 
@@ -86,7 +90,7 @@ def reset_all_players(all_players, dealer):
 
 def play_round(player, table, with_other_players=True):
     # TODO: desperately needs to be broken down into smaller functions
-    
+
     if with_other_players:
         n_other_players = np.random.choice([0, 1, 2, 3, 4, 5])
         other_players = [Player(table.minimum_bet * np.random.randint(1, 101), False, None) for i in range(n_other_players)]
