@@ -16,23 +16,16 @@ r = lambda a, b: np.random.uniform(a, b)
 
 # functions to transform a real number x into the desired type of parameter, in many cases confined to an interval
 
-def exp(x):
-    while True:
-        val = np.exp(x)
-        if not np.isnan(val):
-            return val
-        else:
-            x = np.sqrt(x)
-
 def real_to_interval(x, a, b):
-    sigmoid_0_1 = 1 / (1 + exp(-1 * x))
-    return a + sigmoid_0_1 * (b - a)
+    mod_1 = x % 1
+    return a + mod_1 * (b - a)
 
-def hash_to_interval(x, a, b):
-    x = x % 1
-    x = 1 / x
-    x += (-1 if x >= 0 else 1)
-    return real_to_interval(x, a, b)
+def log(x):
+    return np.log(abs(x)) * np.sign(x)
+
+def sin(x):
+    # prevent stupid overflow
+    return np.sin(x % (2 * np.pi))
     
 def get_ema_alpha(x):
     return real_to_interval(x, 0, 1)
@@ -41,24 +34,24 @@ def get_probability(x):
     return real_to_interval(x, 0, 1)
 
 def get_sign(x):
-    sin_value = np.sin(translate(dilate(x)))
+    sin_value = sin(x)
     return 1 if sin_value >= 0 else -1
 
 def get_step_amount(x):
     return stats.norm.cdf(x, loc=get_normal_mu(x), scale=get_normal_sigma(x))
 
 def get_scale_amount(x):
-    return x * abs(np.sin(x))
+    return abs(x * sin(x))
 
 def get_normal_mu(x):
     return real_to_interval(x, -1*get_scale_amount(x), get_scale_amount(x))
 
 def get_normal_sigma(x):
-    return get_scale_amount(exp(x))
+    return get_scale_amount(x)
 
 def get_boolean(x):
-    # return real_to_interval(x, 0, 1) < real_to_interval(x, 1, 0)
-    return np.random.choice([True, False])
+    return real_to_interval(x, 0, 1) < real_to_interval(x, 1, 0)
+    # return np.random.choice([True, False])
 
 
 # transformation of a number, done by a changing series of basic operations, which may themselves take params
@@ -78,6 +71,7 @@ def transform(x, transformations):
     transformations = modify_transformations(x, transformations)
     for func in transformations:
         x = func(x)
+    x = log(x)
     return x, transformations
 
 def get_random_transformation(x):
@@ -103,13 +97,13 @@ def get_time_series():
     transformations = []
     while True:
         print(x)
-        print(len(transformations))
+        print(transformations)
         x, transformations = transform(x, transformations)
         yield x
 
 
 if __name__ == "__main__":
-    xs = [i for i in range(20)]
+    xs = [i for i in range(100)]
     gen = get_time_series()
     ys = [next(gen) for x in xs]
     plt.plot(xs, ys)
