@@ -57,8 +57,8 @@ def get_time_series():
     while True:
         # print("".join([float_format.format(item) for item in [x, a, b]]))
         x_s = get_step_normal(a, b)
-        # a_s = get_step_with_restorative_force(a, 0, 0.01)
-        a_s = r(-0.01, 0.01)
+        a_s = get_step_with_restorative_force(a, 0, 0.01)
+        # a_s = r(-0.01, 0.01)
         b_s = r(-0.01, 0.01) #get_step(c, x, a)
         # c_s = get_step_with_restorative_force(c, 0, 0.01) #get_step(x, a, b)
         x += x_s
@@ -96,12 +96,28 @@ def run_then_plot(n_points):
     ys = [y[0] for y in y_tuples]
     mus = [y[1] for y in y_tuples]
     log_sigmas = [y[2] for y in y_tuples]
+
     plt.subplot(211)
     plt.plot(xs, ys, label="y", color="b")
     plt.legend()
     plt.subplot(212)
+    # plt.plot(xs, mus, label="mu", color="g")
     plt.plot(xs, log_sigmas, label="log_sigma", color="r")
     plt.legend()
+    plt.show()
+
+def plot_2d_process(n_points):
+    xg = get_time_series()
+    x_tuples = [next(xg) for i in range(n_points)]
+    xs = [x[0] for x in x_tuples]
+    x_mus = [x[1] for x in x_tuples]
+    x_log_sigmas = [x[2] for x in x_tuples]
+    yg = get_time_series()
+    y_tuples = [next(yg) for x in xs]
+    ys = [y[0] for y in y_tuples]
+    y_mus = [y[1] for y in y_tuples]
+    y_log_sigmas = [y[2] for y in y_tuples]
+    plt.plot(xs, ys)
     plt.show()
 
 
@@ -111,3 +127,4 @@ if __name__ == "__main__":
     # plot_window = 10000
     run_then_plot(n_points)
     # run_realtime_plot(n_points, plot_window, plot_interval)
+    # plot_2d_process(n_points)
