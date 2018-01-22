@@ -48,9 +48,9 @@ def get_step_with_restorative_force(x, center, max_step_size):
 def get_time_series():
     x, a, b, c = 0, 0, 0, 0
     while True:
-        print(x, a, b, c)
+        # print(x, a, b, c)
         x_s = get_step_normal(a, b)
-        a_s = r(-0.01, 0.01) #get_step(b, c, x)
+        a_s = get_step_with_restorative_force(a, 0, 0.01) #get_step(b, c, x)
         b_s = r(-0.01, 0.01) #get_step(c, x, a)
         # c_s = get_step_with_restorative_force(c, 0, 0.01) #get_step(x, a, b)
         x += x_s
@@ -61,7 +61,7 @@ def get_time_series():
 
 
 if __name__ == "__main__":
-    xs = [i for i in range(100000)]
+    xs = [i for i in range(1000000)]
     g = get_time_series()
     ys = [next(g) for x in xs]
     plt.plot(xs, ys)
