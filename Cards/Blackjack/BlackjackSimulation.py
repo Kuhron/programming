@@ -1,4 +1,5 @@
 import argparse
+import logging, logging.handlers
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -16,21 +17,21 @@ from Cards.Blackjack.CountingAndBettingSystem import CountingAndBettingSystem
 def add_card(hand, deck, is_face_up, counting_player):
     card = Card(next(deck), is_face_up)
     hand.add_card(card)
-    vprint("new card in hand {}".format(hand))
+    logger.info("new card in hand {}".format(hand))
     if is_face_up:
         counting_player.count(card, deck)
 
 
 def play_turn(player, table, dealer_card, counting_player):
-    vprint("-- playing turn for {}".format(player.name))
+    logger.info("-- playing turn for {}".format(player.name))
     shoe = table.shoe
     for hand in player.hands:
         while True:
             if hand.has_busted():
-                vprint("{} busted with hand {}".format(player, hand))
+                logger.info("{} busted with hand {}".format(player, hand))
                 break
             elif hand.is_blackjack():
-                vprint("{} has blackjack with hand {}".format(player, hand))
+                logger.info("{} has blackjack with hand {}".format(player, hand))
                 break
 
             decision = player.decide(hand, dealer_card)
@@ -41,7 +42,7 @@ def play_turn(player, table, dealer_card, counting_player):
             if decision == "P" and len(player.hands) >= table.max_hands_total:
                 decision = "H"  # TODO is this always true? probably not (e.g. 8s with a high count); treat it as HARD_MATRIX rather than PAIR_MATRIX
 
-            vprint("{} has hand {} and decision {}".format(player, hand, decision))
+            logger.info("{} has hand {} and decision {}".format(player, hand, decision))
 
             if decision == "H":
                 add_card(hand, shoe, is_face_up=True, counting_player=counting_player)
@@ -66,18 +67,18 @@ def play_turn(player, table, dealer_card, counting_player):
 
             elif decision == "P":
                 assert hand in player.hands, "hand {} not in list:\n{}".format(hand, player.hands)
-                print(hand)
-                input()
+                # print(hand)
+                # input()
+                is_aces = hand.cards[0].value == hand.cards[1].value == "A"  # only one each after splitting aces, usually
                 new_hands = hand.split()
                 player.hands.remove(hand)
                 for new_hand in new_hands:
                     add_card(new_hand, shoe, is_face_up=True, counting_player=counting_player)
                     player.hands.append(new_hand)
-                play_turn(player, table, dealer_card, counting_player)  # replay on the resulting hands
+                if (not is_aces) or table.play_after_splitting_aces:
+                    play_turn(player, table, dealer_card, counting_player)  # replay on the resulting hands
                 break  # do not keep looping on old state (before split)
                 # TODO add restrictions on play after split, including staying on non-splittable hand and splitting another one after that
-                # e.g. dealt AA, split to A A, hit to A9 A, hit next hand to A9 AA, split to A9 A A, hit to A9 AT A, hit to A9 AT A2 (allowed to hit again?)
-
             else:
                 raise Exception("unhandled decision: {}".format(decision))
 
@@ -112,7 +113,7 @@ def play_round(player, table, with_other_players=True):
         table.shuffle_shoe()
         shoe = table.shoe  # table.shuffle_shoe() changes table.shoe to a different object, so re-assign this reference
         player.reset_count()
-    vprint("{:.2f} decks left in shoe".format(shoe.get_n_decks_left()))
+    logger.info("{:.2f} decks left in shoe".format(shoe.get_n_decks_left()))
 
     # initial bet
     for pl in all_players:
@@ -130,7 +131,7 @@ def play_round(player, table, with_other_players=True):
 
     is_face_up = True  # all cards that follow
     dealer_card = dealer.hands[0].cards[1]
-    vprint("dealer shows {}".format(dealer_card))
+    logger.info("dealer shows {}".format(dealer_card))
 
     if dealer_card.value == "A":
         for pl in all_players:
@@ -138,11 +139,11 @@ def play_round(player, table, with_other_players=True):
             if pl.will_take_insurance():
                 assert len(pl.hands) == 1  # no one has had chance to split yet
                 pl.insurance_bet = pl.hands[0].current_bet / 2  # half of original bet always, as far as I know
-                vprint("{} takes insurance, betting {:.2f}".format(pl, pl.insurance_bet))
+                logger.info("{} takes insurance, betting {:.2f}".format(pl, pl.insurance_bet))
                 # raise; pl.bet(pl.hands[0], pl.insurance_bet)  # DON'T do this; the player will be overpaid if dealer has blackjack
 
     if dealer.has_blackjack():
-        vprint("dealer has blackjack")
+        logger.info("dealer has blackjack")
         for pl in all_players:
             assert len(pl.hands) == 1  # no one has had chance to split yet
             hand = pl.hands[0]
@@ -158,7 +159,7 @@ def play_round(player, table, with_other_players=True):
         reset_all_players(all_players, dealer)
         return
     elif dealer_card.value == "A":
-        vprint("dealer does not have blackjack")
+        logger.info("dealer does not have blackjack")
 
     for pl in all_players:
         if pl.has_insurance():
@@ -172,7 +173,7 @@ def play_round(player, table, with_other_players=True):
     # show cards
     for card in dealer.hands[0].cards:
         if not card.is_face_up:
-            vprint("dealer flipped over {}".format(card))
+            logger.info("dealer flipped over {}".format(card))
             player.count(card, shoe)
             card.is_face_up = True
     play_turn(dealer, table, None, player)
@@ -187,6 +188,8 @@ def play_round(player, table, with_other_players=True):
             elif hand.is_blackjack() and (len(pl.hands) == 1 or table.pay_blackjack_after_split):
                 # remember, always show blackjack immediately if you are dealt it! (some tables will only pay even money otherwise)
                 pl.win_on_hand(hand.current_bet * (1 + table.blackjack_payoff_ratio))
+            elif dealer.hands[0].has_busted():
+                pl.win_on_hand(hand.current_bet * 2)
             elif hand.max_value > dealer_hand_value:
                 pl.win_on_hand(hand.current_bet * 2)
             elif hand.max_value == dealer_hand_value:
@@ -201,7 +204,7 @@ def play_round(player, table, with_other_players=True):
             for card in hand.cards:
                 if not card.is_face_up:
                     card.is_face_up = True  # pointless, but for consistency
-                    vprint("{} flipped over {}".format(pl, card))
+                    logger.info("{} flipped over {}".format(pl, card))
                     player.count(card, shoe)
 
     # reset everyone
@@ -210,24 +213,37 @@ def play_round(player, table, with_other_players=True):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-v", dest="verbose", action="store_true")
     parser.add_argument("-n", dest="n_rounds", type=int, default=1000)
+    parser.add_argument("-v", dest="verbose", action="store_true")
     args = parser.parse_args()
-    vprint = print if args.verbose else lambda *_, **__: None
 
+    # logging setup
+    log_fh = logging.FileHandler('BJS.log', mode="w")
+    log_fh.setLevel(logging.INFO)
+    log_fh.setFormatter(logging.Formatter('%(message)s'))
+
+    root = logging.getLogger()
+    if args.verbose:
+        root.setLevel(logging.INFO)
+        root.addHandler(log_fh)
+
+    logger = logging.getLogger(__name__)
+
+    # game parameters
     table = Table(
         doubleable_hard_values = [x for x in range(2, 21)], #[9, 10, 11],  # (orig. [10, 11])
         minimum_bet = 1,  # (orig. 5), but make it 1 for easier EV idea
-        maximum_bet = 100,  # this may be the biggest factor limiting gains when the count is high (orig. 200)
+        maximum_bet = 1000,  # this may be the biggest factor limiting gains when the count is high (orig. 200)
         blackjack_payoff_ratio = 3/2,  # (orig. 3/2)
         insurance_payoff_ratio = 2/1,  # (orig. 2/1)
-        n_decks = 2,
+        n_decks = 6,
         max_hands_total = 4,  # limit splitting
         double_after_split = True,
         hit_more_than_once_after_split = False,
         cards_face_up = True,
         stay_on_soft_17 = True,
-        pay_blackjack_after_split = False,
+        pay_blackjack_after_split = False,  # usually False, tables treat this as normal 21
+        play_after_splitting_aces = False,  # usually False, splitting aces will typically give one card each with no further play
     )
 
     def count_function_of_value(n):
@@ -238,11 +254,12 @@ if __name__ == "__main__":
         return 0
 
     def bet_function_of_tc(tc):
-        threshold = 3
+        threshold = 0
+        bet_ratio = 5  # number of minimum bets that the player will increase bet by for each additional TC unit
         def transform(tc):
-            return 0  # always bet table minimum
+            # return 0  # always bet table minimum
             # return np.random.pareto(1 + 1/tc)
-            # return tc
+            return tc * bet_ratio
             # return tc ** 0.5
             # return np.log(tc)
             # return tc**4
@@ -252,14 +269,16 @@ if __name__ == "__main__":
 
     counting_and_betting_system = CountingAndBettingSystem(count_function_of_value, bet_function_of_tc)
 
-    player = Player(100 * table.minimum_bet * args.n_rounds, is_counting=True, counting_and_betting_system=counting_and_betting_system)
+    initial_bankroll = 100000 * table.minimum_bet
+    player = Player(initial_bankroll, is_counting=True, counting_and_betting_system=counting_and_betting_system)
+    # giving player so much money prevents typical drawdowns from bankrupting them
 
     bankrolls = [player.bankroll]
     counts = [0]
     true_counts = [0]
     n_rounds = 0
     while True:
-        vprint("\n---- round {} ----".format(n_rounds))
+        logger.info("\n---- round {} ----".format(n_rounds))
         if n_rounds > args.n_rounds:
             break
         play_round(player, table, with_other_players=True)
@@ -270,16 +289,18 @@ if __name__ == "__main__":
             break
         n_rounds += 1
 
+    pnls = [x - initial_bankroll for x in bankrolls]
+
     d_cash = np.diff(np.array(bankrolls))
     ev = np.mean(d_cash)
     sd = np.std(d_cash)
     print("\n\nEV {:.2f} , SD {:.2f}".format(ev, sd))
 
     # plt.plot(counts, c="r")
-    plt.plot(true_counts, c="r")
+    # plt.plot(true_counts, c="r")
 
-    ax2 = plt.gca().twinx()
-    ax2.plot(bankrolls, c="g")
+    # ax2 = plt.gca().twinx()
+    plt.plot(pnls, c="g")
     plt.show()
 
     # plt.hist(d_cash, bins=50)

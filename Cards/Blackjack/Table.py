@@ -1,13 +1,16 @@
 import numpy as np
+import logging
 
 from Cards import Card
 from Cards.Blackjack.Dealer import Dealer
 
 
+logger = logging.getLogger(__name__)
+
 class Table:
     def __init__(self, minimum_bet, maximum_bet, blackjack_payoff_ratio, insurance_payoff_ratio, n_decks, max_hands_total,
                  doubleable_hard_values, double_after_split, hit_more_than_once_after_split,
-                 cards_face_up, stay_on_soft_17, pay_blackjack_after_split):
+                 cards_face_up, stay_on_soft_17, pay_blackjack_after_split, play_after_splitting_aces):
         self.minimum_bet = minimum_bet
         self.maximum_bet = maximum_bet
         self.blackjack_payoff_ratio = blackjack_payoff_ratio
@@ -20,6 +23,7 @@ class Table:
         self.cards_face_up = cards_face_up
         self.stay_on_soft_17 = stay_on_soft_17
         self.pay_blackjack_after_split = pay_blackjack_after_split
+        self.play_after_splitting_aces = play_after_splitting_aces
 
         self.shoe = self.get_new_shoe()
         self.dealer = Dealer(self.stay_on_soft_17)
@@ -30,5 +34,5 @@ class Table:
         return shoe
 
     def shuffle_shoe(self):
-        vprint("shuffling new shoe")  # debug
+        logger.info("shuffling new shoe")  # debug
         self.shoe = self.get_new_shoe()

@@ -1,5 +1,9 @@
+import logging
+
 from Cards.Blackjack.BlackjackHand import BlackjackHand as Hand
 from Cards.Blackjack.BasicStrategy import BasicStrategy
+
+logger = logging.getLogger(__name__)
 
 
 class Player:
@@ -27,7 +31,7 @@ class Player:
 
     def bet(self, hand, amount):
         amount = min(amount, self.bankroll)
-        vprint("{} bet on hand {}; bet {:.2f} -> {:.2f}. bankroll {:.2f} -> {:.2f}".format(
+        logger.info("{} bet on hand {}; bet {:.2f} -> {:.2f}. bankroll {:.2f} -> {:.2f}".format(
             self, hand, hand.current_bet, hand.current_bet + amount, self.bankroll, self.bankroll - amount))
         hand.current_bet += amount
         self.bankroll -= amount
@@ -53,11 +57,11 @@ class Player:
 
     def lose_on_hand(self):
         # forfeit hand.bet
-        vprint("{} lost hand. new bankroll {:.0f}".format(self, self.bankroll))
+        logger.info("{} lost hand. new bankroll {:.2f}".format(self, self.bankroll))
         pass
 
     def win_on_hand(self, gross_payoff):
-        vprint("{} won hand. bankroll {:.0f} -> {:.0f}".format(self, self.bankroll, self.bankroll + gross_payoff))
+        logger.info("{} won hand. payoff {:.2f}. bankroll {:.2f} -> {:.2f}".format(self, gross_payoff, self.bankroll, self.bankroll + gross_payoff))
         self.bankroll += gross_payoff
 
     def will_take_insurance(self):
@@ -68,7 +72,7 @@ class Player:
 
     def lose_insurance_bet(self):
         self.bankroll -= self.insurance_bet
-        vprint("{} loses insurance bet of {:.2f}; bankroll -> {:.2f}".format(self, self.insurance_bet, self.bankroll))
+        logger.info("{} loses insurance bet of {:.2f}; bankroll -> {:.2f}".format(self, self.insurance_bet, self.bankroll))
         self.insurance_bet = 0
 
     def reset(self):
@@ -77,10 +81,12 @@ class Player:
 
     def count(self, card, shoe):
         if self.is_counting:
-            self.running_count += self.counting_and_betting_system.get_count_value(card)
+            count_change = self.counting_and_betting_system.get_count_value(card)
+            count_change_str = "+1" if count_change == 1 else str(count_change)
+            self.running_count += count_change
             self.true_count = self.get_true_count(shoe)
-            vprint("{} counted card {}; rc = {}; {:.2f} decks left => tc = {:.2f}".format(
-                self, card, self.running_count, shoe.get_n_decks_left(), self.true_count)
+            logger.info("{} counted card {} ({}); rc = {}; {:.2f} decks left => tc = {:.2f}".format(
+                self, card, count_change_str, self.running_count, shoe.get_n_decks_left(), self.true_count)
             )
 
     def get_true_count(self, shoe):
