@@ -254,7 +254,7 @@ if __name__ == "__main__":
         return 0
 
     def bet_function_of_tc(tc):
-        threshold = 0
+        threshold = 0.01
         bet_ratio = 5  # number of minimum bets that the player will increase bet by for each additional TC unit
         def transform(tc):
             # return 0  # always bet table minimum
