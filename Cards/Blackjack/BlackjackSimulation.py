@@ -246,12 +246,7 @@ if __name__ == "__main__":
         play_after_splitting_aces = False,  # usually False, splitting aces will typically give one card each with no further play
     )
 
-    def count_function_of_value(n):
-        if 2 <= n <= 6:
-            return +1
-        elif n in [1, 10]:
-            return -1
-        return 0
+    count_function_of_value = CountingAndBettingSystem.hi_lo_count_function_of_value
 
     def bet_function_of_tc(tc):
         threshold = 0.01

@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 
-from Cards import Card
+from Cards.Blackjack.Shoe import Shoe
 from Cards.Blackjack.Dealer import Dealer
 
 
@@ -29,7 +29,7 @@ class Table:
         self.dealer = Dealer(self.stay_on_soft_17)
 
     def get_new_shoe(self):
-        shoe = Card.ShoeOfCards(n_decks=self.n_decks, ratio_dealt=np.random.uniform(0.75, 0.9))
+        shoe = Shoe(n_decks=self.n_decks, ratio_dealt=np.random.uniform(0.75, 0.9))
         shoe.shuffle()
         return shoe
 
