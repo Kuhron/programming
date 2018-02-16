@@ -1,3 +1,4 @@
+import sys
 import time
 
 from Cards.Blackjack.CountingAndBettingSystem import CountingAndBettingSystem
@@ -34,5 +35,7 @@ def run():
 
 
 if __name__ == "__main__":
-    # run()
-    print("doing nothing. uncomment run function if you want to create hundreds of megs of shoe files")
+    if len(sys.argv) >= 2 and sys.argv[1] == "run":
+        run()
+    else:
+        print("doing nothing. use \"python BootstrapGeneration.py run\" if you want to create hundreds of megs of shoe files")
