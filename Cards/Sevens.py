@@ -48,11 +48,6 @@ PYRAMID_POINTS = {
 }
 # keep in mind that the "-" points for a card are only for being under the card when it is active; "+" points are the deductions for off-class sitters
 POINTS = DEFAULT_POINTS
-# print(POINTS)
-
-# print(sorted(CARDS))
-# for s in range(4):
-#     print([i for i in filter(lambda x: SUITS[s] in x, CARDS)])
 
 # --- ALGORITHMS FOR SELECTING THE CARD TO PLAY --- #
 
@@ -84,8 +79,6 @@ def deal(n_players):
         result.append(shuffled[_*q:(_+1)*q])
     return result
 
-# print(deal(4))
-
 def get_class(card):
     c = card[0]
     if c in NUMBERS:
@@ -104,16 +97,14 @@ def sort_by_suit(s):
     # 1A 2A 3A 1B 2B 2C
 
     a = sorted(s,key=lambda x:VALUES.index(x[0]),reverse=True)
-    # b = [i[::-1] for i in a]
     c = sorted(a,key=lambda x:SUITS.index(x[1]))
-    return c #[i[::-1] for i in c]
+    return c
 
 def play(n_players,user_plays=True,silent=False):
     scores = [0 for i in range(n_players)]
     user_name = "You"
     CPU_names = ["CPU"+i for i in ["Red","Orange","Yellow","Green","Blue","Purple","Pink","Black","Grey","White","Brown"]]
     player_names = [user_name] + random.sample(CPU_names, n_players-1)
-    # print("GO FIX THE BUG ABOUT SCORE INDEX, THE PLAYERS KEEP GETTING REARRANGED") # fixed
 
     # track scores by index, print out scores with the name of the player
     last_user_index = 0
@@ -126,17 +117,15 @@ def play(n_players,user_plays=True,silent=False):
         player_names = [player_names[i%n_players] for i in range((-user+last_user_index),(-user+last_user_index)+n_players)]
         if user_plays and not silent:
             waste = input("You will play as index {0} this hand. Press enter when ready.".format(user))
-        # user_cards = hands[user]
         board = ["S: ","H: ","D: ","C: "]
         points = [{"+":0,"-":0} for i in range(4)] # points outstanding in each suit
         active_classes = ["NONE" for i in range(4)] # active classes in each suit
         active_cards = ["NONE" for i in range(4)] # last on-class or class-setting cards played
         
         card_count = 0
-        index = 0 #index = (-1*user) % n_players # <- this last thing was redundant with the rotating of the scores list
+        index = 0
         while card_count < 24:
             if not silent:
-                print("----")
                 print("Board:")
                 print("\n".join(board))
                 print("Scores:",", ".join([player_names[i]+" : "+str(scores[i]) for i in range(n_players)]))
@@ -157,21 +146,17 @@ def play(n_players,user_plays=True,silent=False):
                 # computers play
                 card = select(hands[index])
 
+            print("\n{} plays {}\n".format(player_names[index], card))
+
             hands[index].remove(card)
             value_name = card[0]
             suit = SUITS.index(card[1])
-            # if len(board[suit]) == 3: # what they start as
-            #     last_card = None
-            # else:
-            #     last_card = board[suit][-2] # value only
             last_card = active_cards[suit]
-            board[suit] += value_name + " "
             p = points[suit]
             cl = get_class(card)
-
-            # if active_classes[suit] == "NONE":
-            #     active_classes[suit] = cl
-            #     # no points can be added or subtracted in this situation
+            on_class = cl == active_classes[suit]
+            no_active_class = active_classes[suit] == "NONE"
+            board[suit] += (" " if on_class or no_active_class else "~") + value_name + " "
 
             if value_name == "7":
                 scores[index] += p["+"]
@@ -179,13 +164,13 @@ def play(n_players,user_plays=True,silent=False):
                 p["-"] = 0
                 active_classes[suit] = "NONE"
                 active_cards[suit] = "NONE"
-            else: # non-seven
-                if active_classes[suit] == "NONE": # no class
+            else:
+                if no_active_class:
                     p["+"] = POINTS[value_name]["+"]
                     p["-"] = POINTS[value_name]["-"]
                     active_classes[suit] = cl
                     active_cards[suit] = value_name
-                elif cl == active_classes[suit]: # if the card is on class
+                elif on_class:
                     if CLASSES[cl].index(value_name) > CLASSES[cl].index(last_card): # if this card beats the previous card in class
                         scores[index] += p["+"]
                         p["+"] = POINTS[value_name]["+"]
@@ -207,8 +192,30 @@ def play(n_players,user_plays=True,silent=False):
 
     print("\nFinal scores:",", ".join([player_names[i]+" : "+str(scores[i]) for i in range(n_players)]))
 
-# play(int(input("How many players? ")),user_plays=False,silent=True) # just look at final scores for completely computerized play
-play(int(input("How many players? ")))
+def get_int_from_input(description_str, validation_function, invalidation_str):
+    while True:
+        n = input(description_str + ": ")
+        try:
+            n = int(n)
+        except ValueError:
+            print(description_str + " must be a valid int. Please try again.")
+            continue  # don't go to the next check yet
+
+        if not validation_function(n):
+            print(invalidation_str)
+        else:
+            return n
+
+
+if __name__ == "__main__":
+    user_is_playing = input("Would you like to play manually? (y to play, n (default) to let computers play themselves.").lower() == "y"
+    n_cards = get_int_from_input("Number of cards in deck", lambda x: x in [24, 52], "Number of cards must be 24 or 52.")
+    n_players = get_int_from_input("Number of players", lambda x: x >= 1 and n_cards % x == 0, "Number of players must be divisor of {}.".format(n_cards))
+    if user_is_playing:
+        play(n_players)
+    else:
+        # just look at final scores for completely computerized play
+        play(n_players, user_plays=False, silent=True)
 
 
 
