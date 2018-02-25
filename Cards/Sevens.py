@@ -187,30 +187,39 @@ def play(n_players, deck, user_plays=True, silent=False):
             p = points[suit]
             cl = deck.get_class(card)
             on_class = cl == active_classes[suit]
-            no_active_class = active_classes[suit] == "NONE"
+            active_class_exists = active_classes[suit] != "NONE"
             is_seven = cl == "SEVEN"
+            point_effect = 0 if not on_class else 1 if deck.CLASSES[cl].index(value_name) > deck.CLASSES[cl].index(last_card) else -1
 
-            if on_class or no_active_class or is_seven:
-                prefix = " "
+            if not active_class_exists:
+                if is_seven:
+                    prefix = " "
+                else:
+                    prefix = "*"
             else:
-                prefix = "~"
+                if is_seven or point_effect > 0:
+                    prefix = "*"
+                elif point_effect < 0:
+                    prefix = "."
+                else:
+                    prefix = "~"
 
             board[suit] += prefix + value_name + " "
 
-            if value_name == "7":
+            if is_seven:
                 scores[index] += p["+"]
                 p["+"] = 0
                 p["-"] = 0
                 active_classes[suit] = "NONE"
                 active_cards[suit] = "NONE"
             else:
-                if no_active_class:
+                if not active_class_exists:
                     p["+"] = deck.POINTS[value_name]["+"]
                     p["-"] = deck.POINTS[value_name]["-"]
                     active_classes[suit] = cl
                     active_cards[suit] = value_name
                 elif on_class:
-                    if deck.CLASSES[cl].index(value_name) > deck.CLASSES[cl].index(last_card): # if this card beats the previous card in class
+                    if point_effect > 0: # if this card beats the previous card in class
                         scores[index] += p["+"]
                         p["+"] = deck.POINTS[value_name]["+"]
                         p["-"] = deck.POINTS[value_name]["-"]
