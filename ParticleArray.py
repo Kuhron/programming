@@ -32,27 +32,31 @@
 # - basically no persistent zero particles
 
 
+import math
 import random
 import time
 
 
-def add_values(a, b):
-    valid_values = [-1, 0, 1]
-    assert a in valid_values and b in valid_values
-    if a == 0:
-        return b
-    if b == 0:
-        return a
-    if a == b:
-        return a
-    if a == -b:
-        return 0
-    raise Exception("should not get here")
+def add_values(a, b, restrict=True):
+    if restrict:
+        valid_values = [-1, 0, 1]
+        assert a in valid_values and b in valid_values
+        if a == 0:
+            return b
+        if b == 0:
+            return a
+        if a == b:
+            return a
+        if a == -b:
+            return 0
+        raise Exception("should not get here")
+    else:
+        return a + b
 
 
 def create_array(side_length):
-    # func = create_zero_particle
-    func = create_random_particle
+    func = create_zero_particle
+    # func = create_random_particle
     return [[func() for col in range(side_length)] for row in range(side_length)]
 
 
@@ -64,22 +68,48 @@ def create_zero_particle():
     return (0, 0)
 
 
-def evolve_array(arr, last_position):
+def create_cyclical_particle(i):
+    return [(1, 1), (-1, 1), (-1, -1), (1, -1)][i % 4]
+
+
+def evolve_array(arr, last_position, i):
     n_rows = len(arr)
     n_cols = len(arr[0])
+    initial_position = last_position
     last_row, last_col = last_position
-    new_particle = create_random_particle()  # but prefer it to be deterministic for a given initial state
+    # new_particle = create_random_particle()  # but prefer it to be deterministic for a given initial state
     # new_particle = arr[last_row][last_col]  # but once a zero is created, evolution will cease
-    existing_particle = arr[last_row][last_col]
-    displacement = get_displacement(existing_particle, new_particle)
-    landing_position = ((last_row + displacement[0]) % n_rows, (last_col + displacement[1]) % n_cols)
-    landing_row, landing_col = landing_position
-    landing_particle = arr[landing_row][landing_col]
-    color = add_values(landing_particle[0], new_particle[0])
-    majority = add_values(landing_particle[1], new_particle[1])
-    arr[landing_row][landing_col] = (color, majority)
-    # return arr, landing_position
-    return arr, last_position  # always insert at the origin
+    new_particle = create_cyclical_particle(i)  # returns suits in cyclical order
+    visited_positions = []  # annihilate all particles in a loop if one occurs
+    annihilate = False
+    while True:
+        existing_particle = arr[last_row][last_col]
+        displacement = get_displacement(existing_particle, new_particle)
+        if displacement == (0, 0):
+            break
+        last_row = (last_row + displacement[0]) % n_rows
+        last_col = (last_col + displacement[1]) % n_cols
+        last_position = (last_row, last_col)
+        if last_position in visited_positions:
+            annihilate = True
+            break  # will annihilate the loop; do not place position's re-occurrence in the list
+        visited_positions.append(last_position)
+
+    if annihilate:
+        # delete new particle, i.e., don't give it any effect on others or place it anywhere
+        loop_boundary = last_position
+        index = [i for i, x in enumerate(visited_positions) if x == loop_boundary][-1]  # the second occurrence was not placed in list
+        to_annihilate = visited_positions[index:]
+        for row, col in to_annihilate:
+            arr[row][col] = (0, 0)
+        return arr, initial_position  # don't use last position since it is at an indeterminate place in the loop
+    else:
+        landing_particle = arr[last_row][last_col]
+        color = add_values(landing_particle[0], new_particle[0])
+        majority = add_values(landing_particle[1], new_particle[1])
+        arr[last_row][last_col] = (color, majority)
+        return arr, last_position
+        # return arr, initial_position  # always insert at the origin
 
 
 def get_displacement(p1, p2):
@@ -98,8 +128,8 @@ def get_displacement(p1, p2):
 def params_to_char(tup):
     # characters indicate what direction a (+1, +1), a spade, would be pushed
     color, majority = tup
-    valid_values = [-1, 0, 1]
-    assert color in valid_values and majority in valid_values
+    color = -1 if color < 0 else 1 if color > 0 else 0
+    majority = -1 if majority < 0 else 1 if majority > 0 else 0
 
     if color == -1:  # red
         return "←" if majority == -1 else "↙" if majority == 0 else "↓" if majority == 1 else None
@@ -129,6 +159,6 @@ if __name__ == "__main__":
         if i % 1000 == 0:
             print_array(arr)
             print(i)
-            time.sleep(0.01)
-        arr, last_position = evolve_array(arr, last_position)
+            time.sleep(0.05)
+        arr, last_position = evolve_array(arr, last_position, i)
         i += 1

@@ -13,6 +13,7 @@ class Card:
         self.suit = suit.upper()
         self.str = self.value + self.suit
         self.color = "R" if self.suit in "HD" else "B"
+        self.majority = "M" if self.suit in "SH" else "m"
         self.number = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1][self.value_index]
 
     def __repr__(self):
