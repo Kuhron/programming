@@ -1,7 +1,7 @@
 import logging
 
 from Cards.Blackjack.BlackjackHand import BlackjackHand as Hand
-from Cards.Blackjack.BasicStrategy import BasicStrategy
+from Cards.Blackjack.Strategy import BasicStrategy
 
 logger = logging.getLogger(__name__)
 

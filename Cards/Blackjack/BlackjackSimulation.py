@@ -11,8 +11,6 @@ from Cards.Blackjack.Dealer import Dealer
 from Cards.Blackjack.Table import Table
 from Cards.Blackjack.CountingAndBettingSystem import CountingAndBettingSystem
 
-# import everything else
-
 
 def add_card(hand, deck, is_face_up, counting_player):
     card = Card(next(deck), is_face_up)
@@ -135,7 +133,6 @@ def play_round(player, table, with_other_players=True):
 
     if dealer_card.value == "A":
         for pl in all_players:
-            # TODO: implement insurance here
             if pl.will_take_insurance():
                 assert len(pl.hands) == 1  # no one has had chance to split yet
                 pl.insurance_bet = pl.hands[0].current_bet / 2  # half of original bet always, as far as I know

@@ -63,3 +63,11 @@ class BasicStrategy:
     def should_take_insurance(tc):
         # return False  # unless incorporating card counting
         return tc >= 3
+
+
+# class IndexStrategy(BasicStrategy):
+#     ILLUSTRIOUS_18 = [
+# 
+#     @staticmethod
+#     def get_action(hand, dealer_card, tc):
+#         ?

@@ -4,6 +4,7 @@
 
 
 import random
+import time
 import numpy as np
 
 import Cards.Card as Card
@@ -54,7 +55,7 @@ class CardParticleArray:
             return 0
 
         neighbor_coords = self.get_neighbors(row, col)
-        MAX_SATURATION = 3
+        MAX_SATURATION = 4
         MAX_SATISFACTION = 3
 
         if any(x >= MAX_SATURATION for x in [self.get_saturation(r, c) for r, c in neighbor_coords]):
@@ -111,18 +112,20 @@ class CardParticleArray:
         return self.array[row % self.side_length, col % self.side_length]
 
     def print(self):
+        suit_strs = {"S": "++", "H": "-+", "D": "--", "C": "+-"}
         s = ""
-        s += "-" * (self.side_length * 3) + "\n"
+        s += "/" + "-" * (self.side_length * 3) + "\\\n"
         for r in range(self.side_length):
+            s += "|"
             for c in range(self.side_length):
                 card = self.card_at(r, c)
                 if card is None:
                     s += "  "
                 else:
-                    s += repr(card)
+                    s += suit_strs[card.suit]
                 s += " "
-            s += "\n"
-        s += "-" * (self.side_length * 3) + "\n"
+            s += "|\n"
+        s += "\\" + "-" * (self.side_length * 3) + "/\n"
         print(s)
 
 
@@ -131,11 +134,16 @@ def get_new_card():
 
 
 if __name__ == "__main__":
-    array = CardParticleArray(35)
-    i = 0
-    while not array.finished:
-        card = get_new_card()
-        array.add_card(card)
+    while True:
+        array = CardParticleArray(35)
+        i = 0
+        while not array.finished:
+            card = get_new_card()
+            array.add_card(card)
+            array.print()
+            print("iterations: " + str(i))
+            i += 1
         array.print()
-        i += 1
         print("iterations: " + str(i))
+        input("press enter to start another")
+

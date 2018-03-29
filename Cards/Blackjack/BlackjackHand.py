@@ -52,7 +52,8 @@ class BlackjackHand:
         return self.soft_value is not None
 
     def is_pair(self):
-        return len(self.cards) == 2 and self.cards[0].value == self.cards[1].value
+        # make sure that 10s of different kinds still count as a pair
+        return len(self.cards) == 2 and self.cards[0].get_blackjack_value() == self.cards[1].get_blackjack_value()
 
     def is_blackjack(self):
         return len(self.cards) == 2 and self.max_value == 21
