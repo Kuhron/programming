@@ -2,6 +2,7 @@ import math
 import random
 import html as html_lib
 import requests
+import webbrowser
 
 from bs4 import BeautifulSoup
 
@@ -50,15 +51,32 @@ def get_populous_us_cities(n_cities):
     return random.sample(cities, n_cities)
 
 
+def open_location_in_google_maps(lat, lon):
+    zoom_level = 6  # int, bigger is zoomed farther in
+    url = "http://www.google.com/maps/place/{lat},{lon}/@{lat},{lon},{zoom_level}z".format(**locals())
+    webbrowser.open(url)
+
+
+def confirm(string):
+    x = input(string + " (y/n, default = n)")
+    return x.strip().lower() == "y"
+
+
 if __name__ == "__main__":
     mode = input("Select mode:\n"
         "1. World\n"
         "2. Continental US (approx.)\n"
         "3. US cities over 100,000 people\n")
     if mode == "1":
-        print(get_random_latitude_and_longitude(degrees=True))
+        loc = get_random_latitude_and_longitude(degrees=True)
+        print(loc)
+        if confirm("open in browser?"):
+            open_location_in_google_maps(*loc)
     elif mode == "2":
-        print(get_random_latitude_and_longitude(degrees=True,lat_range=(24.5,49.5),lon_range=(-125,-66)))
+        loc = get_random_latitude_and_longitude(degrees=True,lat_range=(24.5,49.5),lon_range=(-125,-66))
+        print(loc)
+        if confirm("open in browser?"):
+            open_location_in_google_maps(*loc)
     elif mode == "3":
         n_cities = int(input("How many cities? "))
         for city in get_populous_us_cities(n_cities):
