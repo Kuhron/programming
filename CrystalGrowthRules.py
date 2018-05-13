@@ -139,6 +139,6 @@ class CrystalGrowthRules:
                 CrystalGrowthRules.generate_random_array()
             ]
         ]
-        while len(result) < 10 or random.random() < 0.7:
+        while len(result) < 20 or random.random() < 0.7:
             result.append([CrystalGrowthRules.generate_random_array() for x in range(2)])
         return result

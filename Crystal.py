@@ -1,4 +1,7 @@
+import argparse
 import time
+
+import matplotlib.pyplot as plt
 
 from CrystalGrowthRules import CrystalGrowthRules as CGR
 
@@ -20,9 +23,11 @@ class Grid:
     def __init__(self, side_length):
         self.side_length = side_length
         self.grid = [[States.EMPTY for i in range(side_length)] for j in range(side_length)]
+        self.birth_grid = [[float("nan") for i in range(side_length)] for j in range(side_length)]
         self.points_by_state = {state: set() for state in range(100)}  # please don't use more than 100 states
         self.points_by_state[States.EMPTY] = {(i, j) for j in range(side_length) for i in range(side_length)}
         self.state_ordering = [States.EMPTY, States.NEW, States.EXISTING]
+        self.iteration = 0
 
     def get_state_at(self, point):
         return self.grid[point[0]][point[1]]
@@ -32,6 +37,8 @@ class Grid:
         self.points_by_state[old_state].remove(point)
         new_state = self.get_higher_state(old_state, new_state)
         self.grid[point[0]][point[1]] = new_state
+        if old_state == 0 and new_state > 0:
+            self.birth_grid[point[0]][point[1]] = self.iteration
         self.points_by_state[new_state].add(point)
 
     def set_state_at_point_array(self, point_array, new_state_array):
@@ -70,6 +77,8 @@ class Grid:
                 # print("no rule applied at point {} with environment\n{}".format(point, neighbor_states))
                 pass
 
+        self.iteration += 1
+
     def get_neighbors(self, point):
         # still includes point's coordinates too; this should not be changed, so we are dealing with 3x3 arrays as much as possible
         x, y = point
@@ -84,10 +93,19 @@ class Grid:
         return [[self.get_state_at(p) for p in row] for row in point_array]
 
     def print(self):
+        if self.side_length > 37:
+            # too big to fit on screen
+            print("can't fit grid on screen")
+            return
         print("/" + "-" * (2 * self.side_length - 1) + "\\")
         for row in self.grid:
             print("|" + " ".join(States.get_char(state) for state in row) + "|")
         print("\\" + "-" * (2 * self.side_length - 1) + "/")
+
+    def plot_age(self):
+        plt.imshow(self.birth_grid)
+        plt.colorbar()
+        plt.show()
 
 
 class StopGrowthIteration(Exception):
@@ -194,7 +212,12 @@ def array_to_tuple(arr):
 
 
 if __name__ == "__main__":
-    n = 37
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-e", "--expedite", dest="expedite", action="store_true")
+    parser.add_argument("-n", "--side_length", dest="side_length", type=int, default=37)
+    args = parser.parse_args()
+
+    n = args.side_length
     assert n % 2 == 1
     c = int((n-1)/2)  # center
     grid = Grid(n)
@@ -228,13 +251,19 @@ if __name__ == "__main__":
         try:
             # input("\npress enter to continue\n")
             grid.grow(growth_rules)
-            grid.print()
-            time.sleep(0.1)
+            if not args.expedite:
+                grid.print()
+                time.sleep(0.1)
         except StopGrowthIteration:
             grid.print()
             print("No more points to grow!")
             break
 
-    input("press enter to continue")
+    if not args.expedite:
+        input("press enter to continue")
+
     print("rules generating this pattern:")
     growth_rules.print_codes()
+
+    if grid.iteration > 5:
+        grid.plot_age()
