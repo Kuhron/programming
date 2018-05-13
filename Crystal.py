@@ -37,25 +37,29 @@ class Grid:
         return max([s1, s2], key=lambda x: self.state_ordering.index(x))
 
     def grow(self, growth_rules):
-        for point in self.points_by_state[States.NEW]:
+        points_to_grow = [p for p in self.points_by_state[States.NEW]]  # avoid "set changed size during iteration"
+        for point in points_to_grow:
             neighbors = self.get_neighbors(point)
             neighbor_states = self.get_state_array(neighbors)
             # grow the neighbors depending on the rules
-            rule_matches = [(k, v) for k, v in growth_rules.items() if neighbor_states == k]
+            rule_matches = [(env, rule.resulting_environment) for env, rule in growth_rules.rules.items() if rule.applies(neighbor_states)]
 
             if len(rule_matches) == 1:
                 # apply growth rule
                 k, resulting_environment = rule_matches[0]
+                print("rule applied at point {} with environment\n{}\nand resulting environmment\n{}".format(point, neighbor_states, resulting_environment))
                 self.set_state_at_point_array(neighbors, resulting_environment)
             elif len(rule_matches) > 1:
-                raise Exception("should not match more than one rule because GrowthRuleSet's rules should have at most one rule for each environment")
+                raise Exception("should not match more than one rule because GrowthRuleSet's rules should have at most one rule for each environment\nrule matches: {}".format(rule_matches))
             else:
                 # do nothing, just mark the current point as existing
+                print("no rule applied at point {} with environment\n{}".format(point, neighbor_states))
                 pass
 
             self.set_state_at(point, States.EXISTING)
 
     def get_neighbors(self, point):
+        # still includes point's coordinates too; this should not be changed, so we are dealing with 3x3 arrays as much as possible
         x, y = point
         n = self.side_length
         return [
@@ -87,17 +91,29 @@ class GrowthRuleSet:
         for k, v in zip(equivalent_keys, equivalent_values):
             k = array_to_tuple(k)
             rule = GrowthRule(k, v)
-            self.rules[k] = v
+            self.rules[k] = rule
 
 
 class GrowthRule:
-    def __init__(self, existing_environment_1s_and_0s, resulting_environment):
+    def __init__(self, existing_environment_1s_and_0s, resulting_environment_1s_and_0s):
         self.existing_environment = GrowthRule.convert_1s_and_0s_to_state(existing_environment_1s_and_0s, States.EXISTING)
-        self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(resulting_environment, States.NEW)
+        self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(resulting_environment_1s_and_0s, States.NEW)
+
+    def applies(self, environment):
+        print("seeing if rule with existing environment\n{}\nand resulting environment\n{}\napplies to environment\n{}".format(self.existing_environment, self.resulting_environment, environment))
+        environment = GrowthRule.filter_state_array(environment, States.EXISTING)
+        print("filtered_environment:\n{}".format(environment))
+        print("result: {}\n\n".format(environment == self.existing_environment))
+        return environment == self.existing_environment
 
     @staticmethod
     def convert_1s_and_0s_to_state(input_arr, output_state):
-        return [[output_state if cell == 1 else None for cell in row] for row in input_arr]
+        # changed condition from == 1 to != 0 because the rules have already been initialized (and thus their 1s converted to >= 1) before GrowthRuleSet.add is called, and don't want the existing environment to be overwritten to all zeros because the 1s were already changed to 2s
+        return [[output_state if cell != 0 else 0 for cell in row] for row in input_arr]
+
+    @staticmethod
+    def filter_state_array(input_arr, state_to_keep):
+        return [[x if x == state_to_keep else 0 for x in row] for row in input_arr]
 
     # guidelines for rules:
     # - middle cell should be States.NEW (the one that is being grown, because it hasn't yet done so due to just having sprouted from an older growth)
@@ -152,7 +168,7 @@ if __name__ == "__main__":
     ]
 
     seed_position_array = seed_position_array_1
-    seed_state_array = [[States.EXISTING for cell in row] for row in seed_position_array]
+    seed_state_array = [[States.NEW for cell in row] for row in seed_position_array]
 
     grid.set_state_at_point_array(seed_position_array, seed_state_array)
 
@@ -160,113 +176,117 @@ if __name__ == "__main__":
     growth_rules.add(GrowthRule(
         [
             [0, 0, 0],
-            [0, 1, 0],
+            [0, 0, 0],
             [0, 0, 0],
         ],
         [
             [1, 0, 1],
-            [0, 1, 0],
+            [0, 0, 0],
             [1, 0, 1],
         ],
     ))
     growth_rules.add(GrowthRule(
         [
             [0, 0, 0],
-            [0, 1, 0],
+            [0, 0, 0],
             [0, 1, 0],
         ],
         [
             [1, 0, 1],
-            [0, 1, 0],
+            [0, 0, 0],
             [0, 1, 0],
         ],
     ))
     growth_rules.add(GrowthRule(
         [
             [0, 0, 0],
-            [0, 1, 0],
+            [0, 0, 0],
             [1, 0, 0],
         ],
         [
             [0, 1, 0],
-            [0, 1, 1],
+            [0, 0, 1],
             [1, 0, 0],
         ],
     ))
     growth_rules.add(GrowthRule(
         [
             [0, 0, 0],
-            [0, 1, 0],
+            [0, 0, 0],
             [1, 1, 0],
         ],
         [
             [0, 1, 1],
-            [0, 1, 0],
+            [0, 0, 0],
             [1, 1, 0],
         ],
     ))
     growth_rules.add(GrowthRule(
         [
             [0, 0, 0],
-            [0, 1, 0],
-            [1, 0, 1],
-        ],
-        [
-            [0, 1, 0],
-            [0, 1, 0],
-            [1, 0, 1],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
             [0, 0, 0],
-            [0, 1, 0],
-            [1, 1, 1],
-        ],
-        [
-            [0, 1, 0],
-            [0, 1, 0],
-            [1, 1, 1],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [1, 1, 1],
             [1, 0, 1],
         ],
         [
             [0, 1, 0],
-            [1, 1, 1],
+            [0, 0, 0],
             [1, 0, 1],
         ],
     ))
     growth_rules.add(GrowthRule(
         [
             [0, 0, 0],
+            [0, 0, 0],
             [1, 1, 1],
+        ],
+        [
+            [0, 1, 0],
+            [0, 0, 0],
+            [1, 1, 1],
+        ],
+    ))
+    growth_rules.add(GrowthRule(
+        [
+            [0, 0, 0],
+            [1, 0, 1],
+            [1, 0, 1],
+        ],
+        [
+            [0, 1, 0],
+            [1, 0, 1],
+            [1, 0, 1],
+        ],
+    ))
+    growth_rules.add(GrowthRule(
+        [
+            [0, 0, 0],
+            [1, 0, 1],
             [0, 0, 0],
         ],
         [
             [0, 1, 0],
-            [1, 1, 1],
+            [1, 0, 1],
             [0, 1, 0],
         ],
     ))
     growth_rules.add(GrowthRule(
         [
             [0, 0, 0],
-            [1, 1, 1],
+            [1, 0, 1],
             [0, 1, 0],
         ],
         [
             [0, 1, 0],
-            [1, 1, 1],
+            [1, 0, 1],
             [0, 1, 0],
         ],
     ))
 
+    # for rule in growth_rules.rules:
+    #     print(rule)
+
     grid.print()
     for i in range(10):
+        input("\npress enter to continue\n")
         grid.grow(growth_rules)
         grid.print()
