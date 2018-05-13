@@ -128,10 +128,16 @@ class GrowthRuleSet:
             rule = GrowthRule(k, v)
             self.rules[k] = rule
 
-    def print_codes(self, restrict_to_used=True):
+    def print_codes(self, output_path=None, restrict_to_used=True):
         to_print = self.rules_used if restrict_to_used else self.rules.values()
-        for rule in to_print:
-            print(rule.get_code_str())
+        code_strs = [rule.get_code_str() for rule in to_print]
+        code_strs = sorted(code_strs)
+        s = "\n".join(code_strs)
+        if output_path is None:
+            print(s)
+        else:
+            with open(output_path, "w") as f:
+                f.write(s)
 
     def mark_rule_used(self, rule):
         self.rules_used.add(rule)
@@ -174,6 +180,15 @@ class GrowthRule:
     def get_code_str(self):
         return "".join("".join(str(x) for x in row) for row in self.in_1_0) + " -> " + "".join("".join(str(x) for x in row) for row in self.out_1_0)
 
+    @staticmethod
+    def get_rule_from_code(s):
+        inp, outp = s.split(" -> ")
+        assert len(inp) == len(outp) == 3 ** 2
+        str_to_arr = lambda s: [[int(c) for c in s[3 * n : 3 * (n + 1)]] for n in range(3)]
+        inp_arr = str_to_arr(inp)
+        outp_arr = str_to_arr(outp)
+        return GrowthRule(inp_arr, outp_arr)
+
 
 def get_rotations_and_reflections(arr):
     # output must be ordered
@@ -215,6 +230,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-e", "--expedite", dest="expedite", action="store_true")
     parser.add_argument("-n", "--side_length", dest="side_length", type=int, default=37)
+    parser.add_argument("-r", "--rule_set", dest="rule_set", type=str)
     args = parser.parse_args()
 
     n = args.side_length
@@ -237,13 +253,21 @@ if __name__ == "__main__":
 
     growth_rules = GrowthRuleSet()
 
-    # rule_set = CGR.original_rules
-    # rule_set = CGR.diamond_rules
-    rule_set = CGR.generate_random_rules()
+    if args.rule_set:
+        with open(args.rule_set) as f:
+            lines = f.readlines()
+        rule_set = [GrowthRule.get_rule_from_code(line.strip()) for line in lines]
+    else:
+        # rule_set = CGR.original_rules
+        # rule_set = CGR.diamond_rules
+        rule_set = CGR.generate_random_rules()
 
     for rule in rule_set:
         # print(rule)
-        growth_rules.add(GrowthRule(*rule))
+        if type(rule) is not GrowthRule:
+            # expect pair of arrays, for input and output
+            rule = GrowthRule(*rule)
+        growth_rules.add(rule)
 
     grid.print()
     # for i in range(10):
@@ -259,11 +283,11 @@ if __name__ == "__main__":
             print("No more points to grow!")
             break
 
-    if not args.expedite:
+    if not args.expedite and grid.iteration > 5:
         input("press enter to continue")
 
-    print("rules generating this pattern:")
-    growth_rules.print_codes()
-
     if grid.iteration > 5:
+        print("rules generating this pattern:")
+        growth_rules.print_codes()
+        growth_rules.print_codes("CrystalRules/last.txt")
         grid.plot_age()
