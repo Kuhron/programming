@@ -127,6 +127,33 @@ class CrystalGrowthRules:
 
     diamond_rules = original_rules[:-1]
 
+    test_directionality_rules = [  # should just grow up in a straight line, but making sure I am not mixing up row/column somewhere
+        [
+            [
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+            ],
+            [
+                [0, 1, 0],
+                [0, 0, 0],
+                [0, 0, 0],
+            ],
+        ],
+        [
+            [
+                [0, 0, 0],
+                [0, 0, 0],
+                [0, 1, 0],
+            ],
+            [
+                [0, 1, 0],
+                [0, 0, 0],
+                [0, 1, 0],
+            ],
+        ],
+    ]
+
     @staticmethod
     def generate_random_array():
         return [[random.choice([0, 1]) for j in range(3)] for i in range(3)]

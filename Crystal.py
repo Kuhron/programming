@@ -67,7 +67,6 @@ class Grid:
             if len(rule_matches) == 1:
                 # apply growth rule
                 k, rule = rule_matches[0]
-                growth_rules.mark_rule_used(rule)
                 # print("rule applied at point {} with environment\n{}\nand resulting environmment\n{}".format(point, neighbor_states, resulting_environment))
                 self.set_state_at_point_array(neighbors, rule.resulting_environment)
             elif len(rule_matches) > 1:
@@ -84,9 +83,9 @@ class Grid:
         x, y = point
         n = self.side_length
         return [
-            [((x-1)%n, (y-1)%n), ((x  )%n, (y-1)%n), ((x+1)%n, (y-1)%n)],
-            [((x-1)%n, (y  )%n), ((x  )%n, (y  )%n), ((x+1)%n, (y  )%n)],
-            [((x-1)%n, (y+1)%n), ((x  )%n, (y+1)%n), ((x+1)%n, (y+1)%n)],
+            [((x-1)%n, (y-1)%n), ((x-1)%n, (y  )%n), ((x-1)%n, (y+1)%n)],
+            [((x  )%n, (y-1)%n), ((x  )%n, (y  )%n), ((x  )%n, (y+1)%n)],
+            [((x+1)%n, (y-1)%n), ((x+1)%n, (y  )%n), ((x+1)%n, (y+1)%n)],
         ]
 
     def get_state_array(self, point_array):
@@ -115,7 +114,6 @@ class StopGrowthIteration(Exception):
 class GrowthRuleSet:
     def __init__(self):
         self.rules = {}
-        self.rules_used = set()
 
     def add(self, rule):
         key = rule.existing_environment
@@ -125,13 +123,16 @@ class GrowthRuleSet:
         # ordering of keys and values should correspond, given that the function generating them maintains ordered output
         for k, v in zip(equivalent_keys, equivalent_values):
             k = array_to_tuple(k)
-            rule = GrowthRule(k, v)
-            self.rules[k] = rule
+            equivalent_rule = GrowthRule(k, v)
+            self.rules[k] = equivalent_rule
+        # make sure original rule overwrites any that have replaced it due to having identical key, but possibly different value
+        self.rules[array_to_tuple(key)] = rule
 
-    def print_codes(self, output_path=None, restrict_to_used=True):
-        to_print = self.rules_used if restrict_to_used else self.rules.values()
+    def print_codes(self, output_path=None):
+        to_print = self.rules.values()
         code_strs = [rule.get_code_str() for rule in to_print]
         code_strs = sorted(code_strs)
+        assert len(code_strs) == len(self.rules)
         s = "\n".join(code_strs)
         if output_path is None:
             print(s)
@@ -139,16 +140,16 @@ class GrowthRuleSet:
             with open(output_path, "w") as f:
                 f.write(s)
 
-    def mark_rule_used(self, rule):
-        self.rules_used.add(rule)
-
 
 class GrowthRule:
     def __init__(self, existing_environment_1s_and_0s, resulting_environment_1s_and_0s):
-        self.in_1_0 = GrowthRule.remove_central_value(existing_environment_1s_and_0s)
-        self.out_1_0 = GrowthRule.remove_central_value(resulting_environment_1s_and_0s)
-        self.existing_environment = GrowthRule.convert_1s_and_0s_to_state(self.in_1_0, States.EXISTING)
-        self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(self.out_1_0, States.NEW)
+        # print("initializing rule with input\n{} and\n{}".format(existing_environment_1s_and_0s, resulting_environment_1s_and_0s))
+        in_1_0 = GrowthRule.remove_central_value(existing_environment_1s_and_0s)
+        out_1_0 = GrowthRule.remove_central_value(resulting_environment_1s_and_0s)
+        self.existing_environment = GrowthRule.convert_1s_and_0s_to_state(in_1_0, States.EXISTING)
+        self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(out_1_0, States.NEW)
+        # print("new vars:\n\nin 1 0\n{}\n\nout 1 0\n{}\n\nex env\n{}\n\nres env\n{}\n\n".format(in_1_0, out_1_0, self.existing_environment, self.resulting_environment))
+        # print("code: {}\n\n".format(self.get_code_str()))
 
     def applies(self, environment):
         # print("seeing if rule with existing environment\n{}\nand resulting environment\n{}\napplies to environment\n{}".format(self.existing_environment, self.resulting_environment, environment))
@@ -178,10 +179,11 @@ class GrowthRule:
     # - pay attention only to States.EXISTING for the environment; do not pay attention to new cells, so that each iteration of growth occurs simultaneously
 
     def get_code_str(self):
-        return "".join("".join(str(x) for x in row) for row in self.in_1_0) + " -> " + "".join("".join(str(x) for x in row) for row in self.out_1_0)
+        return "".join("".join(str(x) for x in row) for row in self.existing_environment) + " -> " + "".join("".join(str(x) for x in row) for row in self.resulting_environment)
 
     @staticmethod
     def get_rule_from_code(s):
+        # print("creating rule from code {}".format(s))
         inp, outp = s.split(" -> ")
         assert len(inp) == len(outp) == 3 ** 2
         str_to_arr = lambda s: [[int(c) for c in s[3 * n : 3 * (n + 1)]] for n in range(3)]
@@ -194,13 +196,14 @@ def get_rotations_and_reflections(arr):
     # output must be ordered
     result = []
     for rotation in get_rotations(arr):
-        result += [rotation, get_reflection(rotation)]
+        result += [get_reflection(rotation), rotation]
     return result
 
 
 def get_rotations(arr):
     f = rotate_right
-    return [arr, f(arr), f(f(arr)), f(f(f(arr)))]  # don't optimize prematurely
+    # keep original array last in the whole thing so it overwrites the others and gives the intended output if the input is symmetrical
+    return [f(arr), f(f(arr)), f(f(f(arr))), arr]  # don't optimize prematurely
 
 
 def rotate_right(arr):
@@ -234,8 +237,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     n = args.side_length
-    assert n % 2 == 1
-    c = int((n-1)/2)  # center
+    c = int((n-(n%2))/2)  # center
     grid = Grid(n)
 
     seed_position_array_1 = [
@@ -260,12 +262,15 @@ if __name__ == "__main__":
     else:
         # rule_set = CGR.original_rules
         # rule_set = CGR.diamond_rules
+        # rule_set = CGR.test_directionality_rules
         rule_set = CGR.generate_random_rules()
+
+        rule_set = [GrowthRule(*rule) for rule in rule_set]  # expect pair of arrays, for input and output
+        rule_set = sorted(rule_set, key=lambda x: x.get_code_str())
 
     for rule in rule_set:
         # print(rule)
         if type(rule) is not GrowthRule:
-            # expect pair of arrays, for input and output
             rule = GrowthRule(*rule)
         growth_rules.add(rule)
 
@@ -287,7 +292,7 @@ if __name__ == "__main__":
         input("press enter to continue")
 
     if grid.iteration > 5:
-        print("rules generating this pattern:")
-        growth_rules.print_codes()
+        # print("rules generating this pattern:")
+        # growth_rules.print_codes()
         growth_rules.print_codes("CrystalRules/last.txt")
         grid.plot_age()
