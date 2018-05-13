@@ -1,9 +1,15 @@
+import time
+
+from CrystalGrowthRules import CrystalGrowthRules as CGR
+
+
 class States:
     EXISTING = 2
     NEW = 1
     EMPTY = 0
 
-    STR = " OX"
+    # STR = " OX"
+    STR = " ▪▫"
 
     @staticmethod
     def get_char(state):
@@ -39,7 +45,7 @@ class Grid:
     def grow(self, growth_rules):
         points_to_grow = [p for p in self.points_by_state[States.NEW]]  # avoid "set changed size during iteration"
         if points_to_grow == []:
-            print("No more points to grow!")
+            raise StopGrowthIteration
 
         for point in points_to_grow:
             # do this before the new points are added, since the ones growing are considered "existing" for the purposes of determining environments
@@ -49,13 +55,14 @@ class Grid:
             neighbors = self.get_neighbors(point)
             neighbor_states = self.get_state_array(neighbors)
             # grow the neighbors depending on the rules
-            rule_matches = [(env, rule.resulting_environment) for env, rule in growth_rules.rules.items() if rule.applies(neighbor_states)]
+            rule_matches = [(env, rule) for env, rule in growth_rules.rules.items() if rule.applies(neighbor_states)]
 
             if len(rule_matches) == 1:
                 # apply growth rule
-                k, resulting_environment = rule_matches[0]
+                k, rule = rule_matches[0]
+                growth_rules.mark_rule_used(rule)
                 # print("rule applied at point {} with environment\n{}\nand resulting environmment\n{}".format(point, neighbor_states, resulting_environment))
-                self.set_state_at_point_array(neighbors, resulting_environment)
+                self.set_state_at_point_array(neighbors, rule.resulting_environment)
             elif len(rule_matches) > 1:
                 raise Exception("should not match more than one rule because GrowthRuleSet's rules should have at most one rule for each environment\nrule matches: {}".format(rule_matches))
             else:
@@ -83,9 +90,14 @@ class Grid:
         print("\\" + "-" * (2 * self.side_length - 1) + "/")
 
 
+class StopGrowthIteration(Exception):
+    pass
+
+
 class GrowthRuleSet:
     def __init__(self):
         self.rules = {}
+        self.rules_used = set()
 
     def add(self, rule):
         key = rule.existing_environment
@@ -98,11 +110,21 @@ class GrowthRuleSet:
             rule = GrowthRule(k, v)
             self.rules[k] = rule
 
+    def print_codes(self, restrict_to_used=True):
+        to_print = self.rules_used if restrict_to_used else self.rules.values()
+        for rule in to_print:
+            print(rule.get_code_str())
+
+    def mark_rule_used(self, rule):
+        self.rules_used.add(rule)
+
 
 class GrowthRule:
     def __init__(self, existing_environment_1s_and_0s, resulting_environment_1s_and_0s):
-        self.existing_environment = GrowthRule.convert_1s_and_0s_to_state(existing_environment_1s_and_0s, States.EXISTING)
-        self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(resulting_environment_1s_and_0s, States.NEW)
+        self.in_1_0 = GrowthRule.remove_central_value(existing_environment_1s_and_0s)
+        self.out_1_0 = GrowthRule.remove_central_value(resulting_environment_1s_and_0s)
+        self.existing_environment = GrowthRule.convert_1s_and_0s_to_state(self.in_1_0, States.EXISTING)
+        self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(self.out_1_0, States.NEW)
 
     def applies(self, environment):
         # print("seeing if rule with existing environment\n{}\nand resulting environment\n{}\napplies to environment\n{}".format(self.existing_environment, self.resulting_environment, environment))
@@ -130,6 +152,9 @@ class GrowthRule:
     # guidelines for rules:
     # - middle cell should be States.NEW (the one that is being grown, because it hasn't yet done so due to just having sprouted from an older growth)
     # - pay attention only to States.EXISTING for the environment; do not pay attention to new cells, so that each iteration of growth occurs simultaneously
+
+    def get_code_str(self):
+        return "".join("".join(str(x) for x in row) for row in self.in_1_0) + " -> " + "".join("".join(str(x) for x in row) for row in self.out_1_0)
 
 
 def get_rotations_and_reflections(arr):
@@ -188,121 +213,28 @@ if __name__ == "__main__":
     grid.set_state_at_point_array(seed_position_array, seed_state_array)
 
     growth_rules = GrowthRuleSet()
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0],
-        ],
-        [
-            [1, 0, 1],
-            [0, 0, 0],
-            [1, 0, 1],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 1, 0],
-        ],
-        [
-            [1, 0, 1],
-            [0, 0, 0],
-            [0, 1, 0],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [1, 0, 0],
-        ],
-        [
-            [0, 1, 0],
-            [0, 0, 1],
-            [1, 0, 0],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [1, 1, 0],
-        ],
-        [
-            [0, 1, 1],
-            [0, 0, 0],
-            [1, 1, 0],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [1, 0, 1],
-        ],
-        [
-            [0, 1, 0],
-            [0, 0, 0],
-            [1, 0, 1],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-            [1, 1, 1],
-        ],
-        [
-            [0, 1, 0],
-            [0, 0, 0],
-            [1, 1, 1],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [1, 0, 1],
-            [1, 0, 1],
-        ],
-        [
-            [0, 1, 0],
-            [1, 0, 1],
-            [1, 0, 1],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [1, 0, 1],
-            [0, 0, 0],
-        ],
-        [
-            [0, 1, 0],
-            [1, 0, 1],
-            [0, 1, 0],
-        ],
-    ))
-    growth_rules.add(GrowthRule(
-        [
-            [0, 0, 0],
-            [1, 0, 1],
-            [0, 1, 0],
-        ],
-        [
-            [0, 1, 0],
-            [1, 0, 1],
-            [0, 1, 0],
-        ],
-    ))
 
-    # for rule in growth_rules.rules:
-    #     print(rule)
+    # rule_set = CGR.original_rules
+    # rule_set = CGR.diamond_rules
+    rule_set = CGR.generate_random_rules()
+
+    for rule in rule_set:
+        # print(rule)
+        growth_rules.add(GrowthRule(*rule))
 
     grid.print()
     # for i in range(10):
     while True:
-        input("\npress enter to continue\n")
-        grid.grow(growth_rules)
-        grid.print()
+        try:
+            # input("\npress enter to continue\n")
+            grid.grow(growth_rules)
+            grid.print()
+            time.sleep(0.1)
+        except StopGrowthIteration:
+            grid.print()
+            print("No more points to grow!")
+            break
+
+    input("press enter to continue")
+    print("rules generating this pattern:")
+    growth_rules.print_codes()
