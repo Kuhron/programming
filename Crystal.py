@@ -3,7 +3,7 @@ class States:
     NEW = 1
     EMPTY = 0
 
-    STR = "-OX"
+    STR = " OX"
 
     @staticmethod
     def get_char(state):
@@ -38,6 +38,13 @@ class Grid:
 
     def grow(self, growth_rules):
         points_to_grow = [p for p in self.points_by_state[States.NEW]]  # avoid "set changed size during iteration"
+        if points_to_grow == []:
+            print("No more points to grow!")
+
+        for point in points_to_grow:
+            # do this before the new points are added, since the ones growing are considered "existing" for the purposes of determining environments
+            self.set_state_at(point, States.EXISTING)
+
         for point in points_to_grow:
             neighbors = self.get_neighbors(point)
             neighbor_states = self.get_state_array(neighbors)
@@ -47,16 +54,14 @@ class Grid:
             if len(rule_matches) == 1:
                 # apply growth rule
                 k, resulting_environment = rule_matches[0]
-                print("rule applied at point {} with environment\n{}\nand resulting environmment\n{}".format(point, neighbor_states, resulting_environment))
+                # print("rule applied at point {} with environment\n{}\nand resulting environmment\n{}".format(point, neighbor_states, resulting_environment))
                 self.set_state_at_point_array(neighbors, resulting_environment)
             elif len(rule_matches) > 1:
                 raise Exception("should not match more than one rule because GrowthRuleSet's rules should have at most one rule for each environment\nrule matches: {}".format(rule_matches))
             else:
                 # do nothing, just mark the current point as existing
-                print("no rule applied at point {} with environment\n{}".format(point, neighbor_states))
+                # print("no rule applied at point {} with environment\n{}".format(point, neighbor_states))
                 pass
-
-            self.set_state_at(point, States.EXISTING)
 
     def get_neighbors(self, point):
         # still includes point's coordinates too; this should not be changed, so we are dealing with 3x3 arrays as much as possible
@@ -100,10 +105,11 @@ class GrowthRule:
         self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(resulting_environment_1s_and_0s, States.NEW)
 
     def applies(self, environment):
-        print("seeing if rule with existing environment\n{}\nand resulting environment\n{}\napplies to environment\n{}".format(self.existing_environment, self.resulting_environment, environment))
+        # print("seeing if rule with existing environment\n{}\nand resulting environment\n{}\napplies to environment\n{}".format(self.existing_environment, self.resulting_environment, environment))
+        environment = GrowthRule.remove_central_value(environment)
         environment = GrowthRule.filter_state_array(environment, States.EXISTING)
-        print("filtered_environment:\n{}".format(environment))
-        print("result: {}\n\n".format(environment == self.existing_environment))
+        # print("filtered_environment:\n{}".format(environment))
+        # print("result: {}\n\n".format(environment == self.existing_environment))
         return environment == self.existing_environment
 
     @staticmethod
@@ -114,6 +120,12 @@ class GrowthRule:
     @staticmethod
     def filter_state_array(input_arr, state_to_keep):
         return [[x if x == state_to_keep else 0 for x in row] for row in input_arr]
+
+    @staticmethod
+    def remove_central_value(input_arr):
+        # replaces value in center of array with 0 so state at point does not interfere with neighbor environment classification
+        assert len(input_arr) == 3 and all(len(x) == 3 for x in input_arr)
+        return [[input_arr[i][j] if (i, j) != (1, 1) else 0 for j in range(3)] for i in range(3)]
 
     # guidelines for rules:
     # - middle cell should be States.NEW (the one that is being grown, because it hasn't yet done so due to just having sprouted from an older growth)
@@ -157,14 +169,17 @@ def array_to_tuple(arr):
 
 
 if __name__ == "__main__":
-    grid = Grid(31)
+    n = 37
+    assert n % 2 == 1
+    c = int((n-1)/2)  # center
+    grid = Grid(n)
 
     seed_position_array_1 = [
-        [(15, 15),],
+        [(c, c),],
     ]
     seed_position_array_2 = [
-        [(14, 15),],
-        [(15, 14), (15, 16),],
+        [(c-1, c),],
+        [(c, c-1), (c, c+1),],
     ]
 
     seed_position_array = seed_position_array_1
@@ -286,7 +301,8 @@ if __name__ == "__main__":
     #     print(rule)
 
     grid.print()
-    for i in range(10):
+    # for i in range(10):
+    while True:
         input("\npress enter to continue\n")
         grid.grow(growth_rules)
         grid.print()
