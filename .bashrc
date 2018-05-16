@@ -138,7 +138,12 @@ alias xo="xdg-open"
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
 # function null() { "$@" &> /dev/null ;}  # doesn't work
-function aco() { b=$(a=$(echo $1 | sed -e "s/\-[0-9]\./\./g;s/\.mp3//g"); find . | grep -i $a | grep -v mp3); echo $b | sed -e "s/ /\n/g"; echo "$b" | xargs aplay ;}
+function aco() { 
+    b=$(
+        a=$(echo $1 | sed -e "s/\-[0-9]\./\./g;s/\.mp3//g"); 
+        find . | grep -i $a | grep -v mp3);
+    echo $b | sed -e "s/ /\n/g"; echo "$b" | xargs -I % sh -c '{ aplay %; sleep 1; }';
+}
 
 export LESS="-SR"  # turns off line wrapping in less
 export PYTHONPATH=$PYTHONPATH:/home/wesley/programming
