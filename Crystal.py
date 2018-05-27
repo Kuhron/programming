@@ -62,19 +62,30 @@ class Grid:
             neighbors = self.get_neighbors(point)
             neighbor_states = self.get_state_array(neighbors)
             # grow the neighbors depending on the rules
-            rule_matches = [(env, rule) for env, rule in growth_rules.rules.items() if rule.applies(neighbor_states)]
 
-            if len(rule_matches) == 1:
-                # apply growth rule
-                k, rule = rule_matches[0]
-                # print("rule applied at point {} with environment\n{}\nand resulting environmment\n{}".format(point, neighbor_states, resulting_environment))
+            # NEW WAY
+            env_str = GrowthRule.convert_environment_to_rule_input_code(neighbor_states)
+            # print("looking up rule for str {}".format(env_str))
+            rule = growth_rules.rule_by_env_str.get(env_str)
+            # print("got rule {}".format(rule))
+            if rule is not None:
                 self.set_state_at_point_array(neighbors, rule.resulting_environment)
-            elif len(rule_matches) > 1:
-                raise Exception("should not match more than one rule because GrowthRuleSet's rules should have at most one rule for each environment\nrule matches: {}".format(rule_matches))
-            else:
-                # do nothing, just mark the current point as existing
-                # print("no rule applied at point {} with environment\n{}".format(point, neighbor_states))
-                pass
+
+            
+            # OLD WAY, slow because it iterates over each rule for each point. instead just go get the correct rule, if any, directly by putting a dict of environment code str to rule object in the GrowthRuleSet class
+            # rule_matches = [(env, rule) for env, rule in growth_rules.rules.items() if rule.applies(neighbor_states)]
+            # 
+            # if len(rule_matches) == 1:
+            #     # apply growth rule
+            #     k, rule = rule_matches[0]
+            #     # print("rule applied at point {} with environment\n{}\nand resulting environmment\n{}".format(point, neighbor_states, resulting_environment))
+            #     self.set_state_at_point_array(neighbors, rule.resulting_environment)
+            # elif len(rule_matches) > 1:
+            #     raise Exception("should not match more than one rule because GrowthRuleSet's rules should have at most one rule for each environment\nrule matches: {}".format(rule_matches))
+            # else:
+            #     # do nothing, just mark the current point as existing
+            #     # print("no rule applied at point {} with environment\n{}".format(point, neighbor_states))
+            #     pass
 
         self.iteration += 1
 
@@ -114,6 +125,7 @@ class StopGrowthIteration(Exception):
 class GrowthRuleSet:
     def __init__(self):
         self.rules = {}
+        self.rule_by_env_str = {}
 
     def add(self, rule):
         key = rule.existing_environment
@@ -122,11 +134,18 @@ class GrowthRuleSet:
         equivalent_values = get_rotations_and_reflections(value)
         # ordering of keys and values should correspond, given that the function generating them maintains ordered output
         for k, v in zip(equivalent_keys, equivalent_values):
-            k = array_to_tuple(k)
             equivalent_rule = GrowthRule(k, v)
-            self.rules[k] = equivalent_rule
+            self.rules[array_to_tuple(k)] = equivalent_rule
+            self.rule_by_env_str[GrowthRule.get_code_str_from_environment(k)] = equivalent_rule
         # make sure original rule overwrites any that have replaced it due to having identical key, but possibly different value
         self.rules[array_to_tuple(key)] = rule
+        self.rule_by_env_str[GrowthRule.get_code_str_from_environment(key)] = rule
+        
+        # debug
+        # print("\ndict:")
+        # for k, v in sorted(self.rule_by_env_str.items()):
+        #     print("env str {} : rule {}".format(k, v.get_code_str()))
+        # print("\n")
 
     def print_codes(self, output_path=None):
         to_print = self.rules.values()
@@ -148,16 +167,25 @@ class GrowthRule:
         out_1_0 = GrowthRule.remove_central_value(resulting_environment_1s_and_0s)
         self.existing_environment = GrowthRule.convert_1s_and_0s_to_state(in_1_0, States.EXISTING)
         self.resulting_environment = GrowthRule.convert_1s_and_0s_to_state(out_1_0, States.NEW)
+        self.existing_environment_code_str = GrowthRule.get_code_str_from_environment(self.existing_environment)
         # print("new vars:\n\nin 1 0\n{}\n\nout 1 0\n{}\n\nex env\n{}\n\nres env\n{}\n\n".format(in_1_0, out_1_0, self.existing_environment, self.resulting_environment))
         # print("code: {}\n\n".format(self.get_code_str()))
 
     def applies(self, environment):
-        # print("seeing if rule with existing environment\n{}\nand resulting environment\n{}\napplies to environment\n{}".format(self.existing_environment, self.resulting_environment, environment))
+        # trying to deprecate this function in favor of getting the environment code for each spot first, then just getting the rule that applies to it by looking up the environment code str in a dict within GrowthRuleSet, to avoid iterating over rules for every point to see which one applies
+        environment_code = GrowthRule.convert_environment_to_rule_input_code(environment)
+        return self.applies_to_environment_code_str(environment_code)
+
+    def applies_to_environment_code_str(self, environment_code):
+        return environment_code == self.existing_environment_code_str
+
+    @staticmethod
+    def convert_environment_to_rule_input_code(environment):
         environment = GrowthRule.remove_central_value(environment)
         environment = GrowthRule.filter_state_array(environment, States.EXISTING)
-        # print("filtered_environment:\n{}".format(environment))
-        # print("result: {}\n\n".format(environment == self.existing_environment))
-        return environment == self.existing_environment
+        environment_code = GrowthRule.get_code_str_from_environment(environment)
+        return environment_code
+        
 
     @staticmethod
     def convert_1s_and_0s_to_state(input_arr, output_state):
@@ -178,8 +206,12 @@ class GrowthRule:
     # - middle cell should be States.NEW (the one that is being grown, because it hasn't yet done so due to just having sprouted from an older growth)
     # - pay attention only to States.EXISTING for the environment; do not pay attention to new cells, so that each iteration of growth occurs simultaneously
 
+    @staticmethod
+    def get_code_str_from_environment(environment):
+        return "".join("".join(str(x) for x in row) for row in environment)
+
     def get_code_str(self):
-        return "".join("".join(str(x) for x in row) for row in self.existing_environment) + " -> " + "".join("".join(str(x) for x in row) for row in self.resulting_environment)
+        return GrowthRule.get_code_str_from_environment(self.existing_environment) + " -> " + GrowthRule.get_code_str_from_environment(self.resulting_environment)
 
     @staticmethod
     def get_rule_from_code(s):
