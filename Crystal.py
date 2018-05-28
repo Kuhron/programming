@@ -141,12 +141,6 @@ class GrowthRuleSet:
         self.rules[array_to_tuple(key)] = rule
         self.rule_by_env_str[GrowthRule.get_code_str_from_environment(key)] = rule
         
-        # debug
-        # print("\ndict:")
-        # for k, v in sorted(self.rule_by_env_str.items()):
-        #     print("env str {} : rule {}".format(k, v.get_code_str()))
-        # print("\n")
-
     def print_codes(self, output_path=None):
         to_print = self.rules.values()
         code_strs = [rule.get_code_str() for rule in to_print]
@@ -298,7 +292,8 @@ if __name__ == "__main__":
         rule_set = CGR.generate_random_rules()
 
         rule_set = [GrowthRule(*rule) for rule in rule_set]  # expect pair of arrays, for input and output
-        rule_set = sorted(rule_set, key=lambda x: x.get_code_str())
+
+    rule_set = sorted(rule_set, key=lambda x: x.get_code_str())
 
     for rule in rule_set:
         # print(rule)
@@ -324,7 +319,7 @@ if __name__ == "__main__":
         input("press enter to continue")
 
     if grid.iteration > 5:
-        # print("rules generating this pattern:")
-        # growth_rules.print_codes()
+        print("rules generating this pattern:")
+        growth_rules.print_codes()
         growth_rules.print_codes("CrystalRules/last.txt")
         grid.plot_age()
