@@ -134,6 +134,9 @@ alias elan="/opt/ELAN_5.1/ELAN_5.1"
 alias j="jobs"
 alias sound="alsactl restore"
 alias xo="xdg-open"
+alias ff="firefox"
+alias cr="chrome"
+alias lynx="lynx -accept_all_cookies"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
@@ -143,6 +146,18 @@ function aco() {
         a=$(echo $1 | sed -e "s/\-[0-9]\./\./g;s/\.mp3//g"); 
         find . | grep -i $a | grep -v mp3);
     echo $b | sed -e "s/ /\n/g"; echo "$b" | xargs -I % sh -c '{ aplay %; sleep 1; }';
+}
+
+# nox, for obscuring entire terminal into a font unreadable by others, usually for use with lynx browser
+function nox() {
+    : # nop
+    clear
+    dconf write /org/gnome/desktop/interface/monospace-font-name "'Braille Normal 800 11'"
+}
+function denox() {
+    : # nop
+    clear
+    dconf write /org/gnome/desktop/interface/monospace-font-name "'Ubuntu Mono 13'"
 }
 
 export LESS="-SR"  # turns off line wrapping in less
