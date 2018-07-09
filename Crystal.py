@@ -1,6 +1,7 @@
 import argparse
 import time
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 from CrystalGrowthRules import CrystalGrowthRules as CGR
@@ -113,7 +114,7 @@ class Grid:
         print("\\" + "-" * (2 * self.side_length - 1) + "/")
 
     def plot_age(self):
-        plt.imshow(self.birth_grid)
+        plt.imshow(np.array(self.birth_grid))
         plt.colorbar()
         plt.show()
 
