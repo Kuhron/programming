@@ -102,6 +102,8 @@ class Curve:
 
 
 class FractalStep:
+    instances = []
+
     def __init__(self, left_xs, slopes):
         # make sure slope shape is normalized to domain of [0, 1] and integrates to 0 (do this in the constructor for those shapes itself)
         assert left_xs == sorted(left_xs), "sort your damn left xs"
@@ -113,10 +115,14 @@ class FractalStep:
         self.left_xs = left_xs
         self.slopes = slopes
 
+        FractalStep.instances.append(self)
+
 
 if __name__ == "__main__":
     initial_segments = [Segment(0, 0), Segment(1, None)]
     curve = Curve(initial_segments)
+
+    # FractalStep types, keep them relatively simple but introduce variety
 
     long_fly_step  = FractalStep([0, 0.25, 0.5, 0.75, 1], [0, 1, -1, 0, None])
     short_fly_step = FractalStep([0, 0.25, 0.5, 0.75, 1], [0, -1, 1, 0, None])
@@ -124,8 +130,15 @@ if __name__ == "__main__":
     long_condor_step  = FractalStep([0, 0.2, 0.4, 0.6, 0.8, 1], [0, 1, 0, -1, 0, None])
     short_condor_step = FractalStep([0, 0.2, 0.4, 0.6, 0.8, 1], [0, -1, 0, 1, 0, None])
 
-    # choices = [long_fly_step, short_fly_step, long_condor_step, short_condor_step]
-    choices = [long_condor_step]
+    long_straddle_step  = FractalStep([0, 0.5, 1], [-1, 1, None])
+    short_straddle_step = FractalStep([0, 0.5, 1], [1, -1, None])
+
+    z_step = FractalStep([0, 0.25, 0.75, 1], [1, -1, 1, None])
+    s_step = FractalStep([0, 0.25, 0.75, 1], [-1, 1, -1, None])
+
+
+    choices = FractalStep.instances
+    # choices = [long_condor_step]
 
     n_steps = 5
     for i in range(n_steps):
