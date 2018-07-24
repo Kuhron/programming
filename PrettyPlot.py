@@ -54,7 +54,7 @@ def f4(x, y, *args):
         # the result is the sum of this many sine waves in 2d
         rhs += a[i]*np.sin(b[i]*x) + c[i]*np.sin(d[i]*y) + e[i]
 
-    print("f4; a = {a}; b = {b}; c = {c}; d = {d}; e = {e}".format(a=a, b=b, c=c, d=d, e=e).replace("; ", "\n   ")+"\n")
+    print("f4 ({n} waves); a = {a}; b = {b}; c = {c}; d = {d}; e = {e}".format(a=a, b=b, c=c, d=d, e=e, n=n).replace("; ", "\n   ")+"\n")
     return lhs - rhs
 
 def f5(x, y, *args):
@@ -72,7 +72,7 @@ def f5(x, y, *args):
         # the result is the product of this many sine waves in 2d
         rhs *= a[i]*np.sin(b[i]*x) + c[i]*np.sin(d[i]*y) + e[i]
 
-    print("f5; a = {a}; b = {b}; c = {c}; d = {d}; e = {e}".format(a=a, b=b, c=c, d=d, e=e).replace("; ", "\n   ")+"\n")
+    print("f5 ({n} waves); a = {a}; b = {b}; c = {c}; d = {d}; e = {e}".format(a=a, b=b, c=c, d=d, e=e, n=n).replace("; ", "\n   ")+"\n")
     result = lhs - rhs
     return signed_log(result)
 
@@ -92,7 +92,7 @@ def f6(x, y, *args):
         lhs += c[i]*np.sin(d[i]*x) + a[i]*np.sin(b[i]*y) + e[i]
         rhs *= a[i]*np.sin(b[i]*x) + c[i]*np.sin(d[i]*y) + e[i]
 
-    print("f6; a = {a}; b = {b}; c = {c}; d = {d}; e = {e}".format(a=a, b=b, c=c, d=d, e=e).replace("; ", "\n   ")+"\n")
+    print("f6 ({n} waves); a = {a}; b = {b}; c = {c}; d = {d}; e = {e}".format(a=a, b=b, c=c, d=d, e=e, n=n).replace("; ", "\n   ")+"\n")
     result = lhs - rhs
     return signed_log(result)
 
@@ -153,22 +153,25 @@ def plot_deviation(f, *args):
 if __name__ == "__main__":
     # plot_deviation(f2, random.uniform(-1, 1), random.uniform(-1, 1))
     # plot_deviation(f3, random.uniform(-1, 1), random.uniform(-1, 1))
+    n_f4_waves = np.random.randint(4, 16)  # right-exclusive; for f4, too many doesn't do a lot except increase magnitude of oscillations
+    n_f5_waves = np.random.randint(4, 8)  # for f5, too many makes way too much of the map close to zero, with random huge peaks and troughs
+    n_f6_waves = np.random.randint(7, 16)  # for f6, too many makes the f5 have almost no effect except for random huge peaks and troughs
     plot_deviation(f4,
-        np.random.uniform(-1, 1, 4),
+        np.random.uniform(-1, 1, n_f4_waves),
         np.random.uniform(-4, 4, 100),
         np.random.uniform(-1, 1, 100),
         np.random.uniform(-4, 4, 100),
         np.random.uniform(-1, 1, 100)
     )
     plot_deviation(f5,
-        np.random.uniform(-2, 2, 4),
+        np.random.uniform(-2, 2, n_f5_waves),
         np.random.normal(0, 2, 100),
         np.random.uniform(-2, 2, 100),
         np.random.normal(0, 2, 100),
         np.random.uniform(-1, 1, 100)
     )
     plot_deviation(f6,
-        np.random.uniform(-2, 2, 7),
+        np.random.uniform(-2, 2, n_f6_waves),
         np.random.normal(0, 2, 100),
         np.random.uniform(-2, 2, 100),
         np.random.normal(0, 2, 100),
