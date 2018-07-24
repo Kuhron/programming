@@ -3,6 +3,7 @@ import random
 
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import numpy as np
 
 
@@ -109,49 +110,69 @@ def plot_deviation(f, *args):
     X, Y = np.meshgrid(xs, ys[::-1])
     Z = f(X, Y, *args)
 
+    zero_contour_width_ratio = 1
     zlim = (np.min(Z), np.max(Z))
     n_levels = 20
     zs = np.arange(zlim[0], zlim[1], (zlim[1] - zlim[0])/n_levels)
-    widths = [0.5]*len(zs) + [1]
+    widths = [0.5]*len(zs) + [zero_contour_width_ratio * 0.5]
     zs = np.concatenate([zs, [0]])
-    zs = sorted(set(zs))
+    z_width_dict = {z: w for z, w in zip(zs, widths)}  # removes duplicate heights while making sure zero gets the thick width
+    z_w_tuples = sorted((z, w) for z, w in z_width_dict.items())
+    zs, widths = [tuple(x) for x in zip(*z_w_tuples)]
 
     contours_misplaced = False
     matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 
+    def get_land_and_sea_colormap():
+        # stacking 2 colormaps, from https://stackoverflow.com/questions/31051488/combining-two-matplotlib-colormaps
+        # sample the colormaps that you want to use. Use 128 from each so we get 256 colors in total
+        colors_land = plt.cm.autumn(np.linspace(1, 0, 128))  # autumn: yellow for low-elevation land, to red for high-elevation
+        colors_sea = plt.cm.winter(np.linspace(0, 1, 128))  # winter: green for shallow sea, to blue for deep
+        # combine them and build a new colormap
+        colors = np.vstack((colors_sea, colors_land))  # goes from low to high, so put sea first
+        colormap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+        return colormap
+
+    # colormap = "Spectral"
+    colormap = get_land_and_sea_colormap()
+    max_color_value = 3
+    min_color_value = -1 * max_color_value  # keep 0 in the middle of the colormap
+
     if contours_misplaced:
-        im = plt.imshow(Z, cmap="Spectral", extent=extent)
+        im = plt.imshow(Z, cmap=colormap, extent=extent, vmin=min_color_value, vmax=max_color_value)
         cs = plt.contour(Z, extent=extent, colors="black", levels=zs, linewidths=widths)
     else:
-        im = plt.imshow(Z, cmap="Spectral", extent=extent, origin="lower")
+        im = plt.imshow(Z, cmap=colormap, extent=extent, origin="lower", vmin=min_color_value, vmax=max_color_value)
         cs = plt.contour(Z, extent=extent, colors="black", levels=zs, linewidths=widths, origin="lower")
     
     # plt.clabel(cs, inline=False, fmt='%1.1f', fontsize=np.nan, levels=[0])
     plt.colorbar(im)
     plt.show()
 
-# plot_deviation(f2, random.uniform(-1, 1), random.uniform(-1, 1))
-# plot_deviation(f3, random.uniform(-1, 1), random.uniform(-1, 1))
-plot_deviation(f4,
-    np.random.uniform(-1, 1, 4),
-    np.random.uniform(-4, 4, 100),
-    np.random.uniform(-1, 1, 100),
-    np.random.uniform(-4, 4, 100),
-    np.random.uniform(-1, 1, 100)
-)
-plot_deviation(f5,
-    np.random.uniform(-2, 2, 4),
-    np.random.normal(0, 2, 100),
-    np.random.uniform(-2, 2, 100),
-    np.random.normal(0, 2, 100),
-    np.random.uniform(-1, 1, 100)
-)
-plot_deviation(f6,
-    np.random.uniform(-2, 2, 7),
-    np.random.normal(0, 2, 100),
-    np.random.uniform(-2, 2, 100),
-    np.random.normal(0, 2, 100),
-    np.random.uniform(-1, 1, 100)
-)
+
+if __name__ == "__main__":
+    # plot_deviation(f2, random.uniform(-1, 1), random.uniform(-1, 1))
+    # plot_deviation(f3, random.uniform(-1, 1), random.uniform(-1, 1))
+    plot_deviation(f4,
+        np.random.uniform(-1, 1, 4),
+        np.random.uniform(-4, 4, 100),
+        np.random.uniform(-1, 1, 100),
+        np.random.uniform(-4, 4, 100),
+        np.random.uniform(-1, 1, 100)
+    )
+    plot_deviation(f5,
+        np.random.uniform(-2, 2, 4),
+        np.random.normal(0, 2, 100),
+        np.random.uniform(-2, 2, 100),
+        np.random.normal(0, 2, 100),
+        np.random.uniform(-1, 1, 100)
+    )
+    plot_deviation(f6,
+        np.random.uniform(-2, 2, 7),
+        np.random.normal(0, 2, 100),
+        np.random.uniform(-2, 2, 100),
+        np.random.normal(0, 2, 100),
+        np.random.uniform(-1, 1, 100)
+    )
 
 
