@@ -138,6 +138,7 @@ alias ff="firefox"
 alias cr="chrome"
 alias lynx="lynx -accept_all_cookies"
 alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar"
+alias sublime="/opt/sublime_text/sublime_text"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}

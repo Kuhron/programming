@@ -153,7 +153,7 @@ def plot_deviation(f, *args):
 if __name__ == "__main__":
     # plot_deviation(f2, random.uniform(-1, 1), random.uniform(-1, 1))
     # plot_deviation(f3, random.uniform(-1, 1), random.uniform(-1, 1))
-    n_f4_waves = np.random.randint(4, 16)  # right-exclusive; for f4, too many doesn't do a lot except increase magnitude of oscillations
+    n_f4_waves = np.random.randint(4, 8)  # right-exclusive; for f4, too many doesn't do a lot except increase magnitude of oscillations
     n_f5_waves = np.random.randint(4, 8)  # for f5, too many makes way too much of the map close to zero, with random huge peaks and troughs
     n_f6_waves = np.random.randint(7, 16)  # for f6, too many makes the f5 have almost no effect except for random huge peaks and troughs
     plot_deviation(f4,
