@@ -122,6 +122,9 @@ class RewardSystem:
             outputs.append(output)
             memory_states.append(mind.memory.memory)
 
+        plt.plot(outputs)
+        plt.show()
+
         reward_function = RewardSystem.mean_stddev_memory
 
         return reward_function(outputs, memory_states)
@@ -133,7 +136,7 @@ class RewardSystem:
 
     @staticmethod
     def mean_stddev_memory(outputs, memory_states):
-        return np.mean([np.std(memory.values()) for memory in memory_states])
+        return np.mean([np.std([x for x in memory.values()]) for memory in memory_states])
 
 
 if __name__ == "__main__":
@@ -146,16 +149,13 @@ if __name__ == "__main__":
     # for input_array in [
     #     [1,0],[1,1],[1,0],[1,1],[3,1],[1,3],[1,1],[3,1],[1,3],[3,1],[1,3],[1,1],[3,1],[1,3],[1,1],[3,1]
     # ]:
-    outputs = []
+    input_array_list = []
     for _ in range(1000):
         input_array = [
-            (0 if len(outputs) < 1 else outputs[-1]), 
-            # (0 if len(outputs) < 2 else outputs[-2]),
             random.randint(0, 5), 
             random.randint(0, 5),
         ]
-        output = mind.process_input(input_array)
-        outputs.append(output)
+        input_array_list.append(input_array)
 
-    plt.plot(outputs)
-    plt.show()
+    n_output_lag_terms = 1
+    print(RewardSystem.evaluate(mind, input_array_list, n_output_lag_terms))
