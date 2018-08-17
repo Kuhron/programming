@@ -1,5 +1,11 @@
 # for now just keep memory in an "array" (actually a dict) in RAM, not a file, unless it gets really huge
 
+import random
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
 class Memory:
     def __init__(self):
         self.memory = {}
@@ -89,20 +95,67 @@ class Mind:
         # need to keep array of functions awaiting values for their parameters, and values that can be used for them
         # also if reach the end of genome but still have functions awaiting values, just append zeros to the value buffer until the expression evaluation terminates
 
+        return queue[0]
+
     @staticmethod
     def get_next_n_items(queue, n, index_of_func):
         new_queue = queue + [0] * n
         return new_queue[index_of_func + 1: index_of_func + 1 + n]
 
 
+class RewardSystem:
+    # don't instantiate
+
+    @staticmethod
+    def evaluate(mind, input_array_list, n_output_lag_terms):
+        outputs = []
+        memory_states = []
+
+        for input_array in input_array_list:
+            # add previous output lag terms
+            input_array = [
+                (0 if len(outputs) < (x+1) else outputs[-(x+1)])
+                    for x in range(n_output_lag_terms)
+            ] + input_array
+
+            output = mind.process_input(input_array)
+            outputs.append(output)
+            memory_states.append(mind.memory.memory)
+
+        reward_function = RewardSystem.mean_stddev_memory
+
+        return reward_function(outputs, memory_states)
+
+    @staticmethod
+    def random(outputs, memory_states):
+        # just for testing reward system functionality
+        return random.random()
+
+    @staticmethod
+    def mean_stddev_memory(outputs, memory_states):
+        return np.mean([np.std(memory.values()) for memory in memory_states])
+
+
 if __name__ == "__main__":
-    test_genome = Genome("XSS0XSS0SSS0")  # should output 3
-    mind = Mind(test_genome)
-    mind.process_input([])  # make it use real input later, for now just test that genome evaluation is correct
+    # test_genome = Genome("XSS0XSS0SSS0")  # should output 3
+    # mind = Mind(test_genome)
+    # mind.process_input([])  # make it use real input later, for now just test that genome evaluation is correct
 
     test_genome = Genome("XI0RSIS0WXIS0R0SXI0RS0")  # the one I designed intentionally and implemented in my notebook
     mind = Mind(test_genome)
-    for input_array in [
-        [1,0],[1,1],[1,0],[1,1],[3,1],[1,3],[1,1],[3,1],[1,3],[3,1],[1,3],[1,1],[3,1],[1,3],[1,1],[3,1]
-    ]:
-        mind.process_input(input_array)
+    # for input_array in [
+    #     [1,0],[1,1],[1,0],[1,1],[3,1],[1,3],[1,1],[3,1],[1,3],[3,1],[1,3],[1,1],[3,1],[1,3],[1,1],[3,1]
+    # ]:
+    outputs = []
+    for _ in range(1000):
+        input_array = [
+            (0 if len(outputs) < 1 else outputs[-1]), 
+            # (0 if len(outputs) < 2 else outputs[-2]),
+            random.randint(0, 5), 
+            random.randint(0, 5),
+        ]
+        output = mind.process_input(input_array)
+        outputs.append(output)
+
+    plt.plot(outputs)
+    plt.show()
