@@ -26,8 +26,88 @@ class Memory:
 
 
 class Genome:
-    def __init__(self, string):
-        self.string = string
+    CODONS =  ["000", "001", "010", "011", "100", "101", "110", "111"]
+    LETTERS = [  "0",   "0",   "R",   "W",   "I",   "S",   "S",   "X"]
+    # https://stackoverflow.com/questions/13905741/accessing-class-variables-from-a-list-comprehension-in-the-class-definition
+    # https://stackoverflow.com/a/13913933/7376935
+    CODONS_TO_LETTERS = (lambda CODONS=CODONS, LETTERS=LETTERS: {k: v for k, v in zip(CODONS, LETTERS)})()
+    LETTERS_TO_CODONS = (lambda CODONS=CODONS, LETTERS=LETTERS: {letter: [c for i, c in enumerate(CODONS) if LETTERS[i] == letter] for letter in LETTERS})()
+
+    def __init__(self, binary):
+        self.binary = binary
+        self.string = Genome.get_string_from_binary(binary)
+
+    def mutate(self):
+        r = random.random()
+        if r < 0.25:
+            return Genome(self.insert())
+        elif r < 0.5:
+            return Genome(self.delete())
+        else:
+            return Genome(self.swap())
+
+    def insert(self):
+        b = self.binary
+
+        def insert_once(b):
+            i = random.randrange(len(b))
+            return b[:i] + random.choice("01") + b[i:]
+
+        b = insert_once(b)
+        while random.random() < 0.5:
+            b = insert_once(b)
+
+        return b
+
+    def delete(self):
+        b = self.binary
+
+        def delete_once(b):
+            i = random.randrange(len(b))
+            return b[:i] + b[i+1:]
+
+        b = delete_once(b)
+        while random.random() < 0.5:
+            b = delete_once(b)
+
+        return b
+
+    def swap(self):
+        b = self.binary
+
+        def swap_once(b):
+            i = random.randrange(len(b)-1)
+            return b[:i] + b[i+1] + b[i] + b[i+2:]
+
+        b = swap_once(b)
+        while random.random() < 0.5:
+            b = swap_once(b)
+
+        return b
+
+    @staticmethod
+    def from_string(string):
+        binary = ""
+        for letter in string:
+            binary += random.choice(Genome.LETTERS_TO_CODONS[letter])
+        return Genome(binary)
+
+    @staticmethod
+    def get_string_from_binary(binary):
+        l = len(binary)
+        n = len(Genome.CODONS[0])
+        assert all(len(x) == n for x in Genome.CODONS)
+        n_diff = 0 if l % 3 == 0 else 1 if l % 3 == 2 else 2
+        binary += "0" * n_diff
+        l += n_diff
+
+        result = ""
+        n_letters = l // n
+        for i in range(n_letters):
+            codon = binary[n*i: n*(i+1)]
+            result += Genome.CODONS_TO_LETTERS[codon]
+
+        return result
 
     @staticmethod
     def zero():
@@ -53,6 +133,10 @@ class Genome:
             "S": Genome.succ,
             "X": Genome.xor,
         }[letter]  # want to raise exception if not found, so we are not having Nones where we should have functions
+
+    @staticmethod
+    def get_function_from_codon(codon):
+        return Genome.get_function_from_letter(Genome.CODONS_TO_LETTERS).get(codon, "0")
 
 
 class Mind:
@@ -90,7 +174,7 @@ class Mind:
                         #     raise RuntimeError("fix this")
                         break
 
-        print(queue[0], self.memory.get_memory_str())
+        # print(queue[0], self.memory.get_memory_str())
 
         # need to keep array of functions awaiting values for their parameters, and values that can be used for them
         # also if reach the end of genome but still have functions awaiting values, just append zeros to the value buffer until the expression evaluation terminates
@@ -107,7 +191,8 @@ class RewardSystem:
     # don't instantiate
 
     @staticmethod
-    def evaluate(mind, input_array_list, n_output_lag_terms):
+    def evaluate(genome, input_array_list, n_output_lag_terms, plot=True):
+        mind = Mind(genome)
         outputs = []
         memory_states = []
 
@@ -122,8 +207,9 @@ class RewardSystem:
             outputs.append(output)
             memory_states.append(mind.memory.memory)
 
-        plt.plot(outputs)
-        plt.show()
+        if plot:
+            plt.plot(outputs)
+            plt.show()
 
         reward_function = RewardSystem.mean_stddev_memory
 
@@ -139,23 +225,45 @@ class RewardSystem:
         return np.mean([np.std([x for x in memory.values()]) for memory in memory_states])
 
 
+class Environment:
+    def __init__(self):
+        # later, can add ability for environment's parameters (generating the distribution of the inputs) to change over time
+        self.min = 0
+        self.max = 5
+        self.array_length = 5
+        self.evaluation_lifetime = 1000
+        self.n_output_lag_terms = 1
+
+    def get_input_item(self):
+        return random.randint(self.min, self.max)
+
+    def get_input_array(self):
+        return [self.get_input_item() for _ in range(self.array_length)]
+
+    def evaluate_genome(self, genome, plot=True):
+        input_array_list = [self.get_input_array() for _ in range(self.evaluation_lifetime)]
+        score = RewardSystem.evaluate(genome, input_array_list, self.n_output_lag_terms, plot=plot)
+        return score
+
+    def evolve_genome(self, genome, n_steps):
+        candidates = [genome, genome.mutate()]
+
+        for _ in range(n_steps):
+            print([x.string for x in candidates])
+            scores = [self.evaluate_genome(x, plot=False) for x in candidates]
+            n_candidates_to_survive = len(candidates)  # can make more restrictive later
+            candidates = [candidate for score, candidate in sorted([x for x in zip(scores, candidates)], reverse=True)[:n_candidates_to_survive]]
+            candidates = [candidate.mutate() for candidate in candidates]
+
+        return candidates[0]
+
+
 if __name__ == "__main__":
-    # test_genome = Genome("XSS0XSS0SSS0")  # should output 3
+    # test_genome = Genome.from_string("XSS0XSS0SSS0")  # should output 3
     # mind = Mind(test_genome)
     # mind.process_input([])  # make it use real input later, for now just test that genome evaluation is correct
 
-    test_genome = Genome("XI0RSIS0WXIS0R0SXI0RS0")  # the one I designed intentionally and implemented in my notebook
-    mind = Mind(test_genome)
-    # for input_array in [
-    #     [1,0],[1,1],[1,0],[1,1],[3,1],[1,3],[1,1],[3,1],[1,3],[3,1],[1,3],[1,1],[3,1],[1,3],[1,1],[3,1]
-    # ]:
-    input_array_list = []
-    for _ in range(1000):
-        input_array = [
-            random.randint(0, 5), 
-            random.randint(0, 5),
-        ]
-        input_array_list.append(input_array)
+    genome = Genome.from_string("XI0RSIS0WXIS0R0SXI0RS0")  # the one I designed intentionally and implemented in my notebook
 
-    n_output_lag_terms = 1
-    print(RewardSystem.evaluate(mind, input_array_list, n_output_lag_terms))
+    environment = Environment()
+    environment.evolve_genome(genome, 50)
