@@ -146,6 +146,7 @@ class Mind:
 
     def process_input(self, input_array):
         queue = []
+        queue_repr = ""
 
         for letter in self.genome.string:
             if letter == "W":
@@ -158,9 +159,11 @@ class Mind:
                 f = Genome.get_function_from_letter(letter)
 
             queue.append(f)
+            queue_repr += letter
 
         while len(queue) > 1:
-            # print(queue)
+            # print(queue_repr)
+            last_queue_repr = queue_repr
             for i, item in enumerate(queue):
                 if callable(item):
                     n = item.__code__.co_argcount
@@ -170,9 +173,14 @@ class Mind:
                     else:
                         result = item(*values)
                         queue = queue[:i] + ([] if result is None else [result]) + (queue[i+n+1:] if i+n+1 < len(queue) else [])
+                        queue_repr = queue_repr[:i] + ("" if result is None else "*") + (queue_repr[i+n+1:] if i+n+1 < len(queue_repr) else "")
                         # if None in queue:
                         #     raise RuntimeError("fix this")
                         break
+            if queue_repr == last_queue_repr:
+                assert all(x == "*" for x in queue_repr), "infinite evaluation in queue of type {}".format(queue_repr)
+                queue = [Genome.xor] * (len(queue) - 1) + queue
+                queue_repr = "X" * (len(queue) - 1) + queue_repr
 
         # print(queue[0], self.memory.get_memory_str())
 
@@ -247,13 +255,14 @@ class Environment:
 
     def evolve_genome(self, genome, n_steps):
         candidates = [genome, genome.mutate()]
+        n_candidates_to_survive = 5
 
         for _ in range(n_steps):
             print([x.string for x in candidates])
             scores = [self.evaluate_genome(x, plot=False) for x in candidates]
-            n_candidates_to_survive = len(candidates)  # can make more restrictive later
-            candidates = [candidate for score, candidate in sorted([x for x in zip(scores, candidates)], reverse=True)[:n_candidates_to_survive]]
-            candidates = [candidate.mutate() for candidate in candidates]
+            top_scores = sorted(zip(scores, [random.random() for _ in range(len(scores))], candidates), reverse=True)  # list of random numbers prevents trying to order Genome objects
+            candidates = [candidate for score, _, candidate in top_scores[:n_candidates_to_survive]]
+            candidates += [candidate.mutate() for candidate in candidates]
 
         return candidates[0]
 
@@ -266,4 +275,5 @@ if __name__ == "__main__":
     genome = Genome.from_string("XI0RSIS0WXIS0R0SXI0RS0")  # the one I designed intentionally and implemented in my notebook
 
     environment = Environment()
-    environment.evolve_genome(genome, 50)
+    winner = environment.evolve_genome(genome, 20)
+    environment.evaluate_genome(winner, plot=True)
