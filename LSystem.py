@@ -31,6 +31,9 @@ class LSystem:
         for x in s:
             instructions = self.turtle_dict[x]
             for instruction in instructions:
+                if instruction[0] == "-":
+                    negative = True
+                    instruction = instruction[1:]
                 code = instruction[0]
                 num = int(instruction[1:])
                 if code == "L":
@@ -74,20 +77,48 @@ class LSystemRule:
 
 if __name__ == "__main__":
     rule_dict = {
-        "A": LSystemRule("A", {"F": 0.5, "AB": 0.25, "A": 0.25}),
+        "A": LSystemRule("A", {">": 0.5, "AB": 0.25, "A": 0.25}),
         "B": LSystemRule("B", {"ABA": 0.4, "BA": 0.3, "B": 0.3}),
     }
     koch_curve_rule_dict = {
-        "F": LSystemRule("F", {"FLFRFLF": 1, "F": 0}),
+        # ">": LSystemRule(">", {">L>R>L>": 1, ">": 0}),
+    }
+    acoma_fractal_rule_dict = {
+        ">": LSystemRule(">", {"c>F>>f>C": 1, ">": 0}),  # turns - into /\\/
     }
     turtle_dict = {
-        "L": ["L60", "F1"],
-        "R": ["R120", "F3"],
-        "F": ["R60", "F1", "L60"],
+        "a": ["L15"],
+        "b": ["L30"],
+        "c": ["L45"],
+        "d": ["L60"],
+        "e": ["L75"],
+        "f": ["L90"],
+        "g": ["L105"],
+        "h": ["L120"],
+        "i": ["L135"],
+        "j": ["L150"],
+        "k": ["L165"],
+        "l": ["L180"],
+        "A": ["R15"],
+        "B": ["R30"],
+        "C": ["R45"],
+        "D": ["R60"],
+        "E": ["R75"],
+        "F": ["R90"],
+        "G": ["R105"],
+        "H": ["R120"],
+        "I": ["R135"],
+        "J": ["R150"],
+        "K": ["R165"],
+        "L": ["R180"],
+        ">": ["F1"],
+        # "L": ["L60", ">1"],
+        # "R": ["R120", ">3"],
+        # ">": ["R60", ">1", "L60"],
     }
-    system = LSystem(koch_curve_rule_dict, turtle_dict)
+    system = LSystem(acoma_fractal_rule_dict, turtle_dict)
 
-    start_str = "F"
+    start_str = ">"
     res = system.apply_iterated(start_str, 20, max_length=10000)
     print(len(res))
 
