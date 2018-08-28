@@ -30,7 +30,13 @@ def get_random_latitude_and_longitude(degrees=False,lat_range=real_range,lon_ran
 
 
 def get_populous_us_cities(n_cities):
-    wikipedia_url = "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population"
+    # current page, subject to breaking randomly
+    # wikipedia_url = "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population"
+
+    # static revision, if I can get it to work for one of them
+    wikipedia_url = "https://en.wikipedia.org/w/index.php?title=List_of_United_States_cities_by_population&oldid=854477638"
+    print("using revision as of 2018-08-11")
+
     html = requests.get(wikipedia_url).text
     soup = BeautifulSoup(html, "html5lib")
     tables = soup.find_all("table", attrs={"class": "wikitable sortable"})
@@ -40,14 +46,14 @@ def get_populous_us_cities(n_cities):
     for tr in trs[1:]:
         tds = tr.find_all("td")
         city_td = tds[1]
-        city = city_td.find("a").text
+        city = city_td.find("a").text.strip()
         state_td = tds[2]
-        state = state_td.text.replace("\u00A0", "")  # remove &nbsp;
+        state = state_td.text.replace("\u00A0", "").strip()  # remove &nbsp;
         new_str = u"{}, {}".format(city, state)
         # print(new_str.encode("utf-8"))
         cities.append(new_str)
 
-    assert all(x in cities for x in ["New York, New York", "Chicago, Illinois", "Memphis, Tennessee"])
+    assert all(x in cities for x in ["New York, New York", "Chicago, Illinois", "Memphis, Tennessee"]), cities
     return random.sample(cities, n_cities)
 
 

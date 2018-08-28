@@ -45,6 +45,10 @@ class LSystem:
                 else:
                     raise ValueError("invalid instruction code {}".format(code))
 
+        fp = "LSystemImage.ps"
+        turtle.getscreen().getcanvas().postscript(file=fp)
+        print("saved image to " + fp)
+
         turtle.exitonclick()
 
 
@@ -81,7 +85,7 @@ if __name__ == "__main__":
         "B": LSystemRule("B", {"ABA": 0.4, "BA": 0.3, "B": 0.3}),
     }
     koch_curve_rule_dict = {
-        # ">": LSystemRule(">", {">L>R>L>": 1, ">": 0}),
+        # ">": LSystemRule(">", {">d>H>d>": 1, ">": 0}),
     }
     acoma_fractal_rule_dict = {
         ">": LSystemRule(">", {"c>F>>f>C": 1, ">": 0}),  # turns - into /\\/
@@ -119,7 +123,7 @@ if __name__ == "__main__":
     system = LSystem(acoma_fractal_rule_dict, turtle_dict)
 
     start_str = ">"
-    res = system.apply_iterated(start_str, 20, max_length=10000)
+    res = system.apply_iterated(start_str, 6, max_length=10000)
     print(len(res))
 
     system.plot(res)
