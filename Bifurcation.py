@@ -21,12 +21,10 @@ def get_iterations(f, x0, n0, n1, *args, **kwargs):
     return [next(g) for _ in range(n1 - n0)]
 
 
-def find_equilibria(f, x0, *args, **kwargs):
+def find_equilibria(f, x0, n0, n1, *args, **kwargs):
     # how to do this, finding where it converges?
-    # could specify some large N, find the range of the orbit between, say, N and N+1024 steps. Plot all those points.
-    N = 10000
-    n = 1024
-    iterations = get_iterations(f, x0, N, N+n, *args, **kwargs)
+    # could specify some large N, find the range of the orbit between, say, N and N+1024 steps. Plot all those points. Parametrize these N and n
+    iterations = get_iterations(f, x0, n0, n1, *args, **kwargs)
     return sorted(set(iterations))
 
 
@@ -40,7 +38,7 @@ def scatter(f, x0, n0, n1, *args, **kwargs):
 #     plt.
 
 
-def plot_bifurcation_diagram(f, x0, arg_min, arg_max):
+def plot_bifurcation_diagram(f, x0, n0, n1, n_arg_values, arg_min, arg_max):
     # f should be func of one variable, plotting only bifurcation along that one and holding all else constant
     fail_str = "f must be function of one variable for bifurcation plot, returning a func of x; e.g. f = lambda r: lambda x: r * x * (1 - x)"
     assert f.__code__.co_argcount == 1, fail_str
@@ -51,22 +49,22 @@ def plot_bifurcation_diagram(f, x0, arg_min, arg_max):
     except:
         raise Exception(fail_str)
 
-    n_points = 1000
     arg_range = arg_max - arg_min
-    arg_lst = np.arange(arg_min, arg_max, arg_range/n_points)
+    arg_lst = np.arange(arg_min, arg_max, arg_range/n_arg_values)
 
     xs = []
     ys = []
 
     for arg in arg_lst:
         f_arg = f(arg)
-        equilibria = find_equilibria(f_arg, x0)
+        equilibria = find_equilibria(f_arg, x0, n0, n1)
         # print(arg, equilibria)
         for eq in equilibria:
             xs.append(arg)
             ys.append(eq)
 
-    plt.scatter(xs, ys, c="k", marker=",")
+    # how to plot single pixels: https://stackoverflow.com/questions/39753282/
+    plt.scatter(xs, ys, c="k", marker='o', s=(72./plt.gcf().dpi)**2, alpha=0.15)
     plt.show()
 
 
@@ -74,7 +72,7 @@ if __name__ == "__main__":
     # scatter((lambda x: (2*x+1) % 100), 0, 10000, 11024)  # test
     # scatter(logistic_map, 0.01, 10000, 11024, 3.5)
 
-    plot_bifurcation_diagram((lambda r: lambda x: logistic_map(x, r)), 0.5, 2.5, 4)
+    plot_bifurcation_diagram((lambda r: lambda x: logistic_map(x, r)), x0=0.5, n0=10000, n1=11000, n_arg_values=2000, arg_min=3.56, arg_max=3.58)
 
 
 
