@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 
 
 def logistic_map(x, r):
-    return r * x * (x - 1)
+    return r * x * (1 - x)
 
 
 def iterate(f, x0, *args, **kwargs):
@@ -46,8 +46,8 @@ def plot_bifurcation_diagram(f, x0, arg_range_min, arg_range_max):
 
 
 if __name__ == "__main__":
-    scatter(logistic_map, 0.01, 10000, 11024, 3.8)
-    scatter((lambda x: (2*x+1) % 100), 0, 10000, 11024)  # test
+    # scatter((lambda x: (2*x+1) % 100), 0, 10000, 11024)  # test
+    scatter(logistic_map, 0.01, 0, 1000, 2)
 
 
 
