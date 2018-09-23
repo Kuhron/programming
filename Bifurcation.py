@@ -64,7 +64,7 @@ def plot_bifurcation_diagram(f, x0, n0, n1, n_arg_values, arg_min, arg_max):
             ys.append(eq)
 
     # how to plot single pixels: https://stackoverflow.com/questions/39753282/
-    plt.scatter(xs, ys, c="k", marker='o', s=(72./plt.gcf().dpi)**2, alpha=0.15)
+    plt.scatter(xs, ys, c="k", marker='o', s=(72./plt.gcf().dpi)**2, alpha=0.05)
     plt.show()
 
 
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # scatter((lambda x: (2*x+1) % 100), 0, 10000, 11024)  # test
     # scatter(logistic_map, 0.01, 10000, 11024, 3.5)
 
-    plot_bifurcation_diagram((lambda r: lambda x: logistic_map(x, r)), x0=0.5, n0=10000, n1=11000, n_arg_values=2000, arg_min=3.56, arg_max=3.58)
+    plot_bifurcation_diagram((lambda r: lambda x: logistic_map(x, r)), x0=0.5, n0=10000, n1=11000, n_arg_values=2000, arg_min=2.4, arg_max=4)
 
 
 
