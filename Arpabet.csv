@@ -1,54 +1,43 @@
 Arpabet,GeneralAmerican,Accent1,KTSwitch
-AA,ɑ ,a,ɑ 
-AE,æ ,ɛ,æ 
-AH,ʌ ,ø,ʌ 
-AO,ɔ ,o,ɔ 
-AW,aʊ ,aʊ,aʊ 
-AX,ə ,ø,ə 
-AXR,ɚ ,øɾ,ɚ 
-AY,aɪ ,eɪ,aɪ 
-EH,ɛ ,ɛ,ɛ 
-ER,ɝ ,øɾ,ɝ 
-EY,eɪ ,e,eɪ 
-IH,ɪ ,y,ɪ 
-IX,ɨ ,y,ɨ 
-IY,i ,i,i 
-OW,oʊ ,o,oʊ 
-OY,ɔɪ ,uɪ,ɔɪ 
-UH,ʊ ,u,ʊ 
-UW,u ,y,u 
-UX,ʉ ,y,ʉ 
-B,b ,b,b 
-CH,tʃ ,ʃ,tʃ 
-D,d ,d,g
-DH,ð ,z,ɣ
-DX,ɾ ,ɾ,ɾ 
-EL,l̩ ,il,l̩ 
-EM,m̩ ,im,m̩ 
-EN,n̩ ,in,n̩ 
-F,f ,f,f 
-G,ɡ ,g,d
-HH,h ,.,h 
-JH,dʒ ,ʒ,dʒ 
-K,k ,k,t
-L,l ,l,l 
-M,m ,m,m 
-N,n ,n,n 
-NG,ŋ ,ŋ,ŋ 
-NX,ɾ̃ ,n,ɾ̃ 
-P,p ,p,p 
-Q,ʔ ,ʔ,ʔ 
-R,ɹ ,ɾ,ɹ 
-S,s ,s,s 
-SH,ʃ ,ʃ,ʃ 
-T,t ,t,k
-TH,θ ,s,x
-V,v ,v,v 
-W,w ,v,w 
-WH,ʍ ,v,ʍ 
-Y,j ,j,j 
-Z,z ,z,z 
-ZH,ʒ ,ʒ,ʒ 
+AA,ɑ,a,ɑ
+AE,æ,ɛ,æ
+AH,ʌ,ø,ʌ
+AO,ɔ,o,ɔ
+AW,aʊ,øy,aʊ
+AY,aɪ,eɪ,aɪ
+EH,ɛ,ɛ,ɛ
+ER,ɝ,øɾ,ɝ
+EY,eɪ,e,eɪ
+IH,ɪ,y,ɪ
+IY,i,i,i
+OW,oʊ,o,oʊ
+OY,ɔɪ,uɪ,ɔɪ
+UH,ʊ,u,ʊ
+UW,u,y,u
+B,b,b,b
+CH,tʃ,ʃ,tʃ
+D,d,d,g
+DH,ð,z,ɣ
+F,f,f,f
+G,ɡ,g,d
+HH,h,.,h
+JH,dʒ,ʒ,dʒ
+K,k,k,t
+L,l,l,l
+M,m,m,m
+N,n,n,ŋ
+NG,ŋ,ŋ,n
+P,p,p,p
+R,ɹ,ɾ,ɹ
+S,s,s,s
+SH,ʃ,ʃ,ʃ
+T,t,t,k
+TH,θ,s,x
+V,v,v,v
+W,w,v,w
+Y,j,j,j
+Z,z,z,z
+ZH,ʒ,ʒ,ʒ
 0,,,
 1,́,́,́
 2,̀,̀,̀

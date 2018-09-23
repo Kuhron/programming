@@ -21,6 +21,7 @@ def convert_dictionary(arpabet_to_ipa):
     with open(dictionary_fp) as f:
         lines = [line.strip().split() for line in f.readlines()]
     d = {}
+    arpabet_symbols_used = set()
     for line in lines:
         # combine word and its homograph index into one string
         key = line[0] + "-" + line[1]
@@ -32,12 +33,19 @@ def convert_dictionary(arpabet_to_ipa):
                 symbol = symbol[:-1]
             else:
                 diacritic = ""
-            ipa_symbol = arpabet_to_ipa[symbol] + diacritic
+            arpabet_symbols_used.add(symbol)
+            val = arpabet_to_ipa[symbol]
+            ipa_symbol = val[0] + diacritic + val[1:]
             ipa_str += ipa_symbol
         d[key] = ipa_str
     with open(output_fp, "w") as f:
         for key in sorted(d.keys()):
             f.write("{} {}\n".format(key, d[key]))
+
+    unused = [k for k in arpabet_to_ipa.keys() if k not in arpabet_symbols_used and k not in "012"]
+    if len(unused) != 0:
+        print("unused symbols: " + " ".join(sorted(unused)))
+
     return d
 
 
@@ -48,8 +56,8 @@ def convert_user_input(pronunciation_dict):
         result = ""
         for word in inp.split():
             options = [v for k, v in pronunciation_dict.items() if "".join(k.split("-")[:-1]) == word]
-            result += "/".join(options) + " " if result != [] else ("!" + word)
-        print(result)
+            result += "/".join(options) + " " if options != [] else ("!" + word + " ")
+        print(result + "\n")
 
     
 
@@ -57,7 +65,13 @@ def convert_user_input(pronunciation_dict):
 if __name__ == "__main__":
     table = read_conversion_table()
     arpabet_index = table[0].index("Arpabet")
-    accent = "KTSwitch"
+    other_options = [x for x in table[0] if x != "Arpabet"]
+    print("Choose an accent:\n" + "\n".join("{}. {}".format(i, x) for i, x in enumerate(other_options)))
+    inp = input()
+    try:
+        accent = other_options[int(inp)]
+    except:
+        raise Exception("failure")
     accent_index = table[0].index(accent)
     arpabet_to_ipa = {row[arpabet_index]: row[accent_index] for row in table[1:]}
     d = convert_dictionary(arpabet_to_ipa)
