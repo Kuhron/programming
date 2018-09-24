@@ -72,7 +72,10 @@ if __name__ == "__main__":
     # scatter((lambda x: (2*x+1) % 100), 0, 10000, 11024)  # test
     # scatter(logistic_map, 0.01, 10000, 11024, 3.5)
 
-    plot_bifurcation_diagram((lambda r: lambda x: logistic_map(x, r)), x0=0.5, n0=10000, n1=11000, n_arg_values=2000, arg_min=2.4, arg_max=4)
+    plot_bifurcation_diagram((lambda r: lambda x: logistic_map(x, r)), x0=0.5, n0=10000, n1=11000, n_arg_values=2000, 
+        arg_min=2.5,
+        arg_max=4
+    )
 
 
 
