@@ -167,3 +167,7 @@ export PYTHONPATH=$PYTHONPATH:/home/wesley/programming
 export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
 export PATH=$PATH:$PYTHONPATH:$GOPATH
 
+
+# clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
+gsettings set com.canonical.indicator.datetime time-format "'custom'"
+gsettings set com.canonical.indicator.datetime custom-time-format "'%Y-%m-%d %H:%M:%S %Z  ||  %w  %j  %s'"
