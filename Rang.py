@@ -3,6 +3,7 @@ import random
 import html as html_lib
 import requests
 import webbrowser
+import sys
 
 from bs4 import BeautifulSoup
 
@@ -69,19 +70,30 @@ def confirm(string):
 
 
 if __name__ == "__main__":
-    mode = input("Select mode:\n"
-        "1. World\n"
-        "2. Continental US (approx.)\n"
-        "3. US cities over 100,000 people\n")
+    args = sys.argv
+
+    try:
+        open_in_browser = args[2] == "y"
+    except IndexError:
+        open_in_browser = None
+    confirm_open = lambda: open_in_browser if open_in_browser is not None else confirm("open in browser?")
+
+    try:
+        mode = args[1]
+    except IndexError:
+        mode = input("Select mode:\n"
+            "1. World\n"
+            "2. Continental US (approx.)\n"
+            "3. US cities over 100,000 people\n")
     if mode == "1":
         loc = get_random_latitude_and_longitude(degrees=True)
         print(loc)
-        if confirm("open in browser?"):
+        if confirm_open():
             open_location_in_google_maps(*loc)
     elif mode == "2":
         loc = get_random_latitude_and_longitude(degrees=True,lat_range=(24.5,49.5),lon_range=(-125,-66))
         print(loc)
-        if confirm("open in browser?"):
+        if confirm_open():
             open_location_in_google_maps(*loc)
     elif mode == "3":
         n_cities = int(input("How many cities? "))

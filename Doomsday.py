@@ -107,7 +107,7 @@ def practice():
             print("doh! The correct answer was {} ({}).".format(day, number_to_day(day)))
         total += 1
     t = time.time() - t0
-    print("final score: {} / {}; total time: {:.2f} seconds ({:.2f} average per right answer)".format(score, total, t, t / score))
+    print("final score: {} / {}; total time: {:.2f} seconds ({:.2f} average per right answer)".format(score, total, t, t / score if score > 0 else float("nan")))
 
 
 if __name__ == "__main__":
