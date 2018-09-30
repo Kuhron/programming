@@ -15,23 +15,30 @@ def done():
 
 
 # subroutines
+# please keep alphabetized
 
 def doomsday():
     if do("Doomsday"):
         os.system("python3 Doomsday.py")
     cont()
 
+def liff():
+    if do("Meaning of Liff"):
+        os.system("python3 TheMeaningOfLiff.py")
+    cont()
+
 def rang():
     if do("Rang"):
         os.system("python3 Rang.py 2 y")
+        while do("again?"):
+            os.system("python3 Rang.py 2 y")
     cont()
-
-
 
 
 # routine
 
 doomsday()
 rang()
+liff()
 
 done()
