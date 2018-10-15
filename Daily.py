@@ -27,6 +27,11 @@ def liff():
         os.system("python3 TheMeaningOfLiff.py")
     cont()
 
+def mood():
+    if do("Mood Tracker"):
+        os.system("python3 MoodTracker.py")
+    cont()
+
 def rang():
     if do("Rang"):
         os.system("python3 Rang.py 2 y")
@@ -37,6 +42,7 @@ def rang():
 
 # routine
 
+mood()
 doomsday()
 rang()
 liff()
