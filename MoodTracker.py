@@ -75,18 +75,36 @@ def record():
             f.write("{},{}\n".format(dt_str, res))
 
 
-def plot():
+def get_plot_data():
     with open(data_fp) as f:
         lines = [line.strip() for line in f.readlines()]
     assert lines[0] == "dt,mood"
     lines = [line.split(",") for line in lines[1:]]
     xs = [datetime.strptime(line[0], dt_format) for line in lines]
     ys = [int(line[1]) for line in lines]
+    return xs, ys
+
+def plot():
+    xs, ys = get_plot_data()
+    plot_raw_scatter(xs, ys, "Raw Scatter")
+    plot_time_of_year(xs, ys)  # do later if have data over lots of time
+    plot_time_of_day(xs, ys)
+
+def plot_raw_scatter(xs, ys, title):
     x_range = max(xs) - min(xs)
     padding = x_range / 24
     plt.scatter(xs, ys)
     plt.xlim(xmin = min(xs) - padding, xmax = max(xs) + padding)
+    plt.title(title)
     plt.show()
+
+def plot_time_of_year(xs, ys):
+    xs = [x.replace(year=2000) for x in xs]
+    plot_raw_scatter(xs, ys, "Seasonality")
+
+def plot_time_of_day(xs, ys):
+    xs = [x.replace(year=2000, month=1, day=1) for x in xs]
+    plot_raw_scatter(xs, ys, "Time of Day")
 
 
 if __name__ == "__main__":
