@@ -4,6 +4,7 @@
 
 from datetime import datetime
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 # original scale (note asymmetry where 4 is better than neutral)
 # 1 the worst
@@ -51,10 +52,10 @@ def record():
     print("Mood right now?")
     for n in numbers:
         print("{} : {}".format(n, scale[n]))
-    print("or type \"skip\" to just plot existing data")
+    print("or press enter to just plot existing data")
     while True:
         inp = input()
-        if inp == "skip":
+        if inp == "":
             res = None
             break
         try:
@@ -84,27 +85,34 @@ def get_plot_data():
     ys = [int(line[1]) for line in lines]
     return xs, ys
 
+
 def plot():
     xs, ys = get_plot_data()
     plot_raw_scatter(xs, ys, "Raw Scatter")
     plot_time_of_year(xs, ys)  # do later if have data over lots of time
     plot_time_of_day(xs, ys)
 
-def plot_raw_scatter(xs, ys, title):
+
+def plot_raw_scatter(xs, ys, title, axis_dt_format=None):
     x_range = max(xs) - min(xs)
     padding = x_range / 24
     plt.scatter(xs, ys)
     plt.xlim(xmin = min(xs) - padding, xmax = max(xs) + padding)
+    if axis_dt_format is not None:
+        plt.gca().xaxis.set_major_formatter(mdates.DateFormatter(axis_dt_format))
+    plt.xticks(rotation=20)
     plt.title(title)
     plt.show()
 
+
 def plot_time_of_year(xs, ys):
     xs = [x.replace(year=2000) for x in xs]
-    plot_raw_scatter(xs, ys, "Seasonality")
+    plot_raw_scatter(xs, ys, "Seasonality", "%B %d")
+
 
 def plot_time_of_day(xs, ys):
     xs = [x.replace(year=2000, month=1, day=1) for x in xs]
-    plot_raw_scatter(xs, ys, "Time of Day")
+    plot_raw_scatter(xs, ys, "Time of Day", "%H:%M")
 
 
 if __name__ == "__main__":
