@@ -6,3 +6,4 @@ __pycache__/
 
 # blackjack shoe text files
 *.shoe
+_secret*
