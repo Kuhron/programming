@@ -25,7 +25,7 @@ def get_click_signal():
 
 
 if __name__ == "__main__":
-    n_items = 3
+    n_items = 5
     signals = [get_click_signal() for _ in range(n_items)]
     names = random.sample(string.ascii_uppercase, n_items)
 
