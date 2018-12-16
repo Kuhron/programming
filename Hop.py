@@ -19,6 +19,7 @@
 
 
 import random
+import time
 
 import numpy as np
 # import matplotlib.pyplot as plt
@@ -88,7 +89,9 @@ class Board:
         print("active point and color:", self.active_point, active_color)
         print("occupied points:", self.occupied_points)
         closest_point = min(points, key=lambda p: (Board.measure_distance(self.active_point, p), random.random()))
+        print("closest point of opposite color:", closest_point)
         displacement_vector = Board.get_displacement_vector(self.active_point, closest_point)
+        print("displacement:", displacement_vector)
         # move closest piece away from active point, with same displacement
         # but should adjust for increased mass if two same-colored pieces combined, somehow, while keeping pieces on the grid
         # mass = abs(self.get_piece_at_point(closest_point))  # just ignore this for now
@@ -96,16 +99,27 @@ class Board:
             closest_point[0] + displacement_vector[0],
             closest_point[1] + displacement_vector[1],
         )
+        target_point = self.adjust(target_point)
+        print("target_point:", target_point, "with value", self.get_piece_at_point(target_point))
         self.move_piece(closest_point, target_point)
-        if self.get_piece_at_point(target_point) == 0:
+        resultant_value = self.get_piece_at_point(target_point)
+        print("resultant value at target:", resultant_value)
+        if resultant_value == 0:
             # annihilation occurred
-            self.active_point = random.choice(self.occupied_points)
+            print("annihilation occurred")
+            if self.is_empty():
+                print("entire board has been annihilated")
+                return
+            self.active_point = random.choice([k for k in self.occupied_points])
         else:
-            self.active_point = self.adjust(target_point)
+            self.active_point = target_point
 
     @staticmethod
     def get_displacement_vector(p0, p1):
         return (p1[0] - p0[0], p1[1] - p0[1])
+
+    def is_empty(self):
+        return len(self.occupied_points) == 0
     
     def print(self):
         s = ""
@@ -113,8 +127,9 @@ class Board:
             for item in row:
                 sg = " +-"[sign(item)]
                 value = int(abs(item))
+                sv = str(value) if value != 0 else " "
                 assert value < 10
-                s += sg + str(value) + " "
+                s += sg + sv + " "
             s += "\n"
         print(s)
 
@@ -124,12 +139,15 @@ def sign(item):
 
 
 if __name__ == "__main__":
-    board = Board(8)
-    board.populate(4)
+    board = Board(16)
+    board.populate(12)
     board.print()
 
     for i in range(100):
         print(i)
         board.step()
         board.print()
-        input("press enter to continue\n")
+        # input("press enter to continue\n")
+        time.sleep(0.1)
+        if board.is_empty():
+            break
