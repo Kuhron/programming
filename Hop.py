@@ -18,7 +18,9 @@
 # what does a circle look like?
 
 
+import os
 import random
+import string
 import time
 
 import numpy as np
@@ -86,27 +88,32 @@ class Board:
         active_color = sign(self.get_piece_at_point(self.active_point))
         opposite_color = -1 * active_color
         points = [p for p, v in self.occupied_points.items() if sign(v) == opposite_color]
-        print("active point and color:", self.active_point, active_color)
-        print("occupied points:", self.occupied_points)
+        # print("active point and color:", self.active_point, active_color)
+        # print("occupied points:", self.occupied_points)
         closest_point = min(points, key=lambda p: (Board.measure_distance(self.active_point, p), random.random()))
-        print("closest point of opposite color:", closest_point)
+        # print("closest point of opposite color:", closest_point)
         displacement_vector = Board.get_displacement_vector(self.active_point, closest_point)
-        print("displacement:", displacement_vector)
+        # print("displacement:", displacement_vector)
         # move closest piece away from active point, with same displacement
-        # but should adjust for increased mass if two same-colored pieces combined, somehow, while keeping pieces on the grid
-        # mass = abs(self.get_piece_at_point(closest_point))  # just ignore this for now
+        # but should adjust for increased mass if two same-colored pieces combined, somehow, while keeping pieces on the grid rather than having float positions
+        # how about a larger mass repels even more, and the mass of the moving piece is not taken into account
+        use_mass = False
+        if use_mass:
+            mass = int(abs(self.get_piece_at_point(self.active_point)))
+        else:
+            mass = 1
         target_point = (
-            closest_point[0] + displacement_vector[0],
-            closest_point[1] + displacement_vector[1],
+            closest_point[0] + displacement_vector[0] * mass,
+            closest_point[1] + displacement_vector[1] * mass,
         )
         target_point = self.adjust(target_point)
-        print("target_point:", target_point, "with value", self.get_piece_at_point(target_point))
+        # print("target_point:", target_point, "with value", self.get_piece_at_point(target_point))
         self.move_piece(closest_point, target_point)
         resultant_value = self.get_piece_at_point(target_point)
-        print("resultant value at target:", resultant_value)
+        # print("resultant value at target:", resultant_value)
         if resultant_value == 0:
             # annihilation occurred
-            print("annihilation occurred")
+            # print("annihilation occurred")
             if self.is_empty():
                 print("entire board has been annihilated")
                 return
@@ -122,15 +129,17 @@ class Board:
         return len(self.occupied_points) == 0
     
     def print(self):
-        s = ""
+        s = "/" + "---" * self.side_length + "\\\n"
         for row in self.array:
+            s += "|"
             for item in row:
                 sg = " +-"[sign(item)]
                 value = int(abs(item))
-                sv = str(value) if value != 0 else " "
-                assert value < 10
+                assert value < 62
+                sv = (" 123456789" + string.ascii_lowercase + string.ascii_uppercase)[value]
                 s += sg + sv + " "
-            s += "\n"
+            s += "|\n"
+        s += "\\" + "---" * self.side_length + "/"
         print(s)
 
 
@@ -139,15 +148,17 @@ def sign(item):
 
 
 if __name__ == "__main__":
-    board = Board(16)
+    board = Board(30)
     board.populate(12)
     board.print()
 
-    for i in range(100):
-        print(i)
+    i = 0
+    while not board.is_empty():
+        # os.system("clear")
+        print("step {}, this should be zero: {}".format(i, sum(board.occupied_points.values())))
         board.step()
         board.print()
         # input("press enter to continue\n")
-        time.sleep(0.1)
-        if board.is_empty():
-            break
+        i += 1
+        time.sleep(0.01)
+
