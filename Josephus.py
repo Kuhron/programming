@@ -60,5 +60,10 @@ def f(n):
 
 
 if __name__ == "__main__":
-    for i in range(1000, 101000, 1000):
-        print(i, f(i))
+    # a = 1000
+    # for i in range(a, 101*a, a):
+    #     print(i, f(i))
+    xs = list(range(1, 10001))
+    ys = [f(x) for x in xs]
+    plt.scatter(xs, ys)
+    plt.show()
