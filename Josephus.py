@@ -1,8 +1,25 @@
 import matplotlib.pyplot as plt
 
 
+MEMO = {}
+
 def f(n):
+    assert n > 0, "{} <= 0".format(n)
+
     designations = list(range(1, n+1))
+
+    # memoization
+    if n in MEMO:
+        return MEMO[n]
+    elif n >= 3 and (n-1) in MEMO:
+        # make list of length n-1, note that 1 always kills 2 first, then it is 3's turn
+        # don't bother doing this if n is just 2, so we don't have to worry about the index
+        new_designations = designations[2:] + [designations[0]]
+        assert len(new_designations) == n-1
+        f_n_minus_1 = f(n-1)  # remember that this is 1-indexed, don't worry about function call overhead
+        index_to_get = f_n_minus_1 - 1
+        return new_designations[index_to_get]
+
     statuses = [1 for person in designations]
     current_index = 0
     increment = lambda index: (index + 1) % n
@@ -19,7 +36,9 @@ def f(n):
         while statuses[current_index] == 0:
             current_index = increment(current_index)
         # go again, this current index kills next living person, unless they are the last one
-    return designations[current_index]
+    result = designations[current_index]
+    MEMO[n] = result
+    return result
 
 
 # later may be able to use memoized results for smaller n
@@ -29,5 +48,5 @@ def f(n):
 
 
 if __name__ == "__main__":
-    for i in range(1, 20):
+    for i in range(1000, 101000, 1000):
         print(i, f(i))
