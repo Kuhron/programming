@@ -114,12 +114,12 @@ def p_range():
     plt.title("range in deg F")
     plt.hist(df["rangeF"], bins=100)
     plt.show()
-# p_range()
+p_range()
 
 def p_opt01():
     # TODO this graph's x-axis is messed up
     plt.title("optimum in interval [0, 1]")
     plt.hist(df["opt01"], bins=100)
-    plt.xticks(np.arange(0, 1.1, 0.1))
+    # plt.xticks(np.arange(0, 1.1, 0.1))
     plt.show()
-# p_opt01()
+p_opt01()
