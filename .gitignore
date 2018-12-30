@@ -7,3 +7,6 @@ __pycache__/
 # blackjack shoe text files
 *.shoe
 _secret*
+
+# giant prime number text file
+primes.txt
