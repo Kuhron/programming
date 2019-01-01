@@ -171,3 +171,6 @@ export PATH=$PATH:$PYTHONPATH:$GOPATH
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
 gsettings set com.canonical.indicator.datetime time-format "'custom'"
 gsettings set com.canonical.indicator.datetime custom-time-format "'%Y-%m-%d %H:%M:%S %Z  ||  %w  %j  %s'"
+
+# added by Anaconda3 installer
+export PATH="/home/wesley/anaconda3/bin:$PATH"
