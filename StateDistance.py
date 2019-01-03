@@ -42,6 +42,8 @@ def get_distance_matrix():
 
 
 def plot():
+    # for now just trying to get Basemap to work AT ALL. I give up.
+
     import numpy as np
     import matplotlib.pyplot as plt
     from mpl_toolkits.basemap import Basemap as Basemap
@@ -135,7 +137,27 @@ def plot():
 
 
 if __name__ == "__main__":
-    # m = get_distance_matrix()
+    m = get_distance_matrix()
     # pd.DataFrame.to_csv(m, "StateDistanceMatrix.csv")
 
-    plot()
+    # plot()  # I give up on this
+
+    # puzzle sequence generation
+    admission_order = [
+        "DE","PA","NJ","GA","CT",  # 1999
+        "MA","MD","SC","NH","VA",  # 2000
+        "NY","NC","RI","VT","KY",  # 2001
+        "TN","OH","LA","IN","MS",  # 2002
+        "IL","AL","ME","MO","AR",  # 2003
+        "MI","FL","TX","IA","WI",  # 2004
+        "CA","MN","OR","KS","WV",  # 2005
+        "NV","NE","CO","ND","SD",  # 2006
+        "MT","WA","ID","WY","UT",  # 2007
+        "OK","NM","AZ",            # 2008, omit AK and HI because their distance to others is ill-defined
+    ]
+    seq = []
+    assert len(set(admission_order)) == len(admission_order) == 48
+    for a, b in zip(admission_order[:-1], admission_order[1:]):
+        seq.append(m[a][b])
+    assert len(seq) == 47
+    print(seq)

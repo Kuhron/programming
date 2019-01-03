@@ -589,8 +589,8 @@ COMMON_SOUND_CHANGES = [
 
 
 if __name__ == "__main__":
-    # inventory, vocabulary = get_random_input_language()
-    inventory, vocabulary = get_input_language_from_file()
+    inventory, vocabulary = get_random_input_language()
+    # inventory, vocabulary = get_input_language_from_file()
 
     text = [random.choice(vocabulary) for i in range(50)]
 
