@@ -547,8 +547,8 @@ DEFAULT_FEATURE_VALUES = {k: 0 for k in FEATURE_KEYS.keys()}
 
 
 def get_ipa_symbol_to_features_dict():
-    if os.path.isfile("C:/Users/Wesley/Desktop/Programming/IPA_SYMBOL_TO_FEATURES.pickle"):
-        with open("C:/Users/Wesley/Desktop/Programming/IPA_SYMBOL_TO_FEATURES.pickle", "rb") as f:
+    if os.path.isfile("/home/wesley/programming/IPA_SYMBOL_TO_FEATURES.pickle"):
+        with open("/home/wesley/programming/IPA_SYMBOL_TO_FEATURES.pickle", "rb") as f:
             d = pickle.load(f)
         return d
 
