@@ -1,36 +1,37 @@
 # JUMA 2
 
 d = {
-    "a" : "o",
-    "b" : "v",
-    "c" : "ts",
-    "d" : "z",
-    "e" : "a",
-    "f" : "tʃ",
-    "g" : "d",
-    "h" : "k",
-    "i" : "e",
-    "j" : "dz",
-    "k" : "t",
-    "l" : "n",
-    "m" : "w",
-    "n" : "r",
-    "o" : "u",
-    "p" : "f",
-    "q" : "tɕ",
-    "r" : "y",  # /j/
-    "s" : "p",
-    "t" : "s",
-    "u" : "i",
-    "v" : "dʒ",
-    "w" : "m",
-    "x" : "ɕ",
-    "y" : "l",
-    "z" : "b",
+    "A" : "o",
+    "B" : "v",
+    "C" : "x",
+    "D" : "z",
+    "E" : "a",
+    "F" : "tʃ",
+    "G" : "d",
+    "H" : "k",
+    "I" : "e",
+    "J" : "ɣ",
+    "K" : "t",
+    "L" : "n",
+    "M" : "w",
+    "N" : "r",
+    "O" : "u",
+    "P" : "f",
+    "Q" : "g",
+    "R" : "j",
+    "S" : "p",
+    "T" : "s",
+    "U" : "i",
+    "V" : "dʒ",
+    "W" : "m",
+    "X" : "ŋ",
+    "Y" : "l",
+    "Z" : "b",
 }
 
 def f(s):
-    return "".join(d.get(c, c) for c in s.lower())
+    print(s.upper())
+    return "".join(d.get(c, c) for c in s.upper())
 
 
 if __name__ == "__main__":
