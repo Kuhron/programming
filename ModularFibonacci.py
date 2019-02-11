@@ -1,6 +1,11 @@
+# my own investigation of this, want to try to prove some things myself
+# here is the OEIS sequence for the number of sequences mod n: https://oeis.org/A015134
+
+
 import random
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+import sympy
 
 
 def get_next_value(a, b, base):
@@ -25,7 +30,9 @@ def get_conditions_in_sequence(seq):
 
 def get_sequences_for_base(base):
     result = []
-    remaining_conditions = [[i, j] for i in range(base) for j in range(base)]
+    # order = list(range(base))
+    order = get_column_order_for_base(base)
+    remaining_conditions = [[i, j] for i in order for j in order]
     # all bases will have degenerate sequence of all zeros, but return it anyway
     while remaining_conditions != []:
         a, b = remaining_conditions[0]
@@ -49,17 +56,26 @@ def get_n_sets(base):
 
 def report_for_base(base):
     seqs = get_sequences_for_base(base)
+    seq_lens = [len(seq) - 2 for seq in seqs]  # len of sequence is actually number of pairs in it, = len(seq) - 2
     print("base {} has {} sequences".format(base, len(seqs)))
+    print("lengths in order of sequence number: {}".format(seq_lens))
+    print("lengths in sorted order:             {}".format(sorted(seq_lens)))
+    print()
     tuple_to_seq_number = {}
     for i, seq in enumerate(seqs):
-        print("seq #{}".format(i))
+        print("seq #{}, len {} with factorization {}".format(i, seq_lens[i], sympy.factorint(seq_lens[i])))  
         print(seq)
         pairs = get_conditions_in_sequence(seq)
         for pair in pairs:
             tuple_to_seq_number[tuple(pair)] = i
         print()
 
-    show_table(base, tuple_to_seq_number)
+    print("\n"+ ("-"*40) +"\n")
+
+    if base <= 50:
+        show_table(base, tuple_to_seq_number)
+    else:
+        print("too big to show table")
 
 
 def add_to_lengths_file():
@@ -83,27 +99,56 @@ def add_to_lengths_file():
 
 def is_power_of_2(num):
     # http://code.activestate.com/recipes/577514-chek-if-a-number-is-a-power-of-two/
+    assert int(num) == num
+    num = int(num)
     return num != 0 and ((num & (num - 1)) == 0)
+
+
+def get_column_order_for_base(base):
+    if False: #is_power_of_2(base):
+        return get_column_order_for_power_of_2(base)
+    return list(range(base))
+
+
+def get_column_order_for_power_of_2(base):
+    assert is_power_of_2(base) and base >= 1
+    base = int(base)
+    if base == 1: return [0]  # this is the actual base case
+    previous = get_column_order_for_power_of_2(base/2)
+    previous = [x*2 for x in previous]
+
+    # these are hacks, trying to see what the table looks like with different orders
+    # if base == 2: rest = [1]
+    # elif base == 4: rest = 
+    # elif base == 8: rest = [7, 3, 5, 1]
+
+    if True: # else:
+        # once I figure out how this works, there should only be one "rest = " construction
+        rest = [x + 1 for x in previous] # [x for x in range(base) if x not in previous][::-1]
+    return previous + rest
 
 
 def show_table(base, tuple_to_seq_number):
     # https://stackoverflow.com/questions/46663911/how-to-assign-specific-colors-to-specific-cells-in-a-matplotlib-table
 
-    if is_power_of_2(base):
-        # even numbers first, so that you will see the upper left quarter is the same as the table for the previous power of 2
-        # (previous sequences were all doubled)
-        columns = sorted(range(base), key=lambda x: (x % 2, x))
-    else:
-        columns = [str(x) for x in range(base)]
+    # if is_power_of_2(base):
+    #     # even numbers first, so that you will see the upper left quarter is the same as the table for the previous power of 2
+    #     # (previous sequences were all doubled)
+    #     columns = get_column_order_for_power_of_2(base)
+    # else:
+    #     columns = [str(x) for x in range(base)]
+    columns = get_column_order_for_base(base)
     rows = columns[:]
+
+    n_seqs = max(tuple_to_seq_number.values())
 
     def f(r, c):
         # return random.choice(range(base))
         return tuple_to_seq_number[(r, c)]
 
     def color(x):
-        assert 0 <= x <= base
-        return cm.get_cmap("Spectral")(x/base)
+        assert 0 <= x <= n_seqs
+        return cm.get_cmap("hsv")(x/(n_seqs+1))  # want 0 and 1 not to be the same color
 
     text_array = []
     color_array = []
@@ -129,6 +174,12 @@ def show_table(base, tuple_to_seq_number):
 if __name__ == "__main__":
     # add_to_lengths_file()  # best to do in background job, then comment out
 
-    for base in [4, 8, 16]:
+    while True:
+        try:
+            base = int(input("n = ").strip())
+        except ValueError:
+            print("invalid int, try again")
+            continue
+
         report_for_base(base)
 
