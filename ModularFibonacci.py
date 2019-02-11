@@ -105,8 +105,24 @@ def is_power_of_2(num):
 
 
 def get_column_order_for_base(base):
-    if False: #is_power_of_2(base):
-        return get_column_order_for_power_of_2(base)
+    # if False: #is_power_of_2(base):
+    #     return get_column_order_for_power_of_2(base)
+
+    # prime power ordering
+    factorization = sympy.factorint(base)
+    if len(factorization) == 1:  # prime power, only one prime factor ignoring multiplicity
+        p = list(factorization.keys())[0]
+        k = factorization[p]
+        if k == 1: return list(range(base))
+        else:
+            previous = get_column_order_for_base(p**(k-1))
+            previous = [x*p for x in previous]
+            rest = []
+            for remainder in range(1, p):
+                rest.extend([x + remainder for x in previous])
+            return previous + rest
+
+    # default ordering, contains good patterns of its own! do not dismiss!
     return list(range(base))
 
 
