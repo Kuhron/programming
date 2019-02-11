@@ -89,12 +89,11 @@ def is_power_of_2(num):
 def show_table(base, tuple_to_seq_number):
     # https://stackoverflow.com/questions/46663911/how-to-assign-specific-colors-to-specific-cells-in-a-matplotlib-table
 
-    # if is_power_of_2(base):
-    #     # even numbers first, so that you will see the upper left quarter is the same as the table for the previous power of 2
-    #     # (previous sequences were all doubled)
-    #     # never mind this isn't true
-    #     columns = sorted(range(base), key=lambda x: (x % 2, x))
-    if True: # else:
+    if is_power_of_2(base):
+        # even numbers first, so that you will see the upper left quarter is the same as the table for the previous power of 2
+        # (previous sequences were all doubled)
+        columns = sorted(range(base), key=lambda x: (x % 2, x))
+    else:
         columns = [str(x) for x in range(base)]
     rows = columns[:]
 
@@ -108,10 +107,12 @@ def show_table(base, tuple_to_seq_number):
 
     text_array = []
     color_array = []
-    for r in range(base):
+    for r_i in range(base):
         row_text_array = []
         row_color_array = []
-        for c in range(base):
+        for c_i in range(base):
+            r = rows[r_i]
+            c = columns[c_i]
             v = f(r, c)
             row_text_array.append(" {} ".format(v))
             row_color_array.append(color(v))
@@ -126,7 +127,7 @@ def show_table(base, tuple_to_seq_number):
 
 
 if __name__ == "__main__":
-    add_to_lengths_file()
+    # add_to_lengths_file()  # best to do in background job, then comment out
 
     for base in [4, 8, 16]:
         report_for_base(base)
