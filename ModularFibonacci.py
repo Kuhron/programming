@@ -76,43 +76,58 @@ def add_to_lengths_file():
 
     with open(fp, "a") as f:
         while True:
+            print("n = {}".format(base))
             f.write("{}{}{}\n".format(base, delim, get_n_sets(base)))
             base += 1
 
 
-def test_table(base, tuple_to_seq_number):
+def is_power_of_2(num):
+    # http://code.activestate.com/recipes/577514-chek-if-a-number-is-a-power-of-two/
+    return num != 0 and ((num & (num - 1)) == 0)
+
+
+def show_table(base, tuple_to_seq_number):
     # https://stackoverflow.com/questions/46663911/how-to-assign-specific-colors-to-specific-cells-in-a-matplotlib-table
-    columns = [str(x) for x in range(base)]
+
+    # if is_power_of_2(base):
+    #     # even numbers first, so that you will see the upper left quarter is the same as the table for the previous power of 2
+    #     # (previous sequences were all doubled)
+    #     # never mind this isn't true
+    #     columns = sorted(range(base), key=lambda x: (x % 2, x))
+    if True: # else:
+        columns = [str(x) for x in range(base)]
     rows = columns[:]
 
     def f(r, c):
         # return random.choice(range(base))
+        return tuple_to_seq_number[(r, c)]
 
     def color(x):
-        assert 0 <= x <= n
-        return cm.get_cmap("Spectral")(x/n)
+        assert 0 <= x <= base
+        return cm.get_cmap("Spectral")(x/base)
 
     text_array = []
     color_array = []
-    for r in range(n):
+    for r in range(base):
         row_text_array = []
         row_color_array = []
-        for c in range(n):
+        for c in range(base):
             v = f(r, c)
-            row_text_array.append(str(v))
+            row_text_array.append(" {} ".format(v))
             row_color_array.append(color(v))
         text_array.append(row_text_array)
         color_array.append(row_color_array)
 
     plt.axis('tight')
     plt.axis('off')
-    plt.table(cellText=text_array, cellColours=color_array, rowLabels=rows, colLabels=columns, loc='center')
+    table = plt.table(cellText=text_array, cellColours=color_array, rowLabels=rows, colLabels=columns, loc='center')
+    table.auto_set_column_width(list(range(base)))
     plt.show()
 
 
 if __name__ == "__main__":
-    base = 4
-    report_for_base(base)
+    add_to_lengths_file()
 
-    # add_to_lengths_file()
-    # test_table()
+    for base in [4, 8, 16]:
+        report_for_base(base)
+
