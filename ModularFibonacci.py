@@ -183,7 +183,14 @@ def show_table(base, tuple_to_seq_number):
     plt.axis('tight')
     plt.axis('off')
     table = plt.table(cellText=text_array, cellColours=color_array, rowLabels=rows, colLabels=columns, loc='center')
-    table.auto_set_column_width(list(range(base)))
+    if base > 27:
+        # doesn't fit on screen anymore
+        table.auto_set_font_size(False)  # seriously there is an underscore here but not in set_fontsize()
+        table.scale(0.5, 0.5)
+        table.set_fontsize(4)
+    else:
+        table.auto_set_column_width(list(range(base)))
+        # table.auto_set_row_height(list(range(base)))  # method doesn't exist
     plt.show()
 
 
