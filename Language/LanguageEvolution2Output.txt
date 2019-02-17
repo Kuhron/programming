@@ -1,809 +1,809 @@
 inventory:
-b  y  d̠  ə  ʉ  t͡s  ɶ  ɟ͡ʝ  ɘ  ɹ̠̥  p  ɵ  k  a  ɑ  d͡z  ɐ  g͡ɣ  β  o  o̞  i  x  ɤ̞  β̞̥
+b  t̠  a  ʈ  β  i  ɘ  z  s  ʃ  ɜ  ɯ  ɨ  p  t  d̠  ɞ  ɢ  ɸ  ʒ  ʐ  ɛ  x  ɣ  ɵ  ʌ  χ  ɤ
 ----
 vocabulary:
-kd̠ɘ --> kːo̞t̠ɘːpʰ
-kd̠ɘɟ͡ʝɑɟ͡ʝk --> kːɘd̠u
-kd̠ɘə --> kːo̞t̠ʰ
-kd̠ɘɑ --> kːɘd̠u
-ɟ͡ʝg͡ɣɐɟ͡ʝkd̠ɘ --> c͡çːo̞k͡xːo̞t̠o̞d̠ʱ
-ɟ͡ʝg͡ɣɐɟ͡ʝkd̠ɘɟ͡ʝɑɟ͡ʝk --> c͡çːo̞k͡xːo̞t̠ɘːɟ͡ʝu
-ɟ͡ʝg͡ɣɐɟ͡ʝkd̠ɘə --> c͡çːo̞k͡xːo̞t̠ɘːd̠u
-ɟ͡ʝg͡ɣɐɟ͡ʝkd̠ɘɑ --> c͡çːo̞k͡xːo̞t̠o̞d̠ʱ
-g͡ɣɐkd̠ɘ --> k͡xːo̞k͡xːo̞t̠ɘːd̠u
-g͡ɣɐkd̠ɘɟ͡ʝɑɟ͡ʝk --> k͡xːo̞k͡xːo̞t̠ɘːd̠ʱ
-g͡ɣɐkd̠ɘə --> k͡xːo̞k͡xːo̞t̠ɘːd̠u
-g͡ɣɐkd̠ɘɑ --> k͡xːo̞k͡xːo̞t̠o̞d̠ʱ
-ɟ͡ʝɹ̠̥ɤ̞kd̠ɘ --> cːo̞k͡xːo̞t̠ɘːd̠u
-ɟ͡ʝɹ̠̥ɤ̞kd̠ɘɟ͡ʝɑɟ͡ʝk --> cːo̞k͡xːo̞t̠ɘːd̠ʱ
-ɟ͡ʝɹ̠̥ɤ̞kd̠ɘə --> cːo̞k͡xːo̞t̠ɘːd̠u
-ɟ͡ʝɹ̠̥ɤ̞kd̠ɘɑ --> cːo̞k͡xːo̞t̠o̞d̠ʱ
-β̞̥ɶp --> β̞̥ːɶ̈p͡ɸːu
-β̞̥ɶpɟ͡ʝɑk --> β̞̥ːɶ̈p͡ɸːäːd̠u
-β̞̥ɶpkə --> β̞̥ːɶ̈p͡ɸːo̞k͡xo̞t̠ʰ
-β̞̥ɶpɶ --> β̞̥ːɶ̈ʉː̯ad̠u
-t͡sɶɹ̠̥β̞̥ɶp --> t͡sːo̞ɹ̠̥ø̞̯ɶ̈p͡ɸːo̞t̠ʰ
-t͡sɶɹ̠̥β̞̥ɶpɟ͡ʝɑk --> t͡sːo̞ɹ̠̥ø̞̯ɶ̈p͡ɸːäːd̠u
-t͡sɶɹ̠̥β̞̥ɶpkə --> t͡sːo̞ɹ̠̥ø̞̯ɶ̈p͡ɸːo̞k͡xo̞t̠ʰ
-t͡sɶɹ̠̥β̞̥ɶpɶ --> t͡sːo̞ɹ̠̥ø̞̯ɶ̈ʉː̯ad̠u
-xad̠β̞̥ɶp --> xːap͡ɸːɶ̈p͡ɸːo̞t̠ʰ
-xad̠β̞̥ɶpɟ͡ʝɑk --> xːap͡ɸːɶ̈p͡ɸːäːd̠u
-xad̠β̞̥ɶpkə --> xːap͡ɸːɶ̈p͡ɸːo̞k͡xo̞t̠ʰ
-xad̠β̞̥ɶpɶ --> xːap͡ɸːɶ̈ʉː̯ad̠u
-ɶβ̞̥ɶp --> ɶːø̞ː̯ɶ̈p͡ɸːo̞t̠ʰ
-ɶβ̞̥ɶpɟ͡ʝɑk --> ɶːø̞ː̯ɶ̈p͡ɸːäːd̠u
-ɶβ̞̥ɶpkə --> ɶːø̞ː̯ɶ̈p͡ɸːo̞k͡xo̞t̠ʰ
-ɶβ̞̥ɶpɶ --> ɶːø̞ː̯ɶ̈ʉː̯ad̠u
-ɐ --> ɐːd̠ʱ
-ɐʉxd̠ --> ɐːd̠ʉːk͡xːo̞t̠o̞d̠ʱ
-ɐβɑ --> ɐːd̠ʱ
-ɐi --> ɐːd̠ʱ
-ibɹ̠̥ɐ --> iːd̠ʱ
-ibɹ̠̥ɐʉxd̠ --> iːd̠ʉːk͡xːo̞t̠o̞d̠ʱ
-ibɹ̠̥ɐβɑ --> iːd̠ʱ
-ibɹ̠̥ɐi --> iːd̠ʱ
-pɹ̠̥əɟ͡ʝɐ --> pːo̞t̠ʰ
-pɹ̠̥əɟ͡ʝɐʉxd̠ --> pːʉːk͡xːo̞t̠u
-pɹ̠̥əɟ͡ʝɐβɑ --> pːu
-pɹ̠̥əɟ͡ʝɐi --> pːɐd̠u
-d̠apɐ --> t̠ːo̞p͡ɸːo̞t̠ʰ
-d̠apɐʉxd̠ --> d̠ːʉːk͡xːo̞t̠u
-d̠apɐβɑ --> d̠ːo̞b͡βːu
-d̠apɐi --> d̠ːɐːd̠u
-əɟ͡ʝ --> əːd̠ʱ
-əɟ͡ʝy --> əːd̠ʱ
-əɟ͡ʝɐkt͡s --> əːk͡xːo̞t̠ʰ
-əɟ͡ʝbɶβ --> əːõ̞ː̯ɶːb͡βːu
-bɶəɟ͡ʝ --> bːu
-bɶəɟ͡ʝy --> bːo̞ɟ͡ʝːu
-bɶəɟ͡ʝɐkt͡s --> pːo̞k͡xːo̞t͡su
-bɶəɟ͡ʝbɶβ --> bːo̞ɟ͡ʝːõ̞ː̯ɶːb͡βːu
-d͡zɟ͡ʝoɹ̠̥əɟ͡ʝ --> dːəd̠u
-d͡zɟ͡ʝoɹ̠̥əɟ͡ʝy --> tːo̞ɹ̠̥ːo̞t̠ʰ
-d͡zɟ͡ʝoɹ̠̥əɟ͡ʝɐkt͡s --> tːo̞k͡xːo̞t͡su
-d͡zɟ͡ʝoɹ̠̥əɟ͡ʝbɶβ --> tːo̞ɹ̠̥ːo̞c͡çõ̞ː̯ɶːb͡βːu
-ipəɟ͡ʝ --> iːd̠u
-ipəɟ͡ʝy --> iːd̠ʱ
-ipəɟ͡ʝɐkt͡s --> iːk͡xːo̞t̠ʰ
-ipəɟ͡ʝbɶβ --> iːɟ͡ʝːõ̞ː̯ɶːb͡βːu
-kko̞g͡ɣ --> kːo̞k͡xo̞d̠u
-kko̞g͡ɣakp --> kːo̞k͡xo̞k͡xːo̞p͡ɸo̞t̠ʰ
-kko̞g͡ɣpɤ̞t͡sd͡z --> kːo̞k͡xo̞d̠ɤ̞ːt͡su
-kko̞g͡ɣd̠o̞ --> kːo̞k͡xo̞g͡ɣo̞ːd̠ʱ
-ɵkkko̞g͡ɣ --> ɵːk͡xːo̞k͡xo̞k͡xo̞d̠u
-ɵkkko̞g͡ɣakp --> ɵːk͡xːo̞k͡xo̞k͡xo̞k͡xːo̞p͡ɸo̞t̠ʰ
-ɵkkko̞g͡ɣpɤ̞t͡sd͡z --> ɵːk͡xːo̞k͡xo̞k͡xo̞d̠ɤ̞ːt͡su
-ɵkkko̞g͡ɣd̠o̞ --> ɵːk͡xːo̞k͡xo̞k͡xo̞g͡ɣo̞ːd̠ʱ
-kt͡so̞kko̞g͡ɣ --> kːɵ̞k͡xːo̞k͡xo̞d̠u
-kt͡so̞kko̞g͡ɣakp --> kːɵ̞k͡xːo̞k͡xo̞k͡xːo̞p͡ɸo̞t̠ʰ
-kt͡so̞kko̞g͡ɣpɤ̞t͡sd͡z --> kːɵ̞k͡xːo̞k͡xo̞d̠ɤ̞ːt͡su
-kt͡so̞kko̞g͡ɣd̠o̞ --> kːɵ̞k͡xːo̞k͡xo̞g͡ɣo̞ːd̠ʱ
-bg͡ɣɵd̠kko̞g͡ɣ --> bːɵːt̠ːo̞k͡xːo̞k͡xo̞d̠u
-bg͡ɣɵd̠kko̞g͡ɣakp --> bːɵːt̠ːo̞k͡xːo̞k͡xo̞k͡xːo̞p͡ɸo̞t̠ʰ
-bg͡ɣɵd̠kko̞g͡ɣpɤ̞t͡sd͡z --> bːɵːt̠ːo̞k͡xːo̞k͡xo̞d̠ɤ̞ːt͡su
-bg͡ɣɵd̠kko̞g͡ɣd̠o̞ --> bːɵːt̠ːo̞k͡xːo̞k͡xo̞g͡ɣo̞ːd̠ʱ
-i --> iːd̠u
-ibo̞ɹ̠̥ --> iːd̠o̞ːd̠ʱ
-ii --> iːd̠ʱ
-ipo̞ --> iːp͡ɸːo̞d̠ʱ
-d̠β̞̥o̞ɟ͡ʝi --> t̠ːo̞p͡ɸːo̞d̠ʱ
-d̠β̞̥o̞ɟ͡ʝibo̞ɹ̠̥ --> t̠ːo̞p͡ɸːo̞bːo̞ːɹ̠̥u
-d̠β̞̥o̞ɟ͡ʝii --> t̠ːo̞p͡ɸːo̞ɟ͡ʝu
-d̠β̞̥o̞ɟ͡ʝipo̞ --> t̠ːo̞p͡ɸːo̞p͡ɸːo̞d̠u
-pd̠əβi --> pːo̞t̠ʰ
-pd̠əβibo̞ɹ̠̥ --> pːo̞pːo̞ːɹ̠̥u
-pd̠əβii --> pːəd̠u
-pd̠əβipo̞ --> pːəp͡ɸːo̞d̠ʱ
-ɑd̠ɟ͡ʝi --> ɑːd̠ʱ
-ɑd̠ɟ͡ʝibo̞ɹ̠̥ --> ɑːbːo̞ːd̠ʱ
-ɑd̠ɟ͡ʝii --> ɑːɟ͡ʝo̞d̠ʱ
-ɑd̠ɟ͡ʝipo̞ --> ɑːp͡ɸːo̞d̠u
-ɟ͡ʝɘt͡s --> ɟ͡ʝːo̞d̠ʱ
-ɟ͡ʝɘt͡sy --> c͡çːo̞t͡sːu
-ɟ͡ʝɘt͡sbobβ̞̥ --> ɟ͡ʝːo̞bo̞pːo̞p͡ɸːu
-ɟ͡ʝɘt͡sɟ͡ʝbɤ̞ɹ̠̥ --> ɟ͡ʝːəːd̠u
-əɟ͡ʝɘt͡s --> əːd̠ʱ
-əɟ͡ʝɘt͡sy --> əːd̠ʱ
-əɟ͡ʝɘt͡sbobβ̞̥ --> əːbo̞pːo̞p͡ɸːo̞t̠ʰ
-əɟ͡ʝɘt͡sɟ͡ʝbɤ̞ɹ̠̥ --> əːd̠əːd̠u
-yɟ͡ʝɘt͡s --> yːd̠ʱ
-yɟ͡ʝɘt͡sy --> yːd̠ʱ
-yɟ͡ʝɘt͡sbobβ̞̥ --> yːbo̞pːo̞p͡ɸːo̞t̠ʰ
-yɟ͡ʝɘt͡sɟ͡ʝbɤ̞ɹ̠̥ --> yːd̠əːd̠u
-g͡ɣɘɟ͡ʝɘt͡s --> g͡ɣːo̞d̠ʱ
-g͡ɣɘɟ͡ʝɘt͡sy --> k͡xːo̞t͡sːu
-g͡ɣɘɟ͡ʝɘt͡sbobβ̞̥ --> g͡ɣːo̞bo̞pːo̞p͡ɸːu
-g͡ɣɘɟ͡ʝɘt͡sɟ͡ʝbɤ̞ɹ̠̥ --> g͡ɣːəːd̠u
-t͡sʉ --> t͡sːo̞t̠ʰ
-t͡sʉyβ̞̥t͡s --> t͡sːʉd̠yːp͡ɸo̞t͡su
-t͡sʉɤ̞β̞̥x --> t͡sːəp͡ɸo̞k͡xo̞t̠ʰ
-t͡sʉʉ --> t͡sːʉd̠u
-og͡ɣt͡sʉ --> oːd̠ʱ
-og͡ɣt͡sʉyβ̞̥t͡s --> oːd̠ʉd̠yːp͡ɸo̞t̠ʰ
-og͡ɣt͡sʉɤ̞β̞̥x --> oːd̠əp͡ɸo̞k͡xo̞t̠ʰ
-og͡ɣt͡sʉʉ --> oːd̠ʉd̠ʉːd̠ʱ
-kɘd͡zt͡sʉ --> kːɘd̠ʱ
-kɘd͡zt͡sʉyβ̞̥t͡s --> kːɘd̠ʉd̠yːp͡ɸo̞t̠ʰ
-kɘd͡zt͡sʉɤ̞β̞̥x --> kːɘd̠əp͡ɸo̞k͡xo̞t̠ʰ
-kɘd͡zt͡sʉʉ --> kːɘd̠ʉd̠ʉːd̠ʱ
-kʉɟ͡ʝβ̞̥t͡sʉ --> kːo̞c͡ço̞d̠ʱ
-kʉɟ͡ʝβ̞̥t͡sʉyβ̞̥t͡s --> kːo̞c͡çʉd̠yːp͡ɸo̞t͡su
-kʉɟ͡ʝβ̞̥t͡sʉɤ̞β̞̥x --> kːəp͡ɸo̞k͡xo̞t̠ʰ
-kʉɟ͡ʝβ̞̥t͡sʉʉ --> kːo̞c͡çʉd̠u
-ɟ͡ʝka --> ɟːɵ̞ː̯d̠ʱ
-ɟ͡ʝkakɑ --> ɟːɵ̞ː̯d̠ʱ
-ɟ͡ʝkaɘd͡z --> ɟːo̞d̠ʱ
-ɟ͡ʝkaɑ --> ɟːu
-ko̞ɹ̠̥ɟ͡ʝka --> kːɵ̞ː̯ad̠u
-ko̞ɹ̠̥ɟ͡ʝkakɑ --> kːɵ̞ː̯d̠ʱ
-ko̞ɹ̠̥ɟ͡ʝkaɘd͡z --> kːo̞c͡ço̞d̠ʱ
-ko̞ɹ̠̥ɟ͡ʝkaɑ --> kːo̞c͡çu
-bɐɟ͡ʝka --> bːɵ̞ː̯ad̠u
-bɐɟ͡ʝkakɑ --> bːɵ̞ː̯d̠ʱ
-bɐɟ͡ʝkaɘd͡z --> bːo̞ɟ͡ʝːo̞d̠ʱ
-bɐɟ͡ʝkaɑ --> bːäːd̠u
-kt͡soɟ͡ʝka --> kːɵ̞ː̯d̠ʱ
-kt͡soɟ͡ʝkakɑ --> kːɵ̞ː̯d̠ʱ
-kt͡soɟ͡ʝkaɘd͡z --> kːo̞c͡ço̞d̠ʱ
-kt͡soɟ͡ʝkaɑ --> kːo̞c͡çu
-baɹ̠̥ --> bːu
-baɹ̠̥ɟ͡ʝʉ --> bːu
-baɹ̠̥pib --> bːɨd̠u
-baɹ̠̥ɵt͡sɹ̠̥ --> pːo̞ɹ̠̥ːo̞t̠ʰ
-g͡ɣopbaɹ̠̥ --> g͡ɣːɵːp͡ɸːo̞ɸu
-g͡ɣopbaɹ̠̥ɟ͡ʝʉ --> g͡ɣːɵːp͡ɸːo̞ɸo̞ɟ͡ʝːu
-g͡ɣopbaɹ̠̥pib --> g͡ɣːɵːp͡ɸːo̞ɸɨd̠u
-g͡ɣopbaɹ̠̥ɵt͡sɹ̠̥ --> g͡ɣːɵːp͡ɸːo̞ɸo̞ɹ̠̥ːo̞t̠ʰ
-ɤ̞baɹ̠̥ --> ɤ̞ːd̠u
-ɤ̞baɹ̠̥ɟ͡ʝʉ --> ɤ̞ːd̠ʱ
-ɤ̞baɹ̠̥pib --> ɤ̞ːɹ̠̥ːo̞t̠ʰ
-ɤ̞baɹ̠̥ɵt͡sɹ̠̥ --> ɤ̞ːt͡su
-obaɹ̠̥ --> oːd̠u
-obaɹ̠̥ɟ͡ʝʉ --> oːd̠ʱ
-obaɹ̠̥pib --> oːɹ̠̥ːo̞t̠ʰ
-obaɹ̠̥ɵt͡sɹ̠̥ --> oːt͡su
-d̠o̞bd̠ --> d̠ːo̞ːmu
-d̠o̞bd̠βo̞ --> d̠ːo̞ːmo̞d̠ːo̞b͡βːu
-d̠o̞bd̠ɑxk --> d̠ːo̞ːmo̞ʒːɑːk͡xo̞k͡xu
-d̠o̞bd̠bbɵd͡z --> d̠ːo̞ːmo̞mːo̞bːɵːd͡zu
-ɹ̠̥g͡ɣaɟ͡ʝd̠o̞bd̠ --> ɹ̠̥ːo̞c͡ço̞ːmu
-ɹ̠̥g͡ɣaɟ͡ʝd̠o̞bd̠βo̞ --> ɹ̠̥ːo̞c͡ço̞ːmo̞d̠ːo̞b͡βːu
-ɹ̠̥g͡ɣaɟ͡ʝd̠o̞bd̠ɑxk --> ɹ̠̥ːo̞c͡ço̞ːmo̞ʒːɑːk͡xo̞k͡xu
-ɹ̠̥g͡ɣaɟ͡ʝd̠o̞bd̠bbɵd͡z --> ɹ̠̥ːo̞c͡ço̞ːmo̞mːo̞bːɵːd͡zu
-kɵd̠o̞bd̠ --> kːɵd̠o̞ːmu
-kɵd̠o̞bd̠βo̞ --> kːɵd̠o̞ːmo̞d̠ːo̞d̠ʱ
-kɵd̠o̞bd̠ɑxk --> kːɵd̠o̞ːmo̞ʒːɑːk͡xo̞k͡xo̞t̠ʰ
-kɵd̠o̞bd̠bbɵd͡z --> kːɵd̠o̞ːmo̞mːo̞bːɵːn͡z̃o̞d̠ʱ
-yβd̠o̞bd̠ --> yːd̠ːo̞ːmo̞n̠ːo̞d̠ʱ
-yβd̠o̞bd̠βo̞ --> yːd̠ːo̞ːmo̞d̠ːo̞b͡βːu
-yβd̠o̞bd̠ɑxk --> yːd̠ːo̞ːmo̞ʒːɑːk͡xo̞k͡xu
-yβd̠o̞bd̠bbɵd͡z --> yːd̠ːo̞ːmo̞mːo̞bːɵːd͡zu
-ɐbk --> ɐːk͡xːu
-ɐbkpɐt͡s --> ɐːk͡xːo̞p͡ɸɐd̠u
-ɐbkxo̞ --> ɐːk͡xːo̞k͡xo̞d̠ʱ
-ɐbkd̠ɹ̠̥ʉɹ̠̥ --> ɐːk͡xːo̞t̠ʉɹ̠̥ːu
-g͡ɣɐɐbk --> g͡ɣːɐːpo̞k͡xːu
-g͡ɣɐɐbkpɐt͡s --> g͡ɣːɐːpo̞k͡xːo̞p͡ɸɐd̠u
-g͡ɣɐɐbkxo̞ --> g͡ɣːɐːpo̞k͡xːo̞k͡xo̞d̠ʱ
-g͡ɣɐɐbkd̠ɹ̠̥ʉɹ̠̥ --> g͡ɣːɐːpo̞k͡xːo̞t̠ʉɹ̠̥ːu
-βɑɹ̠̥ɐbk --> βːɐːpo̞k͡xːu
-βɑɹ̠̥ɐbkpɐt͡s --> βːɐːpo̞k͡xːo̞p͡ɸɐd̠u
-βɑɹ̠̥ɐbkxo̞ --> βːɐːpo̞k͡xːo̞k͡xo̞d̠ʱ
-βɑɹ̠̥ɐbkd̠ɹ̠̥ʉɹ̠̥ --> βːɐːpo̞k͡xːo̞t̠ʉɹ̠̥ːu
-d̠əɐbk --> d̠ːɐːpo̞k͡xːu
-d̠əɐbkpɐt͡s --> d̠ːɐːpo̞k͡xːo̞p͡ɸɐd̠u
-d̠əɐbkxo̞ --> d̠ːɐːpo̞k͡xːo̞k͡xo̞d̠ʱ
-d̠əɐbkd̠ɹ̠̥ʉɹ̠̥ --> d̠ːɐːpo̞k͡xːo̞t̠ʉɹ̠̥ːu
-ipβ --> iːp͡ɸːo̞p͡ɸu
-ipβd̠ʉ --> iːd̠ʉːd̠u
-ipβkɘ --> iːd̠ʱ
-ipβd̠i --> iːd̠ːo̞d̠ʱ
-xɶɹ̠̥ipβ --> xːo̞p͡ɸːo̞p͡ɸu
-xɶɹ̠̥ipβd̠ʉ --> xːʉːd̠u
-xɶɹ̠̥ipβkɘ --> xːo̞t̠ʰ
-xɶɹ̠̥ipβd̠i --> xːo̞t̠ːiːd̠u
-ɹ̠̥kɤ̞ipβ --> t̠ːəp͡ɸːo̞t̠ʰ
-ɹ̠̥kɤ̞ipβd̠ʉ --> t̠ːəd̠ʉːd̠u
-ɹ̠̥kɤ̞ipβkɘ --> t̠ːəd̠ʱ
-ɹ̠̥kɤ̞ipβd̠i --> t̠ːəd̠ːo̞d̠ʱ
-β̞̥iipβ --> β̞̥ːo̞p͡ɸːo̞p͡ɸu
-β̞̥iipβd̠ʉ --> β̞̥ːʉːd̠u
-β̞̥iipβkɘ --> β̞̥ːo̞t̠ʰ
-β̞̥iipβd̠i --> β̞̥ːo̞t̠ːiːd̠u
-ɤ̞d̠β --> ɤ̞ːd̠ːo̞d̠ʱ
-ɤ̞d̠βg͡ɣɶ --> ɤ̞ːβːo̞g͡ɣʲːu
-ɤ̞d̠βʉ --> ɤ̞ːd̠u
-ɤ̞d̠βɑt͡s --> ɤ̞ːβːo̞d̠ʱ
-ɹ̠̥t͡sɵβ̞̥ɤ̞d̠β --> ɹ̠̥ːɵp͡ɸo̞t̠ːo̞b͡βːu
-ɹ̠̥t͡sɵβ̞̥ɤ̞d̠βg͡ɣɶ --> ɹ̠̥ːɵp͡ɸo̞ɸːo̞g͡ɣʲːu
-ɹ̠̥t͡sɵβ̞̥ɤ̞d̠βʉ --> ɹ̠̥ːɵp͡ɸəd̠u
-ɹ̠̥t͡sɵβ̞̥ɤ̞d̠βɑt͡s --> ɹ̠̥ːɵp͡ɸo̞ɸːo̞d̠ʱ
-pd̠at͡sɤ̞d̠β --> pːo̞t̠ːo̞b͡βːu
-pd̠at͡sɤ̞d̠βg͡ɣɶ --> pːo̞ɸːo̞g͡ɣʲːu
-pd̠at͡sɤ̞d̠βʉ --> pːo̞p͡ɸːu
-pd̠at͡sɤ̞d̠βɑt͡s --> pːo̞ɸːɑːd̠u
-g͡ɣo̞g͡ɣɹ̠̥ɤ̞d̠β --> gːo̞d̠ːo̞d̠ʱ
-g͡ɣo̞g͡ɣɹ̠̥ɤ̞d̠βg͡ɣɶ --> gːo̞βːo̞g͡ɣʲːu
-g͡ɣo̞g͡ɣɹ̠̥ɤ̞d̠βʉ --> gːo̞b͡βːu
-g͡ɣo̞g͡ɣɹ̠̥ɤ̞d̠βɑt͡s --> gːo̞βːɑːd̠u
-ɵβ̞̥x --> ɵːp͡ɸo̞k͡xo̞t̠ʰ
-ɵβ̞̥xɟ͡ʝɵ --> ɵːp͡ɸo̞k͡xu
-ɵβ̞̥xd̠o̞ --> ɵːp͡ɸo̞k͡xo̞ːd̠u
-ɵβ̞̥xɹ̠̥t͡sɘd̠ --> ɵːp͡ɸo̞k͡xo̞t̠ʰ
-o̞β̞̥ɵβ̞̥x --> o̞ːp͡ɸɵp͡ɸo̞k͡xu
-o̞β̞̥ɵβ̞̥xɟ͡ʝɵ --> o̞ːp͡ɸɵp͡ɸo̞k͡xu
-o̞β̞̥ɵβ̞̥xd̠o̞ --> o̞ːp͡ɸɵp͡ɸo̞k͡xo̞ːd̠u
-o̞β̞̥ɵβ̞̥xɹ̠̥t͡sɘd̠ --> o̞ːp͡ɸɵp͡ɸo̞k͡xo̞t̠ʰ
-g͡ɣo̞pt͡sɵβ̞̥x --> gːɵ̞ːp͡ɸːɵp͡ɸo̞k͡xu
-g͡ɣo̞pt͡sɵβ̞̥xɟ͡ʝɵ --> gːɵ̞ːp͡ɸːɵp͡ɸo̞k͡xu
-g͡ɣo̞pt͡sɵβ̞̥xd̠o̞ --> gːɵ̞ːp͡ɸːɵp͡ɸo̞k͡xo̞ːd̠u
-g͡ɣo̞pt͡sɵβ̞̥xɹ̠̥t͡sɘd̠ --> gːɵ̞ːp͡ɸːɵp͡ɸo̞k͡xo̞t̠ʰ
-d̠ɵg͡ɣɵβ̞̥x --> d̠ːɵːp͡ɸo̞k͡xu
-d̠ɵg͡ɣɵβ̞̥xɟ͡ʝɵ --> d̠ːɵːp͡ɸo̞k͡xu
-d̠ɵg͡ɣɵβ̞̥xd̠o̞ --> d̠ːɵːp͡ɸo̞k͡xo̞ːd̠u
-d̠ɵg͡ɣɵβ̞̥xɹ̠̥t͡sɘd̠ --> d̠ːɵːp͡ɸo̞k͡xo̞t̠ʰ
-ɑ --> ɑːd̠u
-ɑɹ̠̥g͡ɣɶβ --> ɑːd̠ɶ̈ːd̠ʱ
-ɑd̠ap --> ɑːd̠ʱ
-ɑkoβ̞̥ --> ɑːk͡xːop͡ɸʲːo̞t̠ʰ
-ɐpɑ --> ɐːp͡ɸːɑd̠u
-ɐpɑɹ̠̥g͡ɣɶβ --> ɐːd̠ɑd̠ɶ̈ːd̠ʱ
-ɐpɑd̠ap --> ɐːd̠ɑd̠ʱ
-ɐpɑkoβ̞̥ --> ɐːk͡xːop͡ɸʲːo̞t̠ʰ
-d͡zoɑ --> d͡zːɵː̯ɑːd̠u
-d͡zoɑɹ̠̥g͡ɣɶβ --> d͡zːäːd̠ɶ̈ːd̠ʱ
-d͡zoɑd̠ap --> d͡zːäːd̠ʱ
-d͡zoɑkoβ̞̥ --> t͡sːo̞k͡xːop͡ɸʲːo̞t̠ʰ
-kt͡sit͡sɑ --> kːçu
-kt͡sit͡sɑɹ̠̥g͡ɣɶβ --> kːɶ̈ːb͡βːu
-kt͡sit͡sɑd̠ap --> kːɑd̠u
-kt͡sit͡sɑkoβ̞̥ --> kːo̞k͡xːop͡ɸʲːo̞t̠ʰ
-t͡sɑ --> t͡sːu
-t͡sɑt͡skiβ̞̥ --> t͡sːo̞t͡su
-t͡sɑg͡ɣɤ̞d͡z --> t͡sːəd̠u
-t͡sɑo̞d̠ɹ̠̥ --> t͡sːäd̠o̞d̠ʱ
-ɟ͡ʝɤ̞bbt͡sɑ --> ɟːɤ̞ːmo̞mːo̞d̠ʱ
-ɟ͡ʝɤ̞bbt͡sɑt͡skiβ̞̥ --> ɟːɤ̞ːmo̞pːo̞t͡su
-ɟ͡ʝɤ̞bbt͡sɑg͡ɣɤ̞d͡z --> ɟːɤ̞ːmo̞mːəd̠u
-ɟ͡ʝɤ̞bbt͡sɑo̞d̠ɹ̠̥ --> ɟːɤ̞ːmo̞mːäd̠o̞d̠ʱ
-po̞d̠xt͡sɑ --> pːo̞t̠ːo̞k͡xːo̞t̠ʰ
-po̞d̠xt͡sɑt͡skiβ̞̥ --> pːo̞t̠ːo̞k͡xːo̞t͡su
-po̞d̠xt͡sɑg͡ɣɤ̞d͡z --> pːo̞t̠ːo̞k͡xːəd̠u
-po̞d̠xt͡sɑo̞d̠ɹ̠̥ --> pːo̞t̠ːo̞k͡xːäd̠o̞d̠ʱ
-g͡ɣβ̞̥ot͡sɑ --> kːo̞p͡ɸːõd̠ʱ
-g͡ɣβ̞̥ot͡sɑt͡skiβ̞̥ --> kːo̞p͡ɸːõt͡su
-g͡ɣβ̞̥ot͡sɑg͡ɣɤ̞d͡z --> kːo̞p͡ɸːõd̠əd̠u
-g͡ɣβ̞̥ot͡sɑo̞d̠ɹ̠̥ --> kːo̞p͡ɸːõd̠äd̠o̞d̠ʱ
-βpɤ̞k --> βːo̞d̠ʱ
-βpɤ̞kd͡zβɤ̞ɟ͡ʝ --> ɸːo̞k͡xːo̞t͡sɤ̞ːd̠u
-βpɤ̞koβɹ̠̥ --> ɸːo̞k͡xːod̠ʱ
-βpɤ̞kβbɶb --> βːo̞βːo̞β̃ːɶ̃ːbːu
-d̠əpɟ͡ʝβpɤ̞k --> d̠ːo̞βːɤ̞ːd̠u
-d̠əpɟ͡ʝβpɤ̞kd͡zβɤ̞ɟ͡ʝ --> d̠ːo̞ɸːo̞k͡xːo̞t͡so̞d̠ʱ
-d̠əpɟ͡ʝβpɤ̞koβɹ̠̥ --> d̠ːo̞ɸːo̞k͡xːod̠u
-d̠əpɟ͡ʝβpɤ̞kβbɶb --> d̠ːo̞βːo̞βːo̞β̃ːɶ̃ːmːo̞d̠ʱ
-ɑβpɤ̞k --> ɑːd̠ɤ̞ːd̠u
-ɑβpɤ̞kd͡zβɤ̞ɟ͡ʝ --> ɑːk͡xːo̞t͡so̞d̠ʱ
-ɑβpɤ̞koβɹ̠̥ --> ɑːk͡xːod̠u
-ɑβpɤ̞kβbɶb --> ɑːβːo̞β̃ːɶ̃ːmːo̞d̠ʱ
-kd̠ɘβpɤ̞k --> kːɘd̠ɤ̞ːd̠u
-kd̠ɘβpɤ̞kd͡zβɤ̞ɟ͡ʝ --> kːɘk͡xːo̞t͡so̞d̠ʱ
-kd̠ɘβpɤ̞koβɹ̠̥ --> kːɘk͡xːod̠u
-kd̠ɘβpɤ̞kβbɶb --> kːɘβːo̞β̃ːɶ̃ːmːo̞d̠ʱ
-ɶp --> ɶːd̠u
-ɶpβt͡sɑd̠ --> ɶːβːo̞d̠ʱ
-ɶpβkɵk --> ɶːd̠ɵk͡xːu
-ɶpo --> ɶːp͡ɸːõd̠ʱ
-bɵɶp --> bːɵːd̠ɶp͡ɸːo̞t̠ʰ
-bɵɶpβt͡sɑd̠ --> bːɵːd̠ɶp͡ɸːo̞ɸo̞d̠ʱ
-bɵɶpβkɵk --> bːɵːd̠ɶp͡ɸːɵk͡xːo̞t̠ʰ
-bɵɶpo --> bːɵːd̠ɶp͡ɸːõd̠ʱ
-t͡siβɶp --> t͡sːɘ̯ɶːp͡ɸːo̞t̠ʰ
-t͡siβɶpβt͡sɑd̠ --> t͡sːɘ̯ɶːp͡ɸːo̞ɸɑːd̠u
-t͡siβɶpβkɵk --> t͡sːɘ̯ɶːp͡ɸːɵk͡xːo̞t̠ʰ
-t͡siβɶpo --> t͡sːɘ̯ɶːp͡ɸːod̠u
-d̠kɑɶp --> d̠ːɑːd̠ɶp͡ɸːo̞t̠ʰ
-d̠kɑɶpβt͡sɑd̠ --> d̠ːɑːd̠ɶp͡ɸːo̞ɸo̞d̠ʱ
-d̠kɑɶpβkɵk --> d̠ːɑːd̠ɶp͡ɸːɵk͡xːo̞t̠ʰ
-d̠kɑɶpo --> d̠ːɑːd̠ɶp͡ɸːõd̠ʱ
-oxd͡z --> oːk͡xʲːo̞t͡so̞d̠ʱ
-oxd͡zɵbx --> oːk͡xʲːɵːpo̞k͡xːu
-oxd͡zɹ̠̥ɶkg͡ɣ --> oːk͡xʲːo̞t͡sɶ̈k͡xːo̞k͡xu
-oxd͡zo̞β --> oːk͡xʲːɵ̞ːb͡βːu
-ɟ͡ʝʉoxd͡z --> ɟ͡ʝːʉːd̠oːk͡xʲːo̞t͡su
-ɟ͡ʝʉoxd͡zɵbx --> ɟ͡ʝːʉːd̠oːk͡xʲːɵːpo̞k͡xːo̞t̠ʰ
-ɟ͡ʝʉoxd͡zɹ̠̥ɶkg͡ɣ --> ɟ͡ʝːʉːd̠oːk͡xʲːo̞t͡sɶ̈k͡xːo̞t̠ʰ
-ɟ͡ʝʉoxd͡zo̞β --> ɟ͡ʝːʉːd̠oːk͡xʲːɵ̞ːd̠ʱ
-ʉxxoxd͡z --> ʉːk͡xːɵk͡xʲːo̞t͡so̞d̠ʱ
-ʉxxoxd͡zɵbx --> ʉːk͡xːɵk͡xʲːɵːpo̞k͡xːu
-ʉxxoxd͡zɹ̠̥ɶkg͡ɣ --> ʉːk͡xːɵk͡xʲːo̞t͡sɶ̈k͡xːo̞k͡xu
-ʉxxoxd͡zo̞β --> ʉːk͡xːɵk͡xʲːɵ̞ːb͡βːu
-əoxd͡z --> əːd̠oːk͡xʲːo̞t͡su
-əoxd͡zɵbx --> əːd̠oːk͡xʲːɵːpo̞k͡xːo̞t̠ʰ
-əoxd͡zɹ̠̥ɶkg͡ɣ --> əːd̠oːk͡xʲːo̞t͡sɶ̈k͡xːo̞t̠ʰ
-əoxd͡zo̞β --> əːd̠oːk͡xʲːɵ̞ːd̠ʱ
-β̞̥g͡ɣɵ --> β̞̥ːo̞t̠ʰ
-β̞̥g͡ɣɵxo̞t͡s --> β̞̥ːɵːk͡xo̞t͡su
-β̞̥g͡ɣɵg͡ɣa --> β̞̥ːo̞k͡xu
-β̞̥g͡ɣɵβxɵt͡s --> β̞̥ːo̞ɸːɵt͡su
-g͡ɣɤ̞ɟ͡ʝɹ̠̥β̞̥g͡ɣɵ --> gːo̞g͡ɣu
-g͡ɣɤ̞ɟ͡ʝɹ̠̥β̞̥g͡ɣɵxo̞t͡s --> gːɵːk͡xo̞t͡su
-g͡ɣɤ̞ɟ͡ʝɹ̠̥β̞̥g͡ɣɵg͡ɣa --> gːo̞g͡ɣu
-g͡ɣɤ̞ɟ͡ʝɹ̠̥β̞̥g͡ɣɵβxɵt͡s --> gːo̞βːɵt͡su
-β̞̥ɟ͡ʝo̞kβ̞̥g͡ɣɵ --> pːɵ̞ːk͡xːo̞p͡ɸu
-β̞̥ɟ͡ʝo̞kβ̞̥g͡ɣɵxo̞t͡s --> pːɵ̞ːk͡xːo̞p͡ɸɵːk͡xo̞t͡su
-β̞̥ɟ͡ʝo̞kβ̞̥g͡ɣɵg͡ɣa --> pːɵ̞ːk͡xːo̞p͡ɸo̞k͡xu
-β̞̥ɟ͡ʝo̞kβ̞̥g͡ɣɵβxɵt͡s --> pːɵ̞ːk͡xːo̞p͡ɸo̞ɸːɵt͡su
-pɘβ̞̥g͡ɣɵ --> pːɘd̠u
-pɘβ̞̥g͡ɣɵxo̞t͡s --> pːɘd̠ɵːk͡xo̞d̠ʱ
-pɘβ̞̥g͡ɣɵg͡ɣa --> pːɘg͡ɣʲo̞d̠ʱ
-pɘβ̞̥g͡ɣɵβxɵt͡s --> pːɘβːɵt͡su
-d͡zd̠ɶt͡s --> d͡zːʉ̃ː̯ɶ̃ːt͡sːu
-d͡zd̠ɶt͡si --> d͡zːʉ̃ː̯ɶ̃ːt͡sːu
-d͡zd̠ɶt͡sɘβd͡z --> d͡zːʉ̃ː̯ɶ̃ːb͡βu
-d͡zd̠ɶt͡sβ̞̥ɶb --> d͡zːʉ̃ː̯ɶ̃ːt͡sːø̞̯u
-ʉkd͡zd̠ɶt͡s --> ʉːk͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːu
-ʉkd͡zd̠ɶt͡si --> ʉːk͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːu
-ʉkd͡zd̠ɶt͡sɘβd͡z --> ʉːk͡xːo̞t͡sʉ̃ː̯ɶ̃ːb͡βu
-ʉkd͡zd̠ɶt͡sβ̞̥ɶb --> ʉːk͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːø̞̯u
-xabxd͡zd̠ɶt͡s --> xːo̞pːo̞k͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːu
-xabxd͡zd̠ɶt͡si --> xːo̞pːo̞k͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːu
-xabxd͡zd̠ɶt͡sɘβd͡z --> xːo̞pːo̞k͡xːo̞t͡sʉ̃ː̯ɶ̃ːb͡βu
-xabxd͡zd̠ɶt͡sβ̞̥ɶb --> xːo̞pːo̞k͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːø̞̯u
-ɹ̠̥ɘd̠d͡zd̠ɶt͡s --> ɹ̠̥ːo̞t̠ːo̞n͡z̃ːʉ̃ː̯ɶ̃ːt͡sːu
-ɹ̠̥ɘd̠d͡zd̠ɶt͡si --> ɹ̠̥ːo̞t̠ːo̞n͡z̃ːʉ̃ː̯ɶ̃ːt͡sːu
-ɹ̠̥ɘd̠d͡zd̠ɶt͡sɘβd͡z --> ɹ̠̥ːo̞t̠ːo̞n͡z̃ːʉ̃ː̯ɶ̃ːb͡βu
-ɹ̠̥ɘd̠d͡zd̠ɶt͡sβ̞̥ɶb --> ɹ̠̥ːo̞t̠ːo̞n͡z̃ːʉ̃ː̯ɶ̃ːt͡sːø̞̯u
-y --> yːd̠u
-yɟ͡ʝiβd̠ --> yːd̠ʱ
-yβiβ̞̥ --> yːd̠ʱ
-yɹ̠̥pɐ --> yːp͡ɸo̞t̠ʰ
-ɹ̠̥po̞y --> ɹ̠̥ːo̞p͡ɸo̞d̠id̠u
-ɹ̠̥po̞yɟ͡ʝiβd̠ --> ɹ̠̥ːo̞p͡ɸo̞d̠yd̠ʱ
-ɹ̠̥po̞yβiβ̞̥ --> ɹ̠̥ːo̞p͡ɸo̞d̠yβːo̞d̠ʱ
-ɹ̠̥po̞yɹ̠̥pɐ --> ɹ̠̥ːo̞p͡ɸo̞d̠yp͡ɸo̞t̠ʰ
-ɶy --> ɶːd̠ʱ
-ɶyɟ͡ʝiβd̠ --> ɶːd̠ʱ
-ɶyβiβ̞̥ --> ɶːβːo̞d̠ʱ
-ɶyɹ̠̥pɐ --> ɶːp͡ɸɐd̠u
-d͡zɤ̞ɹ̠̥βy --> dːo̞d̠ʱ
-d͡zɤ̞ɹ̠̥βyɟ͡ʝiβd̠ --> dːo̞b͡βːu
-d͡zɤ̞ɹ̠̥βyβiβ̞̥ --> dːo̞βːiːd̠u
-d͡zɤ̞ɹ̠̥βyɹ̠̥pɐ --> tːo̞p͡ɸo̞t̠ʰ
-d̠ɶd͡z --> d̠ːɶːd͡zːu
-d̠ɶd͡zɐpk --> d̠ːɶːt͡sːo̞p͡ɸːo̞k͡xu
-d̠ɶd͡zxt͡sɑβ --> d̠ːɶːt͡sːo̞k͡xːäd̠u
-d̠ɶd͡zət͡s --> d̠ːɶːn͡z̃ːo̞d̠ʱ
-o̞d̠ɶd͡z --> o̞ːʒ̃ːɶːd͡zːu
-o̞d̠ɶd͡zɐpk --> o̞ːʒ̃ːɶːt͡sːo̞p͡ɸːo̞k͡xu
-o̞d̠ɶd͡zxt͡sɑβ --> o̞ːʒ̃ːɶːt͡sːo̞k͡xːäd̠u
-o̞d̠ɶd͡zət͡s --> o̞ːʒ̃ːɶːn͡z̃ːo̞d̠ʱ
-ppɵd̠ɶd͡z --> pːo̞p͡ɸɵʒ̃ːɶːd͡zːu
-ppɵd̠ɶd͡zɐpk --> pːo̞p͡ɸɵʒ̃ːɶːt͡sːo̞p͡ɸːo̞k͡xu
-ppɵd̠ɶd͡zxt͡sɑβ --> pːo̞p͡ɸɵʒ̃ːɶːt͡sːo̞k͡xːäd̠u
-ppɵd̠ɶd͡zət͡s --> pːo̞p͡ɸɵʒ̃ːɶːn͡z̃ːo̞d̠ʱ
-xɘβd̠ɶd͡z --> xːo̞ʃːɶːd͡zːu
-xɘβd̠ɶd͡zɐpk --> xːo̞ʃːɶːt͡sːo̞p͡ɸːo̞k͡xu
-xɘβd̠ɶd͡zxt͡sɑβ --> xːo̞ʃːɶːt͡sːo̞k͡xːäd̠u
-xɘβd̠ɶd͡zət͡s --> xːo̞ʃːɶːn͡z̃ːo̞d̠ʱ
-d͡zɹ̠̥ɐ --> tːo̞ɹ̠̥ːu
-d͡zɹ̠̥ɐɹ̠̥ʉpb --> dːʉp͡ɸːo̞pu
-d͡zɹ̠̥ɐβ̞̥ɟ͡ʝo --> dːɐːɟ͡ʝu
-d͡zɹ̠̥ɐpəβ̞̥ --> dːəːd̠u
-ixd͡zɹ̠̥ɐ --> iːk͡xːo̞t͡so̞d̠ʱ
-ixd͡zɹ̠̥ɐɹ̠̥ʉpb --> iːk͡xːo̞t͡so̞ɹ̠̥ːʉp͡ɸːo̞pu
-ixd͡zɹ̠̥ɐβ̞̥ɟ͡ʝo --> iːk͡xːo̞t͡sɐd̠u
-ixd͡zɹ̠̥ɐpəβ̞̥ --> iːk͡xːo̞t͡so̞d̠ʱ
-g͡ɣd͡zoβ̞̥d͡zɹ̠̥ɐ --> g͡ɣːo̞d͡zːɵːp͡ɸʲːo̞t͡so̞ɹ̠̥ːu
-g͡ɣd͡zoβ̞̥d͡zɹ̠̥ɐɹ̠̥ʉpb --> g͡ɣːo̞d͡zːɵːp͡ɸʲːo̞t͡so̞ɹ̠̥ːʉp͡ɸːo̞pu
-g͡ɣd͡zoβ̞̥d͡zɹ̠̥ɐβ̞̥ɟ͡ʝo --> g͡ɣːo̞d͡zːɵːp͡ɸʲːo̞t͡sɐd̠u
-g͡ɣd͡zoβ̞̥d͡zɹ̠̥ɐpəβ̞̥ --> g͡ɣːo̞d͡zːɵːp͡ɸʲːo̞t͡so̞d̠ʱ
-xt͡sʉt͡sd͡zɹ̠̥ɐ --> xːo̞t͡so̞ɹ̠̥u
-xt͡sʉt͡sd͡zɹ̠̥ɐɹ̠̥ʉpb --> xːo̞t͡so̞t͡so̞ɹ̠̥ʉp͡ɸːo̞pu
-xt͡sʉt͡sd͡zɹ̠̥ɐβ̞̥ɟ͡ʝo --> xːo̞t͡sɐd̠u
-xt͡sʉt͡sd͡zɹ̠̥ɐpəβ̞̥ --> xːo̞t͡so̞t̠ʰ
-ɹ̠̥oβ̞̥b --> ɹ̠̥ːo̞p͡ɸʲːo̞pu
-ɹ̠̥oβ̞̥bɹ̠̥ɘ --> ɹ̠̥ːo̞p͡ɸʲːo̞po̞ɹ̠̥ːu
-ɹ̠̥oβ̞̥bbəβx --> ɹ̠̥ːo̞p͡ɸʲːo̞po̞b͡βːu
-ɹ̠̥oβ̞̥bβ̞̥ap --> ɹ̠̥ːo̞p͡ɸʲːo̞po̞p͡ɸːäd̠u
-pɑɹ̠̥oβ̞̥b --> pːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞d̠ʱ
-pɑɹ̠̥oβ̞̥bɹ̠̥ɘ --> pːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞ɹ̠̥ːu
-pɑɹ̠̥oβ̞̥bbəβx --> pːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞b͡βːu
-pɑɹ̠̥oβ̞̥bβ̞̥ap --> pːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞p͡ɸːäd̠u
-ɹ̠̥ɟ͡ʝɑɹ̠̥oβ̞̥b --> t̠ːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞d̠ʱ
-ɹ̠̥ɟ͡ʝɑɹ̠̥oβ̞̥bɹ̠̥ɘ --> t̠ːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞ɹ̠̥ːu
-ɹ̠̥ɟ͡ʝɑɹ̠̥oβ̞̥bbəβx --> t̠ːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞b͡βːu
-ɹ̠̥ɟ͡ʝɑɹ̠̥oβ̞̥bβ̞̥ap --> t̠ːo̞ɹ̠̥o̞p͡ɸʲːo̞po̞p͡ɸːäd̠u
-ɹ̠̥ɐpɹ̠̥oβ̞̥b --> ɹ̠̥ːɐɹ̠̥o̞p͡ɸʲːo̞po̞d̠ʱ
-ɹ̠̥ɐpɹ̠̥oβ̞̥bɹ̠̥ɘ --> ɹ̠̥ːɐɹ̠̥o̞p͡ɸʲːo̞po̞ɹ̠̥ːu
-ɹ̠̥ɐpɹ̠̥oβ̞̥bbəβx --> ɹ̠̥ːɐɹ̠̥o̞p͡ɸʲːo̞po̞b͡βːu
-ɹ̠̥ɐpɹ̠̥oβ̞̥bβ̞̥ap --> ɹ̠̥ːɐɹ̠̥o̞p͡ɸʲːo̞po̞p͡ɸːäd̠u
-y --> yːd̠ʱ
-yɟ͡ʝɑd͡zd͡z --> yːd̠äːd͡zo̞n͡z̃ːo̞d̠ʱ
-yt͡sɤ̞d̠ --> yːd̠ʱ
-yy --> yːd̠ʱ
-ɟ͡ʝd̠ɶy --> ɟ͡ʝːʉ̃ː̯ãːd̠yːd̠ʱ
-ɟ͡ʝd̠ɶyɟ͡ʝɑd͡zd͡z --> ɟ͡ʝːʉ̃ː̯ãːd̠yːd̠äːd͡zo̞n͡z̃ːo̞d̠ʱ
-ɟ͡ʝd̠ɶyt͡sɤ̞d̠ --> ɟ͡ʝːʉ̃ː̯ãːd̠yːt͡sːo̞t̠ʰ
-ɟ͡ʝd̠ɶyy --> ɟ͡ʝːʉ̃ː̯ãːd̠yːd̠yd̠ʱ
-yy --> yːd̠ʱ
-yyɟ͡ʝɑd͡zd͡z --> yːd̠äːd͡zo̞n͡z̃ːo̞d̠ʱ
-yyt͡sɤ̞d̠ --> yːt͡sːo̞t̠ʰ
-yyy --> yːd̠yd̠ʉːd̠u
-d̠ʉβ̞̥β̞̥y --> t̠ːo̞p͡ɸːo̞p͡ɸyd̠ʱ
-d̠ʉβ̞̥β̞̥yɟ͡ʝɑd͡zd͡z --> t̠ːo̞p͡ɸːo̞p͡ɸyd̠äːd͡zu
-d̠ʉβ̞̥β̞̥yt͡sɤ̞d̠ --> t̠ːo̞p͡ɸːo̞p͡ɸyt͡sːo̞t̠ʰ
-d̠ʉβ̞̥β̞̥yy --> t̠ːo̞p͡ɸːo̞p͡ɸyd̠ʉːd̠u
-d̠ky --> t̠ːo̞k͡xːyd̠ʱ
-d̠kyʉ --> t̠ːo̞k͡xːyd̠u
-d̠kyd̠ɤ̞ɹ̠̥p --> t̠ːo̞k͡xːyd̠ɤ̞ːd̠ʱ
-d̠kyd̠ɟ͡ʝɘk --> t̠ːo̞k͡xːyd̠ʱ
-βbʉɟ͡ʝd̠ky --> bːo̞mːʉːt̠ːo̞k͡xːyd̠u
-βbʉɟ͡ʝd̠kyʉ --> bːo̞mːʉːt̠ːo̞k͡xːyd̠ʉːd̠ʱ
-βbʉɟ͡ʝd̠kyd̠ɤ̞ɹ̠̥p --> bːo̞mːʉːt̠ːo̞k͡xːyd̠ɤ̞ːd̠ʱ
-βbʉɟ͡ʝd̠kyd̠ɟ͡ʝɘk --> bːo̞mːʉːt̠ːo̞k͡xːyd̠ʱ
-β̞̥o̞g͡ɣkd̠ky --> pːo̞k͡xːo̞t̠o̞k͡xːyd̠u
-β̞̥o̞g͡ɣkd̠kyʉ --> pːo̞k͡xːo̞t̠o̞k͡xːyd̠ʉːd̠ʱ
-β̞̥o̞g͡ɣkd̠kyd̠ɤ̞ɹ̠̥p --> pːo̞k͡xːo̞t̠o̞k͡xːyd̠ɤ̞ːd̠ʱ
-β̞̥o̞g͡ɣkd̠kyd̠ɟ͡ʝɘk --> pːo̞k͡xːo̞t̠o̞k͡xːyd̠ʱ
-ɶd̠ky --> ɶːk͡xːyd̠u
-ɶd̠kyʉ --> ɶːk͡xːyd̠ʉːd̠ʱ
-ɶd̠kyd̠ɤ̞ɹ̠̥p --> ɶːk͡xːyd̠ɤ̞ːd̠ʱ
-ɶd̠kyd̠ɟ͡ʝɘk --> ɶːk͡xːyd̠ʱ
-o̞ --> o̞ːd̠ʱ
-o̞g͡ɣɤ̞k --> o̞ːd̠ʱ
-o̞ɘ --> o̞ːd̠ʱ
-o̞d͡zɘp --> o̞ːd̠ʱ
-β̞̥ɶbt͡so̞ --> β̞̥ːo̞pːo̞d̠ʱ
-β̞̥ɶbt͡so̞g͡ɣɤ̞k --> β̞̥ːo̞pːəːd̠u
-β̞̥ɶbt͡so̞ɘ --> β̞̥ːo̞pːo̞t͡sːo̞d̠ʱ
-β̞̥ɶbt͡so̞d͡zɘp --> β̞̥ːo̞pːɵ̞d̠ɘːd̠u
-xβ̞̥ɶo̞ --> kːø̞̯o̞ːd̠ʱ
-xβ̞̥ɶo̞g͡ɣɤ̞k --> kːø̞̯ɵ̞ːg͡ɣo̞d̠ʱ
-xβ̞̥ɶo̞ɘ --> kːø̞̯o̞ːd̠ɘːd̠u
-xβ̞̥ɶo̞d͡zɘp --> kːø̞̯ɵ̞ːd̠ʱ
-yo̞ --> yːd̠ʱ
-yo̞g͡ɣɤ̞k --> yːd̠ʱ
-yo̞ɘ --> yːd̠o̞d̠ʱ
-yo̞d͡zɘp --> yːd̠ɵ̞ːd̠ʱ
-ɹ̠̥g͡ɣiβ̞̥ --> ɹ̠̥ːo̞t̠ʰ
-ɹ̠̥g͡ɣiβ̞̥ɤ̞ɟ͡ʝ --> ɹ̠̥ːəːd̠u
-ɹ̠̥g͡ɣiβ̞̥d̠yx --> ɹ̠̥ːo̞p͡ɸʲːo̞t̠yːk͡xo̞t̠ʰ
-ɹ̠̥g͡ɣiβ̞̥ɘ --> ɹ̠̥ːɘd̠u
-əɹ̠̥d͡zɹ̠̥g͡ɣiβ̞̥ --> əːɹ̠̥o̞t̠ʰ
-əɹ̠̥d͡zɹ̠̥g͡ɣiβ̞̥ɤ̞ɟ͡ʝ --> əːd̠əːd̠u
-əɹ̠̥d͡zɹ̠̥g͡ɣiβ̞̥d̠yx --> əːɹ̠̥o̞p͡ɸʲːo̞t̠yːk͡xo̞t̠ʰ
-əɹ̠̥d͡zɹ̠̥g͡ɣiβ̞̥ɘ --> əːɹ̠̥ɘd̠u
-d̠abɹ̠̥g͡ɣiβ̞̥ --> t̠ːo̞ɹ̠̥ːo̞t̠ʰ
-d̠abɹ̠̥g͡ɣiβ̞̥ɤ̞ɟ͡ʝ --> d̠ːəːd̠u
-d̠abɹ̠̥g͡ɣiβ̞̥d̠yx --> d̠ːɨp͡ɸʲːo̞t̠yːk͡xo̞t̠ʰ
-d̠abɹ̠̥g͡ɣiβ̞̥ɘ --> d̠ːɨd̠ɘd̠u
-d͡zəd͡zɹ̠̥g͡ɣiβ̞̥ --> tːo̞ɹ̠̥ːo̞t̠ʰ
-d͡zəd͡zɹ̠̥g͡ɣiβ̞̥ɤ̞ɟ͡ʝ --> dːəːd̠u
-d͡zəd͡zɹ̠̥g͡ɣiβ̞̥d̠yx --> dːɨp͡ɸʲːo̞t̠yːk͡xo̞t̠ʰ
-d͡zəd͡zɹ̠̥g͡ɣiβ̞̥ɘ --> dːɨd̠ɘd̠u
-pd̠ɤ̞ --> pːo̞t̠ʰ
-pd̠ɤ̞xʉd̠ --> pːɤ̞d̠ʉd̠u
-pd̠ɤ̞ɹ̠̥i --> pːɤ̞d̠ʱ
-pd̠ɤ̞kbo̞p --> pːo̞k͡xːo̞po̞ːp͡ɸːo̞t̠ʰ
-d͡zg͡ɣixpd̠ɤ̞ --> t͡sːo̞k͡xːo̞p͡ɸɤ̞ːd̠u
-d͡zg͡ɣixpd̠ɤ̞xʉd̠ --> t͡sːo̞k͡xːo̞p͡ɸɤ̞ːd̠ʉn̠ːo̞d̠ʱ
-d͡zg͡ɣixpd̠ɤ̞ɹ̠̥i --> t͡sːo̞k͡xːo̞p͡ɸɤ̞ːd̠ʱ
-d͡zg͡ɣixpd̠ɤ̞kbo̞p --> t͡sːo̞k͡xːo̞p͡ɸo̞k͡xːo̞po̞ːp͡ɸːu
-xβɐpd̠ɤ̞ --> xːo̞p͡ɸːo̞t̠ɤ̞ːd̠u
-xβɐpd̠ɤ̞xʉd̠ --> xːo̞p͡ɸːo̞t̠ɤ̞ːd̠ʉn̠ːo̞d̠ʱ
-xβɐpd̠ɤ̞ɹ̠̥i --> xːo̞p͡ɸːo̞t̠ɤ̞ːd̠ʱ
-xβɐpd̠ɤ̞kbo̞p --> xːo̞p͡ɸːo̞t̠o̞k͡xːo̞po̞ːp͡ɸːu
-βɹ̠̥yɟ͡ʝpd̠ɤ̞ --> pːo̞p͡ɸːo̞t̠ɤ̞ːd̠u
-βɹ̠̥yɟ͡ʝpd̠ɤ̞xʉd̠ --> pːo̞p͡ɸːo̞t̠ɤ̞ːd̠ʉn̠ːo̞d̠ʱ
-βɹ̠̥yɟ͡ʝpd̠ɤ̞ɹ̠̥i --> pːo̞p͡ɸːo̞t̠ɤ̞ːd̠ʱ
-βɹ̠̥yɟ͡ʝpd̠ɤ̞kbo̞p --> pːo̞p͡ɸːo̞t̠o̞k͡xːo̞po̞ːp͡ɸːu
-d̠i --> d̠ːu
-d̠iβ̞̥ɘ --> d̠ːɘd̠u
-d̠iɵg͡ɣx --> d̠ːiːd̠ʱ
-d̠id͡zβy --> d̠ːo̞d̠ʱ
-xɟ͡ʝod̠i --> kːo̞c͡çõːd̠ːiːd̠u
-xɟ͡ʝod̠iβ̞̥ɘ --> kːo̞c͡çõːd̠ːiːd̠ʱ
-xɟ͡ʝod̠iɵg͡ɣx --> kːo̞c͡çõːd̠ːo̞g͡ɣːu
-xɟ͡ʝod̠id͡zβy --> kːo̞c͡çõːd̠ːo̞b͡βːu
-o̞ɟ͡ʝt͡sd̠i --> o̞ːd̠u
-o̞ɟ͡ʝt͡sd̠iβ̞̥ɘ --> o̞ːt͡sɘd̠u
-o̞ɟ͡ʝt͡sd̠iɵg͡ɣx --> o̞ːd̠ɨd̠ʱ
-o̞ɟ͡ʝt͡sd̠id͡zβy --> o̞ːd̠ʱ
-βd̠iɹ̠̥d̠i --> βːo̞d̠o̞d̠ʱ
-βd̠iɹ̠̥d̠iβ̞̥ɘ --> βːɨd̠ɘd̠u
-βd̠iɹ̠̥d̠iɵg͡ɣx --> βːɨd̠ʱ
-βd̠iɹ̠̥d̠id͡zβy --> βːo̞d̠ʱ
-od̠ --> oːd̠u
-od̠β̞̥g͡ɣʉ --> oːp͡ɸːo̞t̠ʰ
-od̠d͡zd͡zɶ --> oːd̠ːo̞d͡zː_̃ː̯äːd̠u
-od̠d̠β̞̥ʉg͡ɣ --> oːn̠ːo̞t̠ːo̞p͡ɸːʉd̠ʱ
-ɟ͡ʝəɹ̠̥od̠ --> cːo̞ɹ̠̥ːõd̠u
-ɟ͡ʝəɹ̠̥od̠β̞̥g͡ɣʉ --> cːo̞ɹ̠̥ːõp͡ɸːo̞t̠ʰ
-ɟ͡ʝəɹ̠̥od̠d͡zd͡zɶ --> cːo̞ɹ̠̥ːõd̠ːo̞d͡zː_̃ː̯äːd̠u
-ɟ͡ʝəɹ̠̥od̠d̠β̞̥ʉg͡ɣ --> cːo̞ɹ̠̥ːõn̠ːo̞t̠ːo̞p͡ɸːʉd̠ʱ
-d͡zaod̠ --> d͡zːäːd̠õːd̠ːu
-d͡zaod̠β̞̥g͡ɣʉ --> d͡zːäːd̠õːt̠ːo̞p͡ɸːo̞t̠ʰ
-d͡zaod̠d͡zd͡zɶ --> d͡zːäːd̠õːd̠ːo̞d͡zː_̃ː̯ɶ̃ːd̠ʱ
-d͡zaod̠d̠β̞̥ʉg͡ɣ --> d͡zːäːd̠õːn̠ːo̞t̠ːo̞p͡ɸːʉd̠ʱ
-xoɹ̠̥od̠ --> xːo̞ɹ̠̥õn̠ːo̞d̠ʱ
-xoɹ̠̥od̠β̞̥g͡ɣʉ --> xːo̞ɹ̠̥õp͡ɸːo̞k͡xu
-xoɹ̠̥od̠d͡zd͡zɶ --> xːo̞ɹ̠̥õd̠ːo̞d͡zː_̃ː̯äːd̠u
-xoɹ̠̥od̠d̠β̞̥ʉg͡ɣ --> xːo̞ɹ̠̥õn̠ːo̞t̠ːo̞p͡ɸːʉd̠ʱ
-ɹ̠̥g͡ɣɤ̞d̠ --> ɹ̠̥ːəd̠u
-ɹ̠̥g͡ɣɤ̞d̠ββ̞̥ɶ --> ɹ̠̥ːəp͡ɸʲːɶ̃d̠ʱ
-ɹ̠̥g͡ɣɤ̞d̠ɹ̠̥yd̠ --> ɹ̠̥ːɤ̞ɹ̠̥yn̠ːo̞d̠ʱ
-ɹ̠̥g͡ɣɤ̞d̠d̠əd͡z --> ɹ̠̥ːo̞t̠ːo̞n̠ːəːd̠u
-ɵɹ̠̥g͡ɣɤ̞d̠ --> ɵːd̠ʱ
-ɵɹ̠̥g͡ɣɤ̞d̠ββ̞̥ɶ --> ɵːd̠ɤ̞p͡ɸʲːɶ̃d̠ʱ
-ɵɹ̠̥g͡ɣɤ̞d̠ɹ̠̥yd̠ --> ɵːd̠ɤ̞ɹ̠̥yn̠ːo̞d̠ʱ
-ɵɹ̠̥g͡ɣɤ̞d̠d̠əd͡z --> ɵːn̠ːo̞n̠ːo̞d̠ʱ
-yg͡ɣɹ̠̥g͡ɣɤ̞d̠ --> yːd̠əːd̠u
-yg͡ɣɹ̠̥g͡ɣɤ̞d̠ββ̞̥ɶ --> yːɸːo̞p͡ɸʲːɶ̃d̠ʱ
-yg͡ɣɹ̠̥g͡ɣɤ̞d̠ɹ̠̥yd̠ --> yːd̠ɤ̞ɹ̠̥yd̠u
-yg͡ɣɹ̠̥g͡ɣɤ̞d̠d̠əd͡z --> yːn̠ːo̞n̠ːo̞d̠ʱ
-ɐɹ̠̥g͡ɣɤ̞d̠ --> ɐːd̠ɤ̞d̠u
-ɐɹ̠̥g͡ɣɤ̞d̠ββ̞̥ɶ --> ɐːd̠ɤ̞p͡ɸʲːɶ̃d̠ʱ
-ɐɹ̠̥g͡ɣɤ̞d̠ɹ̠̥yd̠ --> ɐːd̠ɤ̞ɹ̠̥yn̠ːo̞d̠ʱ
-ɐɹ̠̥g͡ɣɤ̞d̠d̠əd͡z --> ɐːn̠ːo̞n̠ːo̞d̠ʱ
-ɟ͡ʝɑ --> ɟ͡ʝːu
-ɟ͡ʝɑɶ --> ɟ͡ʝːäː̯u
-ɟ͡ʝɑd̠g͡ɣɶɹ̠̥ --> ɟ͡ʝːäːɹ̠̥ːu
-ɟ͡ʝɑɶt͡sd͡z --> ɟ͡ʝːɑː̯t͡su
-pɐβ̞̥ɟ͡ʝɟ͡ʝɑ --> pːɐd̠u
-pɐβ̞̥ɟ͡ʝɟ͡ʝɑɶ --> pːɐɟ͡ʝo̞d̠ʱ
-pɐβ̞̥ɟ͡ʝɟ͡ʝɑd̠g͡ɣɶɹ̠̥ --> pːɐd̠äːɹ̠̥ːu
-pɐβ̞̥ɟ͡ʝɟ͡ʝɑɶt͡sd͡z --> pːɐɟ͡ʝɑː̯d̠ʱ
-d͡zɶɹ̠̥ɟ͡ʝɑ --> t͡sːo̞ɹ̠̥ːo̞t̠ʰ
-d͡zɶɹ̠̥ɟ͡ʝɑɶ --> d͡zːä̯u
-d͡zɶɹ̠̥ɟ͡ʝɑd̠g͡ɣɶɹ̠̥ --> d͡zːäɹ̠̥ːu
-d͡zɶɹ̠̥ɟ͡ʝɑɶt͡sd͡z --> t͡sːo̞ɹ̠̥ːɑ̯t͡su
-pβ̞̥ɶɟ͡ʝɑ --> pːo̞p͡ɸu
-pβ̞̥ɶɟ͡ʝɑɶ --> pːo̞p͡ɸäː̯u
-pβ̞̥ɶɟ͡ʝɑd̠g͡ɣɶɹ̠̥ --> pːo̞p͡ɸäːɹ̠̥ːu
-pβ̞̥ɶɟ͡ʝɑɶt͡sd͡z --> pːo̞p͡ɸəː̯ɑː̯t͡su
-ɟ͡ʝʉ --> ɟ͡ʝːu
-ɟ͡ʝʉɟ͡ʝg͡ɣaβ --> ɟ͡ʝːäːd̠u
-ɟ͡ʝʉyd͡zp --> ɟ͡ʝːʉːd̠yːt͡sːo̞p͡ɸːo̞t̠ʰ
-ɟ͡ʝʉxɵp --> ɟ͡ʝːʉːk͡xːɵp͡ɸːo̞t̠ʰ
-t͡sat͡sβ̞̥ɟ͡ʝʉ --> t͡sːo̞t͡su
-t͡sat͡sβ̞̥ɟ͡ʝʉɟ͡ʝg͡ɣaβ --> t͡sːäːd̠u
-t͡sat͡sβ̞̥ɟ͡ʝʉyd͡zp --> t͡sːo̞t͡sʉːd̠yːt͡sːo̞p͡ɸːo̞t̠ʰ
-t͡sat͡sβ̞̥ɟ͡ʝʉxɵp --> t͡sːo̞t͡sʉːk͡xːɵp͡ɸːo̞t̠ʰ
-ɑɟ͡ʝʉ --> ɑːd̠u
-ɑɟ͡ʝʉɟ͡ʝg͡ɣaβ --> ɑːɟ͡ʝːo̞d̠ʱ
-ɑɟ͡ʝʉyd͡zp --> ɑːd̠ʉːd̠yːt͡sːo̞p͡ɸːu
-ɑɟ͡ʝʉxɵp --> ɑːd̠ʉːk͡xːɵp͡ɸːo̞t̠ʰ
-t͡spopɟ͡ʝʉ --> t͡sːo̞p͡ɸop͡ɸːo̞t̠ʰ
-t͡spopɟ͡ʝʉɟ͡ʝg͡ɣaβ --> t͡sːo̞p͡ɸop͡ɸːäːd̠u
-t͡spopɟ͡ʝʉyd͡zp --> t͡sːo̞p͡ɸop͡ɸːʉːd̠yːt͡sːo̞p͡ɸːo̞t̠ʰ
-t͡spopɟ͡ʝʉxɵp --> t͡sːo̞p͡ɸop͡ɸːʉːk͡xːɵp͡ɸːo̞t̠ʰ
-βʉpβ --> βːʉːp͡ɸːo̞p͡ɸu
-βʉpβt͡sɶ --> βːʉːp͡ɸːo̞ɸo̞sːu
-βʉpβɹ̠̥ɵd̠ --> βːʉːp͡ɸːo̞ɸɵd̠u
-βʉpβɘ --> βːʉːp͡ɸːo̞t̠ʰ
-ig͡ɣd̠βʉpβ --> iːd̠ʉːp͡ɸːo̞p͡ɸu
-ig͡ɣd̠βʉpβt͡sɶ --> iːd̠ʉːp͡ɸːo̞ɸo̞d̠ʱ
-ig͡ɣd̠βʉpβɹ̠̥ɵd̠ --> iːd̠ʉːp͡ɸːo̞ɸɵn̠ːo̞d̠ʱ
-ig͡ɣd̠βʉpβɘ --> iːd̠ʉːp͡ɸːo̞t̠ʰ
-kɤ̞ɟ͡ʝβʉpβ --> kːʉːp͡ɸːo̞t̠ʰ
-kɤ̞ɟ͡ʝβʉpβt͡sɶ --> kːʉːp͡ɸːo̞ɸo̞sːu
-kɤ̞ɟ͡ʝβʉpβɹ̠̥ɵd̠ --> kːʉːp͡ɸːo̞ɸɵd̠u
-kɤ̞ɟ͡ʝβʉpβɘ --> kːʉːp͡ɸːo̞t̠ʰ
-β̞̥xʉbβʉpβ --> β̞̥ːo̞k͡xo̞pːʉːp͡ɸːo̞p͡ɸu
-β̞̥xʉbβʉpβt͡sɶ --> β̞̥ːo̞k͡xo̞pːʉːp͡ɸːo̞ɸo̞sːu
-β̞̥xʉbβʉpβɹ̠̥ɵd̠ --> β̞̥ːo̞k͡xo̞pːʉːp͡ɸːo̞ɸɵd̠u
-β̞̥xʉbβʉpβɘ --> β̞̥ːo̞k͡xo̞pːʉːp͡ɸːo̞t̠ʰ
-xpyɹ̠̥ --> xːo̞p͡ɸyɹ̠̥ːu
-xpyɹ̠̥ɐ --> xːo̞p͡ɸyɹ̠̥ːu
-xpyɹ̠̥g͡ɣɵd̠p --> xːo̞p͡ɸyd̠ɵːt̠ːo̞p͡ɸːu
-xpyɹ̠̥o̞k --> xːo̞p͡ɸyd̠ɵ̞k͡xːo̞t̠ʰ
-byxxpyɹ̠̥ --> bːyːk͡xːo̞k͡xo̞p͡ɸyd̠ʱ
-byxxpyɹ̠̥ɐ --> bːyːk͡xːo̞k͡xo̞p͡ɸyɹ̠̥ːu
-byxxpyɹ̠̥g͡ɣɵd̠p --> bːyːk͡xːo̞k͡xo̞p͡ɸyd̠ɵːt̠ːo̞p͡ɸːu
-byxxpyɹ̠̥o̞k --> bːyːk͡xːo̞k͡xo̞p͡ɸyd̠ɵ̞k͡xːo̞t̠ʰ
-t͡sɹ̠̥oxpyɹ̠̥ --> tːɵk͡xːo̞p͡ɸyd̠ʱ
-t͡sɹ̠̥oxpyɹ̠̥ɐ --> tːɵk͡xːo̞p͡ɸyɹ̠̥ːu
-t͡sɹ̠̥oxpyɹ̠̥g͡ɣɵd̠p --> tːɵk͡xːo̞p͡ɸyd̠ɵːt̠ːo̞p͡ɸːu
-t͡sɹ̠̥oxpyɹ̠̥o̞k --> tːɵk͡xːo̞p͡ɸyd̠ɵ̞k͡xːo̞t̠ʰ
-d̠d̠ɶxpyɹ̠̥ --> d̠ːo̞ʒ̃ːɶːk͡xːo̞p͡ɸyd̠ʱ
-d̠d̠ɶxpyɹ̠̥ɐ --> d̠ːo̞ʒ̃ːɶːk͡xːo̞p͡ɸyɹ̠̥ːu
-d̠d̠ɶxpyɹ̠̥g͡ɣɵd̠p --> d̠ːo̞ʒ̃ːɶːk͡xːo̞p͡ɸyd̠ɵːt̠ːo̞p͡ɸːu
-d̠d̠ɶxpyɹ̠̥o̞k --> d̠ːo̞ʒ̃ːɶːk͡xːo̞p͡ɸyd̠ɵ̞k͡xːo̞t̠ʰ
-ɹ̠̥d͡zoβ --> ɹ̠̥ːo̞t͡sɵːd̠ʱ
-ɹ̠̥d͡zoβxʉd͡z --> ɹ̠̥ːo̞t͡sɵːβːʉd̠u
-ɹ̠̥d͡zoβkɤ̞ɹ̠̥ --> ɹ̠̥ːo̞t͡sɵːβːo̞d̠ʱ
-ɹ̠̥d͡zoβɑ --> ɹ̠̥ːo̞t͡sɵːb͡βːu
-ɟ͡ʝβo̞g͡ɣɹ̠̥d͡zoβ --> ɟ͡ʝːo̞βːo̞d͡zɵːb͡βːu
-ɟ͡ʝβo̞g͡ɣɹ̠̥d͡zoβxʉd͡z --> ɟ͡ʝːo̞βːo̞d͡zɵːβːʉd̠u
-ɟ͡ʝβo̞g͡ɣɹ̠̥d͡zoβkɤ̞ɹ̠̥ --> ɟ͡ʝːo̞βːo̞d͡zɵːβːo̞d̠ʱ
-ɟ͡ʝβo̞g͡ɣɹ̠̥d͡zoβɑ --> ɟ͡ʝːo̞βːo̞d͡zɵːb͡βːu
-ag͡ɣd͡zɹ̠̥d͡zoβ --> aːd͡zɵːb͡βːu
-ag͡ɣd͡zɹ̠̥d͡zoβxʉd͡z --> aːd͡zɵːβːʉd̠u
-ag͡ɣd͡zɹ̠̥d͡zoβkɤ̞ɹ̠̥ --> aːd͡zɵːβːo̞d̠ʱ
-ag͡ɣd͡zɹ̠̥d͡zoβɑ --> aːd͡zɵːb͡βːu
-pipɹ̠̥d͡zoβ --> pːo̞t͡sɵːb͡βːu
-pipɹ̠̥d͡zoβxʉd͡z --> pːo̞t͡sɵːβːʉd̠u
-pipɹ̠̥d͡zoβkɤ̞ɹ̠̥ --> pːo̞t͡sɵːβːo̞d̠ʱ
-pipɹ̠̥d͡zoβɑ --> pːo̞t͡sɵːb͡βːu
-d̠ɤ̞ɹ̠̥ --> d̠ːɤ̞ːd̠u
-d̠ɤ̞ɹ̠̥kʉɟ͡ʝp --> t̠ːo̞k͡xo̞t̠ʰ
-d̠ɤ̞ɹ̠̥t͡sbʉ --> t̠ːo̞t͡sːo̞pu
-d̠ɤ̞ɹ̠̥ʉ --> t̠ːo̞ɹ̠̥ːu
-at͡sd̠ɤ̞ɹ̠̥ --> aːd̠əd̠u
-at͡sd̠ɤ̞ɹ̠̥kʉɟ͡ʝp --> aːt͡sːɤ̞k͡xo̞t̠ʰ
-at͡sd̠ɤ̞ɹ̠̥t͡sbʉ --> aːt͡sːɤ̞t͡so̞pu
-at͡sd̠ɤ̞ɹ̠̥ʉ --> aːt͡sːɤ̞ɹ̠̥u
-g͡ɣβ̞̥ɘd̠ɤ̞ɹ̠̥ --> gːɘːd̠ɤ̞d̠u
-g͡ɣβ̞̥ɘd̠ɤ̞ɹ̠̥kʉɟ͡ʝp --> gːɘːd̠ɤ̞k͡xo̞t̠ʰ
-g͡ɣβ̞̥ɘd̠ɤ̞ɹ̠̥t͡sbʉ --> gːɘːd̠ɤ̞t͡so̞pʉːd̠ʱ
-g͡ɣβ̞̥ɘd̠ɤ̞ɹ̠̥ʉ --> gːɘːd̠ɤ̞d̠ʱ
-kpod̠ɤ̞ɹ̠̥ --> kːo̞p͡ɸõd̠ʱ
-kpod̠ɤ̞ɹ̠̥kʉɟ͡ʝp --> kːo̞p͡ɸõd̠ɤ̞ːk͡xu
-kpod̠ɤ̞ɹ̠̥t͡sbʉ --> kːo̞p͡ɸõd̠ɤ̞ːt͡so̞pʉːd̠ʱ
-kpod̠ɤ̞ɹ̠̥ʉ --> kːo̞p͡ɸõd̠ɤ̞ːd̠ʱ
-xbɤ̞g͡ɣ --> kːo̞t̠ʰ
-xbɤ̞g͡ɣxβ̞̥o̞ --> kːək͡xːɵ̞d̠u
-xbɤ̞g͡ɣd͡zd̠ɶp --> kːəg͡ɣo̞n͡z̃ːʉ̃ː̯ɶːp͡ɸːo̞t̠ʰ
-xbɤ̞g͡ɣə --> kːəd̠u
-d͡zid͡zxbɤ̞g͡ɣ --> d͡zːo̞t͡sːo̞k͡xːo̞po̞d̠ʱ
-d͡zid͡zxbɤ̞g͡ɣxβ̞̥o̞ --> d͡zːo̞t͡sːo̞k͡xːo̞pɤ̞ːk͡xːɵ̞d̠u
-d͡zid͡zxbɤ̞g͡ɣd͡zd̠ɶp --> d͡zːo̞t͡sːo̞k͡xːo̞pɤ̞ːg͡ɣo̞n͡z̃ːʉ̃ː̯ɶːp͡ɸːo̞t̠ʰ
-d͡zid͡zxbɤ̞g͡ɣə --> d͡zːo̞t͡sːo̞k͡xːo̞pɤ̞ːg͡ɣu
-ɟ͡ʝβ̞̥yg͡ɣxbɤ̞g͡ɣ --> cːo̞p͡ɸːʉk͡xːo̞k͡xːo̞pɤ̞ːd̠u
-ɟ͡ʝβ̞̥yg͡ɣxbɤ̞g͡ɣxβ̞̥o̞ --> cːo̞p͡ɸːʉk͡xːo̞k͡xːo̞pɤ̞ːk͡xːo̞p͡ɸo̞d̠ʱ
-ɟ͡ʝβ̞̥yg͡ɣxbɤ̞g͡ɣd͡zd̠ɶp --> cːo̞p͡ɸːʉk͡xːo̞k͡xːo̞pɤ̞ːg͡ɣo̞n͡z̃ːʉ̃ː̯ɶːp͡ɸːu
-ɟ͡ʝβ̞̥yg͡ɣxbɤ̞g͡ɣə --> cːo̞p͡ɸːʉk͡xːo̞k͡xːo̞pɤ̞ːg͡ɣu
-g͡ɣoxbɤ̞g͡ɣ --> g͡ɣːɵːk͡xʲːo̞pɤ̞ːd̠u
-g͡ɣoxbɤ̞g͡ɣxβ̞̥o̞ --> g͡ɣːɵːk͡xʲːo̞pɤ̞ːk͡xːo̞p͡ɸo̞d̠ʱ
-g͡ɣoxbɤ̞g͡ɣd͡zd̠ɶp --> g͡ɣːɵːk͡xʲːo̞pɤ̞ːg͡ɣo̞n͡z̃ːʉ̃ː̯ɶːp͡ɸːu
-g͡ɣoxbɤ̞g͡ɣə --> g͡ɣːɵːk͡xʲːo̞pɤ̞ːg͡ɣu
-kyβ̞̥ --> kːyp͡ɸːu
-kyβ̞̥ɹ̠̥xoβ̞̥ --> kːyp͡ɸo̞k͡xo̞p͡ɸːu
-kyβ̞̥ɟ͡ʝa --> kːyp͡ɸu
-kyβ̞̥t͡sɐβb --> kːyp͡ɸo̞t͡su
-β̞̥ɤ̞ɟ͡ʝkyβ̞̥ --> pːo̞k͡xːyp͡ɸːu
-β̞̥ɤ̞ɟ͡ʝkyβ̞̥ɹ̠̥xoβ̞̥ --> pːo̞k͡xːyp͡ɸo̞k͡xo̞p͡ɸːu
-β̞̥ɤ̞ɟ͡ʝkyβ̞̥ɟ͡ʝa --> pːo̞k͡xːyp͡ɸu
-β̞̥ɤ̞ɟ͡ʝkyβ̞̥t͡sɐβb --> pːo̞k͡xːyp͡ɸo̞t͡su
-ɟ͡ʝɤ̞g͡ɣkyβ̞̥ --> cːo̞k͡xːyp͡ɸːu
-ɟ͡ʝɤ̞g͡ɣkyβ̞̥ɹ̠̥xoβ̞̥ --> cːo̞k͡xːyp͡ɸo̞k͡xo̞p͡ɸːu
-ɟ͡ʝɤ̞g͡ɣkyβ̞̥ɟ͡ʝa --> cːo̞k͡xːyp͡ɸu
-ɟ͡ʝɤ̞g͡ɣkyβ̞̥t͡sɐβb --> cːo̞k͡xːyp͡ɸo̞t͡su
-d̠oxkyβ̞̥ --> d̠ːoːk͡xːo̞k͡xyp͡ɸːu
-d̠oxkyβ̞̥ɹ̠̥xoβ̞̥ --> d̠ːoːk͡xːo̞k͡xyp͡ɸo̞k͡xo̞p͡ɸːu
-d̠oxkyβ̞̥ɟ͡ʝa --> d̠ːoːk͡xːo̞k͡xyp͡ɸu
-d̠oxkyβ̞̥t͡sɐβb --> d̠ːoːk͡xːo̞k͡xyp͡ɸo̞t͡su
-g͡ɣɤ̞p --> gːəːd̠u
-g͡ɣɤ̞pəβg͡ɣ --> gːo̞d̠ʱ
-g͡ɣɤ̞pi --> kːo̞p͡ɸːid̠u
-g͡ɣɤ̞pɟ͡ʝɘ --> gːɤ̞ːd̠ʱ
-xβ̞̥oβ̞̥g͡ɣɤ̞p --> kːo̞p͡ɸo̞p͡ɸʲːo̞k͡xo̞d̠ʱ
-xβ̞̥oβ̞̥g͡ɣɤ̞pəβg͡ɣ --> kːo̞p͡ɸo̞p͡ɸʲːo̞k͡xo̞b͡βːu
-xβ̞̥oβ̞̥g͡ɣɤ̞pi --> kːo̞p͡ɸo̞p͡ɸʲːo̞p͡ɸːid̠u
-xβ̞̥oβ̞̥g͡ɣɤ̞pɟ͡ʝɘ --> kːo̞p͡ɸo̞p͡ɸʲːo̞k͡xɤ̞ːd̠ʱ
-ppod̠g͡ɣɤ̞p --> pːo̞p͡ɸõd̠ːəːd̠u
-ppod̠g͡ɣɤ̞pəβg͡ɣ --> pːo̞p͡ɸõd̠ːo̞g͡ɣːo̞d̠ʱ
-ppod̠g͡ɣɤ̞pi --> pːo̞p͡ɸõt̠ːo̞p͡ɸːid̠u
-ppod̠g͡ɣɤ̞pɟ͡ʝɘ --> pːo̞p͡ɸõd̠ːo̞g͡ɣːɤ̞ːd̠ʱ
-aβ̞̥g͡ɣɤ̞p --> aːd̠əːd̠u
-aβ̞̥g͡ɣɤ̞pəβg͡ɣ --> aːd̠ʱ
-aβ̞̥g͡ɣɤ̞pi --> aːp͡ɸːo̞t̠ʰ
-aβ̞̥g͡ɣɤ̞pɟ͡ʝɘ --> aːd̠ɤ̞ːɟ͡ʝu
-β̞̥ɶ --> β̞̥ːo̞t̠ʰ
-β̞̥ɶd͡zo --> β̞̥ːɶ̈d͡zːɵːd̠u
-β̞̥ɶxʉɹ̠̥ --> β̞̥ːɶ̈k͡xːʉd̠ʱ
-β̞̥ɶɟ͡ʝɟ͡ʝʉt͡s --> β̞̥ːʉːd̠ʱ
-β̞̥d͡zɘɹ̠̥β̞̥ɶ --> β̞̥ːɘɹ̠̥ø̞̯ɶ̃d̠ʱ
-β̞̥d͡zɘɹ̠̥β̞̥ɶd͡zo --> β̞̥ːɘɹ̠̥ø̞̯ɶ̈d͡zːõːd̠ʱ
-β̞̥d͡zɘɹ̠̥β̞̥ɶxʉɹ̠̥ --> β̞̥ːɘɹ̠̥ø̞̯ɶ̈k͡xːʉd̠ʱ
-β̞̥d͡zɘɹ̠̥β̞̥ɶɟ͡ʝɟ͡ʝʉt͡s --> β̞̥ːɘɹ̠̥ø̞̯ʉːd̠ʱ
-iβ̞̥ɶ --> iːø̞ː̯ɶ̃d̠ʱ
-iβ̞̥ɶd͡zo --> iːø̞ː̯ɶ̈d͡zːõːd̠ʱ
-iβ̞̥ɶxʉɹ̠̥ --> iːø̞ː̯ɶ̈k͡xːʉd̠ʱ
-iβ̞̥ɶɟ͡ʝɟ͡ʝʉt͡s --> iːø̞ː̯ɶ̃d̠ʉːd̠ʱ
-ʉɹ̠̥xβ̞̥ɶ --> ʉːk͡xe̞̯ɶ̃d̠ʱ
-ʉɹ̠̥xβ̞̥ɶd͡zo --> ʉːk͡xɶ̈d͡zːõːd̠ʱ
-ʉɹ̠̥xβ̞̥ɶxʉɹ̠̥ --> ʉːk͡xɶ̈k͡xːʉd̠ʱ
-ʉɹ̠̥xβ̞̥ɶɟ͡ʝɟ͡ʝʉt͡s --> ʉːk͡xe̞̯ʉːd̠ʱ
-d͡zpa --> d͡zːʉː̯d̠ʱ
-d͡zpapɐd̠t͡s --> d͡zːo̞n̠ːo̞d̠ʱ
-d͡zpad͡zi --> d͡zːo̞d͡zːɨːd̠u
-d͡zpaɟ͡ʝi --> d͡zːo̞d̠ʱ
-xd͡zʉbd͡zpa --> xːo̞t͡sʲo̞bːo̞d͡zːʉː̯ad̠u
-xd͡zʉbd͡zpapɐd̠t͡s --> xːo̞t͡sʲo̞bːo̞d͡zːʉː̯n̠ːo̞d̠ʱ
-xd͡zʉbd͡zpad͡zi --> xːo̞t͡sʲo̞bːo̞d͡zːʉː̯d͡zːɨːd̠u
-xd͡zʉbd͡zpaɟ͡ʝi --> xːo̞t͡sʲo̞bːo̞d͡zːʉː̯ad̠ʱ
-βɐɹ̠̥d͡zpa --> βːo̞d͡zʉː̯ad̠u
-βɐɹ̠̥d͡zpapɐd̠t͡s --> βːo̞d͡zʉː̯n̠ːo̞d̠ʱ
-βɐɹ̠̥d͡zpad͡zi --> βːo̞d͡zʉː̯d͡zːɨːd̠u
-βɐɹ̠̥d͡zpaɟ͡ʝi --> βːo̞d͡zʉː̯ad̠ʱ
-β̞̥ɵd͡zd͡zpa --> β̞̥ːɵd͡zo̞d͡zːʉː̯ad̠u
-β̞̥ɵd͡zd͡zpapɐd̠t͡s --> β̞̥ːɵd͡zo̞d͡zːʉː̯n̠ːo̞d̠ʱ
-β̞̥ɵd͡zd͡zpad͡zi --> β̞̥ːɵd͡zo̞d͡zːʉː̯d͡zːɨːd̠u
-β̞̥ɵd͡zd͡zpaɟ͡ʝi --> β̞̥ːɵd͡zo̞d͡zːʉː̯ad̠ʱ
-d͡zɶd͡z --> d͡zːɶ̈ːd͡zːu
-d͡zɶd͡zd͡zy --> d͡zːɶ̈ːd͡zːo̞n͡z̃ːʉːd̠u
-d͡zɶd͡zbi --> d͡zːɶ̈ːn͡z̃ːo̞bːo̞d̠ʱ
-d͡zɶd͡zɤ̞ --> d͡zːɶ̈ːd͡zːəːd̠u
-kɐxd͡zɶd͡z --> kːɐk͡xɶ̈ːn͡z̃ːo̞d̠ʱ
-kɐxd͡zɶd͡zd͡zy --> kːɐk͡xɶ̈ːd͡zːo̞n͡z̃ːʉːd̠u
-kɐxd͡zɶd͡zbi --> kːɐk͡xɶ̈ːn͡z̃ːo̞bːo̞d̠ʱ
-kɐxd͡zɶd͡zɤ̞ --> kːɐk͡xɶ̈ːd͡zːəːd̠u
-βɤ̞ɹ̠̥d͡zɶd͡z --> pːo̞ɹ̠̥ː_̯̃ɶ̈ːn͡z̃ːo̞d̠ʱ
-βɤ̞ɹ̠̥d͡zɶd͡zd͡zy --> pːo̞ɹ̠̥ː_̯̃ɶ̈ːd͡zːo̞n͡z̃ːʉːd̠u
-βɤ̞ɹ̠̥d͡zɶd͡zbi --> pːo̞ɹ̠̥ː_̯̃ɶ̈ːn͡z̃ːo̞bːo̞d̠ʱ
-βɤ̞ɹ̠̥d͡zɶd͡zɤ̞ --> pːo̞ɹ̠̥ː_̯̃ɶ̈ːd͡zːəːd̠u
-ɐd͡zɶd͡z --> ɐːz̃ɶ̈ːn͡z̃ːo̞d̠ʱ
-ɐd͡zɶd͡zd͡zy --> ɐːz̃ɶ̈ːd͡zːo̞n͡z̃ːʉːd̠u
-ɐd͡zɶd͡zbi --> ɐːz̃ɶ̈ːn͡z̃ːo̞bːo̞d̠ʱ
-ɐd͡zɶd͡zɤ̞ --> ɐːz̃ɶ̈ːd͡zːəːd̠u
-pɐ --> pːo̞t̠ʰ
-pɐi --> pːɐd̠u
-pɐβ̞̥ɤ̞ --> pːɐp͡ɸo̞t̠ʰ
-pɐd͡zɟ͡ʝot͡s --> pːɐɟ͡ʝõːt͡sːu
-βɑt͡sβpɐ --> βːɐd̠u
-βɑt͡sβpɐi --> βːo̞d̠ʱ
-βɑt͡sβpɐβ̞̥ɤ̞ --> βːɐːp͡ɸəd̠u
-βɑt͡sβpɐd͡zɟ͡ʝot͡s --> βːɐːɟ͡ʝõːd̠ʱ
-xɶd͡zβ̞̥pɐ --> xːɶ̈p͡ɸːo̞p͡ɸo̞t̠ʰ
-xɶd͡zβ̞̥pɐi --> xːɶ̈p͡ɸːo̞p͡ɸɐd̠u
-xɶd͡zβ̞̥pɐβ̞̥ɤ̞ --> xːɶ̈p͡ɸːo̞p͡ɸɐp͡ɸo̞t̠ʰ
-xɶd͡zβ̞̥pɐd͡zɟ͡ʝot͡s --> xːɶ̈p͡ɸːo̞p͡ɸɐɟ͡ʝõːt͡sːu
-oβ̞̥pɐ --> oːp͡ɸːo̞p͡ɸɐd̠u
-oβ̞̥pɐi --> oːp͡ɸːo̞p͡ɸo̞t̠ʰ
-oβ̞̥pɐβ̞̥ɤ̞ --> oːp͡ɸːo̞p͡ɸɐp͡ɸəd̠u
-oβ̞̥pɐd͡zɟ͡ʝot͡s --> oːp͡ɸːo̞p͡ɸɐɟ͡ʝõːd̠ʱ
-ə --> əːd̠u
-əib --> əːd̠ʱ
-əbt͡səg͡ɣ --> əːd̠ʱ
-əɟ͡ʝbit͡s --> əːɟ͡ʝːo̞d̠ʱ
-β̞̥d̠yd͡zə --> β̞̥ːo̞t̠yːn͡z̃u
-β̞̥d̠yd͡zəib --> β̞̥ːo̞t̠yːn͡z̃əːd̠iːd̠u
-β̞̥d̠yd͡zəbt͡səg͡ɣ --> β̞̥ːo̞t̠yːn͡z̃əːd̠ʱ
-β̞̥d̠yd͡zəɟ͡ʝbit͡s --> β̞̥ːo̞t̠yːn͡z̃ɨːd̠u
-d͡zo̞ə --> dːo̞ːd̠ʱ
-d͡zo̞əib --> dːəːd̠ʱ
-d͡zo̞əbt͡səg͡ɣ --> dːəːd̠ʱ
-d͡zo̞əɟ͡ʝbit͡s --> dːo̞ɟ͡ʝːo̞d̠ʱ
-ykpə --> yːk͡xːo̞p͡ɸu
-ykpəib --> yːk͡xːo̞p͡ɸəd̠u
-ykpəbt͡səg͡ɣ --> yːk͡xːo̞p͡ɸəd̠ʱ
-ykpəɟ͡ʝbit͡s --> yːk͡xːo̞p͡ɸɨːd̠u
-g͡ɣʉ --> g͡ɣːo̞d̠ʱ
-g͡ɣʉβ̞̥t͡sɘk --> k͡xːo̞p͡ɸːɘd̠u
-g͡ɣʉt͡saβ̞̥ --> k͡xːo̞sːo̞t̠ʰ
-g͡ɣʉɘ --> g͡ɣːʉːd̠ɘːd̠u
-bɐxɹ̠̥g͡ɣʉ --> bːɐːɹ̠̥o̞t̠ʰ
-bɐxɹ̠̥g͡ɣʉβ̞̥t͡sɘk --> bːɐːɹ̠̥o̞k͡xo̞p͡ɸːɘd̠u
-bɐxɹ̠̥g͡ɣʉt͡saβ̞̥ --> bːɐːɹ̠̥o̞sːo̞t̠ʰ
-bɐxɹ̠̥g͡ɣʉɘ --> bːɐːɹ̠̥ʉːd̠ɘːd̠u
-o̞βg͡ɣʉ --> o̞ːd̠ʱ
-o̞βg͡ɣʉβ̞̥t͡sɘk --> o̞ːk͡xʲo̞p͡ɸːo̞t̠ʰ
-o̞βg͡ɣʉt͡saβ̞̥ --> o̞ːd̠äd̠u
-o̞βg͡ɣʉɘ --> o̞ːd̠ʉːd̠ʱ
-t͡sd̠ʉɹ̠̥g͡ɣʉ --> t͡sːo̞t̠o̞ɹ̠̥ːo̞t̠ʰ
-t͡sd̠ʉɹ̠̥g͡ɣʉβ̞̥t͡sɘk --> t͡sːo̞t̠o̞ɹ̠̥ːo̞k͡xo̞p͡ɸːɘd̠u
-t͡sd̠ʉɹ̠̥g͡ɣʉt͡saβ̞̥ --> t͡sːo̞t̠o̞ɹ̠̥ːo̞sːo̞t̠ʰ
-t͡sd̠ʉɹ̠̥g͡ɣʉɘ --> t͡sːo̞t̠o̞ɹ̠̥ːʉːd̠ɘːd̠u
-ɟ͡ʝpɐ --> c͡çːo̞p͡ɸːo̞t̠ʰ
-ɟ͡ʝpɐɟ͡ʝɑɟ͡ʝ --> ɟ͡ʝːɐːd̠ɑd̠u
-ɟ͡ʝpɐyxβ --> ɟ͡ʝːɐːd̠yk͡xːo̞t̠ʰ
-ɟ͡ʝpɐg͡ɣɵβk --> ɟ͡ʝːɐːd̠ʱ
-βd͡zɘd̠ɟ͡ʝpɐ --> βːɘːp͡ɸːo̞t̠ʰ
-βd͡zɘd̠ɟ͡ʝpɐɟ͡ʝɑɟ͡ʝ --> βːɘːd̠ɐːd̠ɑd̠u
-βd͡zɘd̠ɟ͡ʝpɐyxβ --> βːɘːd̠ɐːd̠yk͡xːo̞t̠ʰ
-βd͡zɘd̠ɟ͡ʝpɐg͡ɣɵβk --> βːɘːd̠ɐːd̠ʱ
-kko̞βɟ͡ʝpɐ --> kːo̞k͡xo̞p͡ɸːo̞t̠ʰ
-kko̞βɟ͡ʝpɐɟ͡ʝɑɟ͡ʝ --> kːo̞k͡xo̞d̠ɐːd̠ɑd̠u
-kko̞βɟ͡ʝpɐyxβ --> kːo̞k͡xo̞d̠ɐːd̠yk͡xːo̞t̠ʰ
-kko̞βɟ͡ʝpɐg͡ɣɵβk --> kːo̞k͡xo̞d̠ɐːd̠ʱ
-ɶɟ͡ʝpɐ --> ɶːp͡ɸːo̞t̠ʰ
-ɶɟ͡ʝpɐɟ͡ʝɑɟ͡ʝ --> ɶːd̠ɐːd̠ɑd̠u
-ɶɟ͡ʝpɐyxβ --> ɶːd̠ɐːd̠yk͡xːo̞t̠ʰ
-ɶɟ͡ʝpɐg͡ɣɵβk --> ɶːd̠ɐːd̠ʱ
+ɢɵ
+ɢɵɵʃ
+ɢɵi
+ɢɵt̠ɛs
+zɤɢɵ
+zɤɢɵɵʃ
+zɤɢɵi
+zɤɢɵt̠ɛs
+ʌt̠ɢɵ
+ʌt̠ɢɵɵʃ
+ʌt̠ɢɵi
+ʌt̠ɢɵt̠ɛs
+ʌɢɵ
+ʌɢɵɵʃ
+ʌɢɵi
+ʌɢɵt̠ɛs
+bɤ
+bɤɨ
+bɤɯɸ
+bɤd̠ɘ
+ɜbɤ
+ɜbɤɨ
+ɜbɤɯɸ
+ɜbɤd̠ɘ
+ɞbɤ
+ɞbɤɨ
+ɞbɤɯɸ
+ɞbɤd̠ɘ
+t̠tabɤ
+t̠tabɤɨ
+t̠tabɤɯɸ
+t̠tabɤd̠ɘ
+ɣsɘ
+ɣsɘɢxɵ
+ɣsɘa
+ɣsɘʈpɛ
+paʈɣsɘ
+paʈɣsɘɢxɵ
+paʈɣsɘa
+paʈɣsɘʈpɛ
+t̠ɞɣsɘ
+t̠ɞɣsɘɢxɵ
+t̠ɞɣsɘa
+t̠ɞɣsɘʈpɛ
+t̠ɞɣsɘ
+t̠ɞɣsɘɢxɵ
+t̠ɞɣsɘa
+t̠ɞɣsɘʈpɛ
+ɛb
+ɛbɜb
+ɛbʌd̠
+ɛbbɘ
+tɛɛb
+tɛɛbɜb
+tɛɛbʌd̠
+tɛɛbbɘ
+paʒɛb
+paʒɛbɜb
+paʒɛbʌd̠
+paʒɛbbɘ
+ɵtɛb
+ɵtɛbɜb
+ɵtɛbʌd̠
+ɵtɛbbɘ
+ɤ
+ɤsɸɛ
+ɤʒβa
+ɤzχi
+χɘɤ
+χɘɤsɸɛ
+χɘɤʒβa
+χɘɤzχi
+aɤ
+aɤsɸɛ
+aɤʒβa
+aɤzχi
+sɤɤ
+sɤɤsɸɛ
+sɤɤʒβa
+sɤɤzχi
+ɣzi
+ɣziɣi
+ɣziɸɯ
+ɣzit̠ʌ
+ɵɣzi
+ɵɣziɣi
+ɵɣziɸɯ
+ɵɣzit̠ʌ
+ʒɵɣzi
+ʒɵɣziɣi
+ʒɵɣziɸɯ
+ʒɵɣzit̠ʌ
+bɞɣzi
+bɞɣziɣi
+bɞɣziɸɯ
+bɞɣzit̠ʌ
+xi
+xid̠ɛ
+xiɜβ
+xiɨ
+sɯʒxi
+sɯʒxid̠ɛ
+sɯʒxiɜβ
+sɯʒxiɨ
+ɸɨpxi
+ɸɨpxid̠ɛ
+ɸɨpxiɜβ
+ɸɨpxiɨ
+βsɛxi
+βsɛxid̠ɛ
+βsɛxiɜβ
+βsɛxiɨ
+ɤ
+ɤɢɘ
+ɤd̠ɨ
+ɤɨ
+χd̠ɯɤ
+χd̠ɯɤɢɘ
+χd̠ɯɤd̠ɨ
+χd̠ɯɤɨ
+ɜɤ
+ɜɤɢɘ
+ɜɤd̠ɨ
+ɜɤɨ
+ɨɤ
+ɨɤɢɘ
+ɨɤd̠ɨ
+ɨɤɨ
+ɵ
+ɵtʌ
+ɵɜ
+ɵat
+ɢɣɞɵ
+ɢɣɞɵtʌ
+ɢɣɞɵɜ
+ɢɣɞɵat
+ʐʌɵ
+ʐʌɵtʌ
+ʐʌɵɜ
+ʐʌɵat
+ɜɵ
+ɜɵtʌ
+ɜɵɜ
+ɜɵat
+d̠ɜ
+d̠ɜɤʃ
+d̠ɜɞ
+d̠ɜɸɘt̠
+ɤd̠ɜ
+ɤd̠ɜɤʃ
+ɤd̠ɜɞ
+ɤd̠ɜɸɘt̠
+ɵd̠ɜ
+ɵd̠ɜɤʃ
+ɵd̠ɜɞ
+ɵd̠ɜɸɘt̠
+βʌzd̠ɜ
+βʌzd̠ɜɤʃ
+βʌzd̠ɜɞ
+βʌzd̠ɜɸɘt̠
+ɢʌ
+ɢʌt̠ʌɢ
+ɢʌxɞ
+ɢʌʃɛ
+txɘɢʌ
+txɘɢʌt̠ʌɢ
+txɘɢʌxɞ
+txɘɢʌʃɛ
+ɜɸɢʌ
+ɜɸɢʌt̠ʌɢ
+ɜɸɢʌxɞ
+ɜɸɢʌʃɛ
+ɯɢʌ
+ɯɢʌt̠ʌɢ
+ɯɢʌxɞ
+ɯɢʌʃɛ
+ɢɵ
+ɢɵʈzɯ
+ɢɵβɵ
+ɢɵsxa
+ɜɢɵ
+ɜɢɵʈzɯ
+ɜɢɵβɵ
+ɜɢɵsxa
+xɘɢɵ
+xɘɢɵʈzɯ
+xɘɢɵβɵ
+xɘɢɵsxa
+ɛβɢɵ
+ɛβɢɵʈzɯ
+ɛβɢɵβɵ
+ɛβɢɵsxa
+ɜ
+ɜʒɯ
+ɜɞ
+ɜɵp
+ʒʌd̠ɜ
+ʒʌd̠ɜʒɯ
+ʒʌd̠ɜɞ
+ʒʌd̠ɜɵp
+ʌɜ
+ʌɜʒɯ
+ʌɜɞ
+ʌɜɵp
+iɜ
+iɜʒɯ
+iɜɞ
+iɜɵp
+ɤ
+ɤɸɨ
+ɤɨɸ
+ɤtɜʈ
+aɢɤ
+aɢɤɸɨ
+aɢɤɨɸ
+aɢɤtɜʈ
+ʐɵd̠ɤ
+ʐɵd̠ɤɸɨ
+ʐɵd̠ɤɨɸ
+ʐɵd̠ɤtɜʈ
+bɛɤ
+bɛɤɸɨ
+bɛɤɨɸ
+bɛɤtɜʈ
+ʐɢʌ
+ʐɢʌʌχ
+ʐɢʌʈɘ
+ʐɢʌʐɞ
+χʒʌʐɢʌ
+χʒʌʐɢʌʌχ
+χʒʌʐɢʌʈɘ
+χʒʌʐɢʌʐɞ
+ɵʐɢʌ
+ɵʐɢʌʌχ
+ɵʐɢʌʈɘ
+ɵʐɢʌʐɞ
+ʐɜʐɢʌ
+ʐɜʐɢʌʌχ
+ʐɜʐɢʌʈɘ
+ʐɜʐɢʌʐɞ
+ɣɵz
+ɣɵzʐɞ
+ɣɵzʃi
+ɣɵzɵ
+ɞɣɵz
+ɞɣɵzʐɞ
+ɞɣɵzʃi
+ɞɣɵzɵ
+ɞbɣɵz
+ɞbɣɵzʐɞ
+ɞbɣɵzʃi
+ɞbɣɵzɵ
+ɞɣɵz
+ɞɣɵzʐɞ
+ɞɣɵzʃi
+ɞɣɵzɵ
+χɤ
+χɤɯ
+χɤi
+χɤbɤ
+ɤχɤ
+ɤχɤɯ
+ɤχɤi
+ɤχɤbɤ
+t̠ɤχɤ
+t̠ɤχɤɯ
+t̠ɤχɤi
+t̠ɤχɤbɤ
+ɤχɤ
+ɤχɤɯ
+ɤχɤi
+ɤχɤbɤ
+a
+aχi
+atɨs
+aɨ
+ɸɞxa
+ɸɞxaχi
+ɸɞxatɨs
+ɸɞxaɨ
+d̠ɨɸa
+d̠ɨɸaχi
+d̠ɨɸatɨs
+d̠ɨɸaɨ
+ɣɘa
+ɣɘaχi
+ɣɘatɨs
+ɣɘaɨ
+ɤ
+ɤzɯ
+ɤʐɛɢ
+ɤʌt
+ɞɤ
+ɞɤzɯ
+ɞɤʐɛɢ
+ɞɤʌt
+ɯɤ
+ɯɤzɯ
+ɯɤʐɛɢ
+ɯɤʌt
+ɨpɤ
+ɨpɤzɯ
+ɨpɤʐɛɢ
+ɨpɤʌt
+tʃʌ
+tʃʌɤ
+tʃʌɣɜ
+tʃʌt̠bɵ
+sd̠ɵtʃʌ
+sd̠ɵtʃʌɤ
+sd̠ɵtʃʌɣɜ
+sd̠ɵtʃʌt̠bɵ
+ɣɜχtʃʌ
+ɣɜχtʃʌɤ
+ɣɜχtʃʌɣɜ
+ɣɜχtʃʌt̠bɵ
+ʈbatʃʌ
+ʈbatʃʌɤ
+ʈbatʃʌɣɜ
+ʈbatʃʌt̠bɵ
+ɜ
+ɜɤβ
+ɜɞ
+ɜɞɸ
+tɛɜ
+tɛɜɤβ
+tɛɜɞ
+tɛɜɞɸ
+d̠ɛχɜ
+d̠ɛχɜɤβ
+d̠ɛχɜɞ
+d̠ɛχɜɞɸ
+pɣɤɜ
+pɣɤɜɤβ
+pɣɤɜɞ
+pɣɤɜɞɸ
+i
+iʌ
+itɵɣ
+iʐɜx
+tɤʃi
+tɤʃiʌ
+tɤʃitɵɣ
+tɤʃiʐɜx
+ɣii
+ɣiiʌ
+ɣiitɵɣ
+ɣiiʐɜx
+ɣɘɸi
+ɣɘɸiʌ
+ɣɘɸitɵɣ
+ɣɘɸiʐɜx
+ɢɨ
+ɢɨbɸɜ
+ɢɨɨ
+ɢɨʒʃɜ
+d̠ʌɢɨ
+d̠ʌɢɨbɸɜ
+d̠ʌɢɨɨ
+d̠ʌɢɨʒʃɜ
+ʈɛɢɨ
+ʈɛɢɨbɸɜ
+ʈɛɢɨɨ
+ʈɛɢɨʒʃɜ
+d̠iʈɢɨ
+d̠iʈɢɨbɸɜ
+d̠iʈɢɨɨ
+d̠iʈɢɨʒʃɜ
+ɛt̠
+ɛt̠ʃɘ
+ɛt̠ɸbɤ
+ɛt̠ɛ
+ɜʐɛt̠
+ɜʐɛt̠ʃɘ
+ɜʐɛt̠ɸbɤ
+ɜʐɛt̠ɛ
+ɨɛt̠
+ɨɛt̠ʃɘ
+ɨɛt̠ɸbɤ
+ɨɛt̠ɛ
+xʌzɛt̠
+xʌzɛt̠ʃɘ
+xʌzɛt̠ɸbɤ
+xʌzɛt̠ɛ
+aβ
+aβxi
+aβʃɵ
+aβɯ
+ɯʐaβ
+ɯʐaβxi
+ɯʐaβʃɵ
+ɯʐaβɯ
+tʐʌaβ
+tʐʌaβxi
+tʐʌaβʃɵ
+tʐʌaβɯ
+tɯaβ
+tɯaβxi
+tɯaβʃɵ
+tɯaβɯ
+ɢbɯ
+ɢbɯɛ
+ɢbɯd̠ɸɜ
+ɢbɯɜ
+ʐɞɢbɯ
+ʐɞɢbɯɛ
+ʐɞɢbɯd̠ɸɜ
+ʐɞɢbɯɜ
+ɯpɢbɯ
+ɯpɢbɯɛ
+ɯpɢbɯd̠ɸɜ
+ɯpɢbɯɜ
+ɞɢbɯ
+ɞɢbɯɛ
+ɞɢbɯd̠ɸɜ
+ɞɢbɯɜ
+ɵ
+ɵxɤ
+ɵɨχ
+ɵt̠ɤ
+ɵsɵ
+ɵsɵxɤ
+ɵsɵɨχ
+ɵsɵt̠ɤ
+ɢɵɵ
+ɢɵɵxɤ
+ɢɵɵɨχ
+ɢɵɵt̠ɤ
+ʐɘɵ
+ʐɘɵxɤ
+ʐɘɵɨχ
+ʐɘɵt̠ɤ
+az
+azi
+azzɘ
+azʌ
+taaz
+taazi
+taazzɘ
+taazʌ
+ɜʈaz
+ɜʈazi
+ɜʈazzɘ
+ɜʈazʌ
+sʌsaz
+sʌsazi
+sʌsazzɘ
+sʌsazʌ
+ʒpɵ
+ʒpɵɢɵʒ
+ʒpɵɘʃ
+ʒpɵɞʐ
+sɸɞʒpɵ
+sɸɞʒpɵɢɵʒ
+sɸɞʒpɵɘʃ
+sɸɞʒpɵɞʐ
+ɘʒpɵ
+ɘʒpɵɢɵʒ
+ɘʒpɵɘʃ
+ɘʒpɵɞʐ
+ʈχɘʒpɵ
+ʈχɘʒpɵɢɵʒ
+ʈχɘʒpɵɘʃ
+ʈχɘʒpɵɞʐ
+i
+iɸɜ
+ii
+ia
+bɵi
+bɵiɸɜ
+bɵii
+bɵia
+ɢχɯi
+ɢχɯiɸɜ
+ɢχɯii
+ɢχɯia
+ɵxi
+ɵxiɸɜ
+ɵxii
+ɵxia
+ɤ
+ɤɞp
+ɤχsʌ
+ɤʌ
+ʐɘɤ
+ʐɘɤɞp
+ʐɘɤχsʌ
+ʐɘɤʌ
+pɯɤ
+pɯɤɞp
+pɯɤχsʌ
+pɯɤʌ
+ʃaɤ
+ʃaɤɞp
+ʃaɤχsʌ
+ʃaɤʌ
+ɵ
+ɵd̠ʌ
+ɵaɢ
+ɵa
+ɣʌɵ
+ɣʌɵd̠ʌ
+ɣʌɵaɢ
+ɣʌɵa
+ɛɵ
+ɛɵd̠ʌ
+ɛɵaɢ
+ɛɵa
+t̠aɵ
+t̠aɵd̠ʌ
+t̠aɵaɢ
+t̠aɵa
+ɛ
+ɛʈɯ
+ɛpɵ
+ɛt̠ɛ
+t̠ɘt̠ɛ
+t̠ɘt̠ɛʈɯ
+t̠ɘt̠ɛpɵ
+t̠ɘt̠ɛt̠ɛ
+ʒɛɛ
+ʒɛɛʈɯ
+ʒɛɛpɵ
+ʒɛɛt̠ɛ
+ʒɞʒɛ
+ʒɞʒɛʈɯ
+ʒɞʒɛpɵ
+ʒɞʒɛt̠ɛ
+βab
+βabʐɵs
+βabɨ
+βabʐɵ
+bzaβab
+bzaβabʐɵs
+bzaβabɨ
+bzaβabʐɵ
+ɯβab
+ɯβabʐɵs
+ɯβabɨ
+ɯβabʐɵ
+βɵβab
+βɵβabʐɵs
+βɵβabɨ
+βɵβabʐɵ
+ɤɸ
+ɤɸɜ
+ɤɸzbɘ
+ɤɸʐɯ
+ɜtɤɸ
+ɜtɤɸɜ
+ɜtɤɸzbɘ
+ɜtɤɸʐɯ
+t̠ʃɞɤɸ
+t̠ʃɞɤɸɜ
+t̠ʃɞɤɸzbɘ
+t̠ʃɞɤɸʐɯ
+ɛɸɤɸ
+ɛɸɤɸɜ
+ɛɸɤɸzbɘ
+ɛɸɤɸʐɯ
+i
+id̠tʌ
+iʃɸa
+iɞɣ
+ɤd̠i
+ɤd̠id̠tʌ
+ɤd̠iʃɸa
+ɤd̠iɞɣ
+ʈsɜi
+ʈsɜid̠tʌ
+ʈsɜiʃɸa
+ʈsɜiɞɣ
+ɞi
+ɞid̠tʌ
+ɞiʃɸa
+ɞiɞɣ
+ɢiɣ
+ɢiɣzɤχ
+ɢiɣɣɵt
+ɢiɣʒɨʈ
+ɘɢiɣ
+ɘɢiɣzɤχ
+ɘɢiɣɣɵt
+ɘɢiɣʒɨʈ
+aɢɢiɣ
+aɢɢiɣzɤχ
+aɢɢiɣɣɵt
+aɢɢiɣʒɨʈ
+χɯtɢiɣ
+χɯtɢiɣzɤχ
+χɯtɢiɣɣɵt
+χɯtɢiɣʒɨʈ
+ɞ
+ɞd̠i
+ɞxʌ
+ɞɤ
+ɞɞ
+ɞɞd̠i
+ɞɞxʌ
+ɞɞɤ
+ʌɞ
+ʌɞd̠i
+ʌɞxʌ
+ʌɞɤ
+ɞʈɞ
+ɞʈɞd̠i
+ɞʈɞxʌ
+ɞʈɞɤ
+i
+iɛ
+iid̠
+izd̠ʌ
+ʃʈɘi
+ʃʈɘiɛ
+ʃʈɘiid̠
+ʃʈɘizd̠ʌ
+ɤi
+ɤiɛ
+ɤiid̠
+ɤizd̠ʌ
+ɘi
+ɘiɛ
+ɘiid̠
+ɘizd̠ʌ
+χi
+χipχɜ
+χiɜ
+χid̠ɘz
+pɘzχi
+pɘzχipχɜ
+pɘzχiɜ
+pɘzχid̠ɘz
+ɸɞχi
+ɸɞχipχɜ
+ɸɞχiɜ
+ɸɞχid̠ɘz
+zɘχi
+zɘχipχɜ
+zɘχiɜ
+zɘχid̠ɘz
+ɸɵd̠
+ɸɵd̠ɜp
+ɸɵd̠ɤx
+ɸɵd̠ʌ
+d̠ʃɛɸɵd̠
+d̠ʃɛɸɵd̠ɜp
+d̠ʃɛɸɵd̠ɤx
+d̠ʃɛɸɵd̠ʌ
+ɸpiɸɵd̠
+ɸpiɸɵd̠ɜp
+ɸpiɸɵd̠ɤx
+ɸpiɸɵd̠ʌ
+zpɯɸɵd̠
+zpɯɸɵd̠ɜp
+zpɯɸɵd̠ɤx
+zpɯɸɵd̠ʌ
+ʃi
+ʃiʒit
+ʃiɢi
+ʃia
+ʈɛʃi
+ʈɛʃiʒit
+ʈɛʃiɢi
+ʈɛʃia
+βɯʃi
+βɯʃiʒit
+βɯʃiɢi
+βɯʃia
+ʐiʃi
+ʐiʃiʒit
+ʐiʃiɢi
+ʐiʃia
+ʒɘʐ
+ʒɘʐɸaɢ
+ʒɘʐʈtɯ
+ʒɘʐʌx
+tʌʒɘʐ
+tʌʒɘʐɸaɢ
+tʌʒɘʐʈtɯ
+tʌʒɘʐʌx
+sβaʒɘʐ
+sβaʒɘʐɸaɢ
+sβaʒɘʐʈtɯ
+sβaʒɘʐʌx
+ɵʒɘʐ
+ɵʒɘʐɸaɢ
+ɵʒɘʐʈtɯ
+ɵʒɘʐʌx
+i
+iɜ
+iɤ
+iʌɣ
+ɘi
+ɘiɜ
+ɘiɤ
+ɘiʌɣ
+ɢɨi
+ɢɨiɜ
+ɢɨiɤ
+ɢɨiʌɣ
+ʈai
+ʈaiɜ
+ʈaiɤ
+ʈaiʌɣ
+ɘχ
+ɘχʐaɣ
+ɘχɤɸ
+ɘχχɘ
+ɞɘχ
+ɞɘχʐaɣ
+ɞɘχɤɸ
+ɞɘχχɘ
+ɘɘχ
+ɘɘχʐaɣ
+ɘɘχɤɸ
+ɘɘχχɘ
+ɸɯʃɘχ
+ɸɯʃɘχʐaɣ
+ɸɯʃɘχɤɸ
+ɸɯʃɘχχɘ
+bɯ
+bɯβɨd̠
+bɯɨ
+bɯt̠ʌ
+ʒɞbbɯ
+ʒɞbbɯβɨd̠
+ʒɞbbɯɨ
+ʒɞbbɯt̠ʌ
+ʌbɯ
+ʌbɯβɨd̠
+ʌbɯɨ
+ʌbɯt̠ʌ
+zt̠ɞbɯ
+zt̠ɞbɯβɨd̠
+zt̠ɞbɯɨ
+zt̠ɞbɯt̠ʌ
+a
+atɢɨ
+ai
+aɤ
+ɘa
+ɘatɢɨ
+ɘai
+ɘaɤ
+t̠ɞa
+t̠ɞatɢɨ
+t̠ɞai
+t̠ɞaɤ
+χʌa
+χʌatɢɨ
+χʌai
+χʌaɤ
+ʌ
+ʌt̠ɛ
+ʌɵ
+ʌʒɢɯ
+ʌʃʌ
+ʌʃʌt̠ɛ
+ʌʃʌɵ
+ʌʃʌʒɢɯ
+ɤʌ
+ɤʌt̠ɛ
+ɤʌɵ
+ɤʌʒɢɯ
+ʒɵʌ
+ʒɵʌt̠ɛ
+ʒɵʌɵ
+ʒɵʌʒɢɯ
+tɞz
+tɞzbɨs
+tɞzʐi
+tɞzʌ
+zpɤtɞz
+zpɤtɞzbɨs
+zpɤtɞzʐi
+zpɤtɞzʌ
+ʐʌtɞz
+ʐʌtɞzbɨs
+ʐʌtɞzʐi
+ʐʌtɞzʌ
+ɜtɞz
+ɜtɞzbɨs
+ɜtɞzʐi
+ɜtɞzʌ
+tɯ
+tɯɯɢ
+tɯɤβ
+tɯʃɯ
+ɘxtɯ
+ɘxtɯɯɢ
+ɘxtɯɤβ
+ɘxtɯʃɯ
+ɤtɯ
+ɤtɯɯɢ
+ɤtɯɤβ
+ɤtɯʃɯ
+pɸʌtɯ
+pɸʌtɯɯɢ
+pɸʌtɯɤβ
+pɸʌtɯʃɯ
 
 ---- sample text ----
-β̞̥ɶbt͡so̞ d̠əpɟ͡ʝβpɤ̞koβɹ̠̥ g͡ɣʉβ̞̥t͡sɘk pɐβ̞̥ɤ̞ βɹ̠̥yɟ͡ʝpd̠ɤ̞kbo̞p xabxd͡zd̠ɶt͡si od̠β̞̥g͡ɣʉ βpɤ̞kd͡zβɤ̞ɟ͡ʝ xβɐpd̠ɤ̞ t͡sd̠ʉɹ̠̥g͡ɣʉt͡saβ̞̥ xabxd͡zd̠ɶt͡s ɐd͡zɶd͡zɤ̞ xɘβd̠ɶd͡zxt͡sɑβ βpɤ̞kd͡zβɤ̞ɟ͡ʝ d̠əpɟ͡ʝβpɤ̞kβbɶb g͡ɣɤ̞p ɟ͡ʝʉoxd͡zo̞β obaɹ̠̥pib βɹ̠̥yɟ͡ʝpd̠ɤ̞kbo̞p iβ̞̥ɶxʉɹ̠̥ ɟ͡ʝɑd̠g͡ɣɶɹ̠̥ kt͡sit͡sɑɹ̠̥g͡ɣɶβ β̞̥ɤ̞ɟ͡ʝkyβ̞̥ɟ͡ʝa g͡ɣɘɟ͡ʝɘt͡s β̞̥ɶpɟ͡ʝɑk d̠ɤ̞ɹ̠̥ʉ o̞ɘ βɑt͡sβpɐd͡zɟ͡ʝot͡s ag͡ɣd͡zɹ̠̥d͡zoβ ɹ̠̥kɤ̞ipβd̠i βɐɹ̠̥d͡zpa ipəɟ͡ʝy yo̞g͡ɣɤ̞k pɐβ̞̥ɟ͡ʝɟ͡ʝɑd̠g͡ɣɶɹ̠̥ ɹ̠̥t͡sɵβ̞̥ɤ̞d̠β xbɤ̞g͡ɣd͡zd̠ɶp ɑd̠ap β̞̥g͡ɣɵβxɵt͡s β̞̥ɶbt͡so̞ɘ d̠əpɟ͡ʝβpɤ̞koβɹ̠̥ xbɤ̞g͡ɣxβ̞̥o̞ xt͡sʉt͡sd͡zɹ̠̥ɐβ̞̥ɟ͡ʝo i d͡zid͡zxbɤ̞g͡ɣ kko̞g͡ɣakp β̞̥d̠yd͡zə ɹ̠̥g͡ɣɤ̞d̠ ɐɹ̠̥g͡ɣɤ̞d̠d̠əd͡z β̞̥d̠yd͡zəbt͡səg͡ɣ βpɤ̞kd͡zβɤ̞ɟ͡ʝ
+ɸɯʃɘχʐaɣ tɞz ɣziɸɯ ɨɛt̠ atɢɨ ɘiɤ sɯʒxi ɞɤ ʐʌɵtʌ pɣɤɜɞɸ ɵd̠ʌ ɤʌt̠ɛ ɵxɤ ɵxii iɛ ɢɨiʌɣ ɣii ɣzi bɛɤtɜʈ ɜɞ bɤ ɢɣɞɵ t̠ɞɣsɘʈpɛ ɵʐɢʌʈɘ tɤʃiʐɜx a bɵia ɣɘatɨs ɸpiɸɵd̠ d̠ɛχɜɞɸ ʌbɯ tɯaβxi ɜɞ ɸɞxaχi ɤɨ i aβxi ɤzχi ɘɘχχɘ ɘχ xɘɢɵsxa ɢɨi ɞɤ ʒɛɛ ɢɣɞɵtʌ d̠ʌɢɨbɸɜ χd̠ɯɤɢɘ sɸɞʒpɵɢɵʒ bɯβɨd̠ sβaʒɘʐɸaɢ
 -->
-β̞̥ːo̞pːo̞d̠ʱ d̠ːo̞ɸːo̞k͡xːod̠u k͡xːo̞p͡ɸːɘd̠u pːɐp͡ɸo̞t̠ʰ pːo̞p͡ɸːo̞t̠o̞k͡xːo̞po̞ːp͡ɸːu xːo̞pːo̞k͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːu oːp͡ɸːo̞t̠ʰ ɸːo̞k͡xːo̞t͡sɤ̞ːd̠u xːo̞p͡ɸːo̞t̠ɤ̞ːd̠u t͡sːo̞t̠o̞ɹ̠̥ːo̞sːo̞t̠ʰ xːo̞pːo̞k͡xːo̞t͡sʉ̃ː̯ɶ̃ːt͡sːu ɐːz̃ɶ̈ːd͡zːəːd̠u xːo̞ʃːɶːt͡sːo̞k͡xːäd̠u ɸːo̞k͡xːo̞t͡sɤ̞ːd̠u d̠ːo̞βːo̞βːo̞β̃ːɶ̃ːmːo̞d̠ʱ gːəːd̠u ɟ͡ʝːʉːd̠oːk͡xʲːɵ̞ːd̠ʱ oːɹ̠̥ːo̞t̠ʰ pːo̞p͡ɸːo̞t̠o̞k͡xːo̞po̞ːp͡ɸːu iːø̞ː̯ɶ̈k͡xːʉd̠ʱ ɟ͡ʝːäːɹ̠̥ːu kːɶ̈ːb͡βːu pːo̞k͡xːyp͡ɸu g͡ɣːo̞d̠ʱ β̞̥ːɶ̈p͡ɸːäːd̠u t̠ːo̞ɹ̠̥ːu o̞ːd̠ʱ βːɐːɟ͡ʝõːd̠ʱ aːd͡zɵːb͡βːu t̠ːəd̠ːo̞d̠ʱ βːo̞d͡zʉː̯ad̠u iːd̠ʱ yːd̠ʱ pːɐd̠äːɹ̠̥ːu ɹ̠̥ːɵp͡ɸo̞t̠ːo̞b͡βːu kːəg͡ɣo̞n͡z̃ːʉ̃ː̯ɶːp͡ɸːo̞t̠ʰ ɑːd̠ʱ β̞̥ːo̞ɸːɵt͡su β̞̥ːo̞pːo̞t͡sːo̞d̠ʱ d̠ːo̞ɸːo̞k͡xːod̠u kːək͡xːɵ̞d̠u xːo̞t͡sɐd̠u iːd̠u d͡zːo̞t͡sːo̞k͡xːo̞po̞d̠ʱ kːo̞k͡xo̞k͡xːo̞p͡ɸo̞t̠ʰ β̞̥ːo̞t̠yːn͡z̃u ɹ̠̥ːəd̠u ɐːn̠ːo̞n̠ːo̞d̠ʱ β̞̥ːo̞t̠yːn͡z̃əːd̠ʱ ɸːo̞k͡xːo̞t͡sɤ̞ːd̠u
+ɸɯʃɘχʐaɣ tɞz ɣziɸɯ ɨɛt̠ atɢɨ ɘiɤ sɯʒxi ɞɤ ʐʌɵtʌ pɣɤɜɞɸ ɵd̠ʌ ɤʌt̠ɛ ɵxɤ ɵxii iɛ ɢɨiʌɣ ɣii ɣzi bɛɤtɜʈ ɜɞ bɤ ɢɣɞɵ t̠ɞɣsɘʈpɛ ɵʐɢʌʈɘ tɤʃiʐɜx a bɵia ɣɘatɨs ɸpiɸɵd̠ d̠ɛχɜɞɸ ʌbɯ tɯaβxi ɜɞ ɸɞxaχi ɤɨ i aβxi ɤzχi ɘɘχχɘ ɘχ xɘɢɵsxa ɢɨi ɞɤ ʒɛɛ ɢɣɞɵtʌ d̠ʌɢɨbɸɜ χd̠ɯɤɢɘ sɸɞʒpɵɢɵʒ bɯβɨd̠ sβaʒɘʐɸaɢ

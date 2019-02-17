@@ -330,9 +330,41 @@ def get_random_feature_value_sets():
     return d
 
 
+def print_feature_values_dict(d):
+    print("showing feature values")
+    get_name = lambda k, v: FEATURE_KEYS[k][v]
+    for k, val in d.items():
+        if type(val) is list:
+            translated_val = [get_name(k, v) for v in val]
+        elif type(val) is int:
+            translated_val = get_name(k, val)
+        else:
+            raise TypeError("feature dict values were not list or int, but {}".format(type(val)))
+        print("{}: {}".format(k, translated_val))
+    print()
+
+
+def print_list_of_phones(lst, as_word=False, verbose=False):
+    if verbose:
+        for d in lst:
+            print("symbol: {}".format(get_ipa_symbol_from_features(d)))
+            print_feature_values_dict(d)
+            input()
+    else:
+        delim = "" if as_word else " , "
+        print(delim.join(get_ipa_symbol_from_features(d) for d in lst))
+    print()
+
+
 def get_random_inventory():
     phonology = get_random_feature_value_sets()
+    print("phonology:")
+    print_feature_values_dict(phonology)
+    input()
     raw_inventory = [get_features_from_possible_values(phonology) for i in range(40)]
+    print("raw inventory:")
+    print_list_of_phones(raw_inventory)
+    input()
     seen = []
     seen_symbols = []
     for phone in raw_inventory:
@@ -341,6 +373,9 @@ def get_random_inventory():
         if symbol not in seen_symbols and "_" not in symbol and "?" not in symbol:
             seen.append(restricted_phone)
             seen_symbols.append(symbol)
+    print("final inventory:")
+    print_list_of_phones(seen)
+    input()
     return seen
 
 
@@ -350,7 +385,9 @@ def get_random_syllable_structure_set():
     possible_codas = [""] * 4 + ["C"] * 2 + ["CC"] * 1 + ["N"] * 2 + ["NC"] * 1
     possible_structures = [onset + nucleus + coda for onset in possible_onsets for nucleus in possible_nuclei for coda in possible_codas]
 
-    return list(set(random.sample(possible_structures, random.randint(2, len(possible_structures)))))
+    result = list(set(random.sample(possible_structures, random.randint(2, len(possible_structures)))))
+    input("returning syllable structure set: {}".format(result))
+    return result
 
 
 def get_random_phone_sequence(n_syllables, inventory, syllable_structure):
@@ -382,9 +419,19 @@ def convert_phone_sequence_to_ipa(seq):
 
 
 def get_random_paradigm(inventory, syllable_structure_set):
+    input("generating paradigm")
     root = get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set))
+    print("root:")
+    print_list_of_phones(root, as_word=True)
     prefixes = [[]] + [get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
     suffixes = [[]] + [get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
+    print("prefixes:")
+    for w in prefixes:
+        print_list_of_phones(w, as_word=True)
+    print("suffixes:")
+    for w in suffixes:
+        print_list_of_phones(w, as_word=True)
+    input()
     return [prefix + root + suffix for prefix in prefixes for suffix in suffixes]
 
 
@@ -521,6 +568,167 @@ def get_input_language_from_file():
     return (inventory, vocabulary)
 
 
+def generate_language_and_write_to_file():
+    # original routine
+    inventory, vocabulary = get_random_input_language()
+    # inventory, vocabulary = get_input_language_from_file()
+
+    text = [random.choice(vocabulary) for i in range(50)]
+
+    epenthetic_consonant = random.choice([x for x in inventory if x["syllabicity"] == 0])
+    epenthetic_vowel = random.choice([x for x in inventory if x["syllabicity"] == 3])
+
+    sound_changes = [
+        # ({"syllabicity": 0}, "", ["#"], [{"syllabicity": 3}]),  # initial single consonants deleted
+        # ({}, {}, {}, {}),  # do nothing
+    ] + [get_random_sound_change(inventory) for i in range(30)] + [
+        ({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, [{"syllabicity": 0, "voicing": 0}], []),
+        ({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, [], [{"syllabicity": 0, "voicing": 0}]),  # assimilate clusters to voiceless
+        ("", epenthetic_vowel, [{"syllabicity": 0}], [{"syllabicity": 0}]),  # epenthetic vowel insertion
+        ("", epenthetic_vowel, ["#", {"syllabicity": 0}], ["#"]),  # epenthetic vowel insertion
+        ("", epenthetic_consonant, [{"syllabicity": 3}], [{"syllabicity": 3}]),  # epenthetic consonant insertion
+    ]
+
+    fp = "LanguageEvolution2Output.txt"
+
+    with codecs.open(fp, "wb", "utf-8") as f:
+        f.write("inventory:\r\n")
+        f.write("  ".join([get_ipa_symbol_from_features(x) for x in sorted(inventory, key=lambda x: get_numerical_code_from_features(x))]))
+        f.write("\r\n----\r\n")
+
+        f.write("vocabulary:\r\n")
+        change_dict = {}
+        for word in vocabulary:
+            new_word = deepcopy(word)
+            for sound_change in sound_changes:
+                new_word = apply_sound_change_to_word(sound_change, new_word)
+            ipa = convert_phone_sequence_to_ipa(word)
+            new_ipa = convert_phone_sequence_to_ipa(new_word)
+            change_dict[ipa] = new_ipa
+            if new_ipa != ipa:
+                f.write("{0} --> {1}\r\n".format(ipa, new_ipa))
+            else:
+                f.write("{0}\r\n".format(ipa))
+
+        f.write("\r\n---- sample text ----\r\n")
+        text_ipas = [convert_phone_sequence_to_ipa(word) for word in text]
+        f.write(" ".join(text_ipas) + "\r\n-->\r\n" + " ".join([change_dict[ipa] for ipa in text_ipas]))
+    print("done, written to file {}".format(fp))
+
+
+def get_input_word_from_user():
+    print("Input a word to add to the language.\nFormat: phonemes separated by spaces, syllables separated by hyphens or dollar signs")
+    print("Example: k a - t i")
+    inp = input("word: ")
+    inp = inp.replace("$", "-").strip()
+    if inp == "":
+        return []
+    syllables = inp.split("-")
+    syllables = [syll.strip().split() for syll in syllables]
+    return syllables
+
+
+def get_input_words_from_user():
+    print("Add words. When finished, press enter without entering anything.")
+    words = []
+    while True:
+        w = get_input_word_from_user()
+        if w == []:
+            break
+        words.append(w)
+    return words
+
+
+def get_inventory_from_user_input_words(words):
+    added_phoneme_symbols = set()
+    for word in words:
+        for syll in word:
+            for symbol in syll:
+                added_phoneme_symbols.add(symbol)
+
+    phonemes = []
+    for symbol in added_phoneme_symbols:
+        try:
+            phoneme = IPA_SYMBOL_TO_FEATURES[symbol]
+
+        except KeyError:
+            phoneme = {}
+            print("the phoneme {} was not found in the IPA symbols. Please specify what it is:".format(symbol))
+            for k, d in FEATURE_KEYS.items():
+                print("{}: {}".format(k, d))
+                while True:
+                    inp = input("choice for this feature: ")
+                    try: 
+                        choice = int(inp.strip())
+                        if choice not in d:
+                            print("that choice is not valid, must be one of {}".format(sorted(d.keys())))
+                            continue
+                        phoneme[k] = choice
+                        break
+                    except ValueError:
+                        print("invalid int")
+                        continue
+
+        phonemes.append(phoneme)
+
+    print("resulting inventory:")
+    print_list_of_phones(phonemes)
+    input()
+
+
+def get_syllable_structures_from_user_input_words(words):
+    structures = []
+    for word in words:
+        for syllable in word:
+            raise
+    # better to convert the inputted words into a canonical format usable by the lexicon
+
+
+class Phone:
+    def __init__(self):
+        raise
+
+    @staticmethod
+    def from_symbol(symbol):
+        raise
+
+class Phoneme:
+    def __init__(self):
+        raise
+        self.primary_phone = []
+        self.allophones = []
+
+class PhoneticEnvironment:
+    def __init__(self):
+        raise
+        self.before = []
+        self.after = []
+        # should be able to match underspecified feature dicts
+
+class Word:
+    def __init__(self, phones):
+        self.phones = phones
+
+    @staticmethod
+    def from_user_input():
+        raise
+
+class Inventory:
+    def __init__(self, phonemes):
+        self.phonemes = phonemes
+
+    @staticmethod
+    def from_user_input_words(words):
+        raise
+
+class Language:
+    def __init__(self, inventory, **args):
+        self.inventory = inventory
+
+class Language:
+    pass
+    # does it error when redefining a class?
+
 # ---- constructing global constants ---- #
 
 FEATURE_KEYS = {
@@ -589,45 +797,4 @@ COMMON_SOUND_CHANGES = [
 
 
 if __name__ == "__main__":
-    inventory, vocabulary = get_random_input_language()
-    # inventory, vocabulary = get_input_language_from_file()
-
-    text = [random.choice(vocabulary) for i in range(50)]
-
-    epenthetic_consonant = random.choice([x for x in inventory if x["syllabicity"] == 0])
-    epenthetic_vowel = random.choice([x for x in inventory if x["syllabicity"] == 3])
-
-    sound_changes = [
-        # ({"syllabicity": 0}, "", ["#"], [{"syllabicity": 3}]),  # initial single consonants deleted
-        # ({}, {}, {}, {}),  # do nothing
-    ] + [get_random_sound_change(inventory) for i in range(30)] + [
-        ({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, [{"syllabicity": 0, "voicing": 0}], []),
-        ({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, [], [{"syllabicity": 0, "voicing": 0}]),  # assimilate clusters to voiceless
-        ("", epenthetic_vowel, [{"syllabicity": 0}], [{"syllabicity": 0}]),  # epenthetic vowel insertion
-        ("", epenthetic_vowel, ["#", {"syllabicity": 0}], ["#"]),  # epenthetic vowel insertion
-        ("", epenthetic_consonant, [{"syllabicity": 3}], [{"syllabicity": 3}]),  # epenthetic consonant insertion
-    ]
-
-    with codecs.open("LanguageEvolution2Output.txt", "wb", "utf-8") as f:
-        f.write("inventory:\r\n")
-        f.write("  ".join([get_ipa_symbol_from_features(x) for x in sorted(inventory, key=lambda x: get_numerical_code_from_features(x))]))
-        f.write("\r\n----\r\n")
-
-        f.write("vocabulary:\r\n")
-        change_dict = {}
-        for word in vocabulary:
-            new_word = deepcopy(word)
-            for sound_change in sound_changes:
-                new_word = apply_sound_change_to_word(sound_change, new_word)
-            ipa = convert_phone_sequence_to_ipa(word)
-            new_ipa = convert_phone_sequence_to_ipa(new_word)
-            change_dict[ipa] = new_ipa
-            if new_ipa != ipa:
-                f.write("{0} --> {1}\r\n".format(ipa, new_ipa))
-            else:
-                f.write("{0}\r\n".format(ipa))
-
-        f.write("\r\n---- sample text ----\r\n")
-        text_ipas = [convert_phone_sequence_to_ipa(word) for word in text]
-        f.write(" ".join(text_ipas) + "\r\n-->\r\n" + " ".join([change_dict[ipa] for ipa in text_ipas]))
-
+    inventory = get_inventory_from_user_input()
