@@ -145,6 +145,7 @@ def get_column_order_for_power_of_2(base):
 
 
 def show_table(base, tuple_to_seq_number):
+    show_only_coprime_pairs = input("show only coprime pairs? (y/[n]): ").strip().lower() == "y"
     # https://stackoverflow.com/questions/46663911/how-to-assign-specific-colors-to-specific-cells-in-a-matplotlib-table
 
     # if is_power_of_2(base):
@@ -168,6 +169,23 @@ def show_table(base, tuple_to_seq_number):
 
     text_array = []
     color_array = []
+
+    def effective_for_coprimality(n): return base if n == 0 else n
+    def is_founder_tuple(x, y):
+        if x == 0 and y == 0:
+            return False
+        x = effective_for_coprimality(x)
+        y = effective_for_coprimality(y)
+        if x == y:
+            assert x != base
+            return is_founder_tuple(x, base)
+            # will inherit e.g. (3, 3)%12, from n=4, but not (11, 11)
+            # and even though 10 is not prime, n=21 will not inherit (10, 10) from anywhere because 10 and 21 are coprime
+        x_factors = set(sympy.primefactors(x))
+        y_factors = set(sympy.primefactors(y))
+        base_factors = set(sympy.primefactors(base))
+        return x_factors & y_factors & base_factors == set()  # they share no prime factors
+
     for r_i in range(base):
         row_text_array = []
         row_color_array = []
@@ -176,7 +194,10 @@ def show_table(base, tuple_to_seq_number):
             c = columns[c_i]
             v = f(r, c)
             row_text_array.append(" {} ".format(v))
-            row_color_array.append(color(v))
+            if show_only_coprime_pairs and not is_founder_tuple(r, c):
+                row_color_array.append("#000000")
+            else:
+                row_color_array.append(color(v))
         text_array.append(row_text_array)
         color_array.append(row_color_array)
 
