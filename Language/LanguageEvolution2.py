@@ -14,8 +14,6 @@ def get_random_unicode_character():
     return char
 
 
-
-
 def get_random_syllable_structure_set():
     possible_onsets = [""] * 3 + ["C"] * 4 + ["CC"] * 1
     possible_nuclei = ["V"]
@@ -24,14 +22,6 @@ def get_random_syllable_structure_set():
 
     result = list(set(random.sample(possible_structures, random.randint(2, len(possible_structures)))))
     input("returning syllable structure set: {}".format(result))
-    return result
-
-
-
-def convert_phone_sequence_to_ipa(seq):
-    result = ""
-    for phone in seq:
-        result += Phone.get_ipa_symbol_from_features(phone)
     return result
 
 
@@ -52,10 +42,9 @@ def get_random_paradigm(inventory, syllable_structure_set):
     return [prefix + root + suffix for prefix in prefixes for suffix in suffixes]
 
 
-
 def matches_features_dict(phone, features_dict):
-    if features_dict == "#":
-        return phone == "#"
+    if features_dict == WordBoundaryPhone().features:
+        return phone == WordBoundaryPhone()
     elif type(phone) is not dict:
         return False
 
@@ -67,89 +56,9 @@ def matches_features_dict(phone, features_dict):
     return True
 
 
-def apply_sound_change_to_word(sound_change, word):
-    from_features, to_features, before_features_list, after_features_list = sound_change
-
-    if from_features == "" and to_features == "":
-        return word
-
-    word = ["#"] + word + ["#"]
-
-    before_len = len(before_features_list)
-    start_index = before_len
-    after_len = len(after_features_list)
-    end_index_exclusive = len(word) - after_len
-
-    new_word = []
-
-    if type(from_features) is dict:
-        for i, phone in enumerate(word):
-            if i < before_len or i >= end_index_exclusive:
-                new_word.append(deepcopy(phone))
-                continue
-
-            before_environment = word[i - before_len: i]
-            after_environment = word[i + 1: i + after_len + 1]
-
-            matches_phone = matches_features_dict(phone, from_features)
-            if not matches_phone:
-                new_word.append(deepcopy(phone))
-                continue
-
-            matches_before = all([matches_features_dict(before_environment[j], before_features_list[j]) for j in range(before_len)])
-            matches_after = all([matches_features_dict(after_environment[j], after_features_list[j]) for j in range(after_len)])
-            if matches_before and matches_after:
-                if to_features == "":
-                    new_word.append(None)
-                else:
-                    new_phone = deepcopy(phone)
-                    new_phone.update(to_features)
-                    new_word.append(new_phone)
-            else:
-                new_word.append(deepcopy(phone))
-
-    elif from_features == "":
-        for i, phone in enumerate(word):
-            if i < before_len or i >= end_index_exclusive:
-                new_word.append(deepcopy(phone))
-                continue
-
-            before_environment = word[i - before_len: i]
-            after_environment = word[i: i + after_len]
-
-            matches_before = all([matches_features_dict(before_environment[j], before_features_list[j]) for j in range(before_len)])
-            matches_after = all([matches_features_dict(after_environment[j], after_features_list[j]) for j in range(after_len)])
-            if matches_before and matches_after:
-                new_phone = DEFAULT_FEATURE_VALUES
-                new_phone.update(to_features)
-                new_word.append(new_phone)
-                new_word.append(deepcopy(phone))
-            else:
-                new_word.append(deepcopy(phone))
-
-    else:
-        raise ValueError("invalid from_features: {0}".format(from_features))
-
-    return [x for x in new_word if x is not None]
-
-
 def get_random_feature_value_from_inventory(inventory):
     phone = random.choice(inventory.phonemes)
     return random.choice([i for i in phone.features.items()])
-
-
-def get_random_sound_change(inventory):
-    feature, value = get_random_feature_value_from_inventory(inventory)
-    feature2, value2 = get_random_feature_value_from_inventory(inventory)
-    feature3, value3 = get_random_feature_value_from_inventory(inventory)
-    feature4, value4 = get_random_feature_value_from_inventory(inventory)
-
-    from_features = {feature: value} if random.random() < 0.95 else ""
-    to_features = {feature2: random.choice([i for i in FEATURE_KEYS[feature2].keys()])} if random.random() < 0.95 else ""
-    before_environment = {feature3: value3} if random.random() < 0.8 else "#"
-    after_environment = {feature4: value4} if random.random() < 0.8 else "#"
-
-    return (from_features, to_features, [before_environment], [after_environment])
 
 
 def get_random_input_language():
@@ -189,21 +98,21 @@ def generate_language_and_write_to_file():
     epenthetic_vowel = random.choice([x for x in inventory.phonemes if x.features["syllabicity"] == 3])
 
     sound_changes = [
-        # ({"syllabicity": 0}, "", ["#"], [{"syllabicity": 3}]),  # initial single consonants deleted
+        # ({"syllabicity": 0}, "", [WordBoundaryPhone().features], [{"syllabicity": 3}]),  # initial single consonants deleted
         # ({}, {}, {}, {}),  # do nothing
-    ] + [get_random_sound_change(inventory) for i in range(30)] + [
-        ({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, [{"syllabicity": 0, "voicing": 0}], []),
-        ({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, [], [{"syllabicity": 0, "voicing": 0}]),  # assimilate clusters to voiceless
-        ("", epenthetic_vowel, [{"syllabicity": 0}], [{"syllabicity": 0}]),  # epenthetic vowel insertion
-        ("", epenthetic_vowel, ["#", {"syllabicity": 0}], ["#"]),  # epenthetic vowel insertion
-        ("", epenthetic_consonant, [{"syllabicity": 3}], [{"syllabicity": 3}]),  # epenthetic consonant insertion
+    ] + [SoundChange.get_random_sound_change_from_inventory(inventory) for i in range(30)] + [
+        SoundChange({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, PhoneticEnvironment([{"syllabicity": 0, "voicing": 0}], [])),
+        SoundChange({"syllabicity": 0, "voicing": 1}, {"voicing": 0}, PhoneticEnvironment([], [{"syllabicity": 0, "voicing": 0}])),  # assimilate clusters to voiceless
+        SoundChange("", epenthetic_vowel, PhoneticEnvironment([{"syllabicity": 0}], [{"syllabicity": 0}])),  # epenthetic vowel insertion
+        SoundChange("", epenthetic_vowel, PhoneticEnvironment([WordBoundaryPhone().features, {"syllabicity": 0}], [WordBoundaryPhone().features])),  # epenthetic vowel insertion
+        SoundChange("", epenthetic_consonant, PhoneticEnvironment([{"syllabicity": 3}], [{"syllabicity": 3}])),  # epenthetic consonant insertion
     ]
 
     fp = "LanguageEvolution2Output.txt"
 
     with codecs.open(fp, "wb", "utf-8") as f:
         f.write("inventory:\r\n")
-        f.write("  ".join([Phone.get_ipa_symbol_from_features(x) for x in sorted(inventory, key=lambda x: Phone.get_numerical_code_from_features(x))]))
+        f.write(inventory.str())
         f.write("\r\n----\r\n")
 
         f.write("vocabulary:\r\n")
@@ -211,9 +120,9 @@ def generate_language_and_write_to_file():
         for word in vocabulary:
             new_word = deepcopy(word)
             for sound_change in sound_changes:
-                new_word = apply_sound_change_to_word(sound_change, new_word)
-            ipa = convert_phone_sequence_to_ipa(word)
-            new_ipa = convert_phone_sequence_to_ipa(new_word)
+                new_word = sound_change.apply_to_word(new_word)
+            ipa = word.get_ipa_str()
+            new_ipa = new_word.get_ipa_str()
             change_dict[ipa] = new_ipa
             if new_ipa != ipa:
                 f.write("{0} --> {1}\r\n".format(ipa, new_ipa))
@@ -221,12 +130,9 @@ def generate_language_and_write_to_file():
                 f.write("{0}\r\n".format(ipa))
 
         f.write("\r\n---- sample text ----\r\n")
-        text_ipas = [convert_phone_sequence_to_ipa(word) for word in text]
+        text_ipas = [word.get_ipa_str() for word in text]
         f.write(" ".join(text_ipas) + "\r\n-->\r\n" + " ".join([change_dict[ipa] for ipa in text_ipas]))
     print("done, written to file {}".format(fp))
-
-
-
 
 
 def get_syllable_structures_from_user_input_words(words):
@@ -248,8 +154,9 @@ class PhoneticFeatureSpace:
     def get_features_from_possible_values(self):
         d = {}
         for k, v in FEATURE_KEYS.items():
-            possibilities = self.features[k]
-            d[k] = random.choice(possibilities)
+            possibilities = self.features.get(k)
+            if possibilities is not None:
+                d[k] = random.choice(possibilities)
         return d
 
     @staticmethod
@@ -275,6 +182,9 @@ class PhoneticFeatureSpace:
 
         d = {}
         for k, v in FEATURE_KEYS.items():
+            if k not in value_probabilities:
+                # e.g. is_word_boundary, which we don't want to be involved in phonology creation
+                continue
             d[k] = []
             for val in v.keys():
                 if random.random() < value_probabilities[k][val]:
@@ -323,12 +233,18 @@ class Phone:
 
     @staticmethod
     def from_ipa_symbol(symbol):
-        return IPA_SYMBOL_TO_FEATURES[symbol]
+        if symbol == "#":
+            return WordBoundaryPhone()
+        else:
+            return IPA_SYMBOL_TO_FEATURES[symbol]
 
     @staticmethod
     def get_ipa_symbol_from_features(features):
         if type(features) is not dict:
             raise TypeError("features must be dict if using this method; if possible, use get_ipa_symbol method of Phone object")
+
+        if features.get("is_word_boundary") == 1:
+            return "#"
 
         phone = Phone(features)
 
@@ -597,6 +513,17 @@ class Phone:
         return Phone(features)
 
 
+class WordBoundaryPhone(Phone):
+    def __init__(self):
+        self.features = {"is_word_boundary": 1}
+
+    def __eq__(self, other):
+        return type(other) is WordBoundaryPhone and self.features["is_word_boundary"] == other.features["is_word_boundary"] == 1
+
+    def restrict_features(self):
+        return WordBoundaryPhone()
+
+
 class Phoneme:
     def __init__(self):
         raise
@@ -611,18 +538,98 @@ class Phonology:
 
 
 class PhoneticEnvironment:
-    def __init__(self):
-        raise
-        self.before = []
-        self.after = []
+    def __init__(self, before_environment, after_environment):
+        self.before_environment = before_environment
+        self.after_environment = after_environment
         # should be able to match underspecified feature dicts
 
 
 class SoundChange:
-    def __init__(self, from_phone, to_phone, phonetic_environment):
-        self.from_phone = from_phone
-        self.to_phone = to_phone
+    def __init__(self, from_features, to_features, phonetic_environment):
+        self.from_features = from_features
+        self.to_features = to_features
         self.phonetic_environment = phonetic_environment
+
+    def apply_to_word(self, word):
+        if self.from_features == "" and self.to_features == "":
+            raise Exception("bad practice! features should be feature dicts, and if they do nothing, then make them dicts that somehow say that")  # FIXME
+            return word
+
+        phoneme_list = [WordBoundaryPhone()] + word.get_phoneme_list() + [WordBoundaryPhone()]
+
+        before_features_list = self.phonetic_environment.before_environment
+        after_features_list = self.phonetic_environment.after_environment
+        before_len = len(before_features_list)
+        start_index = before_len
+        after_len = len(after_features_list)
+        end_index_exclusive = len(phoneme_list) - after_len
+
+        new_phoneme_list = []
+
+        if type(self.from_features) is dict:
+            for i, phone in enumerate(phoneme_list):
+                if i < before_len or i >= end_index_exclusive:
+                    new_phoneme_list.append(deepcopy(phone))
+                    continue
+
+                before_environment = phoneme_list[i - before_len: i]
+                after_environment = phoneme_list[i + 1: i + after_len + 1]
+
+                matches_phone = matches_features_dict(phone, self.from_features)
+                if not matches_phone:
+                    new_phoneme_list.append(deepcopy(phone))
+                    continue
+
+                matches_before = all([matches_features_dict(before_environment[j], before_features_list[j]) for j in range(before_len)])
+                matches_after = all([matches_features_dict(after_environment[j], after_features_list[j]) for j in range(after_len)])
+                if matches_before and matches_after:
+                    if self.to_features == "":
+                        new_phoneme_list.append(None)
+                    else:
+                        new_phone = deepcopy(phone)
+                        new_phone.update(self.to_features)
+                        new_phoneme_list.append(new_phone)
+                else:
+                    new_phoneme_list.append(deepcopy(phone))
+
+        elif self.from_features == "":
+            for i, phone in enumerate(phoneme_list):
+                if i < before_len or i >= end_index_exclusive:
+                    new_phoneme_list.append(deepcopy(phone))
+                    continue
+
+                before_environment = phoneme_list[i - before_len: i]
+                after_environment = phoneme_list[i: i + after_len]
+
+                matches_before = all([matches_features_dict(before_environment[j], before_features_list[j]) for j in range(before_len)])
+                matches_after = all([matches_features_dict(after_environment[j], after_features_list[j]) for j in range(after_len)])
+                if matches_before and matches_after:
+                    new_phone = DEFAULT_FEATURE_VALUES
+                    new_phone.update(self.to_features)
+                    new_phoneme_list.append(new_phone)
+                    new_phoneme_list.append(deepcopy(phone))
+                else:
+                    new_phoneme_list.append(deepcopy(phone))
+
+        else:
+            raise ValueError("invalid self.from_features: {0}".format(self.from_features))
+
+        return Word.from_phone_list([x for x in new_phoneme_list if x is not None])
+
+    @staticmethod
+    def get_random_sound_change_from_inventory(inventory):
+        feature, value = get_random_feature_value_from_inventory(inventory)
+        feature2, value2 = get_random_feature_value_from_inventory(inventory)
+        feature3, value3 = get_random_feature_value_from_inventory(inventory)
+        feature4, value4 = get_random_feature_value_from_inventory(inventory)
+    
+        from_features = {feature: value} if random.random() < 0.95 else ""
+        to_features = {feature2: random.choice([i for i in FEATURE_KEYS[feature2].keys()])} if random.random() < 0.95 else ""
+        before_environment = {feature3: value3} if random.random() < 0.8 else WordBoundaryPhone().features
+        after_environment = {feature4: value4} if random.random() < 0.8 else WordBoundaryPhone().features
+
+        phonetic_environment = PhoneticEnvironment([before_environment], [after_environment])
+        return SoundChange(from_features, to_features, phonetic_environment)
 
 
 class Syllable:
@@ -640,6 +647,16 @@ class Word:
             return Word(self.syllables + other.syllables)  # TODO: re-syllabify if necessary
         else:
             return NotImplemented
+
+    def get_phoneme_list(self):
+        lst = []
+        for syll in self.syllables:
+            lst.extend(syll.phonemes)
+        return lst
+
+    def get_ipa_str(self):
+        phoneme_list = self.get_phoneme_list()
+        return "".join(phone.get_ipa_symbol() for phone in phoneme_list)
 
     @staticmethod
     def from_user_input():
@@ -662,6 +679,12 @@ class Word:
                 phone = Phone.from_ipa_symbol(symbol)
                 word.append(phone)
         return word
+
+    @staticmethod
+    def from_phone_list(lst):
+        # TODO: add ability to syllabify the list given a Phonology object
+        syllables = [Syllable(lst)]
+        return Word(syllables)
 
     @staticmethod
     def get_random_phone_sequence(n_syllables, inventory, syllable_structure):
@@ -803,11 +826,12 @@ class Inventory:
         return inventory
 
     def print(self):
-        delim = " , "
-        print(delim.join(phone.str() for phone in self.phonemes))
+        print(self.str())
         print()
 
-
+    def str(self):
+        delim = " , "
+        return delim.join(phone.str() for phone in self.phonemes)
 
 
 class Language:
@@ -835,6 +859,7 @@ FEATURE_KEYS = {
     "v_height": {0: "open", 1: "near-open", 2: "open-mid", 3: "mid", 4: "close-mid", 5: "near-close", 6: "close"},
     "v_roundedness": {0: "unrounded", 1: "rounded"},
     "voicing": {0: "voiceless", 1: "voiced"},
+    "is_word_boundary": {0: False, 1: True},
 }
 
 
