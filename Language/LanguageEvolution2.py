@@ -15,9 +15,9 @@ def get_random_unicode_character():
 
 
 def get_random_syllable_structure_set():
-    possible_onsets = [""] * 3 + ["C"] * 4 + ["CC"] * 1
+    possible_onsets = [""] * 1 + ["C"] * 4 + ["CC"] * 0
     possible_nuclei = ["V"]
-    possible_codas = [""] * 4 + ["C"] * 2 + ["CC"] * 1 + ["N"] * 2 + ["NC"] * 1
+    possible_codas = [""] * 4 + ["C"] * 1 + ["CC"] * 0 + ["N"] * 0 + ["NC"] * 0
     possible_structures = [onset + nucleus + coda for onset in possible_onsets for nucleus in possible_nuclei for coda in possible_codas]
 
     result = list(set(random.sample(possible_structures, random.randint(2, len(possible_structures)))))
@@ -236,7 +236,7 @@ class Phone:
         if symbol == "#":
             return WordBoundaryPhone()
         else:
-            return IPA_SYMBOL_TO_FEATURES[symbol]
+            return Phone(IPA_SYMBOL_TO_FEATURES[symbol])
 
     @staticmethod
     def get_ipa_symbol_from_features(features):
@@ -796,10 +796,10 @@ class Inventory:
         phonemes = []
         for symbol in added_phoneme_symbols:
             try:
-                phoneme = IPA_SYMBOL_TO_FEATURES[symbol]
+                phoneme = Phone.from_ipa_symbol(symbol)
 
             except KeyError:
-                phoneme = {}
+                features_dict = {}
                 print("the phoneme {} was not found in the IPA symbols. Please specify what it is:".format(symbol))
                 for k, d in FEATURE_KEYS.items():
                     print("{}: {}".format(k, d))
@@ -810,11 +810,12 @@ class Inventory:
                             if choice not in d:
                                 print("that choice is not valid, must be one of {}".format(sorted(d.keys())))
                                 continue
-                            phoneme[k] = choice
+                            features_dict[k] = choice
                             break
                         except ValueError:
                             print("invalid int")
                             continue
+                phoneme = Phone(features_dict)
 
             phonemes.append(phoneme)
 
