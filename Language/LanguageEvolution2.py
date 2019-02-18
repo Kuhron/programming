@@ -7,172 +7,6 @@ import random
 from copy import deepcopy
 
 
-
-
-
-def get_word_from_string(s):
-    word = []
-    for symbol in s:
-        if symbol not in ["-", "\ufeff"]:
-            phone = Phone.from_ipa_symbol(symbol)
-            word.append(phone)
-    return word
-
-
-def get_ipa_consonant_symbol_from_features(features, with_secondaries=True):
-    # code = get_numerical_code_from_features(features)
-    code = "_"
-    secondaries = get_secondary_symbols_from_features(features) if with_secondaries else ""
-
-    if features["c_manner"] == 0 and features["nasalization"] == 1:
-        symbol = ["m", "\u0271", "n\u032a", "n", "n\u0320", "\u0273", "\u0272", "\u014b", "\u0274", code, code, code][features["c_place"]]
-        if features["voicing"] == 0:
-            symbol += ["\u0325", "\u030a", "\u0325", "\u0325", "\u0325", "\u030a", "\u030a", "\u030a", "\u0325", code, code, code][features["c_place"]]
-        return symbol + secondaries
-
-    if features["c_manner"] == 0:
-        if features["voicing"] == 0:
-            symbol = ["p", "p\u032a", "t\u032a", "t", "t\u0320", "\u0288", "c", "k", "q", code, "\u02a1", "\u0294"][features["c_place"]]
-        elif features["voicing"] == 1:
-            symbol = ["b", "b\u032a", "d\u032a", "d", "d\u0320", "\u0256", "\u025f", "g", "\u0262", code, code, code][features["c_place"]]
-        return symbol + secondaries
-
-    if features["c_manner"] == 1:
-        plosive_features = deepcopy(features)
-        plosive_features["c_manner"] = 0
-        plosive_symbol = get_ipa_consonant_symbol_from_features(plosive_features, with_secondaries=False)
-
-        fricative_features = deepcopy(features)
-        fricative_features["c_manner"] = 2
-        fricative_symbol = get_ipa_consonant_symbol_from_features(fricative_features, with_secondaries=False)
-
-        tie_bar_above = True
-        tie_symbol = "\u0361" if tie_bar_above else "\u035c"
-        symbol = plosive_symbol + tie_symbol + fricative_symbol
-
-        return symbol + secondaries
-
-    if features["c_manner"] == 2:
-        if features["voicing"] == 0:
-            symbol = ["\u0278", "f", "\u03b8", "s", "\u0283", "\u0282", "\u00e7", "x", "\u03c7", "\u0127", "\u029c", "h"][features["c_place"]]
-        elif features["voicing"] == 1:
-            symbol = ["\u03b2", "v", "\u00f0", "z", "\u0292", "\u0290", "\u029d", "\u0263", "\u0281", "\u0295", "\u02a2", "\u0266"][features["c_place"]]
-        return symbol + secondaries
-
-    if features["c_manner"] == 3:
-        if features["c_labialization"] == 1 and features["c_place"] in [6, 7]:
-            symbol = [None, None, None, None, None, None, "\u0265", "w", None, None, None, None][features["c_place"]]
-        else:
-            symbol = ["\u03b2\u031e", "\u028b", "\u0279\u032a", "\u0279", "\u0279\u0320", "\u027b", "j", "\u0270", code, code, code, code][features["c_place"]]
-        if features["voicing"] == 0:
-            symbol += ["\u0325", "\u0325", "\u0325", "\u0325", "\u0325", "\u030a", "\u030a", "\u030a", "", "", "", ""][features["c_place"]]
-        return symbol + secondaries
-
-    return code
-
-
-def get_ipa_vowel_symbol_from_features(features, with_secondaries=True):
-    # code = get_numerical_code_from_features(features)
-    code = "_"
-    secondaries = get_secondary_symbols_from_features(features) if with_secondaries else ""
-
-    if features["v_height"] == 0:
-        if features["v_roundedness"] == 0:
-            symbol = ["a", "a\u0308", "\u0251"][features["v_backness"]]
-        elif features["v_roundedness"] == 1:
-            symbol = ["\u0276", "\u0276\u0308", "\u0252"][features["v_backness"]]
-        return symbol + secondaries
-
-    if features["v_height"] == 1:
-        if features["v_roundedness"] == 0:
-            symbol = ["\u00e6", "\u0250", code][features["v_backness"]]
-        elif features["v_roundedness"] == 1:
-            symbol = [code, code, code][features["v_backness"]]
-        return symbol + secondaries
-
-    if features["v_height"] == 2:
-        if features["v_roundedness"] == 0:
-            symbol = ["\u025b", "\u025c", "\u028c"][features["v_backness"]]
-        elif features["v_roundedness"] == 1:
-            symbol = ["\u0153", "\u025e", "\u0254"][features["v_backness"]]
-        return symbol + secondaries
-
-    if features["v_height"] == 3:
-        if features["v_roundedness"] == 0:
-            symbol = ["e\u031e", "\u0259", "\u0264\u031e"][features["v_backness"]]
-        elif features["v_roundedness"] == 1:
-            symbol = ["\u00f8\u031e", "\u0275\u031e", "o\u031e"][features["v_backness"]]
-        return symbol + secondaries
-
-    if features["v_height"] == 4:
-        if features["v_roundedness"] == 0:
-            symbol = ["e", "\u0258", "\u0264"][features["v_backness"]]
-        elif features["v_roundedness"] == 1:
-            symbol = ["\u00f8", "\u0275", "o"][features["v_backness"]]
-        return symbol + secondaries
-
-    if features["v_height"] == 5:
-        if features["v_roundedness"] == 0:
-            symbol = ["\u026a", code, "\u026a\u0320"][features["v_backness"]]
-        elif features["v_roundedness"] == 1:
-            symbol = ["\u028f", code, "\u028a"][features["v_backness"]]
-        return symbol + secondaries
-
-    if features["v_height"] == 6:
-        if features["v_roundedness"] == 0:
-            symbol = ["i", "\u0268", "\u026f"][features["v_backness"]]
-        elif features["v_roundedness"] == 1:
-            symbol = ["y", "\u0289", "u"][features["v_backness"]]
-        return symbol + secondaries
-
-    return code
-
-
-def get_secondary_symbols_from_features(features):
-    result = ""
-
-    if features["nasalization"] == 1:
-        if features["c_manner"] != 0:
-            result += "\u0303"
-
-    if features["c_palatization"] == 1:
-        result += "\u02b2"
-
-    if features["c_labialization"] == 1:
-        if features["c_manner"] != 3 and features["c_place"] not in [6, 7]:
-            result += "\u02b7"
-
-    if features["c_velarization"] == 1:
-        result += "\u02e0"
-
-    if features["c_pharyngealization"] == 1:
-        result += "\u02e4"
-
-    if features["c_glottalization"] == 1:
-        if features["syllabicity"] in [1, 3] or features["voicing"] == 1:
-            result += "\u0330"
-        else:
-            result += "\u02bc"
-
-    if features["c_aspiration"] == 1:
-        if features["voicing"] == 0:
-            result += "\u02b0"
-        else:
-            result += "\u02b1"
-
-    if features["length"] == 1:
-        result += "\u02d0"
-
-
-    return result
-
-
-def get_numerical_code_from_features(features):
-    # return "_"
-    # return repr(features)
-    return "\n\n<?" + ",".join([str(v) for k, v in sorted(features.items())]) + ">\n\n"
-
-
 def get_random_unicode_character():
     n = random.randint(1, 5000)
     hex_str = str(hex(n))[2:].rjust(4, "0")
@@ -180,97 +14,6 @@ def get_random_unicode_character():
     return char
 
 
-def get_random_features():
-    d = {}
-    for k, v in FEATURE_KEYS.items():
-        d[k] = random.choice([x for x in v.keys()])
-    return d
-
-
-def get_features_from_possible_values(feature_value_sets):
-    d = {}
-    for k, v in FEATURE_KEYS.items():
-        d[k] = random.choice([x for x in feature_value_sets[k]])
-    return d
-
-
-def get_random_feature_value_sets():
-    value_probabilities = {
-        "c_aspiration": [1, 0.3],
-        "c_glottalization": [1, 0],
-        "c_labialization": [1, 0],
-        "c_lateralization": [1, 0.5],
-        "c_manner": [1, 0.5, 0.7, 0.7],
-        "c_palatization": [1, 0.3],
-        "c_pharyngealization": [1, 0.1],
-        "c_place": [0.5, 0.1, 0.1, 0.8, 0.3, 0.4, 0.4, 1, 0.3, 0.1, 0.05, 0.5],
-        "c_velarization": [1, 0.2],
-        "length": [1, 0.2],
-        "nasalization": [1, 0.2],
-        "syllabicity": [1, 0.05, 0.2, 1],
-        "v_backness": [1, 0.5, 0.9],
-        "v_height": [1, 0.2, 0.5, 0.5, 0.5, 0.2, 0.9],
-        "v_roundedness": [1, 0.8],
-        "voicing": [1, 0.5],
-    }
-
-    d = {}
-    for k, v in FEATURE_KEYS.items():
-        d[k] = []
-        for val in v.keys():
-            if random.random() < value_probabilities[k][val]:
-                d[k].append(val)
-    return d
-
-
-def print_feature_values_dict(d):
-    print("showing feature values")
-    get_name = lambda k, v: FEATURE_KEYS[k][v]
-    for k, val in d.items():
-        if type(val) is list:
-            translated_val = [get_name(k, v) for v in val]
-        elif type(val) is int:
-            translated_val = get_name(k, val)
-        else:
-            raise TypeError("feature dict values were not list or int, but {}".format(type(val)))
-        print("{}: {}".format(k, translated_val))
-    print()
-
-
-def print_list_of_phones(lst, as_word=False, verbose=False):
-    if verbose:
-        for d in lst:
-            print("symbol: {}".format(Phone.get_ipa_symbol_from_features(d)))
-            print_feature_values_dict(d)
-            input()
-    else:
-        delim = "" if as_word else " , "
-        print(delim.join(Phone.get_ipa_symbol_from_features(d) for d in lst))
-    print()
-
-
-def get_random_inventory():
-    phonology = get_random_feature_value_sets()
-    print("phonology:")
-    print_feature_values_dict(phonology)
-    input()
-    raw_inventory = [get_features_from_possible_values(phonology) for i in range(40)]
-    print("raw inventory:")
-    print_list_of_phones(raw_inventory)
-    input()
-    seen = []
-    seen_symbols = []
-    for features_dict in raw_inventory:
-        phone = Phone(features_dict)
-        restricted_phone = phone.restrict_features()
-        symbol = Phone.get_ipa_symbol_from_features(restricted_phone)
-        if symbol not in seen_symbols and "_" not in symbol and "?" not in symbol:
-            seen.append(restricted_phone)
-            seen_symbols.append(symbol)
-    print("final inventory:")
-    print_list_of_phones(seen)
-    input()
-    return seen
 
 
 def get_random_syllable_structure_set():
@@ -284,26 +27,6 @@ def get_random_syllable_structure_set():
     return result
 
 
-def get_random_phone_sequence(n_syllables, inventory, syllable_structure):
-    result = []
-    for i in range(n_syllables):
-        for typ in syllable_structure:
-            if typ == "C":
-                cands = [x for x in inventory if x["syllabicity"] in [0, 1]]
-                chosen = random.choice(cands) if cands != [] else None
-            elif typ == "V":
-                cands = [x for x in inventory if x["syllabicity"] in [2, 3]]
-                chosen = random.choice(cands) if cands != [] else None
-            elif typ == "N":
-                cands = [x for x in inventory if x["syllabicity"] == 0 and x["nasalization"] == 1 and x["c_manner"] == 0]
-                chosen = random.choice(cands) if cands != [] else None
-            else:
-                chosen = random.choice(inventory)
-
-            if chosen is not None:
-                result.append(chosen)
-    return result
-
 
 def convert_phone_sequence_to_ipa(seq):
     result = ""
@@ -314,28 +37,20 @@ def convert_phone_sequence_to_ipa(seq):
 
 def get_random_paradigm(inventory, syllable_structure_set):
     input("generating paradigm")
-    root = get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set))
+    root = Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set))
     print("root:")
-    print_list_of_phones(root, as_word=True)
-    prefixes = [[]] + [get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
-    suffixes = [[]] + [get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
+    root.print()
+    prefixes = [Word([])] + [Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
+    suffixes = [Word([])] + [Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
     print("prefixes:")
     for w in prefixes:
-        print_list_of_phones(w, as_word=True)
+        w.print()
     print("suffixes:")
     for w in suffixes:
-        print_list_of_phones(w, as_word=True)
+        w.print()
     input()
     return [prefix + root + suffix for prefix in prefixes for suffix in suffixes]
 
-
-def get_random_vocabulary(inventory, syllable_structure_set):
-    vocabulary = []
-    for i in range(50):
-        paradigm = get_random_paradigm(inventory, syllable_structure_set)
-        for word in paradigm:
-            vocabulary.append(word)
-    return vocabulary
 
 
 def matches_features_dict(phone, features_dict):
@@ -419,8 +134,8 @@ def apply_sound_change_to_word(sound_change, word):
 
 
 def get_random_feature_value_from_inventory(inventory):
-    phone = random.choice(inventory)
-    return random.choice([i for i in phone.items()])
+    phone = random.choice(inventory.phonemes)
+    return random.choice([i for i in phone.features.items()])
 
 
 def get_random_sound_change(inventory):
@@ -438,9 +153,10 @@ def get_random_sound_change(inventory):
 
 
 def get_random_input_language():
-    inventory = get_random_inventory()
+    inventory = Inventory.random()
     syllable_structure_set = get_random_syllable_structure_set()
-    vocabulary = get_random_vocabulary(inventory, syllable_structure_set)
+    phonology = Phonology(inventory, syllable_structure_set)
+    vocabulary = Lexicon.from_phonology(phonology)
     return (inventory, vocabulary)
 
 
@@ -448,9 +164,9 @@ def get_input_language_from_file():
     with codecs.open("LanguageEvolution2Input.txt", "rb", "utf-8") as f:
         morphemes = [x.strip() for x in f.readlines()]
 
-    roots = [get_word_from_string(x) for x in morphemes if "-" not in x]
-    prefixes = [[]] + [get_word_from_string(x[:-1]) for x in morphemes if x[-1] == "-"]
-    suffixes = [[]] + [get_word_from_string(x[1:]) for x in morphemes if x[0] == "-"]
+    roots = [Word.from_string(x) for x in morphemes if "-" not in x]
+    prefixes = [[]] + [Word.from_string(x[:-1]) for x in morphemes if x[-1] == "-"]
+    suffixes = [[]] + [Word.from_string(x[1:]) for x in morphemes if x[0] == "-"]
     vocabulary = [list(prefix + root + suffix) for root in roots for prefix in prefixes for suffix in suffixes]
 
     inventory = []
@@ -469,8 +185,8 @@ def generate_language_and_write_to_file():
 
     text = [random.choice(vocabulary) for i in range(50)]
 
-    epenthetic_consonant = random.choice([x for x in inventory if x["syllabicity"] == 0])
-    epenthetic_vowel = random.choice([x for x in inventory if x["syllabicity"] == 3])
+    epenthetic_consonant = random.choice([x for x in inventory.phonemes if x.features["syllabicity"] == 0])
+    epenthetic_vowel = random.choice([x for x in inventory.phonemes if x.features["syllabicity"] == 3])
 
     sound_changes = [
         # ({"syllabicity": 0}, "", ["#"], [{"syllabicity": 3}]),  # initial single consonants deleted
@@ -487,7 +203,7 @@ def generate_language_and_write_to_file():
 
     with codecs.open(fp, "wb", "utf-8") as f:
         f.write("inventory:\r\n")
-        f.write("  ".join([Phone.get_ipa_symbol_from_features(x) for x in sorted(inventory, key=lambda x: get_numerical_code_from_features(x))]))
+        f.write("  ".join([Phone.get_ipa_symbol_from_features(x) for x in sorted(inventory, key=lambda x: Phone.get_numerical_code_from_features(x))]))
         f.write("\r\n----\r\n")
 
         f.write("vocabulary:\r\n")
@@ -526,12 +242,84 @@ class PhoneticFeatureSpace:
     # e.g. when picking which features are contrastive in a language, before picking any phones/phonemes
 
     def __init__(self, features_dict):
+        assert all(type(v) is list for v in features_dict.values())
         self.features = features_dict
+
+    def get_features_from_possible_values(self):
+        d = {}
+        for k, v in FEATURE_KEYS.items():
+            possibilities = self.features[k]
+            d[k] = random.choice(possibilities)
+        return d
+
+    @staticmethod
+    def get_random_feature_value_sets():
+        value_probabilities = {
+            "c_aspiration": [1, 0.3],
+            "c_glottalization": [1, 0],
+            "c_labialization": [1, 0],
+            "c_lateralization": [1, 0.5],
+            "c_manner": [1, 0.5, 0.7, 0.7],
+            "c_palatization": [1, 0.3],
+            "c_pharyngealization": [1, 0.1],
+            "c_place": [0.5, 0.1, 0.1, 0.8, 0.3, 0.4, 0.4, 1, 0.3, 0.1, 0.05, 0.5],
+            "c_velarization": [1, 0.2],
+            "length": [1, 0.2],
+            "nasalization": [1, 0.2],
+            "syllabicity": [1, 0.05, 0.2, 1],
+            "v_backness": [1, 0.5, 0.9],
+            "v_height": [1, 0.2, 0.5, 0.5, 0.5, 0.2, 0.9],
+            "v_roundedness": [1, 0.8],
+            "voicing": [1, 0.5],
+        }
+
+        d = {}
+        for k, v in FEATURE_KEYS.items():
+            d[k] = []
+            for val in v.keys():
+                if random.random() < value_probabilities[k][val]:
+                    d[k].append(val)
+
+        return PhoneticFeatureSpace(d)
+
+    def print(self):
+        d = self.features
+        print("showing feature values")
+        get_name = lambda k, v: FEATURE_KEYS[k][v]
+        for k, val in d.items():
+            if type(val) is list:
+                translated_val = [get_name(k, v) for v in val]
+            else:
+                raise TypeError("feature dict values were not list or int, but {}".format(type(val)))
+            print("{}: {}".format(k, translated_val))
+        print()
 
 
 class Phone:
     def __init__(self, features_dict):
+        assert all(type(v) is int for v in features_dict.values())
         self.features = features_dict
+
+    def print(self, verbose=False):
+        print(self.str(verbose=verbose))
+
+    def str(self, verbose=False):
+        if verbose:
+            s = ""
+            d = self.features
+            get_name = lambda k, v: FEATURE_KEYS[k][v]
+            for k, val in d.items():
+                if type(val) is int:
+                    translated_val = get_name(k, val)
+                else:
+                    raise TypeError("feature dict values were not list or int, but {}".format(type(val)))
+                s += "{}: {}\n".format(k, translated_val)
+            return s
+        else:
+            return self.get_ipa_symbol()
+
+    def get_ipa_symbol(self):
+        return Phone.get_ipa_symbol_from_features(self.features)
 
     @staticmethod
     def from_ipa_symbol(symbol):
@@ -540,114 +328,273 @@ class Phone:
     @staticmethod
     def get_ipa_symbol_from_features(features):
         if type(features) is not dict:
-            return ""
+            raise TypeError("features must be dict if using this method; if possible, use get_ipa_symbol method of Phone object")
 
         phone = Phone(features)
 
         phone = phone.restrict_features()
 
         if phone.features["syllabicity"] == 0:
-            return get_ipa_consonant_symbol_from_features(phone.features)
+            return Phone.get_ipa_consonant_symbol_from_features(phone.features)
 
         if phone.features["syllabicity"] == 1:
-            return get_ipa_vowel_symbol_from_features(phone.features) + "\u032f"
+            return Phone.get_ipa_vowel_symbol_from_features(phone.features) + "\u032f"
 
         if phone.features["syllabicity"] == 2:
-            return get_ipa_consonant_symbol_from_features(phone.features) + "\u0329"
+            return Phone.get_ipa_consonant_symbol_from_features(phone.features) + "\u0329"
 
         elif phone.features["syllabicity"] == 3:
-            return get_ipa_vowel_symbol_from_features(phone.features)
+            return Phone.get_ipa_vowel_symbol_from_features(phone.features)
 
         else:
             raise ValueError("invalid syllabicity of {} for features_dict\n{}".format(phone.features["syllabicity"], features))
 
+    @staticmethod
+    def get_ipa_consonant_symbol_from_features(features, with_secondaries=True):
+        # code = Phone.get_numerical_code_from_features(features)
+        code = "_"
+        secondaries = Phone.get_secondary_symbols_from_features(features) if with_secondaries else ""
+
+        if features["c_manner"] == 0 and features["nasalization"] == 1:
+            symbol = ["m", "\u0271", "n\u032a", "n", "n\u0320", "\u0273", "\u0272", "\u014b", "\u0274", code, code, code][features["c_place"]]
+            if features["voicing"] == 0:
+                symbol += ["\u0325", "\u030a", "\u0325", "\u0325", "\u0325", "\u030a", "\u030a", "\u030a", "\u0325", code, code, code][features["c_place"]]
+            return symbol + secondaries
+
+        if features["c_manner"] == 0:
+            if features["voicing"] == 0:
+                symbol = ["p", "p\u032a", "t\u032a", "t", "t\u0320", "\u0288", "c", "k", "q", code, "\u02a1", "\u0294"][features["c_place"]]
+            elif features["voicing"] == 1:
+                symbol = ["b", "b\u032a", "d\u032a", "d", "d\u0320", "\u0256", "\u025f", "g", "\u0262", code, code, code][features["c_place"]]
+            return symbol + secondaries
+
+        if features["c_manner"] == 1:
+            plosive_features = deepcopy(features)
+            plosive_features["c_manner"] = 0
+            plosive_symbol = Phone.get_ipa_consonant_symbol_from_features(plosive_features, with_secondaries=False)
+
+            fricative_features = deepcopy(features)
+            fricative_features["c_manner"] = 2
+            fricative_symbol = Phone.get_ipa_consonant_symbol_from_features(fricative_features, with_secondaries=False)
+
+            tie_bar_above = True
+            tie_symbol = "\u0361" if tie_bar_above else "\u035c"
+            symbol = plosive_symbol + tie_symbol + fricative_symbol
+
+            return symbol + secondaries
+
+        if features["c_manner"] == 2:
+            if features["voicing"] == 0:
+                symbol = ["\u0278", "f", "\u03b8", "s", "\u0283", "\u0282", "\u00e7", "x", "\u03c7", "\u0127", "\u029c", "h"][features["c_place"]]
+            elif features["voicing"] == 1:
+                symbol = ["\u03b2", "v", "\u00f0", "z", "\u0292", "\u0290", "\u029d", "\u0263", "\u0281", "\u0295", "\u02a2", "\u0266"][features["c_place"]]
+            return symbol + secondaries
+
+        if features["c_manner"] == 3:
+            if features["c_labialization"] == 1 and features["c_place"] in [6, 7]:
+                symbol = [None, None, None, None, None, None, "\u0265", "w", None, None, None, None][features["c_place"]]
+            else:
+                symbol = ["\u03b2\u031e", "\u028b", "\u0279\u032a", "\u0279", "\u0279\u0320", "\u027b", "j", "\u0270", code, code, code, code][features["c_place"]]
+            if features["voicing"] == 0:
+                symbol += ["\u0325", "\u0325", "\u0325", "\u0325", "\u0325", "\u030a", "\u030a", "\u030a", "", "", "", ""][features["c_place"]]
+            return symbol + secondaries
+
+        return code
+
+    @staticmethod
+    def get_ipa_vowel_symbol_from_features(features, with_secondaries=True):
+        # code = Phone.get_numerical_code_from_features(features)
+        code = "_"
+        secondaries = Phone.get_secondary_symbols_from_features(features) if with_secondaries else ""
+
+        if features["v_height"] == 0:
+            if features["v_roundedness"] == 0:
+                symbol = ["a", "a\u0308", "\u0251"][features["v_backness"]]
+            elif features["v_roundedness"] == 1:
+                symbol = ["\u0276", "\u0276\u0308", "\u0252"][features["v_backness"]]
+            return symbol + secondaries
+
+        if features["v_height"] == 1:
+            if features["v_roundedness"] == 0:
+                symbol = ["\u00e6", "\u0250", code][features["v_backness"]]
+            elif features["v_roundedness"] == 1:
+                symbol = [code, code, code][features["v_backness"]]
+            return symbol + secondaries
+
+        if features["v_height"] == 2:
+            if features["v_roundedness"] == 0:
+                symbol = ["\u025b", "\u025c", "\u028c"][features["v_backness"]]
+            elif features["v_roundedness"] == 1:
+                symbol = ["\u0153", "\u025e", "\u0254"][features["v_backness"]]
+            return symbol + secondaries
+
+        if features["v_height"] == 3:
+            if features["v_roundedness"] == 0:
+                symbol = ["e\u031e", "\u0259", "\u0264\u031e"][features["v_backness"]]
+            elif features["v_roundedness"] == 1:
+                symbol = ["\u00f8\u031e", "\u0275\u031e", "o\u031e"][features["v_backness"]]
+            return symbol + secondaries
+
+        if features["v_height"] == 4:
+            if features["v_roundedness"] == 0:
+                symbol = ["e", "\u0258", "\u0264"][features["v_backness"]]
+            elif features["v_roundedness"] == 1:
+                symbol = ["\u00f8", "\u0275", "o"][features["v_backness"]]
+            return symbol + secondaries
+
+        if features["v_height"] == 5:
+            if features["v_roundedness"] == 0:
+                symbol = ["\u026a", code, "\u026a\u0320"][features["v_backness"]]
+            elif features["v_roundedness"] == 1:
+                symbol = ["\u028f", code, "\u028a"][features["v_backness"]]
+            return symbol + secondaries
+
+        if features["v_height"] == 6:
+            if features["v_roundedness"] == 0:
+                symbol = ["i", "\u0268", "\u026f"][features["v_backness"]]
+            elif features["v_roundedness"] == 1:
+                symbol = ["y", "\u0289", "u"][features["v_backness"]]
+            return symbol + secondaries
+
+        return code
+
+    @staticmethod
+    def get_secondary_symbols_from_features(features):
+        result = ""
+
+        if features["nasalization"] == 1:
+            if features["c_manner"] != 0:
+                result += "\u0303"
+
+        if features["c_palatization"] == 1:
+            result += "\u02b2"
+
+        if features["c_labialization"] == 1:
+            if features["c_manner"] != 3 and features["c_place"] not in [6, 7]:
+                result += "\u02b7"
+
+        if features["c_velarization"] == 1:
+            result += "\u02e0"
+
+        if features["c_pharyngealization"] == 1:
+            result += "\u02e4"
+
+        if features["c_glottalization"] == 1:
+            if features["syllabicity"] in [1, 3] or features["voicing"] == 1:
+                result += "\u0330"
+            else:
+                result += "\u02bc"
+
+        if features["c_aspiration"] == 1:
+            if features["voicing"] == 0:
+                result += "\u02b0"
+            else:
+                result += "\u02b1"
+
+        if features["length"] == 1:
+            result += "\u02d0"
+
+        return result
+
+    @staticmethod
+    def get_numerical_code_from_features(features):
+        # return "_"
+        # return repr(features)
+        return "\n\n<?" + ",".join([str(v) for k, v in sorted(features.items())]) + ">\n\n"
+
+    @staticmethod
+    def get_random_features():
+        d = {}
+        for k, v in FEATURE_KEYS.items():
+            d[k] = random.choice([x for x in v.keys()])
+        return d
 
     def restrict_features(self):
+        features = deepcopy(self.features)
+
         # no nasalization while voiceless
-        if self.features["nasalization"] == 1 and self.features["voicing"] == 0:
-            self.features["nasalization"] = 0
+        if features["nasalization"] == 1 and features["voicing"] == 0:
+            features["nasalization"] = 0
 
         # uvular/pharyngeal/epiglottal approximant -> fricative
-        if self.features["c_place"] in [8, 9, 10] and self.features["c_manner"] == 3:
-            self.features["c_manner"] = 2
+        if features["c_place"] in [8, 9, 10] and features["c_manner"] == 3:
+            features["c_manner"] = 2
 
         # glottal approximant -> fricative
-        if self.features["c_place"] == 11 and self.features["c_manner"] == 3:
-            self.features["c_manner"] = 2
+        if features["c_place"] == 11 and features["c_manner"] == 3:
+            features["c_manner"] = 2
 
         # pharyngeal stop -> epiglottal
-        if self.features["c_place"] == 9 and self.features["c_manner"] == 0:
-            self.features["c_place"] = 10
+        if features["c_place"] == 9 and features["c_manner"] == 0:
+            features["c_place"] = 10
 
         # voiced epiglottal/glottal stop/affricate -> voiceless
-        if self.features["c_place"] in [10, 11] and self.features["c_manner"] in [0, 1] and self.features["voicing"] == 1:
-            self.features["voicing"] = 0
+        if features["c_place"] in [10, 11] and features["c_manner"] in [0, 1] and features["voicing"] == 1:
+            features["voicing"] = 0
 
         # labialized bilabial/labiodental -> non-labialized
-        if self.features["c_place"] in [0, 1] and self.features["c_labialization"] == 1:
-            self.features["c_labialization"] = 0
+        if features["c_place"] in [0, 1] and features["c_labialization"] == 1:
+            features["c_labialization"] = 0
 
         # pharyngealized/glottalized pharyngeal/epiglottal/glottal -> non-*
-        if self.features["c_place"] in [9, 10, 11]:
-            self.features["c_pharyngealization"] = 0
-            self.features["c_glottalization"] = 0
+        if features["c_place"] in [9, 10, 11]:
+            features["c_pharyngealization"] = 0
+            features["c_glottalization"] = 0
 
         # palatized palatal -> non-palatized
-        if self.features["c_place"] == 6 and self.features["c_palatization"] == 1:
-            self.features["c_palatization"] = 0
+        if features["c_place"] == 6 and features["c_palatization"] == 1:
+            features["c_palatization"] = 0
 
         # velarized velar+ -> non-velarized
-        if self.features["c_place"] in [7, 8, 9, 10, 11] and self.features["c_velarization"] == 1:
-            self.features["c_velarization"] = 0
+        if features["c_place"] in [7, 8, 9, 10, 11] and features["c_velarization"] == 1:
+            features["c_velarization"] = 0
 
         # aspirated h -> non-aspirated
-        if self.features["c_place"] in [9, 10, 11] and self.features["c_manner"] == 2 and self.features["c_aspiration"] == 1:
-            self.features["c_aspiration"] = 0
+        if features["c_place"] in [9, 10, 11] and features["c_manner"] == 2 and features["c_aspiration"] == 1:
+            features["c_aspiration"] = 0
 
         # velarized vowels -> back
-        if self.features["syllabicity"] in [1, 3] and self.features["c_velarization"] == 1:
-            self.features["v_backness"] = 2
-            self.features["c_velarization"] = 0
+        if features["syllabicity"] in [1, 3] and features["c_velarization"] == 1:
+            features["v_backness"] = 2
+            features["c_velarization"] = 0
 
         # palatized vowels -> front
-        if self.features["syllabicity"] in [1, 3] and self.features["c_palatization"] == 1:
-            self.features["v_backness"] = 0
-            self.features["c_palatization"] = 0
+        if features["syllabicity"] in [1, 3] and features["c_palatization"] == 1:
+            features["v_backness"] = 0
+            features["c_palatization"] = 0
 
         # labialized vowels -> rounded
-        if self.features["syllabicity"] in [1, 3] and self.features["c_labialization"] == 1:
-            self.features["v_roundedness"] = 1
-            self.features["c_labialization"] = 0
+        if features["syllabicity"] in [1, 3] and features["c_labialization"] == 1:
+            features["v_roundedness"] = 1
+            features["c_labialization"] = 0
 
         # aspirated/pharyngealized vowel -> non-*
-        if self.features["syllabicity"] in [1, 3]:
-            self.features["c_aspiration"] = 0
-            self.features["c_pharyngealization"] = 0
+        if features["syllabicity"] in [1, 3]:
+            features["c_aspiration"] = 0
+            features["c_pharyngealization"] = 0
 
         # aspirated and glottalized -> glottalized
-        if self.features["c_glottalization"] == 1 and self.features["c_aspiration"] == 1:
-            self.features["c_aspiration"] = 0
+        if features["c_glottalization"] == 1 and features["c_aspiration"] == 1:
+            features["c_aspiration"] = 0
 
         # syllabic consonants must not contain plosive
-        if self.features["syllabicity"] == 2 and self.features["c_manner"] in [0, 1]:
-            self.features["syllabicity"] = 0
+        if features["syllabicity"] == 2 and features["c_manner"] in [0, 1]:
+            features["syllabicity"] = 0
 
         # high semivowels -> consonants, excluding central
-        if self.features["syllabicity"] == 1 and self.features["v_height"] == 6 and self.features["v_backness"] in [0, 2]:
-            self.features["syllabicity"] = 0
-            self.features["c_labialization"] = self.features["v_roundedness"]
-            if self.features["v_backness"] == 0:
-                self.features["c_place"] = 6
-            elif self.features["v_backness"] == 2:
-                self.features["c_place"] = 7
+        if features["syllabicity"] == 1 and features["v_height"] == 6 and features["v_backness"] in [0, 2]:
+            features["syllabicity"] = 0
+            features["c_labialization"] = features["v_roundedness"]
+            if features["v_backness"] == 0:
+                features["c_place"] = 6
+            elif features["v_backness"] == 2:
+                features["c_place"] = 7
 
         # aspirated approximant -> non-aspirated
-        if self.features["c_manner"] == 3:
-            self.features["c_aspiration"] = 0
+        if features["c_manner"] == 3:
+            features["c_aspiration"] = 0
 
-        return self
-
-
+        return Phone(features)
 
 
 class Phoneme:
@@ -655,6 +602,12 @@ class Phoneme:
         raise
         self.primary_phone = []
         self.allophones = []
+
+
+class Phonology:
+    def __init__(self, inventory, syllable_structure_set):
+        self.inventory = inventory
+        self.syllable_structure_set = syllable_structure_set
 
 
 class PhoneticEnvironment:
@@ -665,14 +618,28 @@ class PhoneticEnvironment:
         # should be able to match underspecified feature dicts
 
 
+class SoundChange:
+    def __init__(self, from_phone, to_phone, phonetic_environment):
+        self.from_phone = from_phone
+        self.to_phone = to_phone
+        self.phonetic_environment = phonetic_environment
+
+
 class Syllable:
-    def __init__(self, phones):
-        self.phones = phones
+    def __init__(self, phonemes):
+        self.phonemes = phonemes
 
 
 class Word:
     def __init__(self, syllables):
+        assert type(syllables) is list and all(type(x) is Syllable for x in syllables), "invalid syllables passed to Word: {}".format(syllables)
         self.syllables = syllables
+
+    def __add__(self, other):
+        if type(other) is Word:
+            return Word(self.syllables + other.syllables)  # TODO: re-syllabify if necessary
+        else:
+            return NotImplemented
 
     @staticmethod
     def from_user_input():
@@ -686,6 +653,57 @@ class Word:
         syllables = [syll.strip().split() for syll in syllables]
         syllables = [Syllable(phones_lst) for phones_lst in syllables]
         return Word(syllables)
+
+    @staticmethod
+    def from_string(s):
+        word = []
+        for symbol in s:
+            if symbol not in ["-", "\ufeff"]:
+                phone = Phone.from_ipa_symbol(symbol)
+                word.append(phone)
+        return word
+
+    @staticmethod
+    def get_random_phone_sequence(n_syllables, inventory, syllable_structure):
+        syllables = []
+        for i in range(n_syllables):
+            syllable_phonemes = []
+            for typ in syllable_structure:
+                if typ == "C":
+                    cands = [x for x in inventory.phonemes if x.features["syllabicity"] in [0, 1]]
+                    chosen = random.choice(cands) if cands != [] else None
+                elif typ == "V":
+                    cands = [x for x in inventory.phonemes if x.features["syllabicity"] in [2, 3]]
+                    chosen = random.choice(cands) if cands != [] else None
+                elif typ == "N":
+                    cands = [x for x in inventory.phonemes if x.features["syllabicity"] == 0 and x.features["nasalization"] == 1 and x.features["c_manner"] == 0]
+                    chosen = random.choice(cands) if cands != [] else None
+                else:
+                    chosen = random.choice(inventory.phonemes)
+    
+                if chosen is not None:
+                    syllable_phonemes.append(chosen)
+            syllables.append(Syllable(syllable_phonemes))
+        return Word(syllables)
+
+    def print(self, as_word=False, verbose=False):
+        if verbose:
+            for d in lst:
+                phone = Phone(d)
+                print("symbol: {}".format(phone.get_ipa_symbol()))
+                phone.print()
+                input()
+        else:
+            s = ""
+            for syll in self.syllables:
+                for phone in syll.phonemes:
+                    s += phone.get_ipa_symbol()
+            print(s)
+            # delim = ""
+            # print(delim.join(Phone.get_ipa_symbol_from_features(d) for d in lst))
+        print()
+
+
 
 
 class Lexicon:
@@ -703,6 +721,16 @@ class Lexicon:
             words.append(w)
         return Lexicon(words)
 
+    @staticmethod
+    def from_phonology(phonology):
+        vocabulary = []
+        for i in range(3):
+            paradigm = get_random_paradigm(phonology.inventory, phonology.syllable_structure_set)
+            for word in paradigm:
+                vocabulary.append(word)
+        return vocabulary
+
+
 
 class Inventory:
     def __init__(self, phonemes):
@@ -710,14 +738,36 @@ class Inventory:
 
     @staticmethod
     def random():
-        raise
+        feature_space = PhoneticFeatureSpace.get_random_feature_value_sets()
+        print("phonetic feature space:")
+        feature_space.print()
+        input()
+        raw_inventory = Inventory([Phone(feature_space.get_features_from_possible_values()) for i in range(40)])
+        print("raw inventory ({} phonemes):".format(len(raw_inventory.phonemes)))
+        raw_inventory.print()
+        input()
+        seen = []
+        seen_symbols = []
+        for phone in raw_inventory.phonemes:
+            restricted_phone = phone.restrict_features()
+            symbol = restricted_phone.get_ipa_symbol()
+            print("new symbol: {}\nexisting symbols: {}".format(symbol, seen_symbols))
+            if symbol not in seen_symbols and "_" not in symbol and "?" not in symbol:
+                seen.append(restricted_phone)
+                seen_symbols.append(symbol)
+        inventory = Inventory(seen)
+        print("final inventory:")
+        inventory.print()
+        input()
+        return inventory
+
 
     @staticmethod
     def from_lexicon(lexicon):
         added_phoneme_symbols = set()
         for word in lexicon.words:
             for syll in word.syllables:
-                for symbol in syll.phones:
+                for symbol in syll.phonemes:
                     added_phoneme_symbols.add(symbol)
 
         phonemes = []
@@ -745,11 +795,19 @@ class Inventory:
 
             phonemes.append(phoneme)
 
+        inventory = Inventory(phonemes)
         print("resulting inventory:")
-        print_list_of_phones(phonemes)
+        inventory.print()
         input()
 
-        return Inventory(phonemes)
+        return inventory
+
+    def print(self):
+        delim = " , "
+        print(delim.join(phone.str() for phone in self.phonemes))
+        print()
+
+
 
 
 class Language:
