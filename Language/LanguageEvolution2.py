@@ -8,122 +8,15 @@ from copy import deepcopy
 
 
 
-def restrict_features(features):
-    # no nasalization while voiceless
-    if features["nasalization"] == 1 and features["voicing"] == 0:
-        features["nasalization"] = 0
-
-    # uvular/pharyngeal/epiglottal approximant -> fricative
-    if features["c_place"] in [8, 9, 10] and features["c_manner"] == 3:
-        features["c_manner"] = 2
-
-    # glottal approximant -> fricative
-    if features["c_place"] == 11 and features["c_manner"] == 3:
-        features["c_manner"] = 2
-
-    # pharyngeal stop -> epiglottal
-    if features["c_place"] == 9 and features["c_manner"] == 0:
-        features["c_place"] = 10
-
-    # voiced epiglottal/glottal stop/affricate -> voiceless
-    if features["c_place"] in [10, 11] and features["c_manner"] in [0, 1] and features["voicing"] == 1:
-        features["voicing"] = 0
-
-    # labialized bilabial/labiodental -> non-labialized
-    if features["c_place"] in [0, 1] and features["c_labialization"] == 1:
-        features["c_labialization"] = 0
-
-    # pharyngealized/glottalized pharyngeal/epiglottal/glottal -> non-*
-    if features["c_place"] in [9, 10, 11]:
-        features["c_pharyngealization"] = 0
-        features["c_glottalization"] = 0
-
-    # palatized palatal -> non-palatized
-    if features["c_place"] == 6 and features["c_palatization"] == 1:
-        features["c_palatization"] = 0
-
-    # velarized velar+ -> non-velarized
-    if features["c_place"] in [7, 8, 9, 10, 11] and features["c_velarization"] == 1:
-        features["c_velarization"] = 0
-
-    # aspirated h -> non-aspirated
-    if features["c_place"] in [9, 10, 11] and features["c_manner"] == 2 and features["c_aspiration"] == 1:
-        features["c_aspiration"] = 0
-
-    # velarized vowels -> back
-    if features["syllabicity"] in [1, 3] and features["c_velarization"] == 1:
-        features["v_backness"] = 2
-        features["c_velarization"] = 0
-
-    # palatized vowels -> front
-    if features["syllabicity"] in [1, 3] and features["c_palatization"] == 1:
-        features["v_backness"] = 0
-        features["c_palatization"] = 0
-
-    # labialized vowels -> rounded
-    if features["syllabicity"] in [1, 3] and features["c_labialization"] == 1:
-        features["v_roundedness"] = 1
-        features["c_labialization"] = 0
-
-    # aspirated/pharyngealized vowel -> non-*
-    if features["syllabicity"] in [1, 3]:
-        features["c_aspiration"] = 0
-        features["c_pharyngealization"] = 0
-
-    # aspirated and glottalized -> glottalized
-    if features["c_glottalization"] == 1 and features["c_aspiration"] == 1:
-        features["c_aspiration"] = 0
-
-    # syllabic consonants must not contain plosive
-    if features["syllabicity"] == 2 and features["c_manner"] in [0, 1]:
-        features["syllabicity"] = 0
-
-    # high semivowels -> consonants, excluding central
-    if features["syllabicity"] == 1 and features["v_height"] == 6 and features["v_backness"] in [0, 2]:
-        features["syllabicity"] = 0
-        features["c_labialization"] = features["v_roundedness"]
-        if features["v_backness"] == 0:
-            features["c_place"] = 6
-        elif features["v_backness"] == 2:
-            features["c_place"] = 7
-
-    # aspirated approximant -> non-aspirated
-    if features["c_manner"] == 3:
-        features["c_aspiration"] = 0
-
-    return features
-
-
-def get_features_from_ipa_symbol(symbol):
-    return IPA_SYMBOL_TO_FEATURES[symbol]
 
 
 def get_word_from_string(s):
     word = []
     for symbol in s:
         if symbol not in ["-", "\ufeff"]:
-            features_dict = get_features_from_ipa_symbol(symbol)
-            word.append(features_dict)
+            phone = Phone.from_ipa_symbol(symbol)
+            word.append(phone)
     return word
-
-
-def get_ipa_symbol_from_features(features):
-    if type(features) is not dict:
-        return ""
-
-    features = restrict_features(features)
-
-    if features["syllabicity"] == 0:
-        return get_ipa_consonant_symbol_from_features(features)
-
-    if features["syllabicity"] == 1:
-        return get_ipa_vowel_symbol_from_features(features) + "\u032f"
-
-    if features["syllabicity"] == 2:
-        return get_ipa_consonant_symbol_from_features(features) + "\u0329"
-
-    elif features["syllabicity"] == 3:
-        return get_ipa_vowel_symbol_from_features(features)
 
 
 def get_ipa_consonant_symbol_from_features(features, with_secondaries=True):
@@ -347,12 +240,12 @@ def print_feature_values_dict(d):
 def print_list_of_phones(lst, as_word=False, verbose=False):
     if verbose:
         for d in lst:
-            print("symbol: {}".format(get_ipa_symbol_from_features(d)))
+            print("symbol: {}".format(Phone.get_ipa_symbol_from_features(d)))
             print_feature_values_dict(d)
             input()
     else:
         delim = "" if as_word else " , "
-        print(delim.join(get_ipa_symbol_from_features(d) for d in lst))
+        print(delim.join(Phone.get_ipa_symbol_from_features(d) for d in lst))
     print()
 
 
@@ -367,9 +260,10 @@ def get_random_inventory():
     input()
     seen = []
     seen_symbols = []
-    for phone in raw_inventory:
-        restricted_phone = restrict_features(phone)
-        symbol = get_ipa_symbol_from_features(restricted_phone)
+    for features_dict in raw_inventory:
+        phone = Phone(features_dict)
+        restricted_phone = phone.restrict_features()
+        symbol = Phone.get_ipa_symbol_from_features(restricted_phone)
         if symbol not in seen_symbols and "_" not in symbol and "?" not in symbol:
             seen.append(restricted_phone)
             seen_symbols.append(symbol)
@@ -414,7 +308,7 @@ def get_random_phone_sequence(n_syllables, inventory, syllable_structure):
 def convert_phone_sequence_to_ipa(seq):
     result = ""
     for phone in seq:
-        result += get_ipa_symbol_from_features(phone)
+        result += Phone.get_ipa_symbol_from_features(phone)
     return result
 
 
@@ -593,7 +487,7 @@ def generate_language_and_write_to_file():
 
     with codecs.open(fp, "wb", "utf-8") as f:
         f.write("inventory:\r\n")
-        f.write("  ".join([get_ipa_symbol_from_features(x) for x in sorted(inventory, key=lambda x: get_numerical_code_from_features(x))]))
+        f.write("  ".join([Phone.get_ipa_symbol_from_features(x) for x in sorted(inventory, key=lambda x: get_numerical_code_from_features(x))]))
         f.write("\r\n----\r\n")
 
         f.write("vocabulary:\r\n")
@@ -616,64 +510,7 @@ def generate_language_and_write_to_file():
     print("done, written to file {}".format(fp))
 
 
-def get_input_word_from_user():
-    print("Input a word to add to the language.\nFormat: phonemes separated by spaces, syllables separated by hyphens or dollar signs")
-    print("Example: k a - t i")
-    inp = input("word: ")
-    inp = inp.replace("$", "-").strip()
-    if inp == "":
-        return []
-    syllables = inp.split("-")
-    syllables = [syll.strip().split() for syll in syllables]
-    return syllables
 
-
-def get_input_words_from_user():
-    print("Add words. When finished, press enter without entering anything.")
-    words = []
-    while True:
-        w = get_input_word_from_user()
-        if w == []:
-            break
-        words.append(w)
-    return words
-
-
-def get_inventory_from_user_input_words(words):
-    added_phoneme_symbols = set()
-    for word in words:
-        for syll in word:
-            for symbol in syll:
-                added_phoneme_symbols.add(symbol)
-
-    phonemes = []
-    for symbol in added_phoneme_symbols:
-        try:
-            phoneme = IPA_SYMBOL_TO_FEATURES[symbol]
-
-        except KeyError:
-            phoneme = {}
-            print("the phoneme {} was not found in the IPA symbols. Please specify what it is:".format(symbol))
-            for k, d in FEATURE_KEYS.items():
-                print("{}: {}".format(k, d))
-                while True:
-                    inp = input("choice for this feature: ")
-                    try: 
-                        choice = int(inp.strip())
-                        if choice not in d:
-                            print("that choice is not valid, must be one of {}".format(sorted(d.keys())))
-                            continue
-                        phoneme[k] = choice
-                        break
-                    except ValueError:
-                        print("invalid int")
-                        continue
-
-        phonemes.append(phoneme)
-
-    print("resulting inventory:")
-    print_list_of_phones(phonemes)
-    input()
 
 
 def get_syllable_structures_from_user_input_words(words):
@@ -684,19 +521,141 @@ def get_syllable_structures_from_user_input_words(words):
     # better to convert the inputted words into a canonical format usable by the lexicon
 
 
+class PhoneticFeatureSpace:
+    # for when features take on multiple values in the form of lists,
+    # e.g. when picking which features are contrastive in a language, before picking any phones/phonemes
+
+    def __init__(self, features_dict):
+        self.features = features_dict
+
+
 class Phone:
-    def __init__(self):
-        raise
+    def __init__(self, features_dict):
+        self.features = features_dict
 
     @staticmethod
-    def from_symbol(symbol):
-        raise
+    def from_ipa_symbol(symbol):
+        return IPA_SYMBOL_TO_FEATURES[symbol]
+
+    @staticmethod
+    def get_ipa_symbol_from_features(features):
+        if type(features) is not dict:
+            return ""
+
+        phone = Phone(features)
+
+        phone = phone.restrict_features()
+
+        if phone.features["syllabicity"] == 0:
+            return get_ipa_consonant_symbol_from_features(phone.features)
+
+        if phone.features["syllabicity"] == 1:
+            return get_ipa_vowel_symbol_from_features(phone.features) + "\u032f"
+
+        if phone.features["syllabicity"] == 2:
+            return get_ipa_consonant_symbol_from_features(phone.features) + "\u0329"
+
+        elif phone.features["syllabicity"] == 3:
+            return get_ipa_vowel_symbol_from_features(phone.features)
+
+        else:
+            raise ValueError("invalid syllabicity of {} for features_dict\n{}".format(phone.features["syllabicity"], features))
+
+
+    def restrict_features(self):
+        # no nasalization while voiceless
+        if self.features["nasalization"] == 1 and self.features["voicing"] == 0:
+            self.features["nasalization"] = 0
+
+        # uvular/pharyngeal/epiglottal approximant -> fricative
+        if self.features["c_place"] in [8, 9, 10] and self.features["c_manner"] == 3:
+            self.features["c_manner"] = 2
+
+        # glottal approximant -> fricative
+        if self.features["c_place"] == 11 and self.features["c_manner"] == 3:
+            self.features["c_manner"] = 2
+
+        # pharyngeal stop -> epiglottal
+        if self.features["c_place"] == 9 and self.features["c_manner"] == 0:
+            self.features["c_place"] = 10
+
+        # voiced epiglottal/glottal stop/affricate -> voiceless
+        if self.features["c_place"] in [10, 11] and self.features["c_manner"] in [0, 1] and self.features["voicing"] == 1:
+            self.features["voicing"] = 0
+
+        # labialized bilabial/labiodental -> non-labialized
+        if self.features["c_place"] in [0, 1] and self.features["c_labialization"] == 1:
+            self.features["c_labialization"] = 0
+
+        # pharyngealized/glottalized pharyngeal/epiglottal/glottal -> non-*
+        if self.features["c_place"] in [9, 10, 11]:
+            self.features["c_pharyngealization"] = 0
+            self.features["c_glottalization"] = 0
+
+        # palatized palatal -> non-palatized
+        if self.features["c_place"] == 6 and self.features["c_palatization"] == 1:
+            self.features["c_palatization"] = 0
+
+        # velarized velar+ -> non-velarized
+        if self.features["c_place"] in [7, 8, 9, 10, 11] and self.features["c_velarization"] == 1:
+            self.features["c_velarization"] = 0
+
+        # aspirated h -> non-aspirated
+        if self.features["c_place"] in [9, 10, 11] and self.features["c_manner"] == 2 and self.features["c_aspiration"] == 1:
+            self.features["c_aspiration"] = 0
+
+        # velarized vowels -> back
+        if self.features["syllabicity"] in [1, 3] and self.features["c_velarization"] == 1:
+            self.features["v_backness"] = 2
+            self.features["c_velarization"] = 0
+
+        # palatized vowels -> front
+        if self.features["syllabicity"] in [1, 3] and self.features["c_palatization"] == 1:
+            self.features["v_backness"] = 0
+            self.features["c_palatization"] = 0
+
+        # labialized vowels -> rounded
+        if self.features["syllabicity"] in [1, 3] and self.features["c_labialization"] == 1:
+            self.features["v_roundedness"] = 1
+            self.features["c_labialization"] = 0
+
+        # aspirated/pharyngealized vowel -> non-*
+        if self.features["syllabicity"] in [1, 3]:
+            self.features["c_aspiration"] = 0
+            self.features["c_pharyngealization"] = 0
+
+        # aspirated and glottalized -> glottalized
+        if self.features["c_glottalization"] == 1 and self.features["c_aspiration"] == 1:
+            self.features["c_aspiration"] = 0
+
+        # syllabic consonants must not contain plosive
+        if self.features["syllabicity"] == 2 and self.features["c_manner"] in [0, 1]:
+            self.features["syllabicity"] = 0
+
+        # high semivowels -> consonants, excluding central
+        if self.features["syllabicity"] == 1 and self.features["v_height"] == 6 and self.features["v_backness"] in [0, 2]:
+            self.features["syllabicity"] = 0
+            self.features["c_labialization"] = self.features["v_roundedness"]
+            if self.features["v_backness"] == 0:
+                self.features["c_place"] = 6
+            elif self.features["v_backness"] == 2:
+                self.features["c_place"] = 7
+
+        # aspirated approximant -> non-aspirated
+        if self.features["c_manner"] == 3:
+            self.features["c_aspiration"] = 0
+
+        return self
+
+
+
 
 class Phoneme:
     def __init__(self):
         raise
         self.primary_phone = []
         self.allophones = []
+
 
 class PhoneticEnvironment:
     def __init__(self):
@@ -705,29 +664,99 @@ class PhoneticEnvironment:
         self.after = []
         # should be able to match underspecified feature dicts
 
-class Word:
+
+class Syllable:
     def __init__(self, phones):
         self.phones = phones
 
+
+class Word:
+    def __init__(self, syllables):
+        self.syllables = syllables
+
     @staticmethod
     def from_user_input():
-        raise
+        print("Input a word to add to the language.\nFormat: phonemes separated by spaces, syllables separated by hyphens or dollar signs")
+        print("Example: k a - t i")
+        inp = input("word: ")
+        inp = inp.replace("$", "-").strip()
+        if inp == "":
+            return []
+        syllables = inp.split("-")
+        syllables = [syll.strip().split() for syll in syllables]
+        syllables = [Syllable(phones_lst) for phones_lst in syllables]
+        return Word(syllables)
+
+
+class Lexicon:
+    def __init__(self, words):
+        self.words = words
+
+    @staticmethod
+    def from_user_input():
+        print("Add words. When finished, press enter without entering anything.")
+        words = []
+        while True:
+            w = Word.from_user_input()
+            if w == []:
+                break
+            words.append(w)
+        return Lexicon(words)
+
 
 class Inventory:
     def __init__(self, phonemes):
         self.phonemes = phonemes
 
     @staticmethod
-    def from_user_input_words(words):
+    def random():
         raise
+
+    @staticmethod
+    def from_lexicon(lexicon):
+        added_phoneme_symbols = set()
+        for word in lexicon.words:
+            for syll in word.syllables:
+                for symbol in syll.phones:
+                    added_phoneme_symbols.add(symbol)
+
+        phonemes = []
+        for symbol in added_phoneme_symbols:
+            try:
+                phoneme = IPA_SYMBOL_TO_FEATURES[symbol]
+
+            except KeyError:
+                phoneme = {}
+                print("the phoneme {} was not found in the IPA symbols. Please specify what it is:".format(symbol))
+                for k, d in FEATURE_KEYS.items():
+                    print("{}: {}".format(k, d))
+                    while True:
+                        inp = input("choice for this feature: ")
+                        try: 
+                            choice = int(inp.strip())
+                            if choice not in d:
+                                print("that choice is not valid, must be one of {}".format(sorted(d.keys())))
+                                continue
+                            phoneme[k] = choice
+                            break
+                        except ValueError:
+                            print("invalid int")
+                            continue
+
+            phonemes.append(phoneme)
+
+        print("resulting inventory:")
+        print_list_of_phones(phonemes)
+        input()
+
+        return Inventory(phonemes)
+
 
 class Language:
     def __init__(self, inventory, **args):
         self.inventory = inventory
 
-class Language:
-    pass
-    # does it error when redefining a class?
+
 
 # ---- constructing global constants ---- #
 
@@ -755,6 +784,7 @@ DEFAULT_FEATURE_VALUES = {k: 0 for k in FEATURE_KEYS.keys()}
 
 
 def get_ipa_symbol_to_features_dict():
+    # FIXME: phonemes it doesn't know about: l
     if os.path.isfile("/home/wesley/programming/IPA_SYMBOL_TO_FEATURES.pickle"):
         with open("/home/wesley/programming/IPA_SYMBOL_TO_FEATURES.pickle", "rb") as f:
             d = pickle.load(f)
@@ -774,12 +804,13 @@ def get_ipa_symbol_to_features_dict():
         result = {}
         i = 0
         for features_dict in my_product(d):
-            features_dict = restrict_features(features_dict)
+            phone = Phone(features_dict)
+            phone = phone.restrict_features()
             i += 1
             if i % 10000 == 0:
                 print(i)
-            symbol = get_ipa_symbol_from_features(features_dict)
-            result[symbol] = features_dict
+            symbol = phone.get_ipa_symbol()
+            result[symbol] = phone.features
 
         with open("C:/Users/Wesley/Desktop/Programming/IPA_SYMBOL_TO_FEATURES.pickle", "wb") as f:
             pickle.dump(result, f, pickle.HIGHEST_PROTOCOL)
@@ -797,4 +828,8 @@ COMMON_SOUND_CHANGES = [
 
 
 if __name__ == "__main__":
-    inventory = get_inventory_from_user_input()
+    lexicon = Lexicon.from_user_input()
+    inventory = Inventory.from_lexicon(lexicon)
+    
+    # check that the original routine still works after refactoring stuff
+    generate_language_and_write_to_file()
