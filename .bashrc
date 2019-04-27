@@ -127,7 +127,7 @@ alias python="/usr/bin/python3"
 alias pip="pip3"
 alias battery="upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep \"state\|percentage\""
 alias chrome="google-chrome-stable"
-alias skype="skypeforlinux"
+alias skype="pulseaudio -k; PULSE_LATENCY_MSEC=90 skypeforlinux"
 alias minecraft="java -jar ~/.minecraft/launcher.jar"
 alias pclear="python -c \"print('\n'*1000)\" && clear"
 alias elan="/opt/ELAN_5.1/ELAN_5.1"
@@ -139,6 +139,7 @@ alias cr="chrome"
 alias lynx="lynx -accept_all_cookies"
 alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar"
 alias sublime="/opt/sublime_text/sublime_text"
+alias ipa="vim /usr/share/kmfl/IPA14.kmn"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
@@ -165,7 +166,9 @@ function denox() {
 export LESS="-SR"  # turns off line wrapping in less
 export PYTHONPATH=$PYTHONPATH:/home/wesley/programming
 export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
-export PATH=$PATH:$PYTHONPATH:$GOPATH
+export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
+export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
+export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH
 
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
