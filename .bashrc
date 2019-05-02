@@ -140,6 +140,7 @@ alias lynx="lynx -accept_all_cookies"
 alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar"
 alias sublime="/opt/sublime_text/sublime_text"
 alias ipa="vim /usr/share/kmfl/IPA14.kmn"
+alias zotero="/usr/bin/zotero/zotero"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
