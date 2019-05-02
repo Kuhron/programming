@@ -33,7 +33,8 @@ class Moment:
 
 
 def float_equal(a, b):
-    return abs(a - b) < 1e-9
+    epsilon = 1e-6
+    return abs(a - b) < epsilon
 
 def deg(x):
     return x * 180/np.pi
@@ -83,10 +84,13 @@ def moment_multiply(a, b):
         return b
     if b.is_zero():
         return a
+    if a == b:
+        return a
 
     l_a = a.magnitude
     l_b = b.magnitude
-    new_direction = (l_a * a.direction + l_b * b.direction) / (l_a + l_b)
+    vector_in_new_direction = (l_a * a.direction + l_b * b.direction) / (l_a + l_b)
+    new_direction = direction(vector_in_new_direction)
     phi = angle(new_direction, b.vector)
 
     phi_diff = phi - angle(new_direction, b.direction)
@@ -99,48 +103,64 @@ def moment_multiply(a, b):
     assert float_equal(theta_minus_phi_diff, 0), theta_minus_phi_diff
 
     l_ab = distance(a.vector, b.vector)
-    sin_ratio = math.sin(theta) / l_ab
+    sin_ratio = np.sin(theta) / l_ab
     sin_alpha = sin_ratio * l_a
     sin_beta = sin_ratio * l_b
 
-    alpha = math.asin(sin_alpha)
+    alpha = np.arcsin(sin_alpha)
     # new_length is opposite alpha, adjacent to phi
     # b is between phi and alpha
     third_angle = np.pi - phi - alpha
-    new_sin_ratio = math.sin(third_angle) / l_b
-    # assert float_equal(new_sin_ratio * (l_ab / 2), phi)
+    new_sin_ratio = np.sin(third_angle) / l_b
+    sin_phi = np.sin(phi)
+    opposite_length = sin_phi / new_sin_ratio
+    assert float_equal((l_ab / 2), opposite_length), "opposite length {}, half ab {}".format(opposite_length, l_ab/2)
     new_length = sin_alpha / new_sin_ratio
 
-    beta = math.asin(sin_beta)
+    beta = np.arcsin(sin_beta)
     # new length is opposite beta, adjacent to (theta - phi)
     # a is between (theta - phi) and beta
     third_angle_from_beta = np.pi - theta_minus_phi - beta
-    new_sin_ratio_from_beta = math.sin(third_angle_from_beta) / l_a
-    # assert float_equal(new_sin_ratio_from_beta * (l_ab / 2), theta_minus_phi)
+    new_sin_ratio_from_beta = np.sin(third_angle_from_beta) / l_a
+    sin_theta_minus_phi = np.sin(theta_minus_phi)
+    opposite_length_from_beta = sin_theta_minus_phi / new_sin_ratio_from_beta
+    assert float_equal((l_ab / 2), opposite_length_from_beta), "opposite length {}, half ab {}".format(opposite_length_from_beta, l_ab/2)
     new_length_from_beta = sin_beta / new_sin_ratio_from_beta
 
-    print(" l_a {} \n l_b {} \n l_ab {} \n alpha {} \n beta  {} \n theta {} \n triangle {} \n phi {}".format(l_a, l_b, l_ab, deg(alpha), deg(beta), deg(theta), deg(alpha + beta + theta), deg(phi)))
-    # for triangle-calculator.com
-    # print("a={} b={} C={}".format(l_a, l_b, deg(theta)))
-    print("\nmain triangle")
-    print("https://www.triangle-calculator.com/?what=&q=a%3D{}+b%3D{}+C%3D{}&submit=Solve".format(l_a, l_b, deg(theta)))
-    print("\ntriangle with new_length and b")
-    print("https://www.triangle-calculator.com/?what=&q=b%3D{}+A%3D{}+C%3D{}&submit=Solve".format(l_b, deg(alpha), deg(phi)))
-    print("\ntriangle with new_length and a")
-    print("https://www.triangle-calculator.com/?what=&q=a%3D{}+B%3D{}+C%3D{}&submit=Solve".format(l_a, deg(beta), deg(theta_minus_phi)))
-    print()
+    def check_triangles():
+        print("------- triangle checking -------")
+    
+        print("\nmain triangle")
+        print(" l_a {} \n l_b {} \n l_ab {} \n alpha {} \n beta  {} \n theta {} \n triangle {}".format(l_a, l_b, l_ab, deg(alpha), deg(beta), deg(theta), deg(alpha + beta + theta)))
+        print("https://www.triangle-calculator.com/?what=&q=a%3D{}+b%3D{}+C%3D{}&submit=Solve".format(l_a, l_b, deg(theta)))
+        print()
+    
+        print("\ntriangle with new_length and b")
+        print(" l_b {} \n l_new {} \n l_opposite {} \n phi {} \n alpha {} \n third_angle {}".format(l_b, new_length, opposite_length, deg(phi), deg(alpha), deg(third_angle)))
+        print("https://www.triangle-calculator.com/?what=&q=b%3D{}+A%3D{}+C%3D{}&submit=Solve".format(l_b, deg(alpha), deg(phi)))
+        print()
+    
+        print("\ntriangle with new_length and a")
+        print(" l_a {} \n l_new {} \n l_opposite {} \n theta_minus_phi {} \n beta {} \n third_angle {}".format(l_a, new_length_from_beta, opposite_length_from_beta, deg(theta_minus_phi), deg(beta), deg(third_angle_from_beta)))
+        print("https://www.triangle-calculator.com/?what=&q=a%3D{}+B%3D{}+C%3D{}&submit=Solve".format(l_a, deg(beta), deg(theta_minus_phi)))
+        print()
+    
+    check_triangles()
+
     assert float_equal(new_length, new_length_from_beta), "{} != {}".format(new_length, new_length_from_beta)
 
     result_vector = new_direction * new_length
+    assert float_equal(magnitude(new_direction), 1), "mag {} = {}".format(new_direction, magnitude(new_direction))
+    assert float_equal(magnitude(result_vector), new_length)
 
     # plot their projection onto x-y plane because this should still work when replacing all z with 0
     p_0 = (0, 0)
     p_a = (a.vector[0], a.vector[1])
     p_b = (b.vector[0], b.vector[1])
-    p_nd = tuple(new_direction[:2])
+    # p_nd = tuple(new_direction[:2])
     p_rv = tuple(result_vector[:2])
-    ps = [p_0, p_a, p_b, p_nd, p_rv]
-    plt.scatter([p[0] for p in ps], [p[1] for p in ps], c="brrgk")
+    ps = [p_0, p_a, p_b, p_rv]
+    plt.scatter([p[0] for p in ps], [p[1] for p in ps], c="krbg")
     lines = [[p_0, p_a], [p_0, p_b], [p_a, p_b], [p_0, p_rv]]
     lc = mc.LineCollection(lines)
     plt.gca().add_collection(lc)
@@ -148,14 +168,29 @@ def moment_multiply(a, b):
 
     return Moment(result_vector)
 
-def dotproduct(v1, v2):
-    return sum((a*b) for a, b in zip(v1, v2))
+# def dotproduct(v1, v2):
+#     return sum((a*b) for a, b in zip(v1, v2))
 
-def length(v):
-    return math.sqrt(dotproduct(v, v))
+# def length(v):
+#     return math.sqrt(dotproduct(v, v))
 
 def angle(v1, v2):
-    return math.acos(dotproduct(v1, v2) / (length(v1) * length(v2)))
+    # return math.acos(dotproduct(v1, v2) / (length(v1) * length(v2)))
+    cos_val = np.dot(v1, v2) / (magnitude(v1) * magnitude(v2))
+    
+    # why can't np handle this without domain error
+    if float_equal(cos_val, 1):
+        cos_val = 1
+    if float_equal(cos_val, -1):
+        cos_val = -1
+
+    result = np.arccos(cos_val)
+    if np.isnan(result):
+        raise ValueError("NaN in angle between these vectors:\n{} mag {}\n{} mag {}\ndot = {}\ncos_val = {}".format(v1, magnitude(v1), v2, magnitude(v2), np.dot(v1, v2), np.dot(v1, v2) / (magnitude(v1) * magnitude(v2))))
+    return result
+
+def direction(v):
+    return np.array(v) / magnitude(v)
 
 def moment_multiply_array(arr):
     result = arr[0]
