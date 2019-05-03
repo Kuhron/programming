@@ -28,8 +28,21 @@ class Moment:
                 return False
         return True
 
+    def __mul__(self, other):
+        if type(other) is not Moment:
+            return NotImplemented
+        return moment_multiply(self, other)
+
+    # def __rmul__(self, other):
+    #     if type(other) is not Moment:
+    #         return NotImplemented
+    #     return moment_multiply(other, self)
+
     def is_zero(self):
         return self == Moment((0, 0, 0))
+
+    def __repr__(self):
+        return "Moment: vector {}; magnitude {}.".format(self.vector, self.magnitude)
 
 
 def float_equal(a, b):
@@ -80,12 +93,20 @@ def moment_multiply(a, b):
     # extend that direction to the line connecting the endpoints of a and b
     # vector times zero moment should just be that vector
 
-    if a.is_zero():
-        return b
-    if b.is_zero():
-        return a
-    if a == b:
-        return a
+    # if a.is_zero():
+    #     return b
+    # if b.is_zero():
+    #     return a
+    # if a == b:
+    #     return a * 2
+
+    # just put point halfway between a and b (since this turns out to be the same as the weighted-average method!)
+    # and multiply by 2 since magnitudes should add
+
+    average_vector = 0.5 * a.vector + 0.5 * b.vector
+    return Moment(average_vector * 2)
+    
+    # old way
 
     l_a = a.magnitude
     l_b = b.magnitude
@@ -114,7 +135,6 @@ def moment_multiply(a, b):
     new_sin_ratio = np.sin(third_angle) / l_b
     sin_phi = np.sin(phi)
     opposite_length = sin_phi / new_sin_ratio
-    assert float_equal((l_ab / 2), opposite_length), "opposite length {}, half ab {}".format(opposite_length, l_ab/2)
     new_length = sin_alpha / new_sin_ratio
 
     beta = np.arcsin(sin_beta)
@@ -124,7 +144,6 @@ def moment_multiply(a, b):
     new_sin_ratio_from_beta = np.sin(third_angle_from_beta) / l_a
     sin_theta_minus_phi = np.sin(theta_minus_phi)
     opposite_length_from_beta = sin_theta_minus_phi / new_sin_ratio_from_beta
-    assert float_equal((l_ab / 2), opposite_length_from_beta), "opposite length {}, half ab {}".format(opposite_length_from_beta, l_ab/2)
     new_length_from_beta = sin_beta / new_sin_ratio_from_beta
 
     def check_triangles():
@@ -144,8 +163,11 @@ def moment_multiply(a, b):
         print(" l_a {} \n l_new {} \n l_opposite {} \n theta_minus_phi {} \n beta {} \n third_angle {}".format(l_a, new_length_from_beta, opposite_length_from_beta, deg(theta_minus_phi), deg(beta), deg(third_angle_from_beta)))
         print("https://www.triangle-calculator.com/?what=&q=a%3D{}+B%3D{}+C%3D{}&submit=Solve".format(l_a, deg(beta), deg(theta_minus_phi)))
         print()
+
+        assert float_equal((l_ab / 2), opposite_length), "opposite length {}, half ab {}".format(opposite_length, l_ab/2)
+        assert float_equal((l_ab / 2), opposite_length_from_beta), "opposite length {}, half ab {}".format(opposite_length_from_beta, l_ab/2)
     
-    check_triangles()
+    # check_triangles()
 
     assert float_equal(new_length, new_length_from_beta), "{} != {}".format(new_length, new_length_from_beta)
 
@@ -166,7 +188,7 @@ def moment_multiply(a, b):
     plt.gca().add_collection(lc)
     plt.show()
 
-    return Moment(result_vector)
+    return Moment(result_vector * 2)
 
 # def dotproduct(v1, v2):
 #     return sum((a*b) for a, b in zip(v1, v2))
@@ -207,7 +229,7 @@ def test_math():
 
     #  identity, commutativity, and order of items
     for m in moments:
-        assert m == moment_multiply(m, z) == moment_multiply(z, m)
+        assert m == moment_multiply(m, z) == moment_multiply(z, m), "   {}\n!= {}\n!= {}".format(m, m*z, z*m)
         for m2 in moments2:
             mm2 = moment_multiply(m, m2)
             m2m = moment_multiply(m2, m)
@@ -218,17 +240,32 @@ def test_math():
     m = Moment((1, 0, 0))
     thetas = np.arange(0, 2*np.pi, 0.01*np.pi)
     mags = []
-    sins = []
+    abs_coss = []
     for theta in thetas:
         m2 = Moment((np.cos(theta), np.sin(theta), 0))
         prod = moment_multiply(m, m2)
         mag = prod.magnitude
         mags.append(mag)
-        sins.append(np.sin(theta))
-    plt.plot(thetas, mags, label="mags")
-    plt.plot(thetas, sins, label="sins")
+        abs_coss.append(2 * abs(np.cos(theta/2)))
+    plt.plot(thetas, mags, label="mag")
+    plt.plot(thetas, abs_coss, label="2 abs cos theta/2")
     plt.legend()
     plt.show()
+
+    # limiting behavior with random moments
+    ns = list(range(1, 1001))
+    ms = []
+    m = None
+    for n in ns:
+        new_moment = Moment(rand_unif_3d_sphere())
+        if m is None:
+            m = new_moment
+        else:
+            m = moment_multiply(m, new_moment)
+        ms.append(m.magnitude)
+    plt.plot(ns, ms)
+    plt.show()
+    
 
     return True
     
@@ -238,4 +275,4 @@ if __name__ == "__main__":
     grains = get_grains(100)
     reference_point = (0, 0, 0)
     field = get_field_at_reference_point(grains, reference_point)
-    print(field)
+    print("field at origin is {} with magnitude {}".format(field.vector, field.magnitude))
