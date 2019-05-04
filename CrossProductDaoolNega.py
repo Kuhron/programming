@@ -44,10 +44,19 @@ class Moment:
     def __repr__(self):
         return "Moment: vector {}; magnitude {}.".format(self.vector, self.magnitude)
 
+    @staticmethod
+    def zero():
+        return Moment((0, 0, 0))
+
 
 def float_equal(a, b):
-    epsilon = 1e-6
-    return abs(a - b) < epsilon
+    try:
+        float(a)
+        float(b)
+        epsilon = 1e-6
+        return abs(a - b) < epsilon
+    except (ValueError, TypeError):
+        return a == b
 
 def deg(x):
     return x * 180/np.pi
@@ -74,12 +83,14 @@ def rand_unif_3d_sphere():
             return v
 
 def get_grains(n):
-    # randomly distributed inside a unit sphere
     result = []
     while len(result) < n:
         position = rand_unif_3d_sphere()
         if magnitude(position) <= 1:
-            moment = Moment(rand_unif_3d_sphere())
+            x, y, z = rand_unif_3d_sphere()
+            moment_vector = np.array([x, y, z])  # no bias
+            # moment_vector = np.array([x**2, y**2, z**2])  # bias it in some direction (here, positive x, y, and z)
+            moment = Moment(moment_vector)
             g = Grain(moment=moment, position=position)
             result.append(g)
     return result
@@ -102,9 +113,9 @@ def moment_multiply(a, b):
 
     # just put point halfway between a and b (since this turns out to be the same as the weighted-average method!)
     # and multiply by 2 since magnitudes should add
+    # turns out I was just adding the vectors all along
 
-    average_vector = 0.5 * a.vector + 0.5 * b.vector
-    return Moment(average_vector * 2)
+    return Moment(a.vector + b.vector)
     
     # old way
 
@@ -220,9 +231,53 @@ def moment_multiply_array(arr):
         result = moment_multiply(result, m)
     return result
 
+def add_magnitudes_same_direction(mag1, mag2):
+    if float_equal(mag1, 0):
+        return mag2
+    if float_equal(mag2, 0):
+        return mag1
+
+    c = mag1 + mag2
+    if c == 0:
+        return 0
+    else:
+        return c/2 * (1 + np.cos( -2 * np.pi * np.log2(abs(c)) ))
+
+def test_magnitude_addition_function():
+    f = add_magnitudes_same_direction
+    # mags = [np.random.uniform(-5, 5) for _ in range(3)]
+    # mags2 = mags[:]
+    # random.shuffle(mags2)
+    mags = [1, 2, 3]
+    mags2 = [2, 3, 1]
+    assert mags != mags2 and mags is not mags2
+    for m in mags:
+        check_equal(m, f(m, 0))
+        check_equal(m, f(0, m))
+        for m2 in mags2:
+            check_equal(f(m, m2), f(m2, m))
+    res = 0
+    for m in mags:
+        res = f(res, m)
+        print("m {} --> res {}".format(m, res))
+    res2 = 0
+    for m2 in mags2:
+        res2 = f(res2, m2)
+        print("m2 {} --> res2 {}".format(m2, res2))
+    check_equal(res, res2)
+    print("test complete")
+
+def check_equal(*args):
+    if len(args) == 0:
+        return
+    arg0 = args[0]
+    for arg in args[1:]:
+        assert float_equal(arg, arg0), "{} != {}".format(arg, arg0)
+
 def test_math():
-    moments = [Moment(rand_unif_3d_sphere()) for _ in range(10)]
-    z = Moment((0, 0, 0))
+    moments = [Moment(rand_unif_3d_sphere()) for _ in range(10)]  # random around unit sphere
+    # moments = [Moment((np.random.uniform(-5, 5), 0, 0)) for _ in range(10)]  # all parallel, see if associativity works
+    z = Moment.zero()
     moments2 = moments[:]
     random.shuffle(moments2)
     assert moments != moments2 and moments is not moments2
@@ -253,26 +308,27 @@ def test_math():
     plt.show()
 
     # limiting behavior with random moments
-    ns = list(range(1, 1001))
-    ms = []
-    m = None
-    for n in ns:
-        new_moment = Moment(rand_unif_3d_sphere())
-        if m is None:
-            m = new_moment
-        else:
-            m = moment_multiply(m, new_moment)
-        ms.append(m.magnitude)
-    plt.plot(ns, ms)
-    plt.show()
+    # n_grains = 1000
+    # ns = list(range(1, n_grains + 1))
+    # ms = []
+    # m = Moment.zero()
+    # reference_point = (0, 0, 0)
+    # grains = get_grains(n_grains)
+    # for n in ns:
+    #     grains_subset = grains[:n]
+    #     prod = get_field_at_reference_point(grains_subset, reference_point)
+    #     ms.append(prod.magnitude)
+    # plt.plot(ns, ms)
+    # plt.show()
     
 
     return True
     
 
 if __name__ == "__main__":
-    print(test_math())
-    grains = get_grains(100)
-    reference_point = (0, 0, 0)
-    field = get_field_at_reference_point(grains, reference_point)
-    print("field at origin is {} with magnitude {}".format(field.vector, field.magnitude))
+    # test_math()
+    test_magnitude_addition_function()
+    # grains = get_grains(100)
+    # reference_point = (0, 0, 0)
+    # field = get_field_at_reference_point(grains, reference_point)
+    # print("field at origin is {} with magnitude {}".format(field.vector, field.magnitude))
