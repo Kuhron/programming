@@ -18,3 +18,14 @@ for op in [and_, or_, nand_, nor_, xor_]:
         for b in [true_, false_]:
             print_bool(op (a) (b))
     print()
+
+y_ = lambda f: (lambda x: f (x) (x)) (lambda x: f (x) (x))
+
+# Church numerals
+zero_ = lambda f: lambda x: x
+one_ = lambda f: lambda x: f (x)
+succ_ = lambda n: lambda f: lambda x: f (n) (f (x))
+
+plus_ = lambda a, b: None  # TODO
+minus_ = lambda a, b: None  # TODO
+factorial_ = lambda n: None  # TODO
