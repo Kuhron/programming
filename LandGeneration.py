@@ -19,9 +19,41 @@ LAND = 1
 def decide(p_land):
     return LAND if random.random() < p_land else WATER
 
+def get_probability_of_land(neighbors):
+    # return np.mean(neighbors)  # allows all-land or all-sea to be too likely
+    # try exponential decay of probability the more water there is, and make it symmetric
+    x = np.mean(neighbors)
+    return prob_func(x)
+
+def prob_func(x):
+    if x > 0.5:
+        switched = True
+        x = 1 - x
+    else:
+        switched = False
+    # f(0.5) = 0.5
+    # exponential decay with p getting cut in half (=0.25) with one land neighbor changed to water, so f(3/8) = 0.25
+    assert 0 <= x <= 0.5
+    half_lives_down = (0.5 - x) / (1/2 - 3/8)
+    decay_factor = 2 ** (-1 * half_lives_down)
+    p0 = 0.5
+    p = p0 * decay_factor
+    if switched:
+        return 1 - p
+    else:
+        return p
+
+def plot_prob_func():
+    xs = np.arange(0, 1, 0.01)
+    ys = []
+    for x in xs:
+        ys.append(prob_func(x))
+    plt.plot(xs, ys)
+    plt.show()
+
 def decide_point(neighbors):
     # weight all neighbors equally, including UNDECIDED ones
-    p_land = np.mean(neighbors)
+    p_land = get_probability_of_land(neighbors)
     assert 0 <= p_land <= 1
     return decide(p_land)
 
@@ -66,12 +98,20 @@ class Grid:
         self.side_length = self.side_length * factor
         self.reset_grid()
         self.reset_undecided_points()
-        for i in range(old_side_length):
-            for j in range(old_side_length):
-                new_i = i * factor
-                new_j = j * factor
-                self.grid[new_i, new_j] = old_grid[i, j]
-                self.undecided_points.remove((i, j))
+        for x in range(old_side_length):
+            for y in range(old_side_length):
+                # one way was to just scale up the single point and leave the spaces in between undecided, but ended up too random-looking
+                # try scaling up the point in area too, then "redoing" every point, so the boundaries will blur
+                new_x0 = x * factor
+                new_y0 = y * factor
+                offsets = [i for i in range(factor)]
+                for offset_x in offsets:
+                    for offset_y in offsets:
+                        new_x = new_x0 + offset_x
+                        new_y = new_y0 + offset_y
+                        self.grid[new_x, new_y] = old_grid[x, y]
+                        # self.undecided_points.remove((new_x, new_y))
+                        # re-decide all points
 
     def plot(self):
         plt.imshow(self.grid)
@@ -80,9 +120,11 @@ class Grid:
 
 
 if __name__ == "__main__":
-    g = Grid(2)
+    # plot_prob_func()
+    g = Grid(4)
     g.fill()
-    for _ in range(5):
+    for i in range(5):
+        print("step {}".format(i))
         g.expand()
         g.fill()
-        g.plot()
+    g.plot()
