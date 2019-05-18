@@ -5,14 +5,13 @@ import matplotlib.pyplot as plt
 
 
 def distance(xy1, xy2):
-    dx = xy2[0] - xy1[0]
-    dy = xy2[1] - xy1[1]
-    return (dx**2 + dy**2) ** 0.5
+    # dx = xy2[0] - xy1[0]
+    # dy = xy2[1] - xy1[1]
+    # return (dx**2 + dy**2) ** 0.5
+    return np.linalg.norm(xy1 - xy2)
 
 def average(xy1, xy2, alpha=0.5):
-    x = alpha * xy1[0] + (1 - alpha) * xy2[0]
-    y = alpha * xy1[1] + (1 - alpha) * xy2[1]
-    return (x, y)
+    return alpha * xy1 + (1 - alpha) * xy2
 
 
 class Person:
@@ -23,7 +22,7 @@ class Person:
     def __init__(self, dna, land, location):
         self.dna = dna
         self.land = land
-        self.location = location
+        self.location = np.array(location)
         self.age = 0
         self.person_id = "{}-{}-{}".format(int(location[0]), int(location[1]), Person.value_gene_binary(self.dna))
 
@@ -197,7 +196,7 @@ class Land:
     def get_random_location(self):
         x = random.uniform(0, self.x_max)
         y = random.uniform(0, self.y_max)
-        return (x, y)
+        return np.array([x, y])
 
     def add_person(self, person):
         self.people.append(person)
@@ -340,7 +339,7 @@ class Land:
 if __name__ == "__main__":
     land = Land(30, 30)
     land.populate(100)
-    for _ in range(100):
+    for _ in range(50):
         land.go_to_next_generation()
         if land.year % 10 == 0:
             # land.report()
