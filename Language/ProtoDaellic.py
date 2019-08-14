@@ -86,9 +86,9 @@ class Rule:
     def designate(self, s):
         assert type(s) is str, "designation must be str, got {}".format(type(s))
         self.designation = s
-        print("designated {}".format(self))
+        # print("designated {}".format(self))
        
-    def get_specific_cases(self, classes, phonemes_used):
+    def get_specific_cases(self, classes, used_phonemes):
         inp = self.input
         outp = self.output
         n = len(inp)
@@ -110,6 +110,26 @@ class Rule:
                 return res
         else:
             return [self] if inp != outp else []
+           
+    @staticmethod
+    def expand_classes(s, classes, used_phonemes):
+        n = len(s)
+        for i in range(n):
+            if s[i] in classes:
+                #replace = outp[i] != inp[i]
+                res = []
+                vals = [x for x in classes[s[i]] if x in used_phonemes]
+                for val_i, val in enumerate(vals):
+                    #replacement = outp[i] if replace else val
+                    new_s = s[:i] + [val] + s[i+1:]
+                    #new_outp = outp[:i] + [replacement] + outp[i+1:]
+                    #designation = "{}.{}".format(self.designation, val_i)
+                    #ew_rule = Rule(new_inp, new_outp)
+                    #new_rule.designate(designation)
+                    res += Rule.expand_classes(new_s, classes, used_phonemes)
+                return res
+        else:
+            return [s]
            
     def get_output_phonemes_used(self):
         if self.has_classes():
@@ -170,7 +190,13 @@ def parse_rule_str(inp):
     rule_strs = inp.split(",")
     all_results = []
     for rule_str in rule_strs:
+        if rule_str.count(">") != 1:
+            print("skipping invalid rule_str:", rule_str)
+            continue
         rule_inp_str, rule_outp_str = rule_str.split(">")
+        if rule_inp_str.count("_") > 1:
+            print("only insertions with one blank are accepted right now; please split this into a series of rules:", rule_str)
+            continue
         rule_inp = parse_word_str_to_list(rule_inp_str)
         rule_outp = parse_word_str_to_list(rule_outp_str)
         if len(rule_inp) != len(rule_outp):
@@ -201,22 +227,26 @@ def get_inputs_that_could_apply(word):
     return res
    
 def apply_rule(word, rule):
-    assert "#" not in word
-    inp = rule.input
-    outp = rule.output
-    assert inp.count("#") == outp.count("#") <= 2, "too many '#'s in rule {}".format(rule)
+    try:
+        assert "#" not in word
+        inp = rule.input
+        outp = rule.output
+        assert inp.count("#") == outp.count("#") <= 2, "too many '#'s in rule {}".format(rule)
+    except AssertionError:
+        print("invalid word for rule application:", word)
+        return word
    
     word2 = word.with_word_boundaries()
     res_lst = sublist_replace(word2.lst,inp, outp)
     res_lst = [x for x in res_lst if x not in ["#", ""]]
     if res_lst == []:
-        print("Warning: blocking change that would make {} into a blank word".format(word))
+        print("Warning: blocking change {} that would make {} into a blank word".format(rule, word))
         return word
    
     if res_lst != word.lst:
         res = Word(res_lst, designation=word.designation)
         #outp_display = "Ø" if outp == "" else "".join(outp)
-        print("{} : {} -> {}".format(rule, word, res))
+        #print("{} : {} -> {}".format(rule, word, res))
         return res
     else:
         return word
@@ -394,9 +424,12 @@ def cleanup(word, classes, okay_seqs, new_rules, used_phonemes):
     if dirty:
         #print(original_word)
         word, user_okay_seqs, user_new_rules = user_edit(original_word, classes, used_phonemes)
-        print("got okay seqs", user_okay_seqs)
+        user_okay_seqs_expanded = []
+        for seq in user_okay_seqs:
+            user_okay_seqs_expanded += Rule.expand_classes(seq, classes, used_phonemes)
+        print("got okay seqs", user_okay_seqs_expanded)
         print("got new rules", user_new_rules)
-        okay_seqs += user_okay_seqs
+        okay_seqs += user_okay_seqs_expanded
         new_rules += user_new_rules
     else:
         word = original_word
@@ -416,16 +449,133 @@ def user_edit(word, classes, used_phonemes):
         elif inp[0] == "*":
             okay_seqs += [parse_word_str_to_list(x) for x in inp[1:].split(",")]
         elif ">" in inp:
-            rules_from_inp = parse_rule_str(inp)
-            new_rules += rules_from_inp
+            try:
+                rules_from_inp = parse_rule_str(inp)
+                new_rules += rules_from_inp
+            except AssertionError:
+                print("invalid rule input")
         else:
             inp_word = Word.from_str(inp)
             print("resulting word:", inp_word)
             if input("is this correct? (default yes, n for no)") != "n":
                 print()
+                inp_word.designate(word.designation)
                 return inp_word, okay_seqs, new_rules
-       
+
+def evolve_user_input_words(rules1, rules2, lexicon):
+    new_proto_words = []
+    next_designation = 1 + max(int(x.designation) for x in lexicon)
+    while True:
+        inp = input("\nenter a word to evolve, or nothing to exit\n")
+        if inp == "":
+            break
+        if ">" in inp or "," in inp or "*" in inp:
+            # prevent crashing just because I misread the prompt
+            print("oops! looks like you didn't give a valid word")
+            continue
+        inp = Word.from_str(inp)
+        inp.designate("None")
+        e1 = evolve_word(inp, rules1)
+        e2 = evolve_word(inp, rules2)
+        print("\nresulting evolutions:\n1. {}\n2. {}\n".format(e1, e2))
+        if input("add this proto-word to the lexicon? (y/n, default yes)") != "n":
+            inp.designate(str(next_designation))
+            next_designation += 1
+            # lexicon.append(inp) # put it in original_words instead
+            new_proto_words.append(inp)
+    return new_proto_words
+
+def create_rules_from_rule_strs(rule_strs, next_rule_designation=0):
+    rules = []
+    next_rule_designation = 0
+    for s in rule_strs:
+        rules_from_str = Rule.from_str(s)
+        for r in rules_from_str:
+            r.designate(str(next_rule_designation))
+            next_rule_designation += 1
+            rules.append(r)
+    return rules, next_rule_designation
    
+def build_lexicon_strs(classes):
+    assert "C" in classes and "V" in classes
+    word_strs = []
+    # desig = 0
+    used_phonemes = set()
+    while True:
+        inp = input("make up a new word, enter nothing to generate a word, or enter '*' to stop\ninput: ")
+        if inp == "*":
+            break
+        elif inp == "":
+            if word_strs == []:
+                print("oops! no words yet to generate from")
+                continue
+            while True:
+                # take an existing word and replace Cs and Vs
+                rws = random.choice(word_strs)
+                rw = Word.from_str(rws)
+                nws = ""
+                for ph in rw:
+                    if ph in classes["C"]:
+                        cands = set(classes["C"])
+                    elif ph in classes["V"]:
+                        cands = set(classes["V"])
+                    else:
+                        raise Exception("phoneme {} is not in C or V".format(ph))
+                    cands &= used_phonemes
+                    nws += random.choice(list(cands))
+                if nws not in word_strs:
+                    break
+            if input("{} : use this word? (y/n, default yes)".format(nws)) == "n":
+                continue
+            w = Word.from_str(nws)
+        else:
+            w = Word.from_str(inp)
+        # w.designate(desig)
+        # desig += 1
+        used_phonemes |= w.get_phonemes_used()
+        word_strs.append(w.to_str())
+        print("current lexicon:", ", ".join(word_strs))
+    return word_strs
+   
+def load_lexicon_from_file(fp):
+    with open(fp) as f:
+        lines = [x.strip() for x in f.readlines()]
+    word_strs = []
+    variable_segments = {}
+    variable_segment_lines = [x for x in lines if ":" in x]
+    lexeme_lines = [x for x in lines if ":" not in x]
+   
+    for line in variable_segment_lines:
+        assert line.count(":") == 1, "bad line " + line
+        var_name, val = line.split(":")
+        if var_name in variable_segments:
+            variable_segments[var_name].append(val)
+        else:
+            variable_segments[var_name] = [val]
+           
+    # print(variable_segments)
+    for line in lexeme_lines:
+        strs_from_line = [""]
+        inside_braces = False
+        variable_name = ""
+        for c in line:
+            if c == "{":
+                assert not inside_braces
+                inside_braces = True
+                variable_name = ""
+            elif c == "}":
+                assert inside_braces
+                inside_braces = False
+                segment_values = variable_segments[variable_name]
+                strs_from_line = [s + val for s in strs_from_line for val in segment_values]
+            elif inside_braces:
+                variable_name += c
+            else:
+                strs_from_line = [s + c for s in strs_from_line]
+        word_strs += strs_from_line
+    return word_strs
+
+
 if __name__ == "__main__":
     # use lowercase for phonemes and capital for classes of phonemes
    
@@ -441,10 +591,13 @@ if __name__ == "__main__":
         "N": ["m", "n", "ñ", "ņ"],
         "P": ["p", "[ph]", "b", "t", "[th]", "d", "c", "[ch]", "ģ", "k", "[kh]", "g", "q", "[qh]"],
     }
+    all_phonemes = set()
+    for lst in classes.values():
+        all_phonemes |= set(lst)
    
-    test_rules = ["k>t", "VCV>VsV", "Ca>za", "V#>_#", "V_V>Vju",
+    test_rule_strs = ["k>t", "VCV>VsV", "Ca>za", "V#>_#", "V_V>Vju",
     ]
-    daool_rules = [
+    daool_rule_strs = [
         "VhV>V.V",
         "#h>#_",
         "C_I>CįI",
@@ -503,6 +656,10 @@ if __name__ == "__main__":
         "o.o>o__",
         "a.a>a__",
     ]
+    daool_rules, next_daool_rule_designation = create_rules_from_rule_strs(daool_rule_strs)
+    expanded_daool_rules = []
+    for r in daool_rules:
+        expanded_daool_rules += r.get_specific_cases(classes, all_phonemes)
    
     # android keyboard orthography for modern Daool
     # nn ņ
@@ -522,54 +679,87 @@ if __name__ == "__main__":
     # ol ùl
     # ul oj
    
-    test_words = ["pak", "paka", "apak", "apaka", "limiaisa", "tr[ts]kambr", "ağ[dž]oź[dź]iuaruailiłt", "bsgrubs", "aiea", "in", "ni", "m[ts]vrtnelis[ts]qalši"]
-    proto_daellic_words = ["matiali", "nu", "[tlh]ia", "e[tl]aria",
+    test_word_strs = ["pak", "paka", "apak", "apaka", "limiaisa", "tr[ts]kambr", "ağ[dž]oź[dź]iuaruailiłt", "bsgrubs", "aiea", "in", "ni", "m[ts]vrtnelis[ts]qalši"]
+    proto_daellic_word_strs = ["matiali", "nu", "[tlh]ia", "e[tl]aria",
     "[ph]osati", "janio", "weli", "harai",
     "arera", "[tsh]iari", "[tl]uli", "taholi",
-    "[tlh]uelima", "ni[tlh]ue[tsh]i", "[bh]ajani", "itianiali",
+    "[tlh]uelima", "ni[tlh]ue[tsh]i", "[bh]ajani", "ilisiani",
     "kiuriani", "[kh]iliu", "a[tl]uha", "se[tlh]iura",
     "[th]akariu", "liapapeti", "[kh]a[tlh]i", "luelai",
     "ilai", "[th]i", "eli[th]en", "[th]ai[tsh]a",
-    "tarehe", "pareni",
+    "tarehe",
     ]
-    verb_roots = ["", "tariaka", "itia", "parenia", "milima"]
-    tenses = ["", "ni", "ki"]
-    subjs = ["", "ali", "eli", "ari", "atiali", "atieli", "atiari"]
-    objs = ["", "api", "epi", "a[tl]i", "upi", "aumi", "umi"]
-    proto_daellic_words += [r+t+s+o for r in verb_roots for t in tenses for o in objs for s in subjs]
-    proto_daellic_words = [x for x in proto_daellic_words if x != ""]
+    verb_roots = ["tariak", "iti", "pareni", "milim"]
+    #tenses = ["a", "ani", "aki"]
+    subjs = ["ali", "eli", "ari", "atiali", "atieli", "atiari"]
+    verb_suffixes = ["a"] + subjs
+    verb_suffixes += ["anaha"] + ["ani" + x for x in subjs]
+    verb_suffixes += ["akaha"] + ["aki" + x for x in subjs]
+    #objs = [""]#, "api", "epi", "a[tl]i", "upi", "aumi", "umi"]
+    #proto_daellic_word_strs += [r+t+s+o for r in verb_roots for t in tenses for o in objs for s in subjs]
+    proto_daellic_word_strs += [r+s for r in verb_roots for s in verb_suffixes]
+    #proto_daellic_word_strs = [x for x in proto_daellic_word_strs if x != ""]
     targets = ["maraj", "ņu", "þa", "eđŕa",
     "fosar", "jano", "wej", "aři",
     "aŕeř", "ćaŕ", "đoj", "da.ùl",
-    "ďejm", "niďeć", "[bh]ajan", "iranaj",
+    "ďejm", "niďeć", "[bh]ajan", "išan",
     "zuŕan", "si.u", "ađu.a", "šeþuř",
     "tağŕu", "javaver", "xaþ", "leli",
     "ili", "či", "ejčen", "tis",
-    "dŕe", "vŕen",
+    "dŕe",
     ]
-    verb_roots = ["", "dŕağ", "ir", "vŕen", "mim"]
-    tenses = ["", "an", "az"]
-    subjs = ["", "aj", "ej", "aŕ", "araj", "arej", "araŕ"]
-    objs = ["", "av", "ev", "ađ", "uv", "aum", "um"]
-    targets += [r+t+s+o for r in verb_roots for t in tenses for o in objs for s in subjs]
-    targets = [x for x in targets if x != ""]
-    targets += ["[TODO]"]*1000
+    verb_roots = ["dŕağ", "ir", "vŕen", "mim"]
+    #tenses = ["", "an", "az"]
+    subjs = ["aj", "ej", "aŕ", "araj", "arej", "araŕ"]
+    verb_suffixes = [""] + subjs
+    verb_suffixes += ["aņa"] + ["an" + x for x in subjs]
+    verb_suffixes += ["ağa"] + ["az" + x for x in subjs]
+    #objs = [""]#, "av", "ev", "ađ", "uv", "aum", "um"]
+    #targets += [r+t+s+o for r in verb_roots for t in tenses for o in objs for s in subjs]
+    targets += [r+s for r in verb_roots for s in verb_suffixes]
+    #targets = [x for x in targets if x != ""]
+    targets += ["TODO"] * 1000 + ["END OF TARGETS"]
    
     # mode = "daool"
+    # mode = "random_daellic"
     # mode = "test"
     mode = "random"
    
+    def n_step_generator(n):
+        for i in range(n):
+            yield i
+           
+    def infinite_step_generator():
+        i = 0
+        while True:
+            yield i
+            i += 1
+   
     if mode == "daool":
-        n_steps = len(daool_rules)
-        word_strs = proto_daellic_words
-        rule_strs = daool_rules
+        #n_steps = len(daool_rules)
+        step_generator = n_step_generator(len(daool_rules))
+        word_strs = proto_daellic_word_strs
+        rule_strs = daool_rule_strs
     elif mode == "test":
-        n_steps = 5
-        word_strs = test_words
-        rule_strs = test_rules
+        #n_steps = 5
+        step_generator = n_step_generator(5)
+        word_strs = test_word_strs
+        rule_strs = test_rule_strs
     elif mode == "random":
-        n_steps = int(input("number of steps to evolve?: "))
-        word_strs = proto_daellic_words
+        #n_steps = int(input("number of steps to evolve?: "))
+        step_generator = infinite_step_generator()
+        if input("build lexicon from scratch? (y/n, default yes)") != "n":
+            word_strs = build_lexicon_strs(classes)
+        else:
+            word_strs = load_lexicon_from_file("test_lexicon.txt")
+            print("loaded lexicon:")
+            for w in word_strs:
+                print("*"+w)
+        rule_strs = []
+    elif mode == "random_daellic":
+        #n_steps = int(input("number of steps to evolve?: "))
+        step_generator = infinite_step_generator()
+        word_strs = proto_daellic_word_strs
         rule_strs = []
     else:
         raise Exception("invalid mode " + mode)
@@ -578,17 +768,11 @@ if __name__ == "__main__":
     original_words = words[:]
     next_word_designation = len(words)
    
-    rules = []
-    next_rule_designation = 0
-    for s in rule_strs:
-        rules_from_str = Rule.from_str(s)
-        for r in rules_from_str:
-            r.designate(str(next_rule_designation))
-            next_rule_designation += 1
-            rules.append(r)
+    rules, next_rule_designation = create_rules_from_rule_strs(rule_strs, next_rule_designation=0)
    
     okay_seqs = []
-    for step_i in range(n_steps):
+    rule_history = []  # only for expanded rules
+    for step_i in step_generator:
         print("\n---- step", step_i, "----\n")
         new_rules = []  # reset at every step
         used_phonemes = set()
@@ -599,6 +783,7 @@ if __name__ == "__main__":
         try:
             rule = rules[step_i]
             print("using pre-defined rule {}".format(rule))
+            expanded_rules = rule.get_specific_cases(classes, used_phonemes)
         except IndexError:
             # no pre-defined rule, so get a rule at random or from user
             print("no pre-defined rule at this step; generating random rule")
@@ -610,7 +795,6 @@ if __name__ == "__main__":
                     # user made their own rule(s)
                     try:
                         rules_from_str = Rule.from_str(inp)
-                        # FIXME: if user submits a rule list, first one is designated but never expanded or applied
                         expanded_rules = []
                         for ri, rule in enumerate(rules_from_str):
                             rule.designate(str(next_rule_designation))
@@ -710,6 +894,7 @@ if __name__ == "__main__":
                
         # after finish while loop, check that everyone got all the rules
         assert all(x == len(words) - 1 for x in rule_catchup_tracker)
+        rule_history += all_rules_this_round[:]
                
         #words = new_words
         print("---- finished with step {} ----".format(step_i))
@@ -723,9 +908,16 @@ if __name__ == "__main__":
                 report += " ==="
             else:
                 report += " -> " + w.to_str()
-            if mode in ["daool", "random"]:
+            if mode in ["daool", "random_daellic"]:
                 report += " (Daool {})".format(target)
             print(report)
+           
+        if mode in ["random", "random_daellic"]:
+            new_proto_words = evolve_user_input_words(rule_history, expanded_daool_rules, words)
+            original_words += new_proto_words
+            words += [evolve_word(w, rule_history) for w in new_proto_words]
+        if mode != "daool" and input("press enter to continue, or enter '*' to stop: ") == "*":
+            break
            
     if mode == "daool":
         print("\nchecking Daool evolution")
@@ -738,3 +930,7 @@ if __name__ == "__main__":
         print("{} errors found".format(errors))
     else:
         print("\nnot checking Daool evolution")
+       
+    print("rule history")
+    for r in rule_history:
+        print(r)
