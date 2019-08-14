@@ -1,0 +1,75 @@
+wordclass V1 = {neg}_{tense}{person}{num}
+wordclass V2 = {person}{num}_{neg}{tense}
+V = {V1, V2}
+
+V1.neg=pos:
+V1.neg=neg:ra
+V2.neg=pos:
+V2.neg=neg:ar
+V.tense=pres:
+V.tense=past:a
+V.tense=fut:in
+V2.person=0:
+V2.person=1:ku
+V2.person=2:su
+V2 person=3:ma
+V1.person=0:
+V1.person=1:ku
+V1.person=2:su
+V1.person=3:ma
+V2.num=sg:
+V2.num=pl:na
+V1.num=sg:
+V1.num=pl:n
+
+tar :: V2 = "go"
+kapa :: V1 = "eat"
+sunul :: V2 = "sleep"
+meti :: V1 = "see.trans"
+meti :: V2 = "see.intrans"
+hajun :: V2 = "live"
+olak :: V2 = "chop.wood"
+isi :: V1 = "find"
+nemes :: V2 = "speak"
+nemes :: V1 = "summon"
+awar :: V1 = "burn.trans"
+
+N1=_{num}{case}
+N2=_{num}{case}
+N=N1,N2
+
+N1.num=sg:i
+N1.num=pl:ail
+N2.num=sg:u
+N2.num=pl:um
+N.case=abs:
+N.case=erg:en
+N.case=obl:ak
+
+N1 ko = dog
+N1 tom = person
+N1 asu = fish
+N2 pura = house
+N2 mit = tree
+N2 ul = fire
+
+# syntax options
+# ideally lexicon file is easily usable as a basic dictionary as well as computer parseable
+# gloss of any morpheme should have no spaces
+N2 kal = dust.storm
+N2 "kal" = "dust.storm"
+kal :: N2 = dust.storm
+kal (N2) = dust.storm
+lex kal N2 dust.storm
+kal = lex N2 gloss:dust.storm
+V.tense=past:ta
+morph ta V.tense past
+ta = morph V.tense gloss:past
+[s2] = phon C,F,S (features represented somehow)
+xxeln /xejn/ = lex Vimp burn.by.air
+xxeln [tense=pres,person=4] = xxattl /xaþ/
+xxeln [stem] = xx  # accomplishes the same as declaring the irregular form
+
+# doing anything in the gui should be equivalent to some terminal command
+# this kind of text file serves as a program, a dictionary, a basic sketch grammar, all in one
+# people could share their conlangs and play with others' by just sharing these files and loading them in the gui/terminal
