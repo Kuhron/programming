@@ -752,7 +752,9 @@ if __name__ == "__main__":
         if input("build lexicon from scratch? (y/n, default yes)") != "n":
             word_strs = build_lexicon_strs(classes)
         else:
-            word_strs = load_lexicon_from_file("test_lexicon.txt")
+            # lexicon_file = "test_lexicon.txt"
+            lexicon_file = "simple_lexicon.txt"
+            word_strs = load_lexicon_from_file(lexicon_file)
             print("loaded lexicon:")
             for w in word_strs:
                 print("*"+w)
