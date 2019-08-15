@@ -10,7 +10,7 @@ def window():
    b.move(50,20)
    w.setWindowTitle("PyQt")
    w.show()
-   sys.exit(app.exec_())
-	
+   sys.exit(app.exec_())	
+
 if __name__ == '__main__':
    window()
