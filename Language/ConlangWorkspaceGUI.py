@@ -6,26 +6,9 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
         QVBoxLayout, QWidget)
 
+from LanguageEvolutionTools import Word, Rule, Lexeme, Lexicon, Language
+
 import sys
-
-
-class Language:
-    def __init__(self, lexicon):
-        self.lexicon = lexicon
-
-
-class Lexicon:
-    def __init__(self, lexemes):
-        self.lexemes = lexemes
-    
-    def add_lexeme(self, lexeme):
-        self.lexemes.append(lexeme)
-
-
-class Lexeme:
-    def __init__(self, citation_form, forms):
-        self.citation_form = citation_form
-        self.forms = forms
 
 
 class ConlangWorkspaceGUI(QDialog):
@@ -36,16 +19,42 @@ class ConlangWorkspaceGUI(QDialog):
         self.language = language
         mainLayout = QGridLayout()
 
-        self.createLexemeList()
-        mainLayout.addWidget(self.lexeme_list)
-
-        self.createLexemeFormList()
-        mainLayout.addWidget(self.lexeme_form_list)
-        self.clearSelectedLexeme()
+        self.createTabWidget()
+        mainLayout.addWidget(self.tabWidget)
 
         self.setLayout(mainLayout)
 
         self.setWindowTitle("Conlang Workspace")
+
+    def createTabWidget(self):
+        self.tabWidget = QTabWidget()
+        # self.tabWidget.setSizePolicy(QSizePolicy.Preferred,
+        #         QSizePolicy.Ignored)
+
+        lexiconTab = QWidget()
+
+        self.createLexemeList()
+        self.createLexemeFormList()
+        # self.clearSelectedLexeme()
+
+        lexiconTabHBox = QHBoxLayout()
+        lexiconTabHBox.setContentsMargins(5, 5, 5, 5)
+        lexiconTabHBox.addWidget(self.lexeme_list)
+        lexiconTabHBox.addWidget(self.lexeme_form_list)
+        lexiconTab.setLayout(lexiconTabHBox)
+
+        soundChangeTab = QWidget()
+
+        textEdit = QTextEdit()
+        textEdit.setPlainText("asdf")
+
+        soundChangeTabHBox = QHBoxLayout()
+        soundChangeTabHBox.setContentsMargins(5, 5, 5, 5)
+        soundChangeTabHBox.addWidget(textEdit)
+        soundChangeTab.setLayout(soundChangeTabHBox)
+
+        self.tabWidget.addTab(lexiconTab, "Lexicon")
+        self.tabWidget.addTab(soundChangeTab, "Sound Changes")
 
     def createLexemeList(self):
         self.lexeme_list = QListWidget()
@@ -59,6 +68,7 @@ class ConlangWorkspaceGUI(QDialog):
         self.lexeme_form_list = QListWidget()
 
     def clearSelectedLexeme(self):
+        # doesn't seem to work, qt likes to trigger the currentItemChanged signal anyway
         self.lexeme_list.clearSelection()
         self.lexeme_form_list.clear()
 
