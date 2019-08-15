@@ -1,7 +1,6 @@
 import string
 import itertools
 import random
-import ast
 import time
 
 
@@ -120,13 +119,8 @@ class Rule:
                 #replace = outp[i] != inp[i]
                 res = []
                 vals = [x for x in classes[s[i]] if x in used_phonemes]
-                for val_i, val in enumerate(vals):
-                    #replacement = outp[i] if replace else val
+                for val in vals:
                     new_s = s[:i] + [val] + s[i+1:]
-                    #new_outp = outp[:i] + [replacement] + outp[i+1:]
-                    #designation = "{}.{}".format(self.designation, val_i)
-                    #ew_rule = Rule(new_inp, new_outp)
-                    #new_rule.designate(designation)
                     res += Rule.expand_classes(new_s, classes, used_phonemes)
                 return res
         else:
