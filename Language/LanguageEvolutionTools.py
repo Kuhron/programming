@@ -8,6 +8,10 @@ import pickle
 from copy import deepcopy
 
 
+from PhoneticFeatureSpace import PhoneticFeatureSpace
+import IPAConverter
+
+
 class Language:
     def __init__(self, lexicon):
         self.lexicon = lexicon
@@ -172,128 +176,6 @@ class Rule:
         return "Rule #{} : {}".format(self.designation, rule_str)
 
 
-class PhoneticFeatureSpace:
-    # for when features take on multiple values in the form of lists,
-    # e.g. when picking which features are contrastive in a language, before picking any phones/phonemes
-
-    FEATURE_KEYS = {
-        "c_aspiration": {0: "non-aspirated", 1: "aspirated"},
-        "c_glottalization": {0: "non-glottalized", 1: "glottalized"},
-        "c_labialization": {0: "non-labialized", 1: "labialized"},
-        "c_lateralization": {0: "non-lateral", 1: "lateral"},
-        "c_manner": {0: "stop", 1: "affricate", 2: "fricative", 3: "approximant"},
-        "c_palatization": {0: "non-palatized", 1: "palatized"},
-        "c_pharyngealization": {0: "non-pharyngealized", 1: "pharyngealized"},
-        "c_place": {0: "bilabial", 1: "labiodental", 2: "dental", 3: "alveolar", 4: "postalveolar", 5: "retroflex", 6: "palatal", 7: "velar", 8: "uvular", 9: "pharyngeal", 10: "epiglottal", 11: "glottal"},
-        "c_velarization": {0: "non-velarized", 1: "velarized"},
-        "length": {0: "normal", 1: "long"},
-        "nasalization": {0: "non-nasalized", 1: "nasalized"},
-        "syllabicity": {0: "consonant", 1: "non-syllabic vowel", 2: "syllabic consonant", 3: "vowel"},
-        "v_backness": {0: "front", 1: "central", 2: "back"},
-        "v_height": {0: "open", 1: "near-open", 2: "open-mid", 3: "mid", 4: "close-mid", 5: "near-close", 6: "close"},
-        "v_roundedness": {0: "unrounded", 1: "rounded"},
-        "voicing": {0: "voiceless", 1: "voiced"},
-        "is_word_boundary": {0: False, 1: True},
-    }
-
-    DEFAULT_FEATURE_VALUES = {k: 0 for k in FEATURE_KEYS.keys()}
-
-    IPA_SYMBOL_TO_FEATURES = PhoneticFeatureSpace.get_ipa_symbol_to_features_dict()
-
-    @staticmethod
-    def get_ipa_symbol_to_features_dict():
-        # FIXME: phonemes it doesn't know about: l
-        if os.path.isfile("/home/wesley/programming/IPA_SYMBOL_TO_FEATURES.pickle"):
-            with open("/home/wesley/programming/IPA_SYMBOL_TO_FEATURES.pickle", "rb") as f:
-                d = pickle.load(f)
-            return d
-
-        else:
-            def my_product(dicts):
-                # http://stackoverflow.com/questions/5228158/cartesian-product-of-a-dictionary-of-lists
-                return (dict(zip(dicts, x)) for x in itertools.product(*dicts.values()))
-
-            d = {k: sorted(v.keys(), reverse=True) for k, v in PhoneticFeatureSpace.FEATURE_KEYS.items()}
-            n = 1
-            for lst in d.values():
-                n *= len(lst)
-            input("total symbol-dict pairs to compute: {0}\npress enter to continue".format(n))
-
-            result = {}
-            i = 0
-            for features_dict in my_product(d):
-                phone = Phone(features_dict)
-                phone = phone.restrict_features()
-                i += 1
-                if i % 10000 == 0:
-                    print(i)
-                symbol = phone.get_ipa_symbol()
-                result[symbol] = phone.features
-
-            with open("C:/Users/Wesley/Desktop/Programming/IPA_SYMBOL_TO_FEATURES.pickle", "wb") as f:
-                pickle.dump(result, f, pickle.HIGHEST_PROTOCOL)
-
-            return result
-
-
-    def __init__(self, features_dict):
-        assert all(type(v) is list for v in features_dict.values())
-        self.features = features_dict
-
-    def get_features_from_possible_values(self):
-        d = {}
-        for k, v in FEATURE_KEYS.items():
-            possibilities = self.features.get(k)
-            if possibilities is not None:
-                d[k] = random.choice(possibilities)
-        return d
-
-    @staticmethod
-    def get_random_feature_value_sets():
-        value_probabilities = {
-            "c_aspiration": [1, 0.3],
-            "c_glottalization": [1, 0],
-            "c_labialization": [1, 0],
-            "c_lateralization": [1, 0.5],
-            "c_manner": [1, 0.5, 0.7, 0.7],
-            "c_palatization": [1, 0.3],
-            "c_pharyngealization": [1, 0.1],
-            "c_place": [0.5, 0.1, 0.1, 0.8, 0.3, 0.4, 0.4, 1, 0.3, 0.1, 0.05, 0.5],
-            "c_velarization": [1, 0.2],
-            "length": [1, 0.2],
-            "nasalization": [1, 0.2],
-            "syllabicity": [1, 0.05, 0.2, 1],
-            "v_backness": [1, 0.5, 0.9],
-            "v_height": [1, 0.2, 0.5, 0.5, 0.5, 0.2, 0.9],
-            "v_roundedness": [1, 0.8],
-            "voicing": [1, 0.5],
-        }
-
-        d = {}
-        for k, v in FEATURE_KEYS.items():
-            if k not in value_probabilities:
-                # e.g. is_word_boundary, which we don't want to be involved in phonology creation
-                continue
-            d[k] = []
-            for val in v.keys():
-                if random.random() < value_probabilities[k][val]:
-                    d[k].append(val)
-
-        return PhoneticFeatureSpace(d)
-
-    def print(self):
-        d = self.features
-        print("showing feature values")
-        get_name = lambda k, v: FEATURE_KEYS[k][v]
-        for k, val in d.items():
-            if type(val) is list:
-                translated_val = [get_name(k, v) for v in val]
-            else:
-                raise TypeError("feature dict values were not list or int, but {}".format(type(val)))
-            print("{}: {}".format(k, translated_val))
-        print()
-
-
 class Phone:
     def __init__(self, features_dict):
         assert all(type(v) is int for v in features_dict.values())
@@ -306,7 +188,7 @@ class Phone:
         if verbose:
             s = ""
             d = self.features
-            get_name = lambda k, v: FEATURE_KEYS[k][v]
+            get_name = lambda k, v: PhoneticFeatureSpace.FEATURE_KEYS[k][v]
             for k, val in d.items():
                 if type(val) is int:
                     translated_val = get_name(k, val)
@@ -325,7 +207,7 @@ class Phone:
         if symbol == "#":
             return WordBoundaryPhone()
         else:
-            return Phone(PhoneticFeatureSpace.IPA_SYMBOL_TO_FEATURES[symbol])
+            return Phone(IPAConverter.get_features_from_symbol(symbol))
 
     @staticmethod
     def get_ipa_symbol_from_features(features):
@@ -510,7 +392,7 @@ class Phone:
     @staticmethod
     def get_random_features():
         d = {}
-        for k, v in FEATURE_KEYS.items():
+        for k, v in PhoneticFeatureSpace.FEATURE_KEYS.items():
             d[k] = random.choice([x for x in v.keys()])
         return d
 
@@ -708,7 +590,7 @@ class SoundChange:
         else:
             raise ValueError("invalid self.from_features: {0}".format(self.from_features))
 
-        return Word.from_phone_list([x for x in new_phoneme_list if x is not None])
+        return LE2Word.from_phone_list([x for x in new_phoneme_list if x is not None])
 
     @staticmethod
     def get_random_sound_change_from_inventory(inventory):
@@ -718,7 +600,7 @@ class SoundChange:
         feature4, value4 = get_random_feature_value_from_inventory(inventory)
     
         from_features = {feature: value} if random.random() < 0.95 else ""
-        to_features = {feature2: random.choice([i for i in FEATURE_KEYS[feature2].keys()])} if random.random() < 0.95 else ""
+        to_features = {feature2: random.choice([i for i in PhoneticFeatureSpace.FEATURE_KEYS[feature2].keys()])} if random.random() < 0.95 else ""
         before_environment = {feature3: value3} if random.random() < 0.8 else WordBoundaryPhone().features
         after_environment = {feature4: value4} if random.random() < 0.8 else WordBoundaryPhone().features
 
@@ -895,7 +777,7 @@ class Inventory:
             except KeyError:
                 features_dict = {}
                 print("the phoneme {} was not found in the IPA symbols. Please specify what it is:".format(symbol))
-                for k, d in FEATURE_KEYS.items():
+                for k, d in PhoneticFeatureSpace.FEATURE_KEYS.items():
                     print("{}: {}".format(k, d))
                     while True:
                         inp = input("choice for this feature: ")
@@ -1375,11 +1257,11 @@ def get_random_syllable_structure_set():
 
 def get_random_paradigm(inventory, syllable_structure_set):
     input("generating paradigm")
-    root = Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set))
+    root = LE2Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set))
     print("root:")
     root.print()
-    prefixes = [Word([])] + [Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
-    suffixes = [Word([])] + [Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
+    prefixes = [LE2Word([])] + [LE2Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
+    suffixes = [LE2Word([])] + [LE2Word.get_random_phone_sequence(random.randint(1, 1), inventory, random.choice(syllable_structure_set)) for i in range(3)]
     print("prefixes:")
     for w in prefixes:
         w.print()
@@ -1413,7 +1295,7 @@ def get_random_input_language():
     inventory = Inventory.random()
     syllable_structure_set = get_random_syllable_structure_set()
     phonology = Phonology(inventory, syllable_structure_set)
-    vocabulary = Lexicon.from_phonology(phonology)
+    vocabulary = LE2Lexicon.from_phonology(phonology)
     return (inventory, vocabulary)
 
 
