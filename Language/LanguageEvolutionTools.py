@@ -27,12 +27,15 @@ class Lexicon:
 
 
 class Lexeme:
-    def __init__(self, citation_form, forms, part_of_speech, gloss):
+    def __init__(self, citation_form, forms, part_of_speech, gloss, form_glosses):
         self.citation_form = citation_form
         self.forms = forms
         assert part_of_speech.isidentifier(), "part of speech \"{}\" is not a valid identifier".format(part_of_speech)
         self.part_of_speech = part_of_speech
         self.gloss = gloss
+        self.form_glosses = form_glosses
+        assert len(self.forms) == len(self.form_glosses)
+        self.form_to_gloss = {f: g for f, g in zip(forms, form_glosses)}
 
 
 class Word:

@@ -77,7 +77,7 @@ class ConlangWorkspaceGUI(QDialog):
     def createLexemeList(self):
         self.lexeme_list = QListWidget()
         for lex in self.language.lexicon.lexemes:
-            item = QListWidgetItem(lex.citation_form)
+            item = QListWidgetItem(lex.citation_form + " (" + lex.gloss + ")")
             item.setData(Qt.UserRole, lex)
             self.lexeme_list.addItem(item)
         self.lexeme_list.currentItemChanged.connect(self.changeSelectedLexeme)
@@ -93,12 +93,12 @@ class ConlangWorkspaceGUI(QDialog):
     def changeSelectedLexeme(self):
         self.lexeme_form_list.clear()
         lex = self.lexeme_list.currentItem().data(Qt.UserRole)
-        for form in lex.forms:
-            self.lexeme_form_list.addItem(form)
+        for form, form_gloss in lex.form_to_gloss.items():
+            self.lexeme_form_list.addItem(form + " (" + form_gloss + ")")
 
     def export_lexicon_to_docx(self):
         # output_fp = "/home/wesley/programming/DocxTestOutput.docx"
-        output_fp = "/home/wesley/programming/Language/ExamplishLexiconDocx.docx"
+        output_fp = "/home/wesley/programming/Language/ExamplishLexiconDocx_GENERATED.docx"
         lexicon = self.language.lexicon
 
         document = docx.Document()
@@ -188,21 +188,30 @@ def load_lexicon_from_docx(fp):
     for le in lexeme_entries:
         try:
             citation_form, le = le.split(" = ")
-            pos, gloss = le.split(". ")
+            pos, gloss = le.split(" ")
             assert pos in full_inflections_by_part_of_speech, "unknown part of speech \"{}\"; please declare it"
-            forms = [inflect_lexeme(citation_form, affix)
-                for affix in full_inflections_by_part_of_speech.get(pos, [])]
-            lexeme = Lexeme(citation_form, forms, pos, gloss)
+            affix_to_gloss = full_inflections_by_part_of_speech.get(pos, {})
+            forms = []
+            form_glosses = []
+            for affix, inflection_gloss in affix_to_gloss.items():
+                forms.append(inflect_lexeme(citation_form, affix))
+                form_glosses.append(inflect_gloss(gloss, inflection_gloss))
+                # for inflection_gloss in full_inflections_by_part_of_speech[pos].values()]
+            lexeme = Lexeme(citation_form, forms, pos, gloss, form_glosses)
             lexicon.add_lexeme(lexeme)
         except Exception as exc:
-            print("This line does not appear to be valid. It threw a {}.\n{}".format(type(exc), le))
+            print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
     return lexicon
 
-def inflect_lexeme(citation_form, affix):
+
+def inflect_lexeme(citation_form, inflection):
     # later, implement more robust logic
     # affix should be able to be a string representing a function of citation_form
     # e.g. citation form is k_t_b and affix is _i_a_
-    return affix.replace("_", citation_form)
+    return inflection.replace("_", citation_form)
+
+def inflect_gloss(citation_gloss, inflection_gloss):
+    return citation_gloss + "-" + inflection_gloss
 
 
 if __name__ == '__main__':
