@@ -8,7 +8,6 @@ style = document.styles["Normal"]
 font = style.font
 font.name = "Charis SIL"
 font.size = Pt(12)
-#paragraph.style = document.styles["Normal"]
 
 p = document.add_paragraph("Test ")
 p.add_run("bold").bold = True
@@ -17,4 +16,4 @@ p.add_run("italic").italic = True
 
 p = document.add_paragraph("New paragraph")
 
-document.save("/home/wesley/programming/DocxTestResult.docx")
+document.save("/home/wesley/programming/DocxTestOutput.docx")

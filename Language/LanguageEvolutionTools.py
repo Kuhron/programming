@@ -13,7 +13,8 @@ import IPAConverter
 
 
 class Language:
-    def __init__(self, lexicon):
+    def __init__(self, name, lexicon):
+        self.name = name
         self.lexicon = lexicon
 
 
@@ -26,9 +27,12 @@ class Lexicon:
 
 
 class Lexeme:
-    def __init__(self, citation_form, forms):
+    def __init__(self, citation_form, forms, part_of_speech, gloss):
         self.citation_form = citation_form
         self.forms = forms
+        assert part_of_speech.isidentifier(), "part of speech \"{}\" is not a valid identifier".format(part_of_speech)
+        self.part_of_speech = part_of_speech
+        self.gloss = gloss
 
 
 class Word:
