@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QDateTime, Qt, QTimer
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
-        QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, QLabel, QLineEdit,
+        QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, 
+        QInputDialog, QLabel, QLineEdit,
         QListWidget, QListWidgetItem, 
         QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
@@ -32,7 +33,6 @@ class ConlangWorkspaceGUI(QDialog):
         #         QSizePolicy.Ignored)
 
         lexiconTab = QWidget()
-
         self.createLexemeList()
         self.createLexemeFormList()
         # self.clearSelectedLexeme()
@@ -44,17 +44,29 @@ class ConlangWorkspaceGUI(QDialog):
         lexiconTab.setLayout(lexiconTabHBox)
 
         soundChangeTab = QWidget()
-
-        textEdit = QTextEdit()
-        textEdit.setPlainText("asdf")
+        soundChangeWidget = QLineEdit()
+        soundChangeLabel = QLabel("Rule")
+        soundChangeLabel.setBuddy(soundChangeWidget)
+        soundChangeGenerateButton = QPushButton("Generate rule")
 
         soundChangeTabHBox = QHBoxLayout()
         soundChangeTabHBox.setContentsMargins(5, 5, 5, 5)
-        soundChangeTabHBox.addWidget(textEdit)
+        soundChangeTabHBox.addWidget(soundChangeWidget)
+        soundChangeTabHBox.addWidget(soundChangeGenerateButton)
         soundChangeTab.setLayout(soundChangeTabHBox)
+
+        terminalTab = QWidget()
+        terminalInputWidget = QLineEdit()
+        terminalOutputWidget = QTextEdit()
+        terminalTabHBox = QHBoxLayout()
+        terminalTabHBox.setContentsMargins(5, 5, 5, 5)
+        terminalTabHBox.addWidget(terminalInputWidget)
+        terminalTabHBox.addWidget(terminalOutputWidget)
+        terminalTab.setLayout(terminalTabHBox)
 
         self.tabWidget.addTab(lexiconTab, "Lexicon")
         self.tabWidget.addTab(soundChangeTab, "Sound Changes")
+        self.tabWidget.addTab(terminalTab, "Terminal")
 
     def createLexemeList(self):
         self.lexeme_list = QListWidget()
