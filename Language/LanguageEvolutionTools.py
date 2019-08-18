@@ -7,15 +7,44 @@ import os
 import pickle
 from copy import deepcopy
 
-
 from PhoneticFeatureSpace import PhoneticFeatureSpace
 import IPAConverter
 
 
+DEFAULT_PHONEME_CLASSES = {
+    "C": [
+        "m", "n", "ɳ", "ɲ", "ŋ",
+        "p", "[pʰ]", "b", "t", "[tʰ]", "d", "ʈ", "[ʈʰ]", "ɖ", "c", "[cʰ]", "ɟ", "k", "[kʰ]", "g", "[kʷ]", "[kʷʰ]", "[gʷ]", "q", "[qʰ]", "ɢ", "ʔ", 
+        "[pf]", "[pfʰ]", "[bv]", "[tθ]", "[tθʰ]", "[dð]", "[ts]", "[tsʰ]", "[dz]", "[tɬ]", "[tɬʰ]", "[dɮ]", "[tɕ]", "[tɕʰ]", "[dʑ]", "[tʃ]", "[tʃʰ]", "[dʒ]", "[tʂ]", "[tʂʰ]", "[dʐ]", "[cç]", "[cçʰ]", "[ɟʝ]", "[kx]", "[kxʰ]", "[gɣ]", 
+        "ɸ", "β", "f", "v", "θ", "ð", "s", "z", "ɬ", "ɮ", "ʃ", "ʒ", "ɕ", "ʑ", "ç", "ʝ", "x", "ɣ", "h", 
+        "l", "ɭ", "r", "ɾ", "[ɾʷ]", "ɽ", "j", "w", 
+    ],
+    "V": ["a", "e", "i", "o", "u", "ʊ", "ɪ", "æ", "ɤ", "ɯ", "ø", "y", "ə", "ɨ", "ɛ", "ɔ", "ɑ", "ɒ", ],
+    "I": ["i", "e", ],
+    "U": ["u", "o", "a", ],
+    "[HV]": ["i", "y", "ɯ", "u", ],
+    "Į": ["ʲ", "ˠ", ],
+    "F": ["ɸ", "β", "f", "v", "θ", "ð", "s", "z", "ɬ", "ɮ", "ʃ", "ʒ", "ɕ", "ʑ", "ç", "ʝ", "x", "ɣ", "h", ],
+    "[AFF]": ["[pf]", "[pfʰ]", "[bv]", "[tθ]", "[tθʰ]", "[dð]", "[ts]", "[tsʰ]", "[dz]", "[tɬ]", "[tɬʰ]", "[dɮ]", "[tɕ]", "[tɕʰ]", "[dʑ]", "[tʃ]", "[tʃʰ]", "[dʒ]", "[tʂ]", "[tʂʰ]", "[dʐ]", "[cç]", "[cçʰ]", "[ɟʝ]", "[kx]", "[kxʰ]", "[gɣ]", ],
+    "T": ["t", "[tʰ]", "d", ],
+    "N": ["m", "n", "ɳ", "ɲ", "ŋ"],
+    "P": ["p", "[pʰ]", "b", "t", "[tʰ]", "d", "ʈ", "[ʈʰ]", "ɖ", "c", "[cʰ]", "ɟ", "k", "[kʰ]", "g", "[kʷ]", "[kʷʰ]", "[gʷ]", "q", "[qʰ]", "ɢ", "ʔ", ],
+}
+
+
 class Language:
-    def __init__(self, name, lexicon):
+    def __init__(self, name, lexicon, phoneme_classes):
         self.name = name
         self.lexicon = lexicon
+        self.phoneme_classes = phoneme_classes
+        self.used_phonemes = self.get_used_phonemes()
+
+    def get_used_phonemes(self):
+        forms = self.lexicon.all_forms()
+        res = set()
+        for w in forms:
+            res |= w.get_phonemes_used()
+        return res
 
 
 class Lexicon:
@@ -25,11 +54,19 @@ class Lexicon:
     def add_lexeme(self, lexeme):
         self.lexemes.append(lexeme)
 
+    def all_forms(self):
+        res = []
+        for lex in self.lexemes:
+            res += lex.forms
+        return res
+
 
 class Lexeme:
     def __init__(self, citation_form, forms, part_of_speech, gloss, form_glosses):
         self.citation_form = citation_form
-        self.forms = forms
+        self.forms = [Word.from_str(w) for w in forms]
+        for i, form in enumerate(self.forms):
+            self.forms[i].designate(self.citation_form.designation + "." + str(i))
         assert part_of_speech.isidentifier(), "part of speech \"{}\" is not a valid identifier".format(part_of_speech)
         self.part_of_speech = part_of_speech
         self.gloss = gloss
@@ -41,6 +78,7 @@ class Lexeme:
 class Word:
     def __init__(self, lst, designation=None):
         self.designation = designation
+        assert type(lst) is list, "Word.lst must be a list, got {}: {}".format(type(lst), lst)
         self.lst = lst
         #self.word_class = word_class
         
@@ -51,6 +89,7 @@ class Word:
     @staticmethod
     def from_str(s, designation=None):
         lst =  parse_word_str_to_list(s)
+        assert type(lst) is list
         return Word(lst, designation)
         
     def to_str(self):
@@ -99,7 +138,10 @@ class Word:
         return item in self.lst
         
     def __eq__(self, other):
-        return self.lst == other.lst
+        return self.designation == other.designation and self.to_str() == other.to_str()
+
+    def __hash__(self):
+        return hash((self.designation, self.to_str()))
         
         
 class Rule:
@@ -116,6 +158,9 @@ class Rule:
         
     def to_str(self):
         return self.get_input_str() + " -> " + self.get_output_str()
+
+    def to_notation(self):
+        return self.get_input_str() + ">" + self.get_output_str()
         
     def designate(self, s):
         assert type(s) is str, "designation must be str, got {}".format(type(s))
@@ -869,7 +914,11 @@ def parse_rule_str(inp):
         rule_inp = parse_word_str_to_list(rule_inp_str)
         rule_outp = parse_word_str_to_list(rule_outp_str)
         if len(rule_inp) != len(rule_outp):
-            raise AssertionError("invalid rule given, unequal input and output lengths")
+            # raise AssertionError("invalid rule given, unequal input and output lengths")
+            lri = len(rule_inp)
+            lro = len(rule_outp)
+            shorter_one, shorter_len, longer_len = (rule_inp, lri, lro) if lri < lro else (rule_outp, lro, lri)
+            shorter_one += "_" * (longer_len - shorter_len)
         new_rule = Rule(rule_inp, rule_outp)
         #all_results += new_rule.get_specific_cases(classes, used_phonemes)  # do expansion later
         all_results.append(new_rule)
@@ -1038,7 +1087,7 @@ def get_random_rules(n_rules, lexicon, classes):
             raise Exception("unknown change type")
         
         rule = Rule(inp, outp)  # don't designate it until it is accepted for use
-        print("generated rule: {} -> {}".format(inp, outp))
+        print("generated rule: {}".format(rule))
         res.append(rule)
     
     return res
@@ -1381,18 +1430,7 @@ def get_syllable_structures_from_user_input_words(words):
 
 
 def main():
-    classes = {
-        "C": ["m", "n", "p", "[ph]", "t", "[th]", "k", "[kh]", "[ts]", "[tsh]", "[tl]", "[tlh]", "s", "h", "l", "r", "j", "w", "b", "d", "g", "[phi]", "[bh]", "x", "ğ", "c", "ć", "č", "ç", "ŕ", "ř", "þ", "đ", "ď", "ņ", "ñ", "š", "f", "v", "z", "ž", "[dź]", "ź", "ś", "[dž]", "ł", "q", "[qh]"],
-        "V": ["a", "e", "i", "o", "u", "ù", "ì", "ä", "õ", "ı", "ö", "ü", "ə"],
-        "I": ["i", "e"],
-        "U": ["u", "o", "a"],
-        "[HV]": ["i", "ü", "ı", "u"],
-        "Į": ["į", "ų"],
-        "F": ["[phi]", "[bh]", "v", "f", "þ", "đ", "s", "z", "ś", "ź", "š", "ž", "x", "ğ", "h", "ł"],
-        "T": ["d", "t", "[th]"],
-        "N": ["m", "n", "ñ", "ņ"],
-        "P": ["p", "[ph]", "b", "t", "[th]", "d", "c", "[ch]", "ģ", "k", "[kh]", "g", "q", "[qh]"],
-    }
+    classes = DEFAULT_PHONEME_CLASSES
     all_phonemes = set()
     for lst in classes.values():
         all_phonemes |= set(lst)

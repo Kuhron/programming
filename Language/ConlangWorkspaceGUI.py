@@ -5,12 +5,16 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QListWidget, QListWidgetItem, 
         QProgressBar, QPushButton, QRadioButton, QScrollBar, QSizePolicy,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
-        QVBoxLayout, QWidget)
+        QVBoxLayout, QWidget
+    )
 
 import docx
 from docx.shared import Pt
 
-from LanguageEvolutionTools import Word, Rule, Lexeme, Lexicon, Language
+from LanguageEvolutionTools import (Word, Rule, Lexeme, Lexicon, Language,
+        DEFAULT_PHONEME_CLASSES, 
+        evolve_word, get_random_rules, 
+    )
 
 import sys
 
@@ -50,15 +54,19 @@ class ConlangWorkspaceGUI(QDialog):
         lexiconTab.setLayout(lexiconTabHBox)
 
         soundChangeTab = QWidget()
-        soundChangeWidget = QLineEdit()
+        self.soundChangeWidget = QLineEdit()
         soundChangeLabel = QLabel("Rule")
-        soundChangeLabel.setBuddy(soundChangeWidget)
+        soundChangeLabel.setBuddy(self.soundChangeWidget)
         soundChangeGenerateButton = QPushButton("Generate rule")
+        soundChangeGenerateButton.pressed.connect(self.generate_sound_change)
+        applySoundChangeButton = QPushButton("Apply rule")
+        applySoundChangeButton.pressed.connect(self.apply_sound_change)
 
         soundChangeTabHBox = QHBoxLayout()
         soundChangeTabHBox.setContentsMargins(5, 5, 5, 5)
-        soundChangeTabHBox.addWidget(soundChangeWidget)
+        soundChangeTabHBox.addWidget(self.soundChangeWidget)
         soundChangeTabHBox.addWidget(soundChangeGenerateButton)
+        soundChangeTabHBox.addWidget(applySoundChangeButton)
         soundChangeTab.setLayout(soundChangeTabHBox)
 
         terminalTab = QWidget()
@@ -76,11 +84,14 @@ class ConlangWorkspaceGUI(QDialog):
 
     def createLexemeList(self):
         self.lexeme_list = QListWidget()
+        self.populateLexemeList()
+        self.lexeme_list.currentItemChanged.connect(self.changeSelectedLexeme)
+
+    def populateLexemeList(self):
         for lex in self.language.lexicon.lexemes:
-            item = QListWidgetItem(lex.citation_form + " (" + lex.gloss + ")")
+            item = QListWidgetItem(lex.citation_form.to_str() + " (" + lex.gloss + ")")
             item.setData(Qt.UserRole, lex)
             self.lexeme_list.addItem(item)
-        self.lexeme_list.currentItemChanged.connect(self.changeSelectedLexeme)
 
     def createLexemeFormList(self):
         self.lexeme_form_list = QListWidget()
@@ -97,6 +108,7 @@ class ConlangWorkspaceGUI(QDialog):
             self.lexeme_form_list.addItem(form + " (" + form_gloss + ")")
 
     def export_lexicon_to_docx(self):
+        # TODO include all command lines
         # output_fp = "/home/wesley/programming/DocxTestOutput.docx"
         output_fp = "/home/wesley/programming/Language/ExamplishLexiconDocx_GENERATED.docx"
         lexicon = self.language.lexicon
@@ -121,6 +133,30 @@ class ConlangWorkspaceGUI(QDialog):
         # handle irregularities, notes, etc. after this
 
         document.save(output_fp)
+
+    def generate_sound_change(self):
+        rule = get_random_rules(1, self.language.lexicon.all_forms(), self.language.phoneme_classes)[0]
+        self.soundChangeWidget.setText(rule.to_notation())
+
+    def apply_sound_change(self):
+        rules = Rule.from_str(self.soundChangeWidget.text())
+        expanded_rules = []
+        for rule in rules:
+            expanded_rules += rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
+        new_lexicon = Lexicon([])
+        for lexeme in self.language.lexicon.lexemes:
+            new_citation_form = evolve_word(lexeme.citation_form, expanded_rules)
+            new_forms = []
+            for f in lexeme.forms:
+                new_form = evolve_word(f, expanded_rules)
+                new_forms.append(new_form)
+            new_lexeme = Lexeme(new_citation_form, new_forms, lexeme.part_of_speech, lexeme.gloss, lexeme.form_glosses)
+            new_lexicon.add_lexeme(new_lexeme)
+        self.lexicon = new_lexicon
+        self.update_lexicon_displays()
+
+    def update_lexicon_displays(self):
+        self.populateLexemeList()
 
 
 def load_lexicon_from_docx(fp):
@@ -185,10 +221,13 @@ def load_lexicon_from_docx(fp):
         full_inflections_by_part_of_speech[pos] = inflections
     # print(full_inflections_by_part_of_speech)
     
-    for le in lexeme_entries:
+    for le_i, le in enumerate(lexeme_entries):
         try:
             citation_form, le = le.split(" = ")
-            pos, gloss = le.split(" ")
+            citation_form = Word.from_str(citation_form, str(le_i))
+            # print("citation form:", citation_form)
+            pos, *gloss = le.split(" ")
+            gloss = " ".join(gloss)
             assert pos in full_inflections_by_part_of_speech, "unknown part of speech \"{}\"; please declare it"
             affix_to_gloss = full_inflections_by_part_of_speech.get(pos, {})
             forms = []
@@ -201,6 +240,7 @@ def load_lexicon_from_docx(fp):
             lexicon.add_lexeme(lexeme)
         except Exception as exc:
             print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
+            raise exc
     return lexicon
 
 
@@ -208,7 +248,7 @@ def inflect_lexeme(citation_form, inflection):
     # later, implement more robust logic
     # affix should be able to be a string representing a function of citation_form
     # e.g. citation form is k_t_b and affix is _i_a_
-    return inflection.replace("_", citation_form)
+    return inflection.replace("_", citation_form.to_str())
 
 def inflect_gloss(citation_gloss, inflection_gloss):
     return citation_gloss + "-" + inflection_gloss
@@ -236,7 +276,7 @@ if __name__ == '__main__':
     #     lex = Lexeme(root, forms, part_of_speech, gloss)
     #     lexicon.add_lexeme(lex)
 
-    language = Language("Examplish", lexicon)
+    language = Language("Examplish", lexicon, DEFAULT_PHONEME_CLASSES)
 
     app = QApplication(sys.argv)
     gui = ConlangWorkspaceGUI(language)
