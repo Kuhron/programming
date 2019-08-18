@@ -62,33 +62,66 @@ class Lexicon:
 
 
 class Lexeme:
-    def __init__(self, citation_form, forms, part_of_speech, gloss, form_glosses):
+    def __init__(self, citation_form, part_of_speech, gloss, forms=None, inflection_forms=None):
         self.citation_form = citation_form
-        self.forms = [Word.from_str(w) for w in forms]
-        for i, form in enumerate(self.forms):
-            assert type(form) is Word
-            self.forms[i].designate(self.citation_form.designation + "." + str(i))
         assert part_of_speech.isidentifier(), "part of speech \"{}\" is not a valid identifier".format(part_of_speech)
         self.part_of_speech = part_of_speech
-        self.gloss = gloss
-        self.form_glosses = form_glosses
-        assert len(self.forms) == len(self.form_glosses)
-        self.form_to_gloss = {f: g for f, g in zip(self.forms, self.form_glosses)}
+        self.parse_gloss(gloss)
+
+        if forms is None:
+            self.create_forms(inflection_forms)
+        else:
+            self.forms = forms
+        self.validate_forms()
+
+    def validate_forms(self):
+        for form in self.forms:
+            assert type(form) is Word and form.has_designation(), "invalid form: {}".format(form)
+
+    def create_forms(self, inflection_forms):
+        self.forms = []
+        for inf in inflection_forms:
+            form = self.apply_inflection_form(inf)
+            assert form.has_designation(), "form has no designation: {}".format(form)
+            self.forms.append(form)
+
+    def apply_inflection_form(self, inflection):
+        citation_form = self.citation_form
+        assert type(citation_form) is Word and type(inflection) is InflectionForm
+        new_string = inflection.string.replace("_", citation_form.to_str())
+        new_designation = citation_form.designation + inflection.designation_suffix
+        new_gloss = self.short_gloss + inflection.gloss
+        new_word = Word.from_str(new_string, designation=new_designation)
+        new_word.gloss = new_gloss
+        return new_word
+
+    def parse_gloss(self, gloss_str):
+        if gloss_str[:2] == "g:":
+            # has short gloss
+            short_gloss, *rest = gloss_str.split(" ")
+            self.short_gloss = short_gloss[2:]
+            self.gloss = " ".join(rest)
+        else:
+            self.short_gloss = self.gloss = gloss_str
 
 
 class Word:
-    def __init__(self, lst, designation=None):
+    def __init__(self, lst, designation=None, gloss=None):
         self.designation = designation
         assert type(lst) is list, "Word.lst must be a list, got {}: {}".format(type(lst), lst)
         self.lst = lst
-        #self.word_class = word_class
+        self.gloss = gloss
         
     def designate(self, designation):
         self.designation = designation
-        # print("designated {}".format(self))
+
+    def has_designation(self):
+        return self.designation is not None
         
     @staticmethod
     def from_str(s, designation=None):
+        if type(s) is not str:
+            raise TypeError("expected str, got {}".format(type(s)))
         lst =  parse_word_str_to_list(s)
         assert type(lst) is list
         return Word(lst, designation)
@@ -144,6 +177,30 @@ class Word:
     def __hash__(self):
         return hash((self.designation, self.to_str()))
         
+
+class InflectionForm:
+    # multiple morphemes, ready to be applied to a citation form and then the surface form will be finished
+    def __init__(self, pos, string, gloss, designation_suffix):
+        self.pos = pos
+        self.string = string
+        self.gloss = gloss
+        self.designation_suffix = designation_suffix
+
+    def __repr__(self):
+        return "InflectionForm suffix #{} of POS {}: {} = '{}'".format(
+            self.designation_suffix, self.pos, self.string, self.gloss, 
+        )
+
+
+class Morpheme:
+    # just a single morpheme, such as tense
+    # cannot be applied to inflect a citation form by itself, since only has one feature
+    def __init__(self, pos, feature, string, gloss):
+        self.pos = pos
+        self.feature = feature
+        self.string = string
+        self.gloss = gloss
+
         
 class Rule:
     def __init__(self, inp, outp, designation=None):
@@ -970,7 +1027,7 @@ def apply_rule(word, rule):
         return word
     
     if res_lst != word.lst:
-        res = Word(res_lst, designation=word.designation)
+        res = Word(res_lst, designation=word.designation, gloss=word.gloss)
         #outp_display = "Ø" if outp == "" else "".join(outp)
         #print("{} : {} -> {}".format(rule, word, res))
         return res

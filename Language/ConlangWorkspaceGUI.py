@@ -11,7 +11,8 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
 import docx
 from docx.shared import Pt
 
-from LanguageEvolutionTools import (Word, Rule, Lexeme, Lexicon, Language,
+from LanguageEvolutionTools import (
+        Word, Rule, Lexeme, Lexicon, Language, InflectionForm, Morpheme, 
         DEFAULT_PHONEME_CLASSES, 
         evolve_word, get_random_rules, 
     )
@@ -95,6 +96,14 @@ class ConlangWorkspaceGUI(QDialog):
 
     def createLexemeFormList(self):
         self.lexeme_form_list = QListWidget()
+        self.lexeme_form_list.currentItemChanged.connect(self.report_current_selected_form)
+
+    def report_current_selected_form(self):
+        item = self.lexeme_form_list.currentItem()
+        if item is None:
+            return
+        w = item.data(Qt.UserRole)
+        print(w)
 
     def clearSelectedLexeme(self):
         self.lexeme_list.clearSelection()
@@ -106,9 +115,13 @@ class ConlangWorkspaceGUI(QDialog):
         if item is None:
             return
         lex = item.data(Qt.UserRole)
-        for form, form_gloss in lex.form_to_gloss.items():
+        sorted_forms = sorted(lex.forms, key=lambda w: w.designation)
+        # for form, form_gloss in lex.form_to_gloss.items():
+        for form in sorted_forms:
             assert type(form) is Word
-            self.lexeme_form_list.addItem(form.to_str() + " (" + form_gloss + ")")
+            item = QListWidgetItem(form.to_str() + " (" + form.gloss + ")")
+            item.setData(Qt.UserRole, form)
+            self.lexeme_form_list.addItem(item)
 
     def export_lexicon_to_docx(self):
         # TODO include all command lines
@@ -142,7 +155,7 @@ class ConlangWorkspaceGUI(QDialog):
         self.soundChangeWidget.setText(rule.to_notation())
 
     def apply_sound_change(self):
-        rules = Rule.from_str(self.soundChangeWidget.text().replace("Ø", ""))
+        rules = Rule.from_str(self.soundChangeWidget.text())#.replace("Ø", ""))  # shouldn't have null symbols anymore
         expanded_rules = []
         for rule in rules:
             expanded_rules += rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
@@ -153,7 +166,7 @@ class ConlangWorkspaceGUI(QDialog):
             for f in lexeme.forms:
                 new_form = evolve_word(f, expanded_rules)
                 new_forms.append(new_form)
-            new_lexeme = Lexeme(new_citation_form, new_forms, lexeme.part_of_speech, lexeme.gloss, lexeme.form_glosses)
+            new_lexeme = Lexeme(new_citation_form, lexeme.part_of_speech, lexeme.gloss, forms=new_forms)
             new_lexicon.add_lexeme(new_lexeme)
         self.language.lexicon = new_lexicon
         self.update_lexicon_displays()
@@ -180,6 +193,7 @@ def load_lexicon_from_docx(fp):
 
     full_inflections_by_part_of_speech = {}
     affixes_by_part_of_speech_and_feature = {}
+    inflection_hierarchy_by_part_of_speech = {}
     for ce in command_entries:
         command, *rest = ce.split(" ")
         assert command[0] == "\\"
@@ -188,62 +202,58 @@ def load_lexicon_from_docx(fp):
         if command == "pos":
             pos, template = rest
             assert pos not in full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
-            full_inflections_by_part_of_speech[pos] = {template: ""}  # inflection: gloss, and gloss will be appended to in expansion phase
+            full_inflections_by_part_of_speech[pos] = [InflectionForm(pos, template, gloss="", designation_suffix="")]
             affixes_by_part_of_speech_and_feature[pos] = {}
+            inflection_hierarchy_by_part_of_speech[pos] = []
             if "{" in template:
                 s1s = template.split("{")[1:]
                 s2s = [s.split("}")[0] for s in s1s]
                 # print("got features {}".format(s2s))
-                affixes_by_part_of_speech_and_feature[pos] = {f: {} for f in s2s}
+                affixes_by_part_of_speech_and_feature[pos] = {f: [] for f in s2s}
                 # print(affixes_by_part_of_speech_and_feature)
 
         elif command == "inflect":
-            pos, morpheme, equals_sign, feature, gloss = rest
-            if morpheme == "\\null":
-                morpheme = ""
+            pos, morpheme_string, equals_sign, feature, gloss = rest
+            if morpheme_string == "\\null":
+                morpheme_string = ""
             # assert pos in full_inflections_by_part_of_speech and len(full_inflections_by_part_of_speech[pos]) > 0
-            assert "\\" not in morpheme, "morpheme cannot contain backslash, but this one does: {}".format(morpheme)
+            assert "\\" not in morpheme_string, "morpheme cannot contain backslash, but this one does: {}".format(morpheme_string)
             assert equals_sign == "="
+            morpheme = Morpheme(pos, feature, morpheme_string, gloss)
             try:
-                affixes_by_part_of_speech_and_feature[pos][feature][morpheme] = gloss
+                affixes_by_part_of_speech_and_feature[pos][feature].append(morpheme)
+                if feature not in inflection_hierarchy_by_part_of_speech[pos]:
+                    inflection_hierarchy_by_part_of_speech[pos].append(feature)
             except KeyError:
                 print("can't access index [\"{}\"][\"{}\"] in the affix dict:\n{}"
                     .format(pos, feature, affixes_by_part_of_speech_and_feature))
     
-    # print(affixes_by_part_of_speech_and_feature)
-    # print(full_inflections_by_part_of_speech)
     for pos in affixes_by_part_of_speech_and_feature:
         # expand templates
         inflections = full_inflections_by_part_of_speech[pos]
-        for feature in affixes_by_part_of_speech_and_feature[pos]:
+        for feature in inflection_hierarchy_by_part_of_speech[pos]:
             morphemes = affixes_by_part_of_speech_and_feature[pos][feature]
-            assert type(morphemes) is dict, morphemes
-            new_inflections = {}
-            for inf, inf_gloss in inflections.items():
-                for m, m_gloss in morphemes.items():
-                    new_inf = inf.replace("{"+feature+"}", m)
-                    new_gloss = inf_gloss + "-" + m_gloss
-                    new_inflections[new_inf] = new_gloss
+            assert type(morphemes) is list, morphemes
+            new_inflections = []
+            for inf in inflections:
+                for morpheme_i, m in enumerate(morphemes):
+                    assert type(m) is Morpheme, m
+                    new_morpheme_string = inf.string.replace("{"+feature+"}", m.string)
+                    new_gloss = inf.gloss + "-" + m.gloss
+                    new_designation_suffix = inf.designation_suffix + "." + str(morpheme_i)
+                    new_inflections.append(InflectionForm(pos, new_morpheme_string, new_gloss, new_designation_suffix))
             inflections = new_inflections
         full_inflections_by_part_of_speech[pos] = inflections
-    # print(full_inflections_by_part_of_speech)
     
     for le_i, le in enumerate(lexeme_entries):
         try:
-            citation_form, le = le.split(" = ")
-            citation_form = Word.from_str(citation_form, str(le_i))
-            # print("citation form:", citation_form)
-            pos, *gloss = le.split(" ")
+            citation_form, rest = le.split(" = ")
+            citation_form = Word.from_str(citation_form, designation=str(le_i))
+            pos, *gloss = rest.split(" ")
             gloss = " ".join(gloss)
             assert pos in full_inflections_by_part_of_speech, "unknown part of speech \"{}\"; please declare it"
-            affix_to_gloss = full_inflections_by_part_of_speech.get(pos, {})
-            forms = []
-            form_glosses = []
-            for affix, inflection_gloss in affix_to_gloss.items():
-                forms.append(inflect_lexeme(citation_form, affix))
-                form_glosses.append(inflect_gloss(gloss, inflection_gloss))
-                # for inflection_gloss in full_inflections_by_part_of_speech[pos].values()]
-            lexeme = Lexeme(citation_form, forms, pos, gloss, form_glosses)
+            inflection_forms = full_inflections_by_part_of_speech.get(pos, [])
+            lexeme = Lexeme(citation_form, pos, gloss, inflection_forms=inflection_forms)
             lexicon.add_lexeme(lexeme)
         except Exception as exc:
             print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
@@ -251,38 +261,8 @@ def load_lexicon_from_docx(fp):
     return lexicon
 
 
-def inflect_lexeme(citation_form, inflection):
-    # later, implement more robust logic
-    # affix should be able to be a string representing a function of citation_form
-    # e.g. citation form is k_t_b and affix is _i_a_
-    return inflection.replace("_", citation_form.to_str())
-
-def inflect_gloss(citation_gloss, inflection_gloss):
-    return citation_gloss + "-" + inflection_gloss
-
-
 if __name__ == '__main__':
     lexicon = load_lexicon_from_docx("/home/wesley/programming/Language/ExamplishLexiconDocx.docx")
-    # lexicon = Lexicon([])
-    # roots = [
-    #     "koh", "tom", "asur", "puram", "mit", "ul", "nir", 
-    #     "kal", "lahas", "alat", "eril", "erek", "iliandir", "pahal",
-    #     "ettel", "risam", "tamas", "issol", "maruk", "koratin", "sertem",
-    # ]
-    # num_suffixes = ["", "ail"]
-    # case_suffixes = ["", "en", "ak"]
-    # glosses = [
-    #     "dog", "person", "fish", "house", "hand", "fire", "water",
-    #     "mountain", "storm", "ground", "river", "lake", "animal", "wood",
-    #     "salt", "metal", "sand", "leaf", "knife", "nut", "tool",
-    # ]
-    # suffixes = [n+c for n in num_suffixes for c in case_suffixes]
-    # for root, gloss in zip(roots, glosses):
-    #     forms = [root+s for s in suffixes]
-    #     part_of_speech = "n"
-    #     lex = Lexeme(root, forms, part_of_speech, gloss)
-    #     lexicon.add_lexeme(lex)
-
     language = Language("Examplish", lexicon, DEFAULT_PHONEME_CLASSES)
 
     app = QApplication(sys.argv)
