@@ -215,8 +215,9 @@ class Rule:
         return "".join(("_" if x == "" else x) for x in self.input)
         
     def get_output_str(self):
-        s = "".join(self.output)
-        return "Ø" if s == "" else s
+        s = "".join(("_" if x == "" else x) for x in self.output)
+        # return "Ø" if s == "" else s
+        return s
         
     def has_classes(self):
         return any(x in string.ascii_uppercase for x in self.to_str())
@@ -912,18 +913,18 @@ def parse_rule_str(inp):
         if rule_inp_str.count("_") > 1:
             print("only insertions with one blank are accepted right now; please split this into a series of rules:", rule_str)
             continue
-        if len(rule_inp_str) != len(rule_outp_str):
-            lris = len(rule_inp_str)
-            lros = len(rule_outp_str)
-            input_shorter = lris < lros
-            shorter_one, shorter_len, longer_len = (rule_inp_str, lris, lros) if input_shorter else (rule_outp_str, lros, lris)
-            shorter_one += "_" * (longer_len - shorter_len)
-            if input_shorter:
-                rule_inp_str = shorter_one
-            else:
-                rule_outp_str = shorter_one
         rule_inp = parse_word_str_to_list(rule_inp_str)
         rule_outp = parse_word_str_to_list(rule_outp_str)
+        if len(rule_inp) != len(rule_outp):
+            lri = len(rule_inp)
+            lro = len(rule_outp)
+            input_shorter = lri < lro
+            shorter_one, shorter_len, longer_len = (rule_inp, lri, lro) if input_shorter else (rule_outp, lro, lri)
+            shorter_one += [""] * (longer_len - shorter_len)
+            if input_shorter:
+                rule_inp = shorter_one
+            else:
+                rule_outp = shorter_one
         if len(rule_inp) != len(rule_outp):
             raise AssertionError("invalid rule given, unequal input and output lengths\ninput: {}\noutput: {}".format(rule_inp, rule_outp))
         new_rule = Rule(rule_inp, rule_outp)
