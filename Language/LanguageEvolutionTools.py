@@ -66,13 +66,14 @@ class Lexeme:
         self.citation_form = citation_form
         self.forms = [Word.from_str(w) for w in forms]
         for i, form in enumerate(self.forms):
+            assert type(form) is Word
             self.forms[i].designate(self.citation_form.designation + "." + str(i))
         assert part_of_speech.isidentifier(), "part of speech \"{}\" is not a valid identifier".format(part_of_speech)
         self.part_of_speech = part_of_speech
         self.gloss = gloss
         self.form_glosses = form_glosses
         assert len(self.forms) == len(self.form_glosses)
-        self.form_to_gloss = {f: g for f, g in zip(forms, form_glosses)}
+        self.form_to_gloss = {f: g for f, g in zip(self.forms, self.form_glosses)}
 
 
 class Word:
@@ -911,14 +912,20 @@ def parse_rule_str(inp):
         if rule_inp_str.count("_") > 1:
             print("only insertions with one blank are accepted right now; please split this into a series of rules:", rule_str)
             continue
+        if len(rule_inp_str) != len(rule_outp_str):
+            lris = len(rule_inp_str)
+            lros = len(rule_outp_str)
+            input_shorter = lris < lros
+            shorter_one, shorter_len, longer_len = (rule_inp_str, lris, lros) if input_shorter else (rule_outp_str, lros, lris)
+            shorter_one += "_" * (longer_len - shorter_len)
+            if input_shorter:
+                rule_inp_str = shorter_one
+            else:
+                rule_outp_str = shorter_one
         rule_inp = parse_word_str_to_list(rule_inp_str)
         rule_outp = parse_word_str_to_list(rule_outp_str)
         if len(rule_inp) != len(rule_outp):
-            # raise AssertionError("invalid rule given, unequal input and output lengths")
-            lri = len(rule_inp)
-            lro = len(rule_outp)
-            shorter_one, shorter_len, longer_len = (rule_inp, lri, lro) if lri < lro else (rule_outp, lro, lri)
-            shorter_one += "_" * (longer_len - shorter_len)
+            raise AssertionError("invalid rule given, unequal input and output lengths\ninput: {}\noutput: {}".format(rule_inp, rule_outp))
         new_rule = Rule(rule_inp, rule_outp)
         #all_results += new_rule.get_specific_cases(classes, used_phonemes)  # do expansion later
         all_results.append(new_rule)

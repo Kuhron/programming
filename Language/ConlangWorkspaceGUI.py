@@ -97,15 +97,18 @@ class ConlangWorkspaceGUI(QDialog):
         self.lexeme_form_list = QListWidget()
 
     def clearSelectedLexeme(self):
-        # doesn't seem to work, qt likes to trigger the currentItemChanged signal anyway
         self.lexeme_list.clearSelection()
         self.lexeme_form_list.clear()
 
     def changeSelectedLexeme(self):
         self.lexeme_form_list.clear()
-        lex = self.lexeme_list.currentItem().data(Qt.UserRole)
+        item = self.lexeme_list.currentItem()
+        if item is None:
+            return
+        lex = item.data(Qt.UserRole)
         for form, form_gloss in lex.form_to_gloss.items():
-            self.lexeme_form_list.addItem(form + " (" + form_gloss + ")")
+            assert type(form) is Word
+            self.lexeme_form_list.addItem(form.to_str() + " (" + form_gloss + ")")
 
     def export_lexicon_to_docx(self):
         # TODO include all command lines
@@ -139,7 +142,7 @@ class ConlangWorkspaceGUI(QDialog):
         self.soundChangeWidget.setText(rule.to_notation())
 
     def apply_sound_change(self):
-        rules = Rule.from_str(self.soundChangeWidget.text())
+        rules = Rule.from_str(self.soundChangeWidget.text().replace("Ø", ""))
         expanded_rules = []
         for rule in rules:
             expanded_rules += rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
@@ -152,10 +155,14 @@ class ConlangWorkspaceGUI(QDialog):
                 new_forms.append(new_form)
             new_lexeme = Lexeme(new_citation_form, new_forms, lexeme.part_of_speech, lexeme.gloss, lexeme.form_glosses)
             new_lexicon.add_lexeme(new_lexeme)
-        self.lexicon = new_lexicon
+        self.language.lexicon = new_lexicon
         self.update_lexicon_displays()
+        print("sound change(s) applied: {}".format(rules))
 
     def update_lexicon_displays(self):
+        self.clearSelectedLexeme()
+        self.lexeme_list.clear()
+        self.lexeme_form_list.clear()
         self.populateLexemeList()
 
 
