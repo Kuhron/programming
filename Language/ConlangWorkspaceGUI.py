@@ -40,10 +40,12 @@ class ConlangWorkspaceGUI(QDialog):
         # self.tabWidget.setSizePolicy(QSizePolicy.Preferred,
         #         QSizePolicy.Ignored)
 
-        lexiconTab = QWidget()
+        self.lexiconTab = QWidget()
         self.createLexemeList()
         self.createLexemeFormList()
         # self.clearSelectedLexeme()
+        create_sound_change_button = QPushButton("Create sound change")
+        create_sound_change_button.pressed.connect(self.create_sound_change_from_word)
         export_to_docx_button = QPushButton("Export to DOCX")
         export_to_docx_button.pressed.connect(self.export_lexicon_to_docx)
 
@@ -51,10 +53,11 @@ class ConlangWorkspaceGUI(QDialog):
         lexiconTabHBox.setContentsMargins(5, 5, 5, 5)
         lexiconTabHBox.addWidget(self.lexeme_list)
         lexiconTabHBox.addWidget(self.lexeme_form_list)
+        lexiconTabHBox.addWidget(create_sound_change_button)
         lexiconTabHBox.addWidget(export_to_docx_button)
-        lexiconTab.setLayout(lexiconTabHBox)
+        self.lexiconTab.setLayout(lexiconTabHBox)
 
-        soundChangeTab = QWidget()
+        self.soundChangeTab = QWidget()
         self.soundChangeWidget = QLineEdit()
         soundChangeLabel = QLabel("Rule")
         soundChangeLabel.setBuddy(self.soundChangeWidget)
@@ -68,20 +71,20 @@ class ConlangWorkspaceGUI(QDialog):
         soundChangeTabHBox.addWidget(self.soundChangeWidget)
         soundChangeTabHBox.addWidget(soundChangeGenerateButton)
         soundChangeTabHBox.addWidget(applySoundChangeButton)
-        soundChangeTab.setLayout(soundChangeTabHBox)
+        self.soundChangeTab.setLayout(soundChangeTabHBox)
 
-        terminalTab = QWidget()
+        self.terminalTab = QWidget()
         terminalInputWidget = QLineEdit()
         terminalOutputWidget = QTextEdit()
         terminalTabHBox = QHBoxLayout()
         terminalTabHBox.setContentsMargins(5, 5, 5, 5)
         terminalTabHBox.addWidget(terminalInputWidget)
         terminalTabHBox.addWidget(terminalOutputWidget)
-        terminalTab.setLayout(terminalTabHBox)
+        self.terminalTab.setLayout(terminalTabHBox)
 
-        self.tabWidget.addTab(lexiconTab, "Lexicon")
-        self.tabWidget.addTab(soundChangeTab, "Sound Changes")
-        self.tabWidget.addTab(terminalTab, "Terminal")
+        self.tabWidget.addTab(self.lexiconTab, "Lexicon")
+        self.tabWidget.addTab(self.soundChangeTab, "Sound Changes")
+        self.tabWidget.addTab(self.terminalTab, "Terminal")
 
     def createLexemeList(self):
         self.lexeme_list = QListWidget()
@@ -90,13 +93,14 @@ class ConlangWorkspaceGUI(QDialog):
 
     def populateLexemeList(self):
         for lex in self.language.lexicon.lexemes:
-            item = QListWidgetItem(lex.citation_form.to_str() + " (" + lex.gloss + ")")
+            label = lex.citation_form.to_str() + " ({}, {})".format(lex.part_of_speech, lex.gloss)
+            item = QListWidgetItem(label)
             item.setData(Qt.UserRole, lex)
             self.lexeme_list.addItem(item)
 
     def createLexemeFormList(self):
         self.lexeme_form_list = QListWidget()
-        self.lexeme_form_list.currentItemChanged.connect(self.report_current_selected_form)
+        # self.lexeme_form_list.currentItemChanged.connect(self.report_current_selected_form)
 
     def report_current_selected_form(self):
         item = self.lexeme_form_list.currentItem()
@@ -170,6 +174,7 @@ class ConlangWorkspaceGUI(QDialog):
             new_lexicon.add_lexeme(new_lexeme)
         self.language.lexicon = new_lexicon
         self.update_lexicon_displays()
+        self.soundChangeWidget.clear()
         print("sound change(s) applied: {}".format(rules))
 
     def update_lexicon_displays(self):
@@ -177,6 +182,18 @@ class ConlangWorkspaceGUI(QDialog):
         self.lexeme_list.clear()
         self.lexeme_form_list.clear()
         self.populateLexemeList()
+
+    def create_sound_change_from_word(self):
+        item = self.lexeme_form_list.currentItem()
+        if item is None:
+            item = self.lexeme_list.currentItem()
+            if item is None:
+                print("no item selected to create sound change from")
+                return
+        w = item.data(Qt.UserRole)
+        assert type(w) is Word
+        self.tabWidget.setCurrentWidget(self.soundChangeTab)
+        self.soundChangeWidget.setText(w.to_str())
 
 
 def load_lexicon_from_docx(fp):

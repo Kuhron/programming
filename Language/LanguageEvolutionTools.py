@@ -1152,7 +1152,7 @@ def get_random_rules(n_rules, lexicon, classes):
             raise Exception("unknown change type")
         
         rule = Rule(inp, outp)  # don't designate it until it is accepted for use
-        print("generated rule: {}".format(rule))
+        # print("generated rule: {}".format(rule))
         res.append(rule)
     
     return res
