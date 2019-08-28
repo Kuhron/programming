@@ -196,6 +196,20 @@ class ConlangWorkspaceGUI(QDialog):
         self.soundChangeWidget.setText(w.to_str())
 
 
+class CommandProcessor:
+    def __init__(self):
+        self.command_history = []
+    
+    def process_command(command_str):
+        command_str = command_str.strip()
+        if command_str == "" or command_str[0] == "#":
+            # do nothing on blank lines and comments
+            return
+
+        # if command was processed successfully
+        self.command_history.append(command_str)
+
+
 def load_lexicon_from_docx(fp):
     lexicon = Lexicon([])
     document = docx.Document(fp)
