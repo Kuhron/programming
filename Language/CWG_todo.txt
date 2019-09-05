@@ -20,4 +20,6 @@ features:
 - sound change with capturing groups, e.g. (C:1)V(C:2)#>(2)V(1)# would change apik>akip
 - should sound changes use regex?
 - terminal ability, allow command input and show history (in this branch of tree)
+- sanity check
+- homophone check
 - 

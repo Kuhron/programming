@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QDateTime, Qt, QTimer
+from PyQt5.QtCore import (QDateTime, Qt, QTimer)
 from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QDial, QDialog, QGridLayout, QGroupBox, QHBoxLayout, 
         QInputDialog, QLabel, QLineEdit,
@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QDateTimeEdit,
         QSlider, QSpinBox, QStyleFactory, QTableWidget, QTabWidget, QTextEdit,
         QVBoxLayout, QWidget
     )
+from PyQt5.QtGui import (QIntValidator)
 
 import docx
 from docx.shared import Pt
@@ -35,6 +36,8 @@ class ConlangWorkspaceGUI(QDialog):
 
         self.setWindowTitle("Conlang Workspace")
 
+        self.command_processor = CommandProcessor(gui=self)
+
     def createTabWidget(self):
         self.tabWidget = QTabWidget()
         # self.tabWidget.setSizePolicy(QSizePolicy.Preferred,
@@ -49,13 +52,19 @@ class ConlangWorkspaceGUI(QDialog):
         export_to_docx_button = QPushButton("Export to DOCX")
         export_to_docx_button.pressed.connect(self.export_lexicon_to_docx)
 
-        lexiconTabHBox = QHBoxLayout()
-        lexiconTabHBox.setContentsMargins(5, 5, 5, 5)
-        lexiconTabHBox.addWidget(self.lexeme_list)
-        lexiconTabHBox.addWidget(self.lexeme_form_list)
-        lexiconTabHBox.addWidget(create_sound_change_button)
-        lexiconTabHBox.addWidget(export_to_docx_button)
-        self.lexiconTab.setLayout(lexiconTabHBox)
+        lexiconTabVBox = QVBoxLayout()
+        lexiconTabVBox.setContentsMargins(5, 5, 5, 5)
+
+        lexiconTabHBox0 = QHBoxLayout()
+        lexiconTabHBox0.addWidget(self.lexeme_list)
+        lexiconTabHBox0.addWidget(self.lexeme_form_list)
+        lexiconTabVBox.addLayout(lexiconTabHBox0)
+
+        lexiconTabHBox1 = QHBoxLayout()
+        lexiconTabHBox1.addWidget(create_sound_change_button)
+        lexiconTabHBox1.addWidget(export_to_docx_button)
+        lexiconTabVBox.addLayout(lexiconTabHBox1)
+        self.lexiconTab.setLayout(lexiconTabVBox)
 
         self.soundChangeTab = QWidget()
         self.soundChangeWidget = QLineEdit()
@@ -65,22 +74,45 @@ class ConlangWorkspaceGUI(QDialog):
         soundChangeGenerateButton.pressed.connect(self.generate_sound_change)
         applySoundChangeButton = QPushButton("Apply rule")
         applySoundChangeButton.pressed.connect(self.apply_sound_change)
+        self.fastForwardStepsInput = QLineEdit()
+        fastForwardStepsLabel = QLabel("Steps to fast forward")
+        fastForwardStepsLabel.setBuddy(self.fastForwardStepsInput)
+        self.fastForwardButton = QPushButton("Fast forward")
+        self.onlyInt = QIntValidator()
+        self.fastForwardStepsInput.setValidator(self.onlyInt)
+        self.fastForwardButton.pressed.connect(self.fast_forward)
 
-        soundChangeTabHBox = QHBoxLayout()
-        soundChangeTabHBox.setContentsMargins(5, 5, 5, 5)
-        soundChangeTabHBox.addWidget(self.soundChangeWidget)
-        soundChangeTabHBox.addWidget(soundChangeGenerateButton)
-        soundChangeTabHBox.addWidget(applySoundChangeButton)
-        self.soundChangeTab.setLayout(soundChangeTabHBox)
+        soundChangeTabVBox = QVBoxLayout()
+        soundChangeTabVBox.setContentsMargins(5, 5, 5, 5)
+
+        soundChangeTabHBox0 = QHBoxLayout()
+        soundChangeTabHBox0.addWidget(soundChangeLabel)
+        soundChangeTabHBox0.addWidget(self.soundChangeWidget)
+        soundChangeTabVBox.addLayout(soundChangeTabHBox0)
+
+        soundChangeTabHBox1 = QHBoxLayout()
+        soundChangeTabHBox1.addWidget(soundChangeGenerateButton)
+        soundChangeTabHBox1.addWidget(applySoundChangeButton)
+        soundChangeTabVBox.addLayout(soundChangeTabHBox1)
+
+        soundChangeTabHBox2 = QHBoxLayout()
+        soundChangeTabHBox2.addWidget(fastForwardStepsLabel)
+        soundChangeTabHBox2.addWidget(self.fastForwardStepsInput)
+        soundChangeTabHBox2.addWidget(self.fastForwardButton)
+        soundChangeTabVBox.addLayout(soundChangeTabHBox2)
+
+        self.soundChangeTab.setLayout(soundChangeTabVBox)
 
         self.terminalTab = QWidget()
-        terminalInputWidget = QLineEdit()
-        terminalOutputWidget = QTextEdit()
-        terminalTabHBox = QHBoxLayout()
-        terminalTabHBox.setContentsMargins(5, 5, 5, 5)
-        terminalTabHBox.addWidget(terminalInputWidget)
-        terminalTabHBox.addWidget(terminalOutputWidget)
-        self.terminalTab.setLayout(terminalTabHBox)
+        self.terminalInputWidget = QLineEdit()
+        self.terminalInputWidget.returnPressed.connect(self.send_command_to_processor)
+        self.terminalOutputWidget = QTextEdit()
+        self.terminalOutputWidget.setReadOnly(True)
+        terminalTabVBox = QVBoxLayout()
+        terminalTabVBox.setContentsMargins(5, 5, 5, 5)
+        terminalTabVBox.addWidget(self.terminalOutputWidget)  # put input below output
+        terminalTabVBox.addWidget(self.terminalInputWidget)
+        self.terminalTab.setLayout(terminalTabVBox)
 
         self.tabWidget.addTab(self.lexiconTab, "Lexicon")
         self.tabWidget.addTab(self.soundChangeTab, "Sound Changes")
@@ -177,6 +209,16 @@ class ConlangWorkspaceGUI(QDialog):
         self.soundChangeWidget.clear()
         print("sound change(s) applied: {}".format(rules))
 
+    def fast_forward(self):
+        try:
+            n_steps = int(self.fastForwardStepsInput.text())
+        except ValueError:
+            print("QIntValidator is not working!")
+            return
+        for i in range(n_steps):
+            self.generate_sound_change()
+            self.apply_sound_change()
+
     def update_lexicon_displays(self):
         self.clearSelectedLexeme()
         self.lexeme_list.clear()
@@ -195,19 +237,32 @@ class ConlangWorkspaceGUI(QDialog):
         self.tabWidget.setCurrentWidget(self.soundChangeTab)
         self.soundChangeWidget.setText(w.to_str())
 
+    def send_command_to_processor(self):
+        command_str = self.terminalInputWidget.text()
+        self.command_processor.process_command(command_str)
+
+    def update_command_history_display(self):
+        self.terminalOutputWidget.setText("\n".join(self.command_processor.command_history))
+        self.terminalOutputWidget.verticalScrollBar().setValue(self.terminalOutputWidget.verticalScrollBar().maximum())
+        self.terminalInputWidget.clear()
+
 
 class CommandProcessor:
-    def __init__(self):
+    def __init__(self, gui):
         self.command_history = []
+        self.gui = gui
     
-    def process_command(command_str):
+    def process_command(self, command_str):
         command_str = command_str.strip()
-        if command_str == "" or command_str[0] == "#":
-            # do nothing on blank lines and comments
-            return
+        # if command_str == "" or command_str[0] == "#":
+        #     # do nothing on blank lines and comments
+        #     return
+
+        print("command to process:", command_str)
 
         # if command was processed successfully
         self.command_history.append(command_str)
+        self.gui.update_command_history_display()
 
 
 def load_lexicon_from_docx(fp):
