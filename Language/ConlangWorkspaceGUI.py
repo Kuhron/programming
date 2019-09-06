@@ -251,6 +251,22 @@ class CommandProcessor:
     def __init__(self, gui):
         self.command_history = []
         self.gui = gui
+
+        # language-related variables for the processor to keep track of
+        # maybe should move these to be attributes of the language, as long as processor can see them somehow
+        self.full_inflections_by_part_of_speech = {}
+        self.affixes_by_part_of_speech_and_feature = {}
+        self.inflection_hierarchy_by_part_of_speech = {}
+
+    @staticmethod
+    def is_command_entry(s):
+        return s[0] == "\\"
+
+    @staticmethod
+    def is_lexeme_entry(s):
+        return s[0] not in ["\\", "#"] and " = " in s
+        # use backslash to start special lines, such as defining a word class
+        # use '#' for comment lines
     
     def process_command(self, command_str):
         command_str = command_str.strip()
@@ -260,98 +276,205 @@ class CommandProcessor:
 
         print("command to process:", command_str)
 
+        if CommandProcessor.is_command_entry(command_str):
+            self.process_command_entry(command_str)
+        elif CommandProcessor.is_lexeme_entry(command_str):
+            self.process_lexeme_entry(command_str)
+            # self.expand_templates_for_new_lexeme()
+        else:
+            print("command cannot be processed: {}".format(command_str))
+            return
+
+        # update the lexicon based on any new features, new affixes for a feature, new lexemes, etc.
+        # self.expand_templates()  # crashes computer!
+
         # if command was processed successfully
         self.command_history.append(command_str)
         self.gui.update_command_history_display()
 
-
-def load_lexicon_from_docx(fp):
-    lexicon = Lexicon([])
-    document = docx.Document(fp)
-    ps = [p.text for p in document.paragraphs]
-    ps = [p for p in ps if len(p) > 0]
-    is_lexeme_entry = lambda p: p[0] not in ["\\", "#"] and " = " in p
-    # use backslash to start special lines, such as defining a word class
-    # use '#' for comment lines
-    is_command_entry = lambda p: p[0] == "\\"
-    lexeme_entries = [p for p in ps if is_lexeme_entry(p)]
-    command_entries = [p for p in ps if is_command_entry(p)]
-
-    full_inflections_by_part_of_speech = {}
-    affixes_by_part_of_speech_and_feature = {}
-    inflection_hierarchy_by_part_of_speech = {}
-    for ce in command_entries:
+    def process_command_entry(self, ce):
         command, *rest = ce.split(" ")
         assert command[0] == "\\"
         command = command[1:]
         # print("got command {} with args {}".format(command, rest))
         if command == "pos":
-            pos, template = rest
-            assert pos not in full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
-            full_inflections_by_part_of_speech[pos] = [InflectionForm(pos, template, gloss="", designation_suffix="")]
-            affixes_by_part_of_speech_and_feature[pos] = {}
-            inflection_hierarchy_by_part_of_speech[pos] = []
-            if "{" in template:
-                s1s = template.split("{")[1:]
-                s2s = [s.split("}")[0] for s in s1s]
-                # print("got features {}".format(s2s))
-                affixes_by_part_of_speech_and_feature[pos] = {f: [] for f in s2s}
-                # print(affixes_by_part_of_speech_and_feature)
+            self.process_pos_command_entry(rest)
 
         elif command == "inflect":
-            pos, morpheme_string, equals_sign, feature, gloss = rest
-            if morpheme_string == "\\null":
-                morpheme_string = ""
-            # assert pos in full_inflections_by_part_of_speech and len(full_inflections_by_part_of_speech[pos]) > 0
-            assert "\\" not in morpheme_string, "morpheme cannot contain backslash, but this one does: {}".format(morpheme_string)
-            assert equals_sign == "="
-            morpheme = Morpheme(pos, feature, morpheme_string, gloss)
-            try:
-                affixes_by_part_of_speech_and_feature[pos][feature].append(morpheme)
-                if feature not in inflection_hierarchy_by_part_of_speech[pos]:
-                    inflection_hierarchy_by_part_of_speech[pos].append(feature)
-            except KeyError:
-                print("can't access index [\"{}\"][\"{}\"] in the affix dict:\n{}"
-                    .format(pos, feature, affixes_by_part_of_speech_and_feature))
-    
-    for pos in affixes_by_part_of_speech_and_feature:
-        # expand templates
-        inflections = full_inflections_by_part_of_speech[pos]
-        for feature in inflection_hierarchy_by_part_of_speech[pos]:
-            morphemes = affixes_by_part_of_speech_and_feature[pos][feature]
-            assert type(morphemes) is list, morphemes
-            new_inflections = []
-            for inf in inflections:
-                for morpheme_i, m in enumerate(morphemes):
-                    assert type(m) is Morpheme, m
-                    new_morpheme_string = inf.string.replace("{"+feature+"}", m.string)
-                    new_gloss = inf.gloss + "-" + m.gloss
-                    new_designation_suffix = inf.designation_suffix + "." + str(morpheme_i)
-                    new_inflections.append(InflectionForm(pos, new_morpheme_string, new_gloss, new_designation_suffix))
-            inflections = new_inflections
-        full_inflections_by_part_of_speech[pos] = inflections
-    
-    for le_i, le in enumerate(lexeme_entries):
+            self.process_inflect_command_entry(rest)
+        
+        else:
+            print("unknown command \'{}\'".format(command))
+
+    def process_pos_command_entry(self, args):
+        pos, template = args
+        assert pos not in self.full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
+        self.full_inflections_by_part_of_speech[pos] = [InflectionForm(pos, template, gloss="", designation_suffix="")]
+        self.affixes_by_part_of_speech_and_feature[pos] = {}
+        self.inflection_hierarchy_by_part_of_speech[pos] = []
+        if "{" in template:
+            s1s = template.split("{")[1:]
+            s2s = [s.split("}")[0] for s in s1s]
+            # print("got features {}".format(s2s))
+            self.affixes_by_part_of_speech_and_feature[pos] = {f: [] for f in s2s}
+            # print(self.affixes_by_part_of_speech_and_feature)
+
+    def process_inflect_command_entry(self, args):
+        pos, morpheme_string, equals_sign, feature, gloss = args
+        if morpheme_string == "\\null":
+            morpheme_string = ""
+        # assert pos in self.full_inflections_by_part_of_speech and len(self.full_inflections_by_part_of_speech[pos]) > 0
+        assert "\\" not in morpheme_string, "morpheme cannot contain backslash, but this one does: {}".format(morpheme_string)
+        assert equals_sign == "="
+        morpheme = Morpheme(pos, feature, morpheme_string, gloss)
+        try:
+            self.affixes_by_part_of_speech_and_feature[pos][feature].append(morpheme)
+            if feature not in self.inflection_hierarchy_by_part_of_speech[pos]:
+                self.inflection_hierarchy_by_part_of_speech[pos].append(feature)
+        except KeyError:
+            print("can't access index [\"{}\"][\"{}\"] in the affix dict:\n{}"
+                .format(pos, feature, self.affixes_by_part_of_speech_and_feature))
+
+    def process_lexeme_entry(self, le):
         try:
             citation_form, rest = le.split(" = ")
+            le_i = self.gui.language.lexicon.next_lexeme_designation
             citation_form = Word.from_str(citation_form, designation=str(le_i))
             pos, *gloss = rest.split(" ")
             gloss = " ".join(gloss)
-            assert pos in full_inflections_by_part_of_speech, "unknown part of speech \"{}\"; please declare it"
-            inflection_forms = full_inflections_by_part_of_speech.get(pos, [])
+            assert pos in self.full_inflections_by_part_of_speech, "unknown part of speech \"{}\"; please declare it".format(pos)
+            inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
             lexeme = Lexeme(citation_form, pos, gloss, inflection_forms=inflection_forms)
-            lexicon.add_lexeme(lexeme)
+            self.gui.language.lexicon.add_lexeme(lexeme)
         except Exception as exc:
             print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
             raise exc
-    return lexicon
+
+    def expand_templates(self):
+        raise Exception("do not use")
+        for pos in self.affixes_by_part_of_speech_and_feature:
+            # expand templates
+            inflections = self.full_inflections_by_part_of_speech[pos]
+            for feature in self.inflection_hierarchy_by_part_of_speech[pos]:
+                morphemes = self.affixes_by_part_of_speech_and_feature[pos][feature]
+                assert type(morphemes) is list, morphemes
+                new_inflections = []
+                for inf in inflections:
+                    for morpheme_i, m in enumerate(morphemes):
+                        assert type(m) is Morpheme, m
+                        new_morpheme_string = inf.string.replace("{"+feature+"}", m.string)
+                        new_gloss = inf.gloss + "-" + m.gloss
+                        new_designation_suffix = inf.designation_suffix + "." + str(morpheme_i)
+                        new_inflections.append(InflectionForm(pos, new_morpheme_string, new_gloss, new_designation_suffix))
+                inflections = new_inflections
+            self.full_inflections_by_part_of_speech[pos] = inflections
+
+    def expand_templates_for_new_lexeme(self):
+        raise NotImplementedError
+
+    def expand_templates_for_new_affix(self):
+        raise NotImplementedError
+
+
+
+def load_lexicon_from_docx(fp, command_processor):
+    document = docx.Document(fp)
+    ps = [p.text for p in document.paragraphs]
+    ps = [p for p in ps if len(p) > 0]
+    for s in ps:
+        command_processor.process_command(s)
+    return command_processor.gui.language.lexicon
+    
+    # # old code
+    # lexicon = Lexicon([])
+    # document = docx.Document(fp)
+    # ps = [p.text for p in document.paragraphs]
+    # ps = [p for p in ps if len(p) > 0]
+    # is_lexeme_entry = lambda p: p[0] not in ["\\", "#"] and " = " in p
+    # # use backslash to start special lines, such as defining a word class
+    # # use '#' for comment lines
+    # is_command_entry = lambda p: p[0] == "\\"
+    # lexeme_entries = [p for p in ps if is_lexeme_entry(p)]
+    # command_entries = [p for p in ps if is_command_entry(p)]
+
+    # full_inflections_by_part_of_speech = {}
+    # affixes_by_part_of_speech_and_feature = {}
+    # inflection_hierarchy_by_part_of_speech = {}
+    # for ce in command_entries:
+    #     command, *rest = ce.split(" ")
+    #     assert command[0] == "\\"
+    #     command = command[1:]
+    #     # print("got command {} with args {}".format(command, rest))
+    #     if command == "pos":
+    #         pos, template = rest
+    #         assert pos not in full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
+    #         full_inflections_by_part_of_speech[pos] = [InflectionForm(pos, template, gloss="", designation_suffix="")]
+    #         affixes_by_part_of_speech_and_feature[pos] = {}
+    #         inflection_hierarchy_by_part_of_speech[pos] = []
+    #         if "{" in template:
+    #             s1s = template.split("{")[1:]
+    #             s2s = [s.split("}")[0] for s in s1s]
+    #             # print("got features {}".format(s2s))
+    #             affixes_by_part_of_speech_and_feature[pos] = {f: [] for f in s2s}
+    #             # print(affixes_by_part_of_speech_and_feature)
+
+    #     elif command == "inflect":
+    #         pos, morpheme_string, equals_sign, feature, gloss = rest
+    #         if morpheme_string == "\\null":
+    #             morpheme_string = ""
+    #         # assert pos in full_inflections_by_part_of_speech and len(full_inflections_by_part_of_speech[pos]) > 0
+    #         assert "\\" not in morpheme_string, "morpheme cannot contain backslash, but this one does: {}".format(morpheme_string)
+    #         assert equals_sign == "="
+    #         morpheme = Morpheme(pos, feature, morpheme_string, gloss)
+    #         try:
+    #             affixes_by_part_of_speech_and_feature[pos][feature].append(morpheme)
+    #             if feature not in inflection_hierarchy_by_part_of_speech[pos]:
+    #                 inflection_hierarchy_by_part_of_speech[pos].append(feature)
+    #         except KeyError:
+    #             print("can't access index [\"{}\"][\"{}\"] in the affix dict:\n{}"
+    #                 .format(pos, feature, affixes_by_part_of_speech_and_feature))
+    
+    # for pos in affixes_by_part_of_speech_and_feature:
+    #     # expand templates
+    #     inflections = full_inflections_by_part_of_speech[pos]
+    #     for feature in inflection_hierarchy_by_part_of_speech[pos]:
+    #         morphemes = affixes_by_part_of_speech_and_feature[pos][feature]
+    #         assert type(morphemes) is list, morphemes
+    #         new_inflections = []
+    #         for inf in inflections:
+    #             for morpheme_i, m in enumerate(morphemes):
+    #                 assert type(m) is Morpheme, m
+    #                 new_morpheme_string = inf.string.replace("{"+feature+"}", m.string)
+    #                 new_gloss = inf.gloss + "-" + m.gloss
+    #                 new_designation_suffix = inf.designation_suffix + "." + str(morpheme_i)
+    #                 new_inflections.append(InflectionForm(pos, new_morpheme_string, new_gloss, new_designation_suffix))
+    #         inflections = new_inflections
+    #     full_inflections_by_part_of_speech[pos] = inflections
+    
+    # for le_i, le in enumerate(lexeme_entries):
+    #     try:
+    #         citation_form, rest = le.split(" = ")
+    #         citation_form = Word.from_str(citation_form, designation=str(le_i))
+    #         pos, *gloss = rest.split(" ")
+    #         gloss = " ".join(gloss)
+    #         assert pos in full_inflections_by_part_of_speech, "unknown part of speech \"{}\"; please declare it"
+    #         inflection_forms = full_inflections_by_part_of_speech.get(pos, [])
+    #         lexeme = Lexeme(citation_form, pos, gloss, inflection_forms=inflection_forms)
+    #         lexicon.add_lexeme(lexeme)
+    #     except Exception as exc:
+    #         print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
+    #         raise exc
+    # return lexicon
 
 
 if __name__ == '__main__':
-    lexicon = load_lexicon_from_docx("/home/wesley/programming/Language/ExamplishLexiconDocx.docx")
-    language = Language("Examplish", lexicon, DEFAULT_PHONEME_CLASSES)
+    empty_lexicon = Lexicon([])
+    language = Language("Examplish", empty_lexicon, DEFAULT_PHONEME_CLASSES)
 
     app = QApplication(sys.argv)
     gui = ConlangWorkspaceGUI(language)
+    lexicon = load_lexicon_from_docx("/home/wesley/programming/Language/ExamplishLexiconDocx.docx", gui.command_processor)
+    gui.language.lexicon = lexicon
+
     gui.show()
     sys.exit(app.exec_())
