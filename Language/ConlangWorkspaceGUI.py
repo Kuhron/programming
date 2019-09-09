@@ -348,8 +348,10 @@ class CommandProcessor:
 
         self.expand_templates_for_new_affix(morpheme)
         lexemes_of_pos = [lex for lex in self.gui.language.lexicon.lexemes if lex.part_of_speech == pos]
+        inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
         for lex in lexemes_of_pos:
-            lex.inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
+            lex.create_forms(inflection_forms)
+        self.gui.update_lexicon_displays()
 
     def process_lexeme_entry(self, le):
         # e.g. lahas = n mountain
@@ -365,6 +367,7 @@ class CommandProcessor:
             inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
             lexeme = Lexeme(citation_form, pos, gloss, inflection_forms=inflection_forms)
             self.gui.language.lexicon.add_lexeme(lexeme)
+            self.gui.update_lexicon_displays()
         except Exception as exc:
             print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
             raise exc
