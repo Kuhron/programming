@@ -257,6 +257,7 @@ class CommandProcessor:
         self.full_inflections_by_part_of_speech = {}
         self.affixes_by_part_of_speech_and_feature = {}
         self.inflection_hierarchy_by_part_of_speech = {}
+        self.inflection_templates_by_part_of_speech = {}
 
     @staticmethod
     def is_command_entry(s):
@@ -299,19 +300,25 @@ class CommandProcessor:
         # print("got command {} with args {}".format(command, rest))
         if command == "pos":
             self.process_pos_command_entry(rest)
+            # don't expand templates here because only declaring new pos, no inflections yet
 
         elif command == "inflect":
             self.process_inflect_command_entry(rest)
+            # templates for this pos will be expanded in the process_inflect_... method
         
         else:
             print("unknown command \'{}\'".format(command))
 
     def process_pos_command_entry(self, args):
+        # e.g. \pos v {negation}_{tense}{person}{number}
+        #      \pos pa _
+        #      \pos pb {motion}_{number}
         pos, template = args
         assert pos not in self.full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
-        self.full_inflections_by_part_of_speech[pos] = [InflectionForm(pos, template, gloss="", designation_suffix="")]
+        self.full_inflections_by_part_of_speech[pos] = []
         self.affixes_by_part_of_speech_and_feature[pos] = {}
         self.inflection_hierarchy_by_part_of_speech[pos] = []
+        self.inflection_templates_by_part_of_speech[pos] = template
         if "{" in template:
             s1s = template.split("{")[1:]
             s2s = [s.split("}")[0] for s in s1s]
@@ -320,11 +327,14 @@ class CommandProcessor:
             # print(self.affixes_by_part_of_speech_and_feature)
 
     def process_inflect_command_entry(self, args):
+        # e.g. \inflect v ra = negation NEG
+        #      \inflect v ku = person 1
+        #      \inflect v \null = number SG
         pos, morpheme_string, equals_sign, feature, gloss = args
         if morpheme_string == "\\null":
             morpheme_string = ""
         # assert pos in self.full_inflections_by_part_of_speech and len(self.full_inflections_by_part_of_speech[pos]) > 0
-        assert "\\" not in morpheme_string, "morpheme cannot contain backslash, but this one does: {}".format(morpheme_string)
+        assert "\\" not in morpheme_string, "non-null morpheme cannot contain backslash, but this one does: {}".format(morpheme_string)
         assert equals_sign == "="
         morpheme = Morpheme(pos, feature, morpheme_string, gloss)
         try:
@@ -334,8 +344,17 @@ class CommandProcessor:
         except KeyError:
             print("can't access index [\"{}\"][\"{}\"] in the affix dict:\n{}"
                 .format(pos, feature, self.affixes_by_part_of_speech_and_feature))
+            return
+
+        self.expand_templates_for_new_affix(morpheme)
+        lexemes_of_pos = [lex for lex in self.gui.language.lexicon.lexemes if lex.part_of_speech == pos]
+        for lex in lexemes_of_pos:
+            lex.inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
 
     def process_lexeme_entry(self, le):
+        # e.g. lahas = n mountain
+        #      mak = v eat
+        #      mo = pb g:out out, outside, out of
         try:
             citation_form, rest = le.split(" = ")
             le_i = self.gui.language.lexicon.next_lexeme_designation
@@ -351,29 +370,32 @@ class CommandProcessor:
             raise exc
 
     def expand_templates(self):
-        raise Exception("do not use")
-        for pos in self.affixes_by_part_of_speech_and_feature:
-            # expand templates
-            inflections = self.full_inflections_by_part_of_speech[pos]
-            for feature in self.inflection_hierarchy_by_part_of_speech[pos]:
-                morphemes = self.affixes_by_part_of_speech_and_feature[pos][feature]
-                assert type(morphemes) is list, morphemes
-                new_inflections = []
-                for inf in inflections:
-                    for morpheme_i, m in enumerate(morphemes):
-                        assert type(m) is Morpheme, m
-                        new_morpheme_string = inf.string.replace("{"+feature+"}", m.string)
-                        new_gloss = inf.gloss + "-" + m.gloss
-                        new_designation_suffix = inf.designation_suffix + "." + str(morpheme_i)
-                        new_inflections.append(InflectionForm(pos, new_morpheme_string, new_gloss, new_designation_suffix))
-                inflections = new_inflections
-            self.full_inflections_by_part_of_speech[pos] = inflections
+        raise Exception("do not use!!!")
+        #for pos in self.affixes_by_part_of_speech_and_feature:
 
-    def expand_templates_for_new_lexeme(self):
+
+    def expand_templates_for_new_lexeme(self, lexeme):
+        # is this even necessary? the lexeme will get its InflectionForms by looking up those in the full_inflections_... dict
         raise NotImplementedError
 
-    def expand_templates_for_new_affix(self):
-        raise NotImplementedError
+    def expand_templates_for_new_affix(self, morpheme):
+        pos = morpheme.pos
+        template = self.inflection_templates_by_part_of_speech[pos]
+        # inflections = self.full_inflections_by_part_of_speech[pos]
+        inflections = [InflectionForm(pos, template, gloss="", designation_suffix="")]
+        for feature in self.inflection_hierarchy_by_part_of_speech[pos]:
+            morphemes = self.affixes_by_part_of_speech_and_feature[pos][feature]
+            assert type(morphemes) is list, morphemes
+            new_inflections = []
+            for inf in inflections:
+                for morpheme_i, m in enumerate(morphemes):
+                    assert type(m) is Morpheme, m
+                    new_morpheme_string = inf.string.replace("{"+feature+"}", m.string)
+                    new_gloss = inf.gloss + "-" + m.gloss
+                    new_designation_suffix = inf.designation_suffix + "." + str(morpheme_i)
+                    new_inflections.append(InflectionForm(pos, new_morpheme_string, new_gloss, new_designation_suffix))
+            inflections = new_inflections
+        self.full_inflections_by_part_of_speech[pos] = inflections
 
 
 
@@ -473,8 +495,11 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     gui = ConlangWorkspaceGUI(language)
-    lexicon = load_lexicon_from_docx("/home/wesley/programming/Language/ExamplishLexiconDocx.docx", gui.command_processor)
-    gui.language.lexicon = lexicon
+
+    input_docx_fp = "/home/wesley/programming/Language/ExamplishLexiconDocx.docx"
+    if input("load commands/lexicon from this file?\n{}\ny/n (default yes) ".format(input_docx_fp)) != "n":
+        lexicon = load_lexicon_from_docx(input_docx_fp, gui.command_processor)
+        gui.language.lexicon = lexicon
 
     gui.show()
     sys.exit(app.exec_())
