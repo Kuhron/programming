@@ -49,6 +49,8 @@ class ConlangWorkspaceGUI(QDialog):
         # self.clearSelectedLexeme()
         create_sound_change_button = QPushButton("Create sound change")
         create_sound_change_button.pressed.connect(self.create_sound_change_from_word)
+        show_word_history_button = QPushButton("Show word history")
+        show_word_history_button.pressed.connect(self.show_word_history)
         export_to_docx_button = QPushButton("Export to DOCX")
         export_to_docx_button.pressed.connect(self.export_lexicon_to_docx)
 
@@ -62,8 +64,12 @@ class ConlangWorkspaceGUI(QDialog):
 
         lexiconTabHBox1 = QHBoxLayout()
         lexiconTabHBox1.addWidget(create_sound_change_button)
-        lexiconTabHBox1.addWidget(export_to_docx_button)
+        lexiconTabHBox1.addWidget(show_word_history_button)
         lexiconTabVBox.addLayout(lexiconTabHBox1)
+
+        lexiconTabHBox2 = QHBoxLayout()
+        lexiconTabHBox2.addWidget(export_to_docx_button)
+        lexiconTabVBox.addLayout(lexiconTabHBox2)
         self.lexiconTab.setLayout(lexiconTabVBox)
 
         self.soundChangeTab = QWidget()
@@ -114,9 +120,16 @@ class ConlangWorkspaceGUI(QDialog):
         terminalTabVBox.addWidget(self.terminalInputWidget)
         self.terminalTab.setLayout(terminalTabVBox)
 
+        self.historyTab = QWidget()
+        historyTabVBox = QVBoxLayout()
+        historyTabVBox.setContentsMargins(5, 5, 5, 5)
+        historyTabVBox.addWidget(QLabel("TODO"))
+        self.historyTab.setLayout(historyTabVBox)
+
         self.tabWidget.addTab(self.lexiconTab, "Lexicon")
         self.tabWidget.addTab(self.soundChangeTab, "Sound Changes")
         self.tabWidget.addTab(self.terminalTab, "Terminal")
+        self.tabWidget.addTab(self.historyTab, "History")
 
     def createLexemeList(self):
         self.lexeme_list = QListWidget()
@@ -225,17 +238,28 @@ class ConlangWorkspaceGUI(QDialog):
         self.lexeme_form_list.clear()
         self.populateLexemeList()
 
-    def create_sound_change_from_word(self):
+    def get_selected_word(self):
         item = self.lexeme_form_list.currentItem()
         if item is None:
             item = self.lexeme_list.currentItem()
             if item is None:
-                print("no item selected to create sound change from")
-                return
+                print("no item selected")
+                return None
         w = item.data(Qt.UserRole)
         assert type(w) is Word
+        return w
+
+    def create_sound_change_from_word(self):
+        w = self.get_selected_word()
+        if w is None:
+            return
         self.tabWidget.setCurrentWidget(self.soundChangeTab)
         self.soundChangeWidget.setText(w.to_str())
+
+    def show_word_history(self):
+        w = self.get_selected_word()
+        print("*??? -> {}".format(w.to_str()))
+        raise NotImplementedError
 
     def send_command_to_processor(self):
         command_str = self.terminalInputWidget.text()
