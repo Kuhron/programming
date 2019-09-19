@@ -1,0 +1,21 @@
+\pos n _{number}{case}
+\pos v _{negation}{tense}{person}{number}
+\pos adj _{degree}
+juka = n cat
+tomu = n bear
+uki = n tree
+sono = v see
+unara = v chase
+\inflect n \null = number SG
+\inflect n r = number PL
+\inflect v sh = negation NEG
+\inflect v \null = negation POS
+\inflect v tam = tense PAST
+\inflect v sor = tense FUT
+\inflect v \null = tense PRES
+\inflect v i = person 3
+\inflect v s = number SG
+\inflect v k = number PL
+\inflect n \null = case NOM
+\inflect n g = case OBL
+\inflect n ti = case ACC
