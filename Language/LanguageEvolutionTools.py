@@ -37,14 +37,14 @@ class Language:
         self.name = name
         self.lexicon = lexicon
         self.phoneme_classes = phoneme_classes
-        self.used_phonemes = self.get_used_phonemes()
+        self.update_used_phonemes()
 
-    def get_used_phonemes(self):
+    def update_used_phonemes(self):
         forms = self.lexicon.all_forms()
         res = set()
         for w in forms:
             res |= w.get_phonemes_used()
-        return res
+        self.used_phonemes = res
 
 
 class Lexicon:

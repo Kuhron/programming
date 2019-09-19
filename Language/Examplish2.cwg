@@ -23,7 +23,6 @@ amaj = adj scary
 \inflect adj \null = degree POS
 \inflect adj olon = degree COMP
 \inflect adj aʃar = degree SUPER
-
 \sc VV>V_
 \sc oC>aC
 \sc VkV>VgV

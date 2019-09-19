@@ -328,11 +328,15 @@ class ConlangWorkspaceGUI(QMainWindow):
         for rule in rules:
             s = "\\sc " + rule.to_notation()
             self.command_processor.process_command(s)
-        # print("sound change(s) applied: {}".format(rules))
 
     def apply_sound_change(self, rule):
+        print("got rule from cprocessor: {}".format(rule))
         expanded_rules = []
         expanded_rules += rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
+        print("used phonemes:")
+        print(self.language.used_phonemes)
+        print("expanded:")
+        print(expanded_rules)
         new_lexicon = Lexicon([])
         for lexeme in self.language.lexicon.lexemes:
             new_citation_form = evolve_word(lexeme.citation_form, expanded_rules)
@@ -449,7 +453,7 @@ class CommandProcessor:
         command, *rest = ce.split(" ")
         assert command[0] == "\\"
         command = command[1:]
-        # print("got command {} with args {}".format(command, rest))
+        print("got command {} with args {}".format(command, rest))
         if command == "pos":
             self.process_pos_command_entry(rest)
             # don't expand templates here because only declaring new pos, no inflections yet
@@ -507,6 +511,7 @@ class CommandProcessor:
         inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
         for lex in lexemes_of_pos:
             lex.create_forms(inflection_forms)
+        self.gui.language.update_used_phonemes()
         self.gui.update_lexicon_displays()
 
     def process_lexeme_entry(self, le):
@@ -523,6 +528,7 @@ class CommandProcessor:
             inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
             lexeme = Lexeme(citation_form, pos, gloss, inflection_forms=inflection_forms)
             self.gui.language.lexicon.add_lexeme(lexeme)
+            self.gui.language.update_used_phonemes()
             self.gui.update_lexicon_displays()
         except Exception as exc:
             print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
@@ -532,7 +538,9 @@ class CommandProcessor:
         sc = " ".join(sc)  # in case there were more spaces in there that for some reason are supposed to be there, but processor split it on them
         rules = Rule.from_str(sc)
         for rule in rules:
+            print("sending rule to gui: {}".format(rule))
             self.gui.apply_sound_change(rule)
+        self.gui.language.update_used_phonemes()
 
     def get_parts_of_speech(self):
         return sorted(self.full_inflections_by_part_of_speech.keys())
