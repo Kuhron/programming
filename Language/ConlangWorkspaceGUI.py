@@ -148,7 +148,7 @@ class ConlangWorkspaceGUI(QMainWindow):
         soundChangeGenerateButton = QPushButton("Generate rule")
         soundChangeGenerateButton.pressed.connect(self.generate_sound_change)
         applySoundChangeButton = QPushButton("Apply rule")
-        applySoundChangeButton.pressed.connect(self.apply_sound_change)
+        applySoundChangeButton.pressed.connect(self.send_sound_change_command)
         self.fastForwardStepsInput = QLineEdit()
         fastForwardStepsLabel = QLabel("Steps to fast forward")
         fastForwardStepsLabel.setBuddy(self.fastForwardStepsInput)
@@ -323,11 +323,16 @@ class ConlangWorkspaceGUI(QMainWindow):
         rule = get_random_rules(1, self.language.lexicon.all_forms(), self.language.phoneme_classes)[0]
         self.soundChangeWidget.setText(rule.to_notation())
 
-    def apply_sound_change(self):
-        rules = Rule.from_str(self.soundChangeWidget.text())#.replace("Ø", ""))  # shouldn't have null symbols anymore
-        expanded_rules = []
+    def send_sound_change_command(self):
+        rules = Rule.from_str(self.soundChangeWidget.text())
         for rule in rules:
-            expanded_rules += rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
+            s = "\\sc " + rule.to_notation()
+            self.command_processor.process_command(s)
+        # print("sound change(s) applied: {}".format(rules))
+
+    def apply_sound_change(self, rule):
+        expanded_rules = []
+        expanded_rules += rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
         new_lexicon = Lexicon([])
         for lexeme in self.language.lexicon.lexemes:
             new_citation_form = evolve_word(lexeme.citation_form, expanded_rules)
@@ -340,7 +345,6 @@ class ConlangWorkspaceGUI(QMainWindow):
         self.language.lexicon = new_lexicon
         self.update_lexicon_displays()
         self.soundChangeWidget.clear()
-        print("sound change(s) applied: {}".format(rules))
 
     def fast_forward(self):
         try:
@@ -350,7 +354,7 @@ class ConlangWorkspaceGUI(QMainWindow):
             return
         for i in range(n_steps):
             self.generate_sound_change()
-            self.apply_sound_change()
+            self.send_sound_change_command()
 
     def update_lexicon_displays(self):
         self.clearSelectedLexeme()
@@ -453,6 +457,9 @@ class CommandProcessor:
         elif command == "inflect":
             self.process_inflect_command_entry(rest)
             # templates for this pos will be expanded in the process_inflect_... method
+
+        elif command == "sc":
+            self.process_sound_change_command_entry(rest)
         
         else:
             print("unknown command \'{}\'".format(command))
@@ -521,13 +528,14 @@ class CommandProcessor:
             print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
             raise exc
 
+    def process_sound_change_command_entry(self, sc):
+        sc = " ".join(sc)  # in case there were more spaces in there that for some reason are supposed to be there, but processor split it on them
+        rules = Rule.from_str(sc)
+        for rule in rules:
+            self.gui.apply_sound_change(rule)
+
     def get_parts_of_speech(self):
         return sorted(self.full_inflections_by_part_of_speech.keys())
-
-    def expand_templates(self):
-        raise Exception("do not use!!!")
-        #for pos in self.affixes_by_part_of_speech_and_feature:
-
 
     def expand_templates_for_new_lexeme(self, lexeme):
         # is this even necessary? the lexeme will get its InflectionForms by looking up those in the full_inflections_... dict
@@ -583,10 +591,10 @@ if __name__ == '__main__':
     gui = ConlangWorkspaceGUI(language)
 
     # input_fp = "/home/wesley/programming/Language/ExamplishLexiconDocx.docx"
-    input_fp = "/home/wesley/programming/Language/Examplish.cwg"
-    if input("load commands/lexicon from this file?\n{}\ny/n (default yes) ".format(input_fp)) != "n":
-        lexicon = load_input_file(input_fp, gui.command_processor)
-        gui.language.lexicon = lexicon
+    # input_fp = "/home/wesley/programming/Language/Examplish.cwg"
+    # if input("load commands/lexicon from this file?\n{}\ny/n (default yes) ".format(input_fp)) != "n":
+    #     lexicon = load_input_file(input_fp, gui.command_processor)
+    #     gui.language.lexicon = lexicon
 
     gui.show()
     sys.exit(app.exec_())

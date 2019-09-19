@@ -8,7 +8,7 @@ sono = v see
 unara = v chase
 \inflect n \null = number SG
 \inflect n r = number PL
-\inflect v sh = negation NEG
+\inflect v ʃ = negation NEG
 \inflect v \null = negation POS
 \inflect v tam = tense PAST
 \inflect v sor = tense FUT
@@ -19,3 +19,15 @@ unara = v chase
 \inflect n \null = case NOM
 \inflect n g = case OBL
 \inflect n ti = case ACC
+amaj = adj scary
+\inflect adj \null = degree POS
+\inflect adj olon = degree COMP
+\inflect adj aʃar = degree SUPER
+
+\sc VV>V_
+\sc oC>aC
+\sc VkV>VgV
+\sc C_C#>CiC#
+\sc VtV>VdV
+\sc VpV>VbV
+\sc FF>F_
