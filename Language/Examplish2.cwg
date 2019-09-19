@@ -1,3 +1,5 @@
+\include DefaultPhonology.cwg
+
 \pos n _{number}{case}
 \pos v _{negation}{tense}{person}{number}
 \pos adj _{degree}
@@ -23,10 +25,3 @@ amaj = adj scary
 \inflect adj \null = degree POS
 \inflect adj olon = degree COMP
 \inflect adj aʃar = degree SUPER
-\sc VV>V_
-\sc oC>aC
-\sc VkV>VgV
-\sc C_C#>CiC#
-\sc VtV>VdV
-\sc VpV>VbV
-\sc FF>F_

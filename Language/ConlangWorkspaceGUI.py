@@ -14,10 +14,10 @@ from docx.shared import Pt
 
 from LanguageEvolutionTools import (
         Word, Rule, Lexeme, Lexicon, Language, InflectionForm, Morpheme, 
-        DEFAULT_PHONEME_CLASSES, 
         evolve_word, get_random_rules, 
     )
 
+import string
 import sys
 
 
@@ -89,15 +89,43 @@ class ConlangWorkspaceGUI(QMainWindow):
         # self.tabWidget.setSizePolicy(QSizePolicy.Preferred,
         #         QSizePolicy.Ignored)
 
+        self.create_phonology_tab()
         self.create_lexicon_tab()
         self.create_sound_change_tab()
         self.create_terminal_tab()
         self.create_history_tab()
 
+        self.tabWidget.addTab(self.phonologyTab, "Phonology")
         self.tabWidget.addTab(self.lexiconTab, "Lexicon")
         self.tabWidget.addTab(self.soundChangeTab, "Sound Changes")
         self.tabWidget.addTab(self.terminalTab, "Terminal")
         self.tabWidget.addTab(self.historyTab, "History")
+
+    def create_phonology_tab(self):
+        self.phonologyTab = QWidget()
+        self.create_phoneme_class_list()
+        self.create_phoneme_inventory_list()
+        self.create_create_phoneme_widget()
+        create_phoneme_button = QPushButton("Create phoneme")
+        create_phoneme_button.pressed.connect(self.create_phoneme)
+
+        phonologyTabVBox = QVBoxLayout()
+        phonologyTabVBox.setContentsMargins(5, 5, 5, 5)
+
+        phonologyTabHBox0 = QHBoxLayout()
+        phonologyTabHBox0.addWidget(self.phoneme_class_list)
+        phonologyTabHBox0.addWidget(self.phoneme_inventory_list)
+        phonologyTabVBox.addLayout(phonologyTabHBox0)
+
+        phonologyTabHBox1 = QHBoxLayout()
+        phonologyTabHBox1.addWidget(create_phoneme_button)
+        phonologyTabVBox.addLayout(phonologyTabHBox1)
+
+        phonologyTabHBox2 = QHBoxLayout()
+        phonologyTabHBox2.addWidget(self.create_phoneme_widget)
+        phonologyTabVBox.addLayout(phonologyTabHBox2)
+
+        self.phonologyTab.setLayout(phonologyTabVBox)
 
     def create_lexicon_tab(self):
         self.lexiconTab = QWidget()
@@ -138,6 +166,7 @@ class ConlangWorkspaceGUI(QMainWindow):
         # lexiconTabHBox3.addWidget(save_file_button)
         lexiconTabHBox3.addWidget(export_to_docx_button)
         lexiconTabVBox.addLayout(lexiconTabHBox3)
+
         self.lexiconTab.setLayout(lexiconTabVBox)
 
     def create_sound_change_tab(self):
@@ -197,6 +226,42 @@ class ConlangWorkspaceGUI(QMainWindow):
         historyTabVBox.addWidget(QLabel("TODO"))
         self.historyTab.setLayout(historyTabVBox)
 
+    def create_phoneme_class_list(self):
+        phoneme_class_list_label = QLabel("Phoneme Classes")
+        self.phoneme_class_list = QListWidget()
+        phoneme_class_list_label.setBuddy(self.phoneme_class_list)
+        self.phoneme_class_list.currentItemChanged.connect(self.show_phonemes_in_class)
+
+    def create_phoneme_inventory_list(self):
+        phoneme_inventory_list_label = QLabel("Phoneme Inventory")
+        self.phoneme_inventory_list = QListWidget()
+        phoneme_inventory_list_label.setBuddy(self.phoneme_inventory_list)
+
+    def create_create_phoneme_widget(self):
+        cpw = QWidget()
+        phoneme_input_label = QLabel("Phoneme symbol (no brackets):")
+        cpw.phoneme_input = QLineEdit()
+        phoneme_input_label.setBuddy(cpw.phoneme_input)
+        classes_input_label = QLabel("Classes this phoneme is in:")
+        cpw.classes_input = QLineEdit()
+        classes_input_label.setBuddy(cpw.classes_input)
+        enter_button = QPushButton("Submit")
+        cancel_button = QPushButton("Cancel")
+        enter_button.pressed.connect(self.submit_created_phoneme)
+        cancel_button.pressed.connect(lambda: self.create_phoneme_widget.hide())
+        vbox = QVBoxLayout()
+        vbox.addWidget(phoneme_input_label)
+        vbox.addWidget(cpw.phoneme_input)
+        vbox.addWidget(classes_input_label)
+        vbox.addWidget(cpw.classes_input)
+        vbox.addWidget(enter_button)
+        vbox.addWidget(cancel_button)
+        cpw.setLayout(vbox)
+
+        self.create_phoneme_widget = cpw
+        self.create_phoneme_widget.hide()
+
+
     def create_create_lexeme_widget(self):
         clw = QWidget()
         # params to get are:
@@ -247,9 +312,59 @@ class ConlangWorkspaceGUI(QMainWindow):
         self.command_processor.process_command(s)
         self.create_lexeme_widget.hide()
 
+    def submit_created_phoneme(self):
+        forbidden_chars = [" ", "[", "]", "\\"]
+        s = "\\phone "
+        phoneme_symbol = self.create_phoneme_widget.phoneme_input.text().strip()
+        classes = self.create_phoneme_widget.classes_input.text().strip()
+        assert all(x not in phoneme_symbol for x in forbidden_chars + list(string.ascii_uppercase))
+        assert len(phoneme_symbol) > 0
+        if len(phoneme_symbol) > 1:
+            phoneme_symbol = "[" + phoneme_symbol + "]"
+        assert " " not in classes
+        classes = classes.split(",")
+        new_classes = []
+        for cl in classes:
+            assert all(x in string.ascii_uppercase for x in cl)
+            assert all(x not in cl for x in forbidden_chars)
+            if len(cl) > 1:
+                cl = "[" + cl + "]"
+            new_classes.append(cl)
+        s += "{} {}".format(phoneme_symbol, ",".join(new_classes))
+        self.command_processor.process_command(s)
+        self.create_phoneme_widget.hide()
+
+        self.populate_phoneme_class_list()
+        self.populate_phoneme_inventory_list()
+
     def add_pos(self, pos):
         self.create_lexeme_widget.pos_input.addItem(pos)
         self.create_lexeme_widget.pos_input.model().sort(0)  # sorts the dropdown list
+
+    def populate_phoneme_class_list(self):
+        self.phoneme_class_list.clear()
+        phoneme_classes = self.language.get_phoneme_classes()
+        for cl in phoneme_classes:
+            self.phoneme_class_list.addItem(cl)
+
+    def populate_phoneme_inventory_list(self, phoneme_class=None):
+        self.phoneme_inventory_list.clear()
+        phonemes = self.language.get_phonemes()
+        used_phonemes = sorted(self.language.get_used_phonemes(), key=Language.unbracket_phoneme)
+        unused_phonemes = sorted([x for x in phonemes if x not in used_phonemes], key=Language.unbracket_phoneme)
+        if phoneme_class is not None:
+            used_phonemes = [x for x in used_phonemes if x in self.language.phoneme_classes[phoneme_class]]
+            unused_phonemes = [x for x in unused_phonemes if x in self.language.phoneme_classes[phoneme_class]]
+        for p in used_phonemes:
+            item_str = p
+            self.phoneme_inventory_list.addItem(item_str)
+        for p in unused_phonemes:
+            item_str = p + " (unused)"
+            self.phoneme_inventory_list.addItem(item_str)
+
+    def show_phonemes_in_class(self):
+        cl = self.phoneme_class_list.currentItem().text()
+        self.populate_phoneme_inventory_list(phoneme_class=cl)
 
     def createLexemeList(self):
         self.lexeme_list = QListWidget()
@@ -360,6 +475,10 @@ class ConlangWorkspaceGUI(QMainWindow):
             self.generate_sound_change()
             self.send_sound_change_command()
 
+    def update_phonology_displays(self):
+        self.populate_phoneme_class_list()
+        self.populate_phoneme_inventory_list()
+
     def update_lexicon_displays(self):
         self.clearSelectedLexeme()
         self.lexeme_list.clear()
@@ -376,6 +495,9 @@ class ConlangWorkspaceGUI(QMainWindow):
         w = item.data(Qt.UserRole)
         assert type(w) is Word
         return w
+
+    def create_phoneme(self):
+        self.create_phoneme_widget.show()
 
     def create_lexeme(self):
         self.create_lexeme_widget.show()
@@ -454,19 +576,30 @@ class CommandProcessor:
         assert command[0] == "\\"
         command = command[1:]
         print("got command {} with args {}".format(command, rest))
-        if command == "pos":
+
+        if False:
+            pass  # just so I don't have to keep changing "if" to "elif" when adding new commands
+        elif command == "include":
+            assert len(rest) == 1
+            self.load_input_file(rest[0])
+        elif command == "phone":
+            self.process_phone_command_entry(rest)
+        elif command == "pos":
             self.process_pos_command_entry(rest)
             # don't expand templates here because only declaring new pos, no inflections yet
-
         elif command == "inflect":
             self.process_inflect_command_entry(rest)
             # templates for this pos will be expanded in the process_inflect_... method
-
         elif command == "sc":
             self.process_sound_change_command_entry(rest)
-        
         else:
             print("unknown command \'{}\'".format(command))
+
+    def process_phone_command_entry(self, args):
+        phoneme_symbol, classes_str = args
+        classes = classes_str.split(",")
+        self.gui.language.add_phoneme(phoneme_symbol, classes)
+        self.gui.update_phonology_displays()
 
     def process_pos_command_entry(self, args):
         # e.g. \pos v {negation}_{tense}{person}{number}
@@ -512,6 +645,7 @@ class CommandProcessor:
         for lex in lexemes_of_pos:
             lex.create_forms(inflection_forms)
         self.gui.language.update_used_phonemes()
+        self.gui.update_phonology_displays()
         self.gui.update_lexicon_displays()
 
     def process_lexeme_entry(self, le):
@@ -529,6 +663,7 @@ class CommandProcessor:
             lexeme = Lexeme(citation_form, pos, gloss, inflection_forms=inflection_forms)
             self.gui.language.lexicon.add_lexeme(lexeme)
             self.gui.language.update_used_phonemes()
+            self.gui.update_phonology_displays()
             self.gui.update_lexicon_displays()
         except Exception as exc:
             print("This line does not appear to be valid: {}\nIt threw {}: {}".format(le, type(exc), exc))
@@ -541,6 +676,7 @@ class CommandProcessor:
             print("sending rule to gui: {}".format(rule))
             self.gui.apply_sound_change(rule)
         self.gui.language.update_used_phonemes()
+        self.gui.update_phonology_displays()
 
     def get_parts_of_speech(self):
         return sorted(self.full_inflections_by_part_of_speech.keys())
@@ -568,32 +704,30 @@ class CommandProcessor:
             inflections = new_inflections
         self.full_inflections_by_part_of_speech[pos] = inflections
 
+    def load_input_file(self, input_fp):
+        extension = input_fp.split(".")[-1]
+        if extension == "docx":
+            return self.load_lexicon_from_docx(input_fp, command_processor)
+        else:
+            with open(input_fp) as f:
+                lines = f.readlines()
+            lines = [x.strip() for x in lines]
+            for s in lines:
+                self.process_command(s)
+            return self.gui.language.lexicon
 
-def load_input_file(input_fp, command_processor):
-    extension = input_fp.split(".")[-1]
-    if extension == "docx":
-        return load_lexicon_from_docx(input_fp, command_processor)
-    else:
-        with open(input_fp) as f:
-            lines = f.readlines()
-        lines = [x.strip() for x in lines]
-        for s in lines:
-            command_processor.process_command(s)
-        return command_processor.gui.language.lexicon
-
-
-def load_lexicon_from_docx(fp, command_processor):
-    document = docx.Document(fp)
-    ps = [p.text for p in document.paragraphs]
-    for s in ps:
-        command_processor.process_command(s)
-    return command_processor.gui.language.lexicon
+    def load_lexicon_from_docx(self, fp):
+        document = docx.Document(fp)
+        ps = [p.text for p in document.paragraphs]
+        for s in ps:
+            self.process_command(s)
+        return self.gui.language.lexicon
 
 
 
 if __name__ == '__main__':
     empty_lexicon = Lexicon([])
-    language = Language("Examplish", empty_lexicon, DEFAULT_PHONEME_CLASSES)
+    language = Language("Examplish", empty_lexicon)
 
     app = QApplication(sys.argv)
     gui = ConlangWorkspaceGUI(language)

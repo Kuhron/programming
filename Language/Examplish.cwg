@@ -1,3 +1,5 @@
+\include DefaultPhonology.cwg
+
 # test
 \pos vtest _{tense}
 ka = vtest go
