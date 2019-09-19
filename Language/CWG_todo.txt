@@ -4,6 +4,8 @@ bugs:
 - not recognizing new used_phonemes, later sound changes don't apply to them
     to see, use rule k>[kʷ],C>_
     the kw's will still be there
+- inflectionless words don't show any forms in lexeme form list
+    (they should just show one form that is equal to the citation form)
 
 features:
 - visualize tree of language evolutions, 

@@ -1,0 +1,92 @@
+# test
+\pos vtest _{tense}
+ka = vtest go
+\inflect vtest n = tense PRES
+so = vtest eat
+\inflect vtest k = tense PAST
+mi = vtest speak
+
+# Examplish Lexicon
+
+# noun
+\pos n _{number}{case}
+\inflect n \null = number SG
+\inflect n i = number DL
+\inflect n ail = number PL
+\inflect n \null = case ABS
+\inflect n en = case ERG
+\inflect n ak = case OBL
+
+# quantity/mass noun
+\pos nq _{case}
+\inflect nq \null = case ABS
+\inflect nq en = case ERG
+\inflect nq ak = case OBL
+# later would be nice to be able to tell it to use the same case endings from noun POS
+
+# verb
+\pos v {negation}_{tense}{person}{number}
+\inflect v \null = negation POS
+\inflect v ra = negation NEG
+\inflect v \null = tense PRES
+\inflect v ta = tense PAST
+\inflect v ina = tense FUT
+\inflect v ku = person 1
+\inflect v su = person 2
+\inflect v \null = person 3
+\inflect v \null = number SG
+\inflect v n = number PL
+
+# preposition type A, uninflectable
+\pos pa _
+
+# preposition type B, inflectable for number of object and motion
+\pos pb {motion}_{number}
+\inflect pb \null = motion STATIC
+\inflect pb sa = motion MOVING
+\inflect pb n = number SG
+\inflect pb ni = number DL
+\inflect pb il = number PL
+
+koh = n dog
+tom = n person
+asur = n fish
+puram = n house
+mit = n hand
+ul = nq fire
+nir = nq water
+kal = n storm
+lahas = n mountain
+alat = nq ground
+eril = n river
+erek = n lake
+iliandir = n animal
+pahal = nq wood
+ettel = nq salt
+risam = nq metal
+tamas = nq sand
+issol = n leaf
+maruk = n knife
+koratin = n nut
+sertem = n tool
+mak = v eat
+lam = v see
+kor = v chase
+teris = pa above
+kupur = pa under
+le = pb g:in in, inside
+mo = pb g:out out, outside, out of
+
+# test ability to add inflections after the fact
+\inflect n akin = number PCL
+ja = n boat
+\inflect v eme = negation MAYBE
+taril = v jump
+
+# # should throw error if you try to inflect or instantiate an undefined POS
+# \inflect nx morphx = featurex valx
+# xxx = nx thing
+# \pos nx _{featurex}
+# # the morph "morphx" and the lexeme "xxx" should not have been added even though the POS "nx" was eventually defined
+# \inflect nx morph2x = featurex val2x
+# x2x = nx thing2
