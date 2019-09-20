@@ -1,9 +1,6 @@
 todo for ConlangWorkspaceGUI
 
 bugs:
-- not recognizing new used_phonemes, later sound changes don't apply to them
-    to see, use rule k>[kʷ],C>_
-    the kw's will still be there
 - inflectionless words don't show any forms in lexeme form list
     (they should just show one form that is equal to the citation form)
 
@@ -12,16 +9,12 @@ features:
     be able to switch to a different version of the language history
 - number every event with a sequential "tick" number
 - command to create new lexeme at a specific point in time
-- create CommandProcessor class, every single thing the user does in the gui
-    should create a text command which is sent to the processor, THEN the command
-    actually does stuff to the language, words, etc.
 - every possible sequence of actions in the gui should be recordable as a text file of commands
-- load existing command file / lexicon
 - undo sound change
 - sound change with set of phonemes defined on the fly, e.g. (r,u,k,i:1)s>(1)s
 - sound change with capturing groups, e.g. (C:1)V(C:2)#>(2)V(1)# would change apik>akip
 - should sound changes use regex?
-- terminal ability, allow command input and show history (in this branch of tree)
 - sanity check
 - homophone check
-- 
+- click on phoneme, see what classes it is in, what features it has, where it is used,
+    what phonetic environments it occurs in

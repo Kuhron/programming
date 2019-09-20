@@ -1,13 +1,5 @@
 \include DefaultPhonology.cwg
 
-# test
-\pos vtest _{tense}
-ka = vtest go
-\inflect vtest n = tense PRES
-so = vtest eat
-\inflect vtest k = tense PAST
-mi = vtest speak
-
 # Examplish Lexicon
 
 # noun
@@ -85,10 +77,10 @@ ja = n boat
 \inflect v eme = negation MAYBE
 taril = v jump
 
-# # should throw error if you try to inflect or instantiate an undefined POS
-# \inflect nx morphx = featurex valx
-# xxx = nx thing
-# \pos nx _{featurex}
-# # the morph "morphx" and the lexeme "xxx" should not have been added even though the POS "nx" was eventually defined
-# \inflect nx morph2x = featurex val2x
-# x2x = nx thing2
+# should throw error if you try to inflect or instantiate an undefined POS
+\inflect nx morphx = featurex valx
+x = nx thing
+\pos nx _{featurex}
+# the morph "morphx" and the lexeme "x" should not have been added even though the POS "nx" was eventually defined
+\inflect nx morphxx = featurex valxx
+xx = nx thingx

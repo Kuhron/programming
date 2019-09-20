@@ -94,12 +94,14 @@ class ConlangWorkspaceGUI(QMainWindow):
         self.create_sound_change_tab()
         self.create_terminal_tab()
         self.create_history_tab()
+        self.create_review_tab()
 
         self.tabWidget.addTab(self.phonologyTab, "Phonology")
         self.tabWidget.addTab(self.lexiconTab, "Lexicon")
         self.tabWidget.addTab(self.soundChangeTab, "Sound Changes")
         self.tabWidget.addTab(self.terminalTab, "Terminal")
         self.tabWidget.addTab(self.historyTab, "History")
+        self.tabWidget.addTab(self.reviewTab, "Review")
 
     def create_phonology_tab(self):
         self.phonologyTab = QWidget()
@@ -225,6 +227,19 @@ class ConlangWorkspaceGUI(QMainWindow):
         historyTabVBox.setContentsMargins(5, 5, 5, 5)
         historyTabVBox.addWidget(QLabel("TODO"))
         self.historyTab.setLayout(historyTabVBox)
+
+    def create_review_tab(self):
+        self.reviewTab = QWidget()
+        reviewTabVBox = QVBoxLayout()
+        reviewTabVBox.setContentsMargins(5, 5, 5, 5)
+
+        sanity_check_button = QPushButton("Sanity check")
+        sanity_check_button.pressed.connect(self.sanity_check)
+        homophone_check_button = QPushButton("Homophone check")
+        homophone_check_button.pressed.connect(self.homophone_check)
+        reviewTabVBox.addWidget(sanity_check_button)
+        reviewTabVBox.addWidget(homophone_check_button)
+        self.reviewTab.setLayout(reviewTabVBox)
 
     def create_phoneme_class_list(self):
         phoneme_class_list_label = QLabel("Phoneme Classes")
@@ -445,13 +460,8 @@ class ConlangWorkspaceGUI(QMainWindow):
             self.command_processor.process_command(s)
 
     def apply_sound_change(self, rule):
-        print("got rule from cprocessor: {}".format(rule))
         expanded_rules = []
         expanded_rules += rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
-        print("used phonemes:")
-        print(self.language.used_phonemes)
-        print("expanded:")
-        print(expanded_rules)
         new_lexicon = Lexicon([])
         for lexeme in self.language.lexicon.lexemes:
             new_citation_form = evolve_word(lexeme.citation_form, expanded_rules)
@@ -522,6 +532,29 @@ class ConlangWorkspaceGUI(QMainWindow):
         self.terminalOutputWidget.setText("\n".join(self.command_processor.command_history))
         self.terminalOutputWidget.verticalScrollBar().setValue(self.terminalOutputWidget.verticalScrollBar().maximum())
         self.terminalInputWidget.clear()
+
+    def sanity_check(self):
+        forms = self.language.lexicon.all_forms()
+        raise NotImplementedError  # TODO
+
+    def homophone_check(self):
+        forms = self.language.lexicon.all_forms()
+        d = {}
+        for w in forms:
+            s = w.to_str()
+            if s not in d:
+                d[s] = []
+            d[s].append(w)
+        homophones = [s for s in d if len(d[s]) > 1]
+        if len(homophones) == 0:
+            print("No homophones found!")
+            return
+        homophones = sorted(homophones, key=lambda s: (-1*len(d[s]), s))
+        print("Homophones found:")
+        for s in homophones:
+            meanings = [w.gloss for w in d[s]]
+            print(s, "({} times)".format(len(d[s])))
+            print("meanings:", meanings)
 
 
 class CommandProcessor:
@@ -673,7 +706,6 @@ class CommandProcessor:
         sc = " ".join(sc)  # in case there were more spaces in there that for some reason are supposed to be there, but processor split it on them
         rules = Rule.from_str(sc)
         for rule in rules:
-            print("sending rule to gui: {}".format(rule))
             self.gui.apply_sound_change(rule)
         self.gui.language.update_used_phonemes()
         self.gui.update_phonology_displays()

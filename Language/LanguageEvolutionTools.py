@@ -1162,13 +1162,13 @@ def get_random_rules(n_rules, lexicon, classes):
         outp = inp[:]
         if typ == "insertion":
             c = random.choice(list(classes.keys()))  # make this better later, e.g. don't do C_C -> CfC
-            outp[change_index] = random.choice(classes[c])
+            outp[change_index] = random.choice(tuple(classes[c]))
         elif typ == "deletion":
             outp[change_index] = ""
         elif typ == "mutation":
             if inp[change_index] in classes:
                 possibilities = classes[inp[change_index]]
-                outp[change_index] = random.choice(possibilities)
+                outp[change_index] = random.choice(tuple(possibilities))
             else:
                 classes_with_seg = [c for c in classes if inp[change_index] in classes[c]]
                 if len(classes_with_seg) == 0:
