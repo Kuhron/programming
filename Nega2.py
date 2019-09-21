@@ -64,6 +64,9 @@ class Vector:
         m = self.magnitude()
         return Vector(self.x/m, self.y/m, self.z/m)
 
+    def as_array(self):
+        return np.array((self.x, self.y, self.z))
+
     def direction_color(self):
         x_pos = np.array((1, 0, 0))
         x_neg = np.array((0, 1, 1))
@@ -75,7 +78,7 @@ class Vector:
         x_c = abs(d.x) * (x_pos if d.x >= 0 else x_neg)
         y_c = abs(d.y) * (y_pos if d.y >= 0 else y_neg)
         z_c = abs(d.z) * (z_pos if d.z >= 0 else z_neg)
-        return x_c + y_c + z_c
+        return Vector(*(x_c + y_c + z_c)).direction().as_array()
 
     @staticmethod
     def dot(v1, v2):
@@ -113,28 +116,33 @@ class Desert:
     def __init__(self, grains):
         self.grains = grains
 
-    def plot_field(self, x_min, x_max, y_min, y_max, fixed_z):
-        x_steps = 100
-        y_steps = 100
-        xs = np.linspace(x_min, x_max, x_steps)
-        ys = np.linspace(y_min, y_max, y_steps)
+    def plot_field(self, x_min, x_max, y_min, y_max, fixed_z, resolution_steps=100):
+        xs = np.linspace(x_min, x_max, resolution_steps)
+        ys = np.linspace(y_min, y_max, resolution_steps)
 
         field = self.get_field(xs, ys, fixed_z)
         field_magnitudes = grid_map(lambda g: g.moment.magnitude(), field)
-        # field_directions = grid_map(lambda v: v.direction(), field)
+        max_mag = max(max(row) for row in field_magnitudes)
+        max_mag = 1 if max_mag == 0 else max_mag  # fury road
+        direction_colors_grid = grid_map(lambda g: g.moment.direction_color(), field)
+        magnitude_color_product_grid = [[x/max_mag for x in row] for row in elementwise_product(field_magnitudes, direction_colors_grid)]
         flat_field = flatten_grid(field)
         # field_xs = [v.x for v in flat_field]  # these are the xs of the VECTORS in the field, not their locations! makes cool plot if you scatter these instead of locations, though!
         field_xs = [g.location.x for g in flat_field]
         field_ys = [g.location.y for g in flat_field]
-        direction_colors = [g.moment.direction_color() for g in flat_field]
+        # direction_colors = [g.moment.direction_color() for g in flat_field]
+        # direction_colors = flatten_grid(direction_colors_grid)
         # print(field_magnitudes)
 
-        plt.subplot(1, 2, 1)
-        plt.imshow(field_magnitudes)
+        plt.subplot(1, 3, 1)
+        plt.imshow(field_magnitudes, origin="lower")
         plt.colorbar()
 
-        plt.subplot(1, 2, 2)
-        plt.scatter(field_xs, field_ys, c=direction_colors)
+        plt.subplot(1, 3, 2)
+        plt.scatter(field_xs, field_ys, c=flatten_grid(direction_colors_grid))
+
+        plt.subplot(1, 3, 3)
+        plt.scatter(field_xs, field_ys, c=flatten_grid(magnitude_color_product_grid))
         plt.show()
 
 
@@ -204,14 +212,28 @@ def grid_map(f, grid):
     return res
 
 
+def elementwise_product(grid1, grid2):
+    x1 = len(grid1)
+    x2 = len(grid2)
+    y1 = len(grid1[0])
+    y2 = len(grid2[0])
+    assert x1 == x2 and y1 == y2
+    res = [[None for j in range(y1)] for i in range(x1)]
+    for i in range(x1):
+        for j in range(x2):
+            res[i][j] = grid1[i][j] * grid2[i][j]
+    return res
+
+
+def r(a, b, n):
+    return np.random.uniform(a, b, n)
+
+
 if __name__ == "__main__":
     grains = [
-        Grain(Coordinates(-1, -1, 0), Vector(1, 0, 0)),
-        Grain(Coordinates(-1, 1, 0), Vector(-1, 0, 0)),
-        Grain(Coordinates(1, -1, 0), Vector(-1, 0, 0)),
-        Grain(Coordinates(1, 1, 0), Vector(1, 0, 0)),
+        Grain(Coordinates(r(-4,4,1), r(-4,4,1), 0), Vector(*r(-1, 1, 3))) for _ in range(100)
     ]
 
     desert = Desert(grains)
-    for fixed_z in [-1, 0, 1]:
-        desert.plot_field(x_min=-5, x_max=5, y_min=-5, y_max=5, fixed_z=fixed_z)
+    for fixed_z in [0]:
+        desert.plot_field(x_min=-5, x_max=5, y_min=-5, y_max=5, fixed_z=fixed_z, resolution_steps=100)
