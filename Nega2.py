@@ -93,6 +93,9 @@ class Vector:
         # define a synonym since they do the same thing but my brain feels like they are pretty different, don't want to confuse future me
         return self.direction
 
+    def as_array(self):
+        return np.array((self.x, self.y, self.z))
+
     @staticmethod
     def dot(v1, v2):
         return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z
@@ -139,21 +142,21 @@ class Desert:
         # field_xs = [v.x for v in flat_field]  # these are the xs of the VECTORS in the field, not their locations! makes cool plot if you scatter these instead of locations, though!
         field_xs = [g.location.x for g in flat_field]
         field_ys = [g.location.y for g in flat_field]
-        direction_colors = [g.moment.direction_color() for g in flat_field]
+        direction_colors = [g.moment.direction_color().as_array() for g in flat_field]
         # print(field_magnitudes)
 
         plt.subplot(1, 2, 1)
         plt.imshow(field_magnitudes)
         plt.colorbar()
 
-        # print(field_xs)
-        # print(field_ys)
-        # print("\n")
-        # print(direction_colors)
+        print(field_xs)
+        print(field_ys)
+        print("\n")
+        print(direction_colors)
 
         plt.subplot(1, 2, 2)
-        #plt.scatter(field_xs, field_ys, c=direction_colors)  # TODO put back after optimized
-        # plt.show()  # TODO put back after optimized
+        plt.scatter(field_xs, field_ys, c=direction_colors)  # TODO put back after optimized
+        plt.show()  # TODO put back after optimized
 
 
     def get_field(self, xs, ys, fixed_z):
@@ -227,9 +230,9 @@ def r(a, b, n):
 
 if __name__ == "__main__":
     grains = [
-        Grain(Coordinates(*r(-1.5, 1.5, 3)), Vector(*r(-1, 1, 3))) for _ in range(100)
+        Grain(Coordinates(r(-4,4,1), r(-4,4,1), 0), Vector(*r(-1, 1, 3))) for _ in range(2)
     ]
 
     desert = Desert(grains)
-    for fixed_z in [-1, 0, 1]:
-        desert.plot_field(x_min=-2, x_max=2, y_min=-2, y_max=2, fixed_z=fixed_z, resolution_steps=100)
+    for fixed_z in [0]:
+        desert.plot_field(x_min=-5, x_max=5, y_min=-5, y_max=5, fixed_z=fixed_z, resolution_steps=3)
