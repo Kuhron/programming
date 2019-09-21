@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import random
 
 
 RADIUS_DECAY = 1
@@ -74,6 +75,8 @@ class Vector:
         y_neg = np.array((1, 0, 1))
         z_pos = np.array((0, 0, 1))
         z_neg = np.array((1, 1, 0))
+        # note that this color space is ambiguous (cyan could be (negative x) or (positive y plus positive z))
+        # maybe I will make a better one later if the visualization of direction as color ends up useful enough to warrant it
         d = self.direction()
         x_c = abs(d.x) * (x_pos if d.x >= 0 else x_neg)
         y_c = abs(d.y) * (y_pos if d.y >= 0 else y_neg)
@@ -84,11 +87,16 @@ class Vector:
     def dot(v1, v2):
         return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z
 
+    @staticmethod
+    def get_random_unit_vector():
+        return Vector(*r(-1, 1, 3)).direction()
+
 
 class Grain:
-    def __init__(self, location, moment):
+    def __init__(self, phonic, location, moment):
         assert type(location) is Coordinates
         assert type(moment) is Vector
+        self.phonic = phonic
         self.location = location
         self.moment = moment
 
@@ -96,12 +104,25 @@ class Grain:
         return "Grain {} {}".format(self.location, self.moment)
 
     def get_effective_moment_due_to_grain_at_point(self, point):
+        if self.phonic is None:
+            raise Exception("trying to get effective field from pseudo-grain (not a phonic, just a moment field value at a point)")
         point_relative_coords = CoordinatesRelativeToOtherMoment.from_grain_and_other_point(self, point)
         r = point_relative_coords.r
         theta = point_relative_coords.theta
 
         direction_change = lambda v: Vector(v.x, v.y, v.z)  # maybe this will depend on r and theta somehow, but simplest is that the whole field due to a single grain points the same direction
-        magnitude_factor = np.exp(-r/RADIUS_DECAY)
+
+        magnitude_factor = np.exp(-r/RADIUS_DECAY)  # the radius decay constant is arbitrary, could be a parameter of the grain, but I don't want to add that extra parameter
+
+        if self.phonic == "positic":
+            magnitude_factor *= positic_magnitude_factor(theta)
+        elif self.phonic == "negatic":
+            magnitude_factor *= negatic_magnitude_factor(theta)
+        elif self.phonic == "zerotic":
+            magnitude_factor *= zerotic_magnitude_factor(theta)
+        else:
+            raise ValueError("unknown phonic type {}".format(self.phonic))
+
         # print("r {} gave magfac {}".format(r, magnitude_factor))
         res = direction_change(self.moment)
         # print("changed direction of {} to {}".format(self.moment, res))
@@ -159,7 +180,7 @@ class Desert:
             moments_due_to_each_grain.append(contribution)
         total_moment = MomentMath.get_total_moment(moments_due_to_each_grain)
         # print("TOTAL {}".format(total_moment))
-        return Grain(point, total_moment)
+        return Grain(None, point, total_moment)  # pseudo-grain, not a phonic, just a moment field value at a point
 
 
 class MomentMath:
@@ -229,11 +250,45 @@ def r(a, b, n):
     return np.random.uniform(a, b, n)
 
 
+def positic_magnitude_factor(theta):
+    # return np.sin(abs(theta))
+    return np.cos(abs(theta))**2
+
+def negatic_magnitude_factor(theta):
+    # return 1 - np.sin(abs(theta))
+    return np.sin(abs(theta))**2
+    # note that sin^2 and cos^2 look the same in the cross section, but the sin^2 is a donut and the cos^2 is two balls
+    # I want nega to look like a donut
+
+def zerotic_magnitude_factor(theta):
+    return 1
+
+def plot_magnitude_factor_functions():
+    thetas = np.linspace(-np.pi, np.pi, 500)
+    pos_rs = positic_magnitude_factor(thetas)
+    neg_rs = negatic_magnitude_factor(thetas)
+    zer_rs = zerotic_magnitude_factor(thetas)
+    plt.polar(thetas, pos_rs, "b")
+    plt.polar(thetas, neg_rs, "r")
+    # don't worry about plotting zerotic
+    plt.show()
+
+
+def choose_phonic():
+    # return "positic"
+    # return "negatic"
+    # return "zerotic"
+    return random.choice(["positic", "negatic", "zerotic"])
+
+
 if __name__ == "__main__":
+    # plot_magnitude_factor_functions()
+
     grains = [
-        Grain(Coordinates(r(-4,4,1), r(-4,4,1), 0), Vector(*r(-1, 1, 3))) for _ in range(100)
+        Grain(choose_phonic(), Coordinates(r(-10,10,1), r(-10,10,1), r(-0.1,0.1,1)), Vector.get_random_unit_vector()) for _ in range(100)  # all mag 1, random directions
+        # Grain(Coordinates(r(-4,4,1), r(-4,4,1), 0), Vector(0, 0, 1)) for _ in range(100)  # all mag 1, same direction
     ]
 
     desert = Desert(grains)
     for fixed_z in [0]:
-        desert.plot_field(x_min=-5, x_max=5, y_min=-5, y_max=5, fixed_z=fixed_z, resolution_steps=100)
+        desert.plot_field(x_min=-12, x_max=12, y_min=-12, y_max=12, fixed_z=fixed_z, resolution_steps=100)
