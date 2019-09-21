@@ -36,46 +36,62 @@ class CoordinatesRelativeToOtherMoment:
         dz = other_point.z - grain.location.z
         # get the theta
         displacement_of_other_point = Vector(dx, dy, dz)
-        r = displacement_of_other_point.magnitude()
+        r = displacement_of_other_point.magnitude
         if r == 0:
             return CoordinatesRelativeToOtherMoment(0, 0)
         moment = grain.moment
         v1 = displacement_of_other_point
         v2 = moment
-        cos_theta = Vector.dot(v1, v2) / (v1.magnitude() * v2.magnitude())
+        cos_theta = Vector.dot(v1, v2) / (v1.magnitude * v2.magnitude)
         theta = np.arccos(cos_theta)
         assert 0 <= theta <= np.pi, theta
         return CoordinatesRelativeToOtherMoment(r, theta)
 
 
 class Vector:
-    def __init__(self, x, y, z):
+    # if you take care to just instantiate new vectors instead of modifying existing ones,
+    # then you can save a ton of computation time by just assigning magnitude and direction at the beginning rather than having a method
+
+    x_pos = np.array((1, 0, 0))
+    x_neg = np.array((0, 1, 1))
+    y_pos = np.array((0, 1, 0))
+    y_neg = np.array((1, 0, 1))
+    z_pos = np.array((0, 0, 1))
+    z_neg = np.array((1, 1, 0))
+
+    def __init__(self, x, y, z, already_normalized=False):
         self.x = x
         self.y = y
         self.z = z
+        self.magnitude = (x**2 + y**2 + z**2) ** 0.5
+        if already_normalized:
+            self.direction = self
+        elif self.magnitude == 0:
+            self.direction = Vector(1, 0, 0, already_normalized=True)
+        else:
+            self.direction = Vector(self.x/self.magnitude, self.y/self.magnitude, self.z/self.magnitude, already_normalized=True)
 
     def __repr__(self):
-        return "v({}, {}, {}, |{}|)".format(self.x, self.y, self.z, self.magnitude())
+        return "v({}, {}, {}, |{}|)".format(self.x, self.y, self.z, self.magnitude)
 
-    def magnitude(self):
-        return np.linalg.norm((self.x, self.y, self.z))
+    # def magnitude(self):
+    #     return np.linalg.norm((self.x, self.y, self.z))
 
-    def direction(self):
-        m = self.magnitude()
-        return Vector(self.x/m, self.y/m, self.z/m)
+    # def direction(self):
+    #     m = self.magnitude
+    #     return Vector(self.x/m, self.y/m, self.z/m)
 
     def direction_color(self):
-        x_pos = np.array((1, 0, 0))
-        x_neg = np.array((0, 1, 1))
-        y_pos = np.array((0, 1, 0))
-        y_neg = np.array((1, 0, 1))
-        z_pos = np.array((0, 0, 1))
-        z_neg = np.array((1, 1, 0))
-        d = self.direction()
-        x_c = abs(d.x) * (x_pos if d.x >= 0 else x_neg)
-        y_c = abs(d.y) * (y_pos if d.y >= 0 else y_neg)
-        z_c = abs(d.z) * (z_pos if d.z >= 0 else z_neg)
-        return x_c + y_c + z_c
+        d = self.direction
+        x_c = abs(d.x) * (Vector.x_pos if d.x >= 0 else Vector.x_neg)
+        y_c = abs(d.y) * (Vector.y_pos if d.y >= 0 else Vector.y_neg)
+        z_c = abs(d.z) * (Vector.z_pos if d.z >= 0 else Vector.z_neg)
+        vec = Vector(*(x_c + y_c + z_c))
+        return vec.normalize()
+
+    def normalize(self):
+        # define a synonym since they do the same thing but my brain feels like they are pretty different, don't want to confuse future me
+        return self.direction
 
     @staticmethod
     def dot(v1, v2):
@@ -102,9 +118,7 @@ class Grain:
         # print("r {} gave magfac {}".format(r, magnitude_factor))
         res = direction_change(self.moment)
         # print("changed direction of {} to {}".format(self.moment, res))
-        res.x *= magnitude_factor
-        res.y *= magnitude_factor
-        res.z *= magnitude_factor
+        res = Vector(res.x * magnitude_factor, res.y * magnitude_factor, res.z * magnitude_factor)
         # print("g {} ; p {} ; res {}".format(self, point, res))
         return res
 
@@ -113,14 +127,13 @@ class Desert:
     def __init__(self, grains):
         self.grains = grains
 
-    def plot_field(self, x_min, x_max, y_min, y_max, fixed_z):
-        x_steps = 100
-        y_steps = 100
-        xs = np.linspace(x_min, x_max, x_steps)
-        ys = np.linspace(y_min, y_max, y_steps)
+    def plot_field(self, x_min, x_max, y_min, y_max, fixed_z, resolution_steps=100):
+        xs = np.linspace(x_min, x_max, resolution_steps)
+        ys = np.linspace(y_min, y_max, resolution_steps)
 
         field = self.get_field(xs, ys, fixed_z)
-        field_magnitudes = grid_map(lambda g: g.moment.magnitude(), field)
+        field = np.array(field)
+        field_magnitudes = grid_map(lambda g: g.moment.magnitude, field)
         # field_directions = grid_map(lambda v: v.direction(), field)
         flat_field = flatten_grid(field)
         # field_xs = [v.x for v in flat_field]  # these are the xs of the VECTORS in the field, not their locations! makes cool plot if you scatter these instead of locations, though!
@@ -133,9 +146,14 @@ class Desert:
         plt.imshow(field_magnitudes)
         plt.colorbar()
 
+        # print(field_xs)
+        # print(field_ys)
+        # print("\n")
+        # print(direction_colors)
+
         plt.subplot(1, 2, 2)
-        plt.scatter(field_xs, field_ys, c=direction_colors)
-        plt.show()
+        #plt.scatter(field_xs, field_ys, c=direction_colors)  # TODO put back after optimized
+        # plt.show()  # TODO put back after optimized
 
 
     def get_field(self, xs, ys, fixed_z):
@@ -195,7 +213,6 @@ def cartesian_product_map(f, xs, ys):
 
 
 def grid_map(f, grid):
-    grid = np.array(grid)
     assert len(grid.shape) == 2
     res = [[None for j in range(grid.shape[1])] for i in range(grid.shape[0])]
     for i in range(grid.shape[0]):
@@ -204,14 +221,15 @@ def grid_map(f, grid):
     return res
 
 
+def r(a, b, n):
+    return np.random.uniform(a, b, n)
+
+
 if __name__ == "__main__":
     grains = [
-        Grain(Coordinates(-1, -1, 0), Vector(1, 0, 0)),
-        Grain(Coordinates(-1, 1, 0), Vector(-1, 0, 0)),
-        Grain(Coordinates(1, -1, 0), Vector(-1, 0, 0)),
-        Grain(Coordinates(1, 1, 0), Vector(1, 0, 0)),
+        Grain(Coordinates(*r(-1.5, 1.5, 3)), Vector(*r(-1, 1, 3))) for _ in range(100)
     ]
 
     desert = Desert(grains)
     for fixed_z in [-1, 0, 1]:
-        desert.plot_field(x_min=-5, x_max=5, y_min=-5, y_max=5, fixed_z=fixed_z)
+        desert.plot_field(x_min=-2, x_max=2, y_min=-2, y_max=2, fixed_z=fixed_z, resolution_steps=100)
