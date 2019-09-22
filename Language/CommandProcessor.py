@@ -174,7 +174,8 @@ class CommandProcessor:
 
         replacement_rule = Rule.from_str("{}>{}".format(grapheme_str, phoneme_str), add_blanks=False)[0]  # rule is unidirectional, but should be able to use expansion this way and then extract both input and output from specific cases
         cases = replacement_rule.get_specific_cases(self.gui.language.phoneme_classes, used_phonemes=None)
-        # print("cases: {}".format(cases))
+        if cases == []:
+            raise RuntimeError("Got no cases of rule {}".format(replacement_rule))
         for r in cases:
             print("case: {}".format(r))
             g = r.get_input_str()

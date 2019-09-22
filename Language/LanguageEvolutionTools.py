@@ -329,7 +329,7 @@ class Rule:
                     res += new_rule.get_specific_cases(classes, used_phonemes)
                 return res
         else:
-            return [self] if inp != outp else []
+            return [self]  # may be a rule that does not change anything, but this is needed for orthography
             
     @staticmethod
     def expand_classes(s, classes, used_phonemes):

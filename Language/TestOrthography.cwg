@@ -1,6 +1,6 @@
 \include DefaultPhonology.cwg
 
-\ortho <VgVC> /Vs[kh]rVC/
+\ortho <VgV> /Vs[kh]rV/
 
 \ortho <p> /p/
 \ortho <b> /v/
@@ -23,6 +23,7 @@
 \ortho <cs> /[tʃ]/
 
 \write /zamaxat/
+\write /mɨsɨʃɨ/
 \read <banym>
 \read <ng>
 \read <mga>
@@ -33,5 +34,3 @@
 
 # ambiguous
 \read <csy>
-
-\write /mɨsɨʃɨ/

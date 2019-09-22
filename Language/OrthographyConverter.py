@@ -13,22 +13,13 @@ class OrthographyConverter:
         assert grapheme_str not in self.grapheme_to_phoneme, "Warning: overwriting grapheme_str {}".format(grapheme_str)
         self.grapheme_to_phoneme[grapheme_str] = phoneme_str
         self.phoneme_to_grapheme[phoneme_str] = grapheme_str
-        # print(self.grapheme_to_phoneme, self.phoneme_to_grapheme)
 
     def convert_graphemes_to_phonemes(self, grapheme_str):
-        # res = ""
-        # for g in grapheme_str:
-        #     res += self.grapheme_to_phoneme[g]
-        # return res
         grapheme_str = "#" + grapheme_str + "#"
         res = OrthographyConverter.greedy_replace(grapheme_str, self.grapheme_to_phoneme)
         return "/" + res.replace("#", "") + "/"
 
     def convert_phonemes_to_graphemes(self, phoneme_str):
-        # res = ""
-        # for p in phoneme_str:
-        #     res += self.phoneme_to_grapheme[p]
-        # return res
         phoneme_str = "#" + phoneme_str + "#"
         res = OrthographyConverter.greedy_replace(phoneme_str, self.phoneme_to_grapheme)
         return "<" + res.replace("#", "") + ">"
@@ -38,12 +29,15 @@ class OrthographyConverter:
         if s in ["", "#"]:
             return s
         if keys == None:
-            keys = sorted(dct.keys(), key=lambda x: -1*len(x))
+            keys = sorted(dct.keys(), key=lambda x: -1*len(x))  # TODO: sort keys by ranking of some kind, where they are allowed to tie, which then creates a branch of possible readings
         for i, k in enumerate(keys):
+            # print("checking if {} contains {}".format(s, k))
             pattern_found = OrthographyConverter.pattern_find(k, s)
             if pattern_found is None:
+                # print("it does not")
                 continue
             else:
+                # print("it does!")
                 pre, match, post = pattern_found
                 replacement = dct[match]
                 # print("s {}, k {}, {}-{}-{} --> {}-{}-{}".format(s, k, pre, match, post, pre, replacement, post))
@@ -53,8 +47,9 @@ class OrthographyConverter:
                 replace_post = OrthographyConverter.greedy_replace(post, dct, remaining_keys)
                 return replace_pre + replacement + replace_post
         # if we fall through to here, no matches were found
+        # print("s {}, but not found".format(s))
+        # input("press to continue")
         return "?"
-                
 
     @staticmethod
     def pattern_find(pattern, s):

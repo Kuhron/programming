@@ -66,6 +66,9 @@ class ConlangWorkspaceGUI(QMainWindow):
         fp = QFileDialog.getOpenFileName(self, 'Open File')
         if type(fp) is tuple:
             fp = fp[0]
+        self.open_file_known_filepath(fp)
+
+    def open_file_known_filepath(self, fp):
         with open(fp) as f:
             lines = f.readlines()
         lines = [x.strip() for x in lines]
@@ -562,17 +565,21 @@ class ConlangWorkspaceGUI(QMainWindow):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        argv_input_fp = sys.argv[1]
+    elif len(sys.argv) > 2:
+        print("usage: python ConlangWorkspaceGUI.py (<input_filepath>)")
+        sys.exit()
+    else:
+        argv_input_fp = None
+    
     empty_lexicon = Lexicon([])
     language = Language("Examplish", empty_lexicon)
 
     app = QApplication(sys.argv)
     gui = ConlangWorkspaceGUI(language)
-
-    # input_fp = "/home/wesley/programming/Language/ExamplishLexiconDocx.docx"
-    # input_fp = "/home/wesley/programming/Language/Examplish.cwg"
-    # if input("load commands/lexicon from this file?\n{}\ny/n (default yes) ".format(input_fp)) != "n":
-    #     lexicon = load_input_file(input_fp, gui.command_processor)
-    #     gui.language.lexicon = lexicon
+    if argv_input_fp is not None:
+        gui.open_file_known_filepath(argv_input_fp)
 
     gui.show()
     sys.exit(app.exec_())
