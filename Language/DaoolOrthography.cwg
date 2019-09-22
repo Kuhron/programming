@@ -1,0 +1,58 @@
+\include DefaultPhonology.cwg
+
+\ortho <m> /m/
+\ortho <n> /n/
+\ortho <nn> /ŋ/
+
+\ortho <t> /d/
+\ortho <tt> /[tʰ]/
+\ortho <d> /[d']/
+
+\ortho <v> /β/
+\ortho <f> /v/
+\ortho <ff> /f/
+\ortho <tl> /ð/
+\ortho <ttl> /θ/
+\ortho <s> /z/
+\ortho <ss> /s/
+\ortho <zl> /ʃ/
+\ortho <x> /ɣ/
+\ortho <xx> /x/
+\ortho <h> /./
+
+\ortho <z> /[tɕ]/
+\ortho <tzl> /[tʃ]/
+\ortho <tttl> /[tθ]/
+
+\ortho <#ll#> /i/
+\ortho <e> /e/
+\ortho <a> /a/
+\ortho <u> /u/
+\ortho <o> /o/
+\ortho <al> /aj/
+\ortho <el> /ej/
+\ortho <ol> /ʊl/
+\ortho <ul> /oj/
+
+\ortho <#l> /l/
+\ortho <#llV> /jV/
+\ortho <#llC> /iC/
+
+\ortho <Cll> /Ci/
+\ortho <Vll> /Vl/
+\ortho <Vu> /Vw/
+\ortho <#uV> /#wV/
+
+\read <ssllhu>
+\read <ll>
+\read <llsu>
+\read <llasu>
+\read <mal>
+\read <mall>
+\read <nalu>
+\read <nallu>
+\read <xolam>
+\read <uall>
+
+# this word is ambiguous, need to figure out how to get both readings (rank the rules so there is a tie here)
+\read <ull>

@@ -1,0 +1,37 @@
+\include DefaultPhonology.cwg
+
+\ortho <VgVC> /Vs[kh]rVC/
+
+\ortho <p> /p/
+\ortho <b> /v/
+\ortho <m> /m/
+\ortho <t> /t/
+\ortho <d> /z/
+\ortho <n> /n/
+\ortho <kh> /x/
+\ortho <a> /a/
+\ortho <y> /ɨ/
+\ortho <#ng#> /naŋ/
+\ortho <ng> /ŋ/
+\ortho <#mga#> /maŋa/
+\ortho <g> /g/
+\ortho <s> /s/
+\ortho <sy> /ʃ/
+\ortho <sý> /sɨ/
+\ortho <syý> /ʃɨ/
+\ortho <c> /[ts]/
+\ortho <cs> /[tʃ]/
+
+\write /zamaxat/
+\read <banym>
+\read <ng>
+\read <mga>
+\read <manga>
+\read <amga>
+\read <ynggysy>
+\read <agan>
+
+# ambiguous
+\read <csy>
+
+\write /mɨsɨʃɨ/

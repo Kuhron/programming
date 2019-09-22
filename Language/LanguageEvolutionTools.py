@@ -11,28 +11,6 @@ from PhoneticFeatureSpace import PhoneticFeatureSpace
 import IPAConverter
 
 
-# moved to DefaultPhonology.cwg
-# DEFAULT_PHONEME_CLASSES = {
-#     "C": {
-#         "m", "n", "ɳ", "ɲ", "ŋ",
-#         "p", "[pʰ]", "b", "t", "[tʰ]", "d", "ʈ", "[ʈʰ]", "ɖ", "c", "[cʰ]", "ɟ", "k", "[kʰ]", "g", "[kʷ]", "[kʷʰ]", "[gʷ]", "q", "[qʰ]", "ɢ", "ʔ", 
-#         "[pf]", "[pfʰ]", "[bv]", "[tθ]", "[tθʰ]", "[dð]", "[ts]", "[tsʰ]", "[dz]", "[tɬ]", "[tɬʰ]", "[dɮ]", "[tɕ]", "[tɕʰ]", "[dʑ]", "[tʃ]", "[tʃʰ]", "[dʒ]", "[tʂ]", "[tʂʰ]", "[dʐ]", "[cç]", "[cçʰ]", "[ɟʝ]", "[kx]", "[kxʰ]", "[gɣ]", 
-#         "ɸ", "β", "f", "v", "θ", "ð", "s", "z", "ɬ", "ɮ", "ʃ", "ʒ", "ɕ", "ʑ", "ç", "ʝ", "x", "ɣ", "h", 
-#         "l", "ɭ", "r", "ɾ", "[ɾʷ]", "ɽ", "j", "w", 
-#     },
-#     "V": {"a", "e", "i", "o", "u", "ʊ", "ɪ", "æ", "ɤ", "ɯ", "ø", "y", "ə", "ɨ", "ɛ", "ɔ", "ɑ", "ɒ", },
-#     "I": {"i", "e", },
-#     "U": {"u", "o", "a", },
-#     "[HV]": {"i", "y", "ɯ", "u", },
-#     "Į": {"ʲ", "ˠ", },
-#     "F": {"ɸ", "β", "f", "v", "θ", "ð", "s", "z", "ɬ", "ɮ", "ʃ", "ʒ", "ɕ", "ʑ", "ç", "ʝ", "x", "ɣ", "h", },
-#     "[AFF]": {"[pf]", "[pfʰ]", "[bv]", "[tθ]", "[tθʰ]", "[dð]", "[ts]", "[tsʰ]", "[dz]", "[tɬ]", "[tɬʰ]", "[dɮ]", "[tɕ]", "[tɕʰ]", "[dʑ]", "[tʃ]", "[tʃʰ]", "[dʒ]", "[tʂ]", "[tʂʰ]", "[dʐ]", "[cç]", "[cçʰ]", "[ɟʝ]", "[kx]", "[kxʰ]", "[gɣ]", },
-#     "T": {"t", "[tʰ]", "d", },
-#     "N": {"m", "n", "ɳ", "ɲ", "ŋ"},
-#     "P": {"p", "[pʰ]", "b", "t", "[tʰ]", "d", "ʈ", "[ʈʰ]", "ɖ", "c", "[cʰ]", "ɟ", "k", "[kʰ]", "g", "[kʷ]", "[kʷʰ]", "[gʷ]", "q", "[qʰ]", "ɢ", "ʔ", },
-# }
-
-
 class Language:
     def __init__(self, name, lexicon):
         self.name = name
@@ -145,6 +123,11 @@ class Word:
 
     def has_designation(self):
         return self.designation is not None
+
+    def get_soundgloss_identifier(self):
+        res = "{}:{}".format(self.to_str(), self.gloss)
+        assert " " not in res
+        return res
         
     @staticmethod
     def from_str(s, designation=None):
@@ -235,10 +218,13 @@ class Rule:
         self.designation = designation
         self.input = inp
         self.output = outp
+        self.input_replaceability = None
+        self.output_replaceability = None
+        self.partitioned = False
     
     @staticmethod
-    def from_str(s):
-        rules = parse_rule_str(s)
+    def from_str(s, add_blanks=True):
+        rules = parse_rule_str(s, add_blanks=add_blanks)
         # don't designate unless it will be used, so put the designate() call elsewhere
         return rules
         
@@ -252,25 +238,94 @@ class Rule:
         assert type(s) is str, "designation must be str, got {}".format(type(s))
         self.designation = s
         # print("designated {}".format(self))
+
+    def get_segmented_and_replaceability_arrays(self, input_or_output_lst, classes):
+        # groups adjacent non-replaceable symbols into one segment
+        # e.g. Rule Vs[kh]rVC -> VglVC becomes [V, s[kh]r, V, C] -> [V, gl, V, C]
+        assert type(input_or_output_lst) is list, "must be list: {}".format(input_or_output_lst)
+        # print("partitioning {}".format(input_or_output_lst))
+        segmented_array = []
+        replaceability_array = []
+        current_unreplaceable_segment = []
+        for seg in input_or_output_lst:
+            replaceable = seg in classes
+            if replaceable:
+                if current_unreplaceable_segment != []:
+                    segmented_array.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
+                    replaceability_array.append(False)
+                    current_unreplaceable_segment = []
+                segmented_array.append(seg)
+                replaceability_array.append(True)
+            else:
+                current_unreplaceable_segment.append(seg)
+
+        # at end ,add remaining replaceable stuff if any
+        if current_unreplaceable_segment != []:
+            segmented_array.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
+            replaceability_array.append(False)
         
-    def get_specific_cases(self, classes, used_phonemes):
+        # print("partitioned {} into:\n{}\n{}".format(input_or_output_lst, segmented_array, replaceability_array))
+        return segmented_array, replaceability_array
+
+    def partition(self, classes):
+        self.input, self.input_replaceability = self.get_segmented_and_replaceability_arrays(self.input, classes)
+        self.output, self.output_replaceability = self.get_segmented_and_replaceability_arrays(self.output, classes)
+        self.partitioned = True
+
+    def unpartition(self):
+        new_inp = []
+        new_outp = []
+        new_inp = Rule.flatten_partitioned_list(self.input)
+        new_outp = Rule.flatten_partitioned_list(self.output)
+        self.input = new_inp
+        self.output = new_outp
+        self.input_replaceability = None
+        self.output_replaceability = None
+        self.partitioned = False
+
+    @staticmethod
+    def flatten_partitioned_list(lst):
+        res = []
+        for x in lst:
+            if type(x) is list:
+                for y in x:
+                    res.append(y)
+            else:
+                res.append(x)
+        return res
+        
+    def get_specific_cases(self, classes, used_phonemes=None):
+        if not self.partitioned:
+            self.partition(classes)
         inp = self.input
         outp = self.output
+        # print("getting specific cases of {}".format(self))
         n = len(inp)
-        assert n == len(outp), "rule with unequal lengths: {}".format(self)
+        assert n == len(outp), "rule with unequal segmented lengths: {}".format(self)
+        assert all(x == y for x, y in zip(self.input_replaceability, self.output_replaceability)), "rule with incompatible replaceabilities: {}".format(self)
         for i in range(n):
-            if inp[i] in classes:
-                assert outp[i] == inp[i] or outp[i] not in classes
-                replace = outp[i] != inp[i]
+            is_replaceable = self.input_replaceability[i]
+            if is_replaceable:
+                assert type(inp[i]) is type(outp[i]) is str, "{} and {} should be equal and replaceable, but one or both of them is not a string".format(inp[i], outp[i])
+                inp_seg = inp[i][0]
+                outp_seg = outp[i][0]
+                assert outp_seg == inp_seg or outp_seg not in classes
+                replace = outp_seg != inp_seg
                 res = []
-                vals = [x for x in classes[inp[i]] if x in used_phonemes]
+                if used_phonemes is None:
+                    # default behavior is to get all possible expansions given classes
+                    vals = [x for x in classes[inp_seg]]
+                else:
+                    vals = [x for x in classes[inp_seg] if x in used_phonemes]
+                
                 for val_i, val in enumerate(vals):
-                    replacement = outp[i] if replace else val
+                    replacement = outp_seg if replace else val
                     new_inp = inp[:i] + [val] + inp[i+1:]
                     new_outp = outp[:i] + [replacement] + outp[i+1:]
                     designation = "{}.{}".format(self.designation, val_i)
                     new_rule = Rule(new_inp, new_outp)
                     new_rule.designate(designation)
+                    new_rule.unpartition()
                     res += new_rule.get_specific_cases(classes, used_phonemes)
                 return res
         else:
@@ -297,11 +352,18 @@ class Rule:
         return set(self.output)
         
     def get_input_str(self):
-        return "".join(("_" if x == "" else x) for x in self.input)
+        if self.partitioned:
+            input_lst = Rule.flatten_partitioned_list(self.input)
+        else:
+            input_lst = self.input
+        return "".join(("_" if x == "" else x) for x in input_lst)
         
     def get_output_str(self):
-        s = "".join(("_" if x == "" else x) for x in self.output)
-        # return "Ø" if s == "" else s
+        if self.partitioned:
+            output_lst = Rule.flatten_partitioned_list(self.output)
+        else:
+            output_lst = self.output
+        s = "".join(("_" if x == "" else x) for x in output_lst)
         return s
         
     def has_classes(self):
@@ -987,7 +1049,7 @@ def parse_word_str_to_list(w):
                 lst.append(c)
     return lst
 
-def parse_rule_str(inp):
+def parse_rule_str(inp, add_blanks=True):
     rule_strs = inp.split(",")
     all_results = []
     for rule_str in rule_strs:
@@ -1000,18 +1062,19 @@ def parse_rule_str(inp):
             continue
         rule_inp = parse_word_str_to_list(rule_inp_str)
         rule_outp = parse_word_str_to_list(rule_outp_str)
-        if len(rule_inp) != len(rule_outp):
-            lri = len(rule_inp)
-            lro = len(rule_outp)
-            input_shorter = lri < lro
-            shorter_one, shorter_len, longer_len = (rule_inp, lri, lro) if input_shorter else (rule_outp, lro, lri)
-            shorter_one += [""] * (longer_len - shorter_len)
-            if input_shorter:
-                rule_inp = shorter_one
-            else:
-                rule_outp = shorter_one
-        if len(rule_inp) != len(rule_outp):
-            raise AssertionError("invalid rule given, unequal input and output lengths\ninput: {}\noutput: {}".format(rule_inp, rule_outp))
+        if add_blanks:
+            if len(rule_inp) != len(rule_outp):
+                lri = len(rule_inp)
+                lro = len(rule_outp)
+                input_shorter = lri < lro
+                shorter_one, shorter_len, longer_len = (rule_inp, lri, lro) if input_shorter else (rule_outp, lro, lri)
+                shorter_one += [""] * (longer_len - shorter_len)
+                if input_shorter:
+                    rule_inp = shorter_one
+                else:
+                    rule_outp = shorter_one
+            if len(rule_inp) != len(rule_outp):
+                raise AssertionError("invalid rule given, unequal input and output lengths\ninput: {}\noutput: {}".format(rule_inp, rule_outp))
         new_rule = Rule(rule_inp, rule_outp)
         #all_results += new_rule.get_specific_cases(classes, used_phonemes)  # do expansion later
         all_results.append(new_rule)
