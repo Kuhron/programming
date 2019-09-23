@@ -1,12 +1,40 @@
 \include DefaultPhonology.cwg
 
-\ortho <VgV> /Vs[kh]rV/
+\graph p C
+\graph b C
+\graph m C
+\graph t C
+\graph d C
+\graph n C
+\graph kh C
+\graph g C
+\graph s C
+\graph sy C
+\graph c C
+\graph a V
+\graph y V
+\graph ý V
+
+# test ability to have graphemes that do not match CV-ness of their IPA value
+\graph u C
+\graph o C
+\ortho <u> /w/
+\ortho <o> /β/
+
+# try weird stuff
+\ortho <VgV> /<V>s[kh]r<V>/
+\ortho <ktc> /θ/
+\ortho <gdc> /ð/
+# phoneme sequence that is not a "digraph phoneme" (such as [ts])
+\ortho <x> /ks/
 
 \ortho <p> /p/
 \ortho <b> /v/
 \ortho <m> /m/
 \ortho <t> /t/
 \ortho <d> /z/
+\ortho <Cd> /<C>r/
+\ortho </ɨ/d> /ɨr/
 \ortho <n> /n/
 \ortho <kh> /x/
 \ortho <a> /a/
@@ -22,6 +50,9 @@
 \ortho <c> /[ts]/
 \ortho <cs> /[tʃ]/
 
+
+# test cases
+
 \write /zamaxat/
 \write /mɨsɨʃɨ/
 \read <banym>
@@ -30,7 +61,19 @@
 \read <manga>
 \read <amga>
 \read <ynggysy>
-\read <agan>
+\read <kagan>
+\read <kaktcan>
+\read <kagdcan>
+\read <myx>
+\read <cydy>
+\read <sydy>
+\read <sýdy>
 
 # ambiguous
 \read <csy>
+
+# CV mismatch
+\read <uaoy>
+\write /waβɨ/
+\read <oda>
+\write /βra/

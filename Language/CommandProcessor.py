@@ -74,6 +74,8 @@ class CommandProcessor:
             # templates for this pos will be expanded in the process_inflect_... method
         elif command == "sc":
             self.process_sound_change_command_entry(rest)
+        elif command == "graph":
+            self.process_graph_command_entry(rest)
         elif command == "ortho":
             self.process_ortho_command_entry(rest)
         elif command == "write":
@@ -88,6 +90,11 @@ class CommandProcessor:
         classes = classes_str.split(",")
         self.gui.language.add_phoneme(phoneme_symbol, classes)
         self.gui.update_phonology_displays()
+
+    def process_graph_command_entry(self, args):
+        grapheme, classes_str = args
+        classes = classes_str.split(",")
+        self.orthography_converter.add_grapheme_to_classes(grapheme, classes)
 
     def process_pos_command_entry(self, args):
         # e.g. \pos v {negation}_{tense}{person}{number}
@@ -172,7 +179,7 @@ class CommandProcessor:
         assert phoneme_str[0] == "/" and phoneme_str[-1] == "/"
         phoneme_str = phoneme_str[1:-1]
 
-        replacement_rule = Rule.from_str("{}>{}".format(grapheme_str, phoneme_str), add_blanks=False)[0]  # rule is unidirectional, but should be able to use expansion this way and then extract both input and output from specific cases
+        replacement_rule = Rule.from_str("{}>{}".format(grapheme_str, phoneme_str), is_orthographic_rule=True, add_blanks=False)[0]  # rule is unidirectional, but should be able to use expansion this way and then extract both input and output from specific cases
         cases = replacement_rule.get_specific_cases(self.gui.language.phoneme_classes, used_phonemes=None)
         if cases == []:
             raise RuntimeError("Got no cases of rule {}".format(replacement_rule))

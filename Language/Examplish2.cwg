@@ -1,8 +1,8 @@
 \include DefaultPhonology.cwg
 
-\pos n _{number}{case}
-\pos v _{negation}{tense}{person}{number}
-\pos adj _{degree}
+\pos n -{number}{case}
+\pos v -{negation}{tense}{person}{number}
+\pos adj -{degree}
 juka = n cat
 tomu = n bear
 uki = n tree

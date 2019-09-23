@@ -1,0 +1,39 @@
+\phone m C,N
+\phone n C,N
+\phone ŋ C,N
+
+\phone d C,P
+\phone [tʰ] C,P
+\phone [d'] C,P
+
+\phone β C,F
+\phone v C,F
+\phone f C,F
+\phone ð C,F
+\phone θ C,F
+\phone z C,F
+\phone s C,F
+\phone ʃ C,F
+\phone ɣ C,F
+\phone x C,F
+
+\phone [tɕ] C,[AFF]
+\phone [tʃ] C,[AFF]
+\phone [tθ] C,[AFF]
+
+\phone l C
+\phone ɹ C
+\phone ɾ C
+\phone [rʷ] C
+\phone j C
+\phone w C
+
+\phone i V,A
+\phone e V,E
+\phone a V,A
+\phone u V,A
+\phone o V,A
+\phone ʊ V,A
+\phone aj V,[DIP],A
+\phone ej V,[DIP],E
+\phone oj V,[DIP],A

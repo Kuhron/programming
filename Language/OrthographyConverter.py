@@ -2,15 +2,22 @@ class OrthographyConverter:
     def __init__(self):
         self.grapheme_to_phoneme = OrthographyConverter.initial_dict()
         self.phoneme_to_grapheme = OrthographyConverter.initial_dict()
+        self.grapheme_classes = {}
 
     @staticmethod
     def initial_dict():
         # return {"": "", "#": "#"}  # causes bugs where it wants to match # before letters
         return {}
 
+    def add_grapheme_to_classes(self, grapheme, classes):
+        for cl in classes:
+            if cl not in self.grapheme_classes:
+                self.grapheme_classes[cl] = set()
+            self.grapheme_classes[cl].add(grapheme)
+
     def add_pair(self, grapheme_str, phoneme_str):
-        assert phoneme_str not in self.phoneme_to_grapheme, "Warning: overwriting phoneme_str {}".format(phoneme_str)
-        assert grapheme_str not in self.grapheme_to_phoneme, "Warning: overwriting grapheme_str {}".format(grapheme_str)
+        assert phoneme_str not in self.phoneme_to_grapheme or self.phoneme_to_grapheme[phoneme_str] == grapheme_str, "Warning: overwriting phoneme_str {} (current ortho {}, would be replaced by {})".format(phoneme_str, self.phoneme_to_grapheme[phoneme_str], grapheme_str)
+        assert grapheme_str not in self.grapheme_to_phoneme or self.grapheme_to_phoneme[grapheme_str] == phoneme_str, "Warning: overwriting grapheme_str {} (current pronunciation {}, would be replaced by {})".format(grapheme_str, self.grapheme_to_phoneme[grapheme_str], phoneme_str)
         self.grapheme_to_phoneme[grapheme_str] = phoneme_str
         self.phoneme_to_grapheme[phoneme_str] = grapheme_str
 

@@ -3,7 +3,7 @@
 # Examplish Lexicon
 
 # noun
-\pos n _{number}{case}
+\pos n -{number}{case}
 \inflect n \null = number SG
 \inflect n i = number DL
 \inflect n ail = number PL
@@ -12,14 +12,14 @@
 \inflect n ak = case OBL
 
 # quantity/mass noun
-\pos nq _{case}
+\pos nq -{case}
 \inflect nq \null = case ABS
 \inflect nq en = case ERG
 \inflect nq ak = case OBL
 # later would be nice to be able to tell it to use the same case endings from noun POS
 
 # verb
-\pos v {negation}_{tense}{person}{number}
+\pos v {negation}-{tense}{person}{number}
 \inflect v \null = negation POS
 \inflect v ra = negation NEG
 \inflect v \null = tense PRES
@@ -32,10 +32,10 @@
 \inflect v n = number PL
 
 # preposition type A, uninflectable
-\pos pa _
+\pos pa -
 
 # preposition type B, inflectable for number of object and motion
-\pos pb {motion}_{number}
+\pos pb {motion}-{number}
 \inflect pb \null = motion STATIC
 \inflect pb sa = motion MOVING
 \inflect pb n = number SG
@@ -80,7 +80,7 @@ taril = v jump
 # should throw error if you try to inflect or instantiate an undefined POS
 \inflect nx morphx = featurex valx
 x = nx thing
-\pos nx _{featurex}
+\pos nx -{featurex}
 # the morph "morphx" and the lexeme "x" should not have been added even though the POS "nx" was eventually defined
 \inflect nx morphxx = featurex valxx
 xx = nx thingx

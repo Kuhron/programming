@@ -94,7 +94,7 @@ class Lexeme:
     def apply_inflection_form(self, inflection):
         citation_form = self.citation_form
         assert type(citation_form) is Word and type(inflection) is InflectionForm
-        new_string = inflection.string.replace("_", citation_form.to_str())
+        new_string = inflection.string.replace("-", citation_form.to_str())
         new_designation = citation_form.designation + inflection.designation_suffix
         new_gloss = self.short_gloss + inflection.gloss
         new_word = Word.from_str(new_string, designation=new_designation)
@@ -223,8 +223,12 @@ class Rule:
         self.partitioned = False
     
     @staticmethod
-    def from_str(s, add_blanks=True):
-        rules = parse_rule_str(s, add_blanks=add_blanks)
+    def from_str(s, is_orthographic_rule=False, add_blanks=True):
+        rules = parse_rule_str(
+            s,
+            is_orthographic_rule=is_orthographic_rule,
+            add_blanks=add_blanks
+        )
         # don't designate unless it will be used, so put the designate() call elsewhere
         return rules
         
@@ -356,14 +360,14 @@ class Rule:
             input_lst = Rule.flatten_partitioned_list(self.input)
         else:
             input_lst = self.input
-        return "".join(("_" if x == "" else x) for x in input_lst)
+        return "".join(("-" if x == "" else x) for x in input_lst)
         
     def get_output_str(self):
         if self.partitioned:
             output_lst = Rule.flatten_partitioned_list(self.output)
         else:
             output_lst = self.output
-        s = "".join(("_" if x == "" else x) for x in output_lst)
+        s = "".join(("-" if x == "" else x) for x in output_lst)
         return s
         
     def has_classes(self):
@@ -1042,14 +1046,14 @@ def parse_word_str_to_list(w):
                 assert current_item == ""
                 current_item += c
                 inside_brackets = True
-            elif c == "_":
+            elif c == "-":
                 # use this to make blanks in rules with string notation
                 lst.append("")
             else:
                 lst.append(c)
     return lst
 
-def parse_rule_str(inp, add_blanks=True):
+def parse_rule_str(inp, is_orthographic_rule=False, add_blanks=True):
     rule_strs = inp.split(",")
     all_results = []
     for rule_str in rule_strs:
@@ -1057,7 +1061,7 @@ def parse_rule_str(inp, add_blanks=True):
             print("skipping invalid rule_str:", rule_str)
             continue
         rule_inp_str, rule_outp_str = rule_str.split(">")
-        if rule_inp_str.count("_") > 1:
+        if rule_inp_str.count("-") > 1:
             print("only insertions with one blank are accepted right now; please split this into a series of rules:", rule_str)
             continue
         rule_inp = parse_word_str_to_list(rule_inp_str)
