@@ -223,14 +223,27 @@ class Rule:
         self.partitioned = False
     
     @staticmethod
-    def from_str(s, is_orthographic_rule=False, add_blanks=True):
+    def from_str(s, add_blanks=True):
         rules = parse_rule_str(
             s,
-            is_orthographic_rule=is_orthographic_rule,
+            # is_orthographic_rule=is_orthographic_rule,
             add_blanks=add_blanks
         )
         # don't designate unless it will be used, so put the designate() call elsewhere
         return rules
+
+    @staticmethod
+    def from_input_and_output_strs(input_str, output_str, is_orthographic_rule=False):
+        if is_orthographic_rule:
+            # check for hybrid strings
+            grapheme_str = input_str
+            phoneme_str = output_str
+            grapheme_str_is_hybrid = "/" in grapheme_str
+            phoneme_str_is_hybrid = "<" in phoneme_str
+            if phoneme_str_is_hybrid:
+                assert ">" in phoneme_str, "hybrid phoneme str opens grapheme brackets but does not close them: {}".format(phoneme_str)
+        
+        raise NotImplementedError
         
     def to_str(self):
         return self.get_input_str() + " -> " + self.get_output_str()
@@ -1053,7 +1066,7 @@ def parse_word_str_to_list(w):
                 lst.append(c)
     return lst
 
-def parse_rule_str(inp, is_orthographic_rule=False, add_blanks=True):
+def parse_rule_str(inp, add_blanks=True):
     rule_strs = inp.split(",")
     all_results = []
     for rule_str in rule_strs:

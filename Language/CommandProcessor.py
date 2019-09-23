@@ -179,8 +179,17 @@ class CommandProcessor:
         assert phoneme_str[0] == "/" and phoneme_str[-1] == "/"
         phoneme_str = phoneme_str[1:-1]
 
-        replacement_rule = Rule.from_str("{}>{}".format(grapheme_str, phoneme_str), is_orthographic_rule=True, add_blanks=False)[0]  # rule is unidirectional, but should be able to use expansion this way and then extract both input and output from specific cases
-        cases = replacement_rule.get_specific_cases(self.gui.language.phoneme_classes, used_phonemes=None)
+        # replacement_rule = Rule.from_str("{}>{}".format(grapheme_str, phoneme_str), is_orthographic_rule=True, add_blanks=False)[0]  # rule is unidirectional, but should be able to use expansion this way and then extract both input and output from specific cases
+        replacement_rule = Rule.from_input_and_output_strs(
+            grapheme_str,
+            phoneme_str,
+            is_orthographic_rule=True
+        )
+        cases = replacement_rule.get_specific_cases(
+            phoneme_classes=self.gui.language.phoneme_classes,
+            grapheme_classes=self.orthography_converter.grapheme_classes,
+            used_phonemes=None
+        )
         if cases == []:
             raise RuntimeError("Got no cases of rule {}".format(replacement_rule))
         for r in cases:
