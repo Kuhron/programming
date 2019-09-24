@@ -1,5 +1,8 @@
 from LanguageEvolutionTools import parse_brackets_and_blanks
 
+import random
+
+
 class Rule:
     def __init__(self, inp, outp, designation=None):
         self.designation = designation
@@ -211,3 +214,91 @@ class Rule:
     def __repr__(self):
         rule_str = self.to_str()
         return "Rule #{} : {}".format(self.designation, rule_str)
+
+    @staticmethod
+    def get_random_rules(n_rules, lexicon, classes):
+        res = []
+        for _ in range(n_rules):
+            w = random.choice(lexicon)
+            w = w.with_word_boundaries()
+            n = len(w)
+            max_env_len = min(4, n-1)
+            env_len = random.randint(1, max_env_len)
+            max_start_index = n - env_len
+            min_start_index = 0
+            typ = random.choice(
+                ["insertion"] * 1 +\
+                ["deletion"] * 3 +\
+                ["mutation"] * 6
+            )
+            if env_len == 1 and typ != "insertion":
+                # only do insertions if the whole environment is a word boundary
+                min_start_index += 1
+                max_start_index -= 1
+            assert min_start_index <= max_start_index, "non-overlapping indices with parameters\nword = {w}\ntyp = {typ}\nenv_len = {env_len}\nindices = {min_start_index}, {max_start_index}".format(**locals())
+            start_index = random.randint(min_start_index, max_start_index)
+            end_index = start_index + env_len
+            inp = list(w[start_index : end_index])
+            if typ == "insertion":
+                # add a blank somewhere
+                if inp[0] == "#":
+                    min_blank_index = 1
+                else:
+                    min_blank_index = 0
+                if inp[-1] == "#":
+                    max_blank_index = len(inp) - 1
+                else:
+                    max_blank_index = len(inp)
+                if min_blank_index == 1 and max_blank_index == 0:
+                    # insertion where input is just ["#"], pick beginning or end of word
+                    blank_index = random.choice([0, 1])
+                else:
+                    blank_index = random.randint(min_blank_index, max_blank_index)
+                inp = inp[:blank_index] + [""] + inp[blank_index:]
+                change_index = blank_index
+            else:
+                while True:
+                    change_index = random.randrange(len(inp))
+                    if inp[change_index] != "#":
+                        break
+            
+            # put some classes in inp, with some probability
+            # echo these classes in outp, all changes are to nothing or a specific string with no classes
+            # e.g., can't make rule like [["#", "", "a"], ["#", "C", "a"]] because don't know which C to insert!
+                    
+            for i, seg in enumerate(inp):
+                if len(inp) > 1 and random.random() < 0.3:
+                    # don't have changes like C -> s or V -> Ø
+                    classes_with_seg = [c for c in classes if seg in classes[c]]
+                    if len(classes_with_seg) == 0:
+                        continue
+                    
+                    c = random.choice(classes_with_seg)
+                    inp[i] = c
+                
+            # now copy input as output and do something to it
+            outp = inp[:]
+            if typ == "insertion":
+                c = random.choice(list(classes.keys()))  # make this better later, e.g. don't do C_C -> CfC
+                outp[change_index] = random.choice(tuple(classes[c]))
+            elif typ == "deletion":
+                outp[change_index] = ""
+            elif typ == "mutation":
+                if inp[change_index] in classes:
+                    possibilities = classes[inp[change_index]]
+                    outp[change_index] = random.choice(tuple(possibilities))
+                else:
+                    classes_with_seg = [c for c in classes if inp[change_index] in classes[c]]
+                    if len(classes_with_seg) == 0:
+                        raise Exception("segment to be changed ({}) is not in any class".format(inp[change_index]))
+                    
+                    c = random.choice(classes_with_seg)
+                    outp[change_index] = random.choice([x for x in classes[c] if x != inp[change_index]])
+            else:
+                raise Exception("unknown change type")
+            
+            rule = Rule(inp, outp)  # don't designate it until it is accepted for use
+            # print("generated rule: {}".format(rule))
+            res.append(rule)
+        
+        return res

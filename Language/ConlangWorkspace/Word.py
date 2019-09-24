@@ -1,4 +1,6 @@
-from LanguageEvolutionTools import parse_brackets_and_blanks
+from LanguageEvolutionTools import (
+    parse_brackets_and_blanks, sublist_replace
+)
 
 
 class Word:
@@ -85,7 +87,7 @@ class Word:
     def apply_rules(self, rules):
         word = self
         for rule in rules:
-            word = apply_rule(word, rule)
+            word = word.apply_rule(rule)
         return word
 
     def get_inputs_that_could_apply(self):

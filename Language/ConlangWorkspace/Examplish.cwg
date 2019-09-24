@@ -1,7 +1,5 @@
 \include DefaultPhonology.cwg
 
-# Examplish Lexicon
-
 # noun
 \pos n -{number}{case}
 \inflect n \null = number SG
@@ -84,3 +82,10 @@ taril = v jump
 # # the morph "morphx" and the lexeme "x" should not have been added even though the POS "nx" was eventually defined
 # \inflect nx morphxx = featurex valxx
 # xx = nx thingx
+
+# test handling of sound change rule types
+\sc b>mb
+\sc P#>k#
+\sc CC>-C
+\sc V-V>VrV
+\sc #V-CV>#arC-

@@ -12,7 +12,7 @@ from PyQt5.QtGui import (QIntValidator)
 import docx
 from docx.shared import Pt
 
-from LanguageEvolutionTools import get_random_rules
+# from LanguageEvolutionTools import get_random_rules
 
 from CommandProcessor import CommandProcessor
 from InflectionForm import InflectionForm
@@ -463,7 +463,7 @@ class ConlangWorkspaceGUI(QMainWindow):
         document.save(output_fp)
 
     def generate_sound_change(self):
-        rule = get_random_rules(1, self.language.lexicon.all_forms(), self.language.phoneme_classes)[0]
+        rule = Rule.get_random_rules(1, self.language.lexicon.all_forms(), self.language.phoneme_classes)[0]
         self.soundChangeWidget.setText(rule.to_notation())
 
     def send_sound_change_command(self):
