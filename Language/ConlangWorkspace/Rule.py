@@ -1,3 +1,5 @@
+from LanguageEvolutionTools import parse_brackets_and_blanks
+
 class Rule:
     def __init__(self, inp, outp, designation=None):
         self.designation = designation
@@ -9,13 +11,37 @@ class Rule:
     
     @staticmethod
     def from_str(s, add_blanks=True):
-        rules = parse_rule_str(
-            s,
-            # is_orthographic_rule=is_orthographic_rule,
-            add_blanks=add_blanks
-        )
-        # don't designate unless it will be used, so put the designate() call elsewhere
-        return rules
+        rule_strs = s.split(",")
+        all_results = []
+        for rule_str in rule_strs:
+            if rule_str.count(">") != 1:
+                print("skipping invalid rule_str:", rule_str)
+                continue
+            rule_inp_str, rule_outp_str = rule_str.split(">")
+            if rule_inp_str.count("-") > 1:
+                print("only insertions with one blank are accepted right now; please split this into a series of rules:", rule_str)
+                continue
+            rule_inp = parse_brackets_and_blanks(rule_inp_str)
+            rule_outp = parse_brackets_and_blanks(rule_outp_str)
+            if add_blanks:
+                if len(rule_inp) != len(rule_outp):
+                    lri = len(rule_inp)
+                    lro = len(rule_outp)
+                    input_shorter = lri < lro
+                    shorter_one, shorter_len, longer_len = (rule_inp, lri, lro) if input_shorter else (rule_outp, lro, lri)
+                    shorter_one += [""] * (longer_len - shorter_len)
+                    if input_shorter:
+                        rule_inp = shorter_one
+                    else:
+                        rule_outp = shorter_one
+                if len(rule_inp) != len(rule_outp):
+                    raise AssertionError("invalid rule given, unequal input and output lengths\ninput: {}\noutput: {}".format(rule_inp, rule_outp))
+            new_rule = Rule(rule_inp, rule_outp)
+            #all_results += new_rule.get_specific_cases(classes, used_phonemes)  # do expansion later
+            all_results.append(new_rule)
+
+        # don't designate unless it will be used, so put the designate() call elsewhere    
+        return all_results
 
     @staticmethod
     def from_input_and_output_strs(input_str, output_str, is_orthographic_rule=False, grapheme_classes=None):
@@ -176,6 +202,11 @@ class Rule:
         
     def get_input_no_blanks(self):
         return [x for x in self.input if x != ""]
+
+    def applies_to_word(self, word):
+        word = word.with_word_boundaries()
+        inp_no_blanks = self.get_input_no_blanks()
+        return list_contains(word, inp_no_blanks)
     
     def __repr__(self):
         rule_str = self.to_str()

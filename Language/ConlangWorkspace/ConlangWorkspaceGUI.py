@@ -12,12 +12,17 @@ from PyQt5.QtGui import (QIntValidator)
 import docx
 from docx.shared import Pt
 
-from LanguageEvolutionTools import (
-        Word, Rule, Lexeme, Lexicon, Language, InflectionForm, Morpheme, 
-        evolve_word, get_random_rules, 
-    )
+from LanguageEvolutionTools import get_random_rules
+
 from CommandProcessor import CommandProcessor
+from InflectionForm import InflectionForm
+from Language import Language
+from Lexeme import Lexeme
+from Lexicon import Lexicon
+from Morpheme import Morpheme
 from OrthographyConverter import OrthographyConverter
+from Rule import Rule
+from Word import Word
 
 import string
 import sys
@@ -471,10 +476,10 @@ class ConlangWorkspaceGUI(QMainWindow):
         expanded_rules = rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
         new_lexicon = Lexicon([])
         for lexeme in self.language.lexicon.lexemes:
-            new_citation_form = evolve_word(lexeme.citation_form, expanded_rules)
+            new_citation_form = lexeme.citation_form.apply_rules(expanded_rules)
             new_forms = []
             for f in lexeme.forms:
-                new_form = evolve_word(f, expanded_rules)
+                new_form = f.apply_rules(expanded_rules)
                 new_forms.append(new_form)
             new_lexeme = Lexeme(new_citation_form, lexeme.part_of_speech, lexeme.gloss, forms=new_forms)
             new_lexicon.add_lexeme(new_lexeme)

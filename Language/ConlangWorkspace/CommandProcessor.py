@@ -1,8 +1,12 @@
-from LanguageEvolutionTools import (
-        Word, Rule, Lexeme, Lexicon, Language, InflectionForm, Morpheme, 
-        evolve_word, get_random_rules, 
-    )
+from InflectionForm import InflectionForm
+from Lexeme import Lexeme
+from Morpheme import Morpheme
+from Rule import Rule
+from Word import Word
 from OrthographyConverter import OrthographyConverter
+
+import docx
+from docx.shared import Pt
 
 
 class CommandProcessor:

@@ -1,3 +1,6 @@
+from LanguageEvolutionTools import parse_brackets_and_blanks
+
+
 class Word:
     def __init__(self, lst, designation=None, gloss=None):
         self.designation = designation
@@ -20,8 +23,7 @@ class Word:
     def from_str(s, designation=None):
         if type(s) is not str:
             raise TypeError("expected str, got {}".format(type(s)))
-        lst =  parse_word_str_to_list(s)
-        assert type(lst) is list
+        lst = parse_brackets_and_blanks(s)
         return Word(lst, designation)
         
     def to_str(self):
@@ -54,6 +56,49 @@ class Word:
         else:
             assert "#" not in self.designation
             return False
+
+    def apply_rule(self, rule):
+        try:
+            assert "#" not in self
+            inp = rule.input
+            outp = rule.output
+            assert inp.count("#") == outp.count("#") <= 2, "too many '#'s in rule {}".format(rule)
+        except AssertionError:
+            print("invalid word for rule application:", self)
+            return self
+        
+        word2 = self.with_word_boundaries()
+        res_lst = sublist_replace(word2.lst,inp, outp)
+        res_lst = [x for x in res_lst if x not in ["#", ""]]
+        if res_lst == []:
+            print("Warning: blocking change {} that would make {} into a blank word".format(rule, self))
+            return self
+        
+        if res_lst != self.lst:
+            res = Word(res_lst, designation=self.designation, gloss=self.gloss)
+            #outp_display = "Ø" if outp == "" else "".join(outp)
+            #print("{} : {} -> {}".format(rule, word, res))
+            return res
+        else:
+            return self
+
+    def apply_rules(self, rules):
+        word = self
+        for rule in rules:
+            word = apply_rule(word, rule)
+        return word
+
+    def get_inputs_that_could_apply(self):
+        # ignoring blanks, so check (classless) rules for inclusion in the list that is returned by this function, based on presence of their input without blanks
+        # returns triangle number of sublists of word
+        
+        word = self.with_word_boundaries()
+        res = []
+        for length in range(1, len(word) + 1):
+            n_lists = len(word) - length + 1
+            for i in range(n_lists):
+                res.append(word[i:i+length])
+        return res
             
     def __repr__(self):
         # don't put with(out)_word_boundaries() in here because it will call this if it throws an error, causing stack overflow

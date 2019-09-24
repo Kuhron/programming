@@ -1,3 +1,7 @@
+from InflectionForm import InflectionForm
+from Word import Word
+
+
 class Lexeme:
     def __init__(self, citation_form, part_of_speech, gloss, forms=None, inflection_forms=None):
         self.citation_form = citation_form

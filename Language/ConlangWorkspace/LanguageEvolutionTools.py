@@ -7,20 +7,13 @@ import os
 import pickle
 from copy import deepcopy
 
-from PhoneticFeatureSpace import PhoneticFeatureSpace
-import IPAConverter
 
-
-def evolve_word(word, rules):
-    for rule in rules:
-        word = apply_rule(word, rule)
-    return word
-
-def parse_word_str_to_list(w):
+def parse_brackets_and_blanks(s):
+    assert type(s) is str
     lst = []
     inside_brackets = False
     current_item = ""
-    for c in w:
+    for c in s:
         if inside_brackets:
             assert c != "["
             # no nesting allowed, no meta-digraphs
@@ -43,82 +36,6 @@ def parse_word_str_to_list(w):
                 lst.append(c)
     return lst
 
-def parse_rule_str(inp, add_blanks=True):
-    rule_strs = inp.split(",")
-    all_results = []
-    for rule_str in rule_strs:
-        if rule_str.count(">") != 1:
-            print("skipping invalid rule_str:", rule_str)
-            continue
-        rule_inp_str, rule_outp_str = rule_str.split(">")
-        if rule_inp_str.count("-") > 1:
-            print("only insertions with one blank are accepted right now; please split this into a series of rules:", rule_str)
-            continue
-        rule_inp = parse_word_str_to_list(rule_inp_str)
-        rule_outp = parse_word_str_to_list(rule_outp_str)
-        if add_blanks:
-            if len(rule_inp) != len(rule_outp):
-                lri = len(rule_inp)
-                lro = len(rule_outp)
-                input_shorter = lri < lro
-                shorter_one, shorter_len, longer_len = (rule_inp, lri, lro) if input_shorter else (rule_outp, lro, lri)
-                shorter_one += [""] * (longer_len - shorter_len)
-                if input_shorter:
-                    rule_inp = shorter_one
-                else:
-                    rule_outp = shorter_one
-            if len(rule_inp) != len(rule_outp):
-                raise AssertionError("invalid rule given, unequal input and output lengths\ninput: {}\noutput: {}".format(rule_inp, rule_outp))
-        new_rule = Rule(rule_inp, rule_outp)
-        #all_results += new_rule.get_specific_cases(classes, used_phonemes)  # do expansion later
-        all_results.append(new_rule)
-        
-    return all_results
-            
-def rule_applies(word, rule):
-    word = word.with_word_boundaries()
-    inp_no_blanks = rule.get_input_no_blanks()
-    return list_contains(word, inp_no_blanks)
-
-def get_inputs_that_could_apply(word):
-    # ignoring blanks, so check (classless) rules for inclusion in the list that is returned by this function, based on presence of their input without blanks
-    # returns triangle number of sublists of word
-    if type(word) is str:
-        word = parse_word_str_to_list(word)
-        
-    word = word.with_word_boundaries()
-    res = []
-    for length in range(1, len(word) + 1):
-        n_lists = len(word) - length + 1
-        for i in range(n_lists):
-            res.append(word[i:i+length])
-    return res
-    
-def apply_rule(word, rule):
-    try:
-        assert "#" not in word
-        inp = rule.input
-        outp = rule.output
-        assert inp.count("#") == outp.count("#") <= 2, "too many '#'s in rule {}".format(rule)
-    except AssertionError:
-        print("invalid word for rule application:", word)
-        return word
-    
-    word2 = word.with_word_boundaries()
-    res_lst = sublist_replace(word2.lst,inp, outp)
-    res_lst = [x for x in res_lst if x not in ["#", ""]]
-    if res_lst == []:
-        print("Warning: blocking change {} that would make {} into a blank word".format(rule, word))
-        return word
-    
-    if res_lst != word.lst:
-        res = Word(res_lst, designation=word.designation, gloss=word.gloss)
-        #outp_display = "Ø" if outp == "" else "".join(outp)
-        #print("{} : {} -> {}".format(rule, word, res))
-        return res
-    else:
-        return word
-    
 def sublist_replace(lst, old, new):
     assert len(old) == len(new)  # true for this use case
     insert = "" in old
@@ -154,7 +71,7 @@ def sublist_replace(lst, old, new):
             #input("please review")
             index_offset += m-n
     return lst
-   
+
 def get_random_rules(n_rules, lexicon, classes):
     res = []
     for _ in range(n_rules):
@@ -267,7 +184,7 @@ def cleanup(word, classes, okay_seqs, new_rules, used_phonemes):
             
     for r in new_rules:
         # assert type(word) is list
-        if rule_applies(word, r):
+        if r.applies_to_word(word):
             #print("new rule will be applied:", r)
             pass
         
@@ -315,10 +232,10 @@ def user_edit(word, classes, used_phonemes):
         if inp == "":
             return word, okay_seqs, new_rules
         elif inp[0] == "*":
-            okay_seqs += [parse_word_str_to_list(x) for x in inp[1:].split(",")]
+            okay_seqs += [parse_brackets_and_blanks(x) for x in inp[1:].split(",")]
         elif ">" in inp:
             try:
-                rules_from_inp = parse_rule_str(inp)
+                rules_from_inp = Rule.from_str(inp)
                 new_rules += rules_from_inp
             except AssertionError:
                 print("invalid rule input")
@@ -343,8 +260,8 @@ def evolve_user_input_words(rules1, rules2, lexicon):
             continue
         inp = Word.from_str(inp)
         inp.designate("None")
-        e1 = evolve_word(inp, rules1)
-        e2 = evolve_word(inp, rules2)
+        e1 = inp.apply_rules(rules1)
+        e2 = inp.apply_rules(rules2)
         print("\nresulting evolutions:\n1. {}\n2. {}\n".format(e1, e2))
         if input("add this proto-word to the lexicon? (y/n, default yes)") != "n":
             inp.designate(str(next_designation))
@@ -835,7 +752,7 @@ def main():
             assert len(all_rules_this_round) == len(rule_catchup_tracker), "{} rules but tracker has {}".format(len(all_rules_this_round), len(rule_catchup_tracker))
             rule_indices_to_apply = [ri for ri in range(len(all_rules_this_round)) if rule_catchup_tracker[ri] < word_i]
             rules_to_apply = [all_rules_this_round[ri] for ri in rule_indices_to_apply]
-            #inputs_with_effect = get_inputs_that_could_apply(word)
+            #inputs_with_effect = word.get_inputs_that_could_apply()
             rules_to_apply_with_effect = rules_to_apply #[r for r in rules_to_apply if [x for x in r[0] if x != ""] in inputs_with_effect]
             #print(word, inputs_with_effect, rules_to_apply_with_effect)
             new_word = evolve_word(word, rules_to_apply_with_effect)
