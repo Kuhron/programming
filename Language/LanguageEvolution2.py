@@ -6,7 +6,7 @@ import random
 
 from copy import deepcopy
 
-from LanguageEvolutionTools import *
+from LE2Classes import *
 
 
 if __name__ == "__main__":
