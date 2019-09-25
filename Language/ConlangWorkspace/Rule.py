@@ -73,42 +73,66 @@ class Rule:
         self.designation = s
         # print("designated {}".format(self))
 
-    def get_segmented_and_replaceability_arrays(self, input_or_output_lst, classes):
-        # groups adjacent non-replaceable symbols into one segment
-        # e.g. Rule Vs[kh]rVC -> VglVC becomes [V, s[kh]r, V, C] -> [V, gl, V, C]
-        assert type(input_or_output_lst) is list, "must be list: {}".format(input_or_output_lst)
-        # print("partitioning {}".format(input_or_output_lst))
-        segmented_array = []
-        replaceability_array = []
-        current_unreplaceable_segment = []
-        for seg in input_or_output_lst:
-            replaceable = seg in classes
-            if replaceable:
-                if current_unreplaceable_segment != []:
-                    segmented_array.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
-                    replaceability_array.append(False)
-                    current_unreplaceable_segment = []
-                segmented_array.append(seg)
-                replaceability_array.append(True)
+    @staticmethod
+    def get_replaceability_array(lst, classes):
+        res = []
+        for seg in lst:
+            if type(seg) is list:
+                # unhashable type
+                res.append(False)
             else:
-                current_unreplaceable_segment.append(seg)
+                res.append(seg in classes)
+        return res
+
+    @staticmethod
+    def partition_input_and_output_lists(input_lst, output_lst, classes):
+        input_replaceability = Rule.get_replaceability_array(input_lst, classes)
+        output_replaceability = Rule.get_replaceability_array(output_lst, classes)
+        # check compatibility
+        for inp_r, outp_r in zip(input_replaceability, output_replaceability):
+            # reject an unreplaceable (e.g. /k/) turning into a replaceable (e.g. /C/)
+            assert not (outp_r and not inp_r), "incompatible replaceabilities: {} > {}".format(input_lst, output_lst)
+        # now make an array that they will both be partitioned according to
+        # want to "or" the boolean arrays
+        # but since you will only ever have T>T, F>F, or T>F, the or should be the same as the input
+        total_replaceability = [a or b for a, b in zip(input_replaceability, output_replaceability)]
+        assert total_replaceability == input_replaceability, "logic error in replaceability arrays {} > {}".format(input_replaceability, output_replaceability)
+        partitioned_input = Rule.partition_list(input_lst, replaceability=total_replaceability)
+        partitioned_output = Rule.partition_list(output_lst, replaceability=total_replaceability)
+        # print("partitioned these:\n{}\n{}\ninto\n{}\n{}\n".format(input_lst, output_lst, partitioned_input, partitioned_output))
+        return partitioned_input, partitioned_output
+
+    @staticmethod
+    def partition_list(lst, replaceability=None, classes=None):
+        if replaceability is None:
+            assert classes is None, "either replaceability or classes must be supplied"
+            replaceability = Rule.get_replaceability_array(lst, classes)
+        # put sequences of unreplaceables together
+        partitioned = []
+        current_unreplaceable_segment = []
+        for x, r in zip(lst, replaceability):
+            if r:
+                if current_unreplaceable_segment != []:
+                    partitioned.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
+                    current_unreplaceable_segment = []
+                partitioned.append(x)
+            else:
+                current_unreplaceable_segment.append(x)
 
         # at end ,add remaining replaceable stuff if any
         if current_unreplaceable_segment != []:
-            segmented_array.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
-            replaceability_array.append(False)
+            partitioned.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
         
-        # print("partitioned {} into:\n{}\n{}".format(input_or_output_lst, segmented_array, replaceability_array))
-        return segmented_array, replaceability_array
+        return partitioned
 
     def partition(self, classes):
-        self.input, self.input_replaceability = self.get_segmented_and_replaceability_arrays(self.input, classes)
-        self.output, self.output_replaceability = self.get_segmented_and_replaceability_arrays(self.output, classes)
+        self.input, self.output = Rule.partition_input_and_output_lists(self.input, self.output, classes)
+        # save the replaceability attributes AFTER partitioning so the length will match
+        self.input_replaceability = Rule.get_replaceability_array(self.input, classes)
+        self.output_replaceability = Rule.get_replaceability_array(self.output, classes)
         self.partitioned = True
 
     def unpartition(self):
-        new_inp = []
-        new_outp = []
         new_inp = Rule.flatten_partitioned_list(self.input)
         new_outp = Rule.flatten_partitioned_list(self.output)
         self.input = new_inp
@@ -133,10 +157,8 @@ class Rule:
             self.partition(classes)
         inp = self.input
         outp = self.output
-        # print("getting specific cases of {}".format(self))
+        print("getting specific cases of {}".format(self))
         n = len(inp)
-        assert n == len(outp), "rule with unequal segmented lengths: {}".format(self)
-        assert all(x == y for x, y in zip(self.input_replaceability, self.output_replaceability)), "rule with incompatible replaceabilities: {}".format(self)
         for i in range(n):
             is_replaceable = self.input_replaceability[i]
             if is_replaceable:
