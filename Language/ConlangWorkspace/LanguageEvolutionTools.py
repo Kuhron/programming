@@ -37,23 +37,20 @@ def parse_brackets_and_blanks(s):
     return lst
 
 def sublist_replace(lst, old, new):
-    assert len(old) == len(new)  # true for this use case
+    print("sublist replace {}, {}, {}".format(lst, old, new))
+    assert len(old) == len(new)
     insert = "" in old
     if insert:
         assert old.count("") == 1
     b = old.index("") if insert else None
     n = len([x for x in old if x != ""])
     m = len([x for x in new if x != ""])
-    #print("\n{}, {} -> {}".format(lst, old, new))
-    #print("n {}, m {}".format(n, m))
     new_no_blanks = [x for x in new if x != ""]
     word_len = len(lst)
     index_offset = 0
     for i in range(word_len - n + 1):
         j = i + index_offset
-        #print(i, index_offset, j)
         slice = lst[j:j+n]
-        #print("slice", slice)
         if insert:
             new_slice = []
             for k in range(n+1):
@@ -64,11 +61,8 @@ def sublist_replace(lst, old, new):
                 else:
                     new_slice.append(slice[k-1])
             slice = new_slice
-            #print("insert, slice now =", slice)
         if slice == old:
             lst = lst[:j] + new_no_blanks + lst[j+n:]
-            #print("lst now", lst)
-            #input("please review")
             index_offset += m-n
     return lst
 

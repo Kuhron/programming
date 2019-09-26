@@ -99,7 +99,10 @@ class Rule:
         assert total_replaceability == input_replaceability, "logic error in replaceability arrays {} > {}".format(input_replaceability, output_replaceability)
         partitioned_input = Rule.partition_list(input_lst, replaceability=total_replaceability)
         partitioned_output = Rule.partition_list(output_lst, replaceability=total_replaceability)
-        # print("partitioned these:\n{}\n{}\ninto\n{}\n{}\n".format(input_lst, output_lst, partitioned_input, partitioned_output))
+
+        # disallow changing things into or from word boundaries
+        for a, b in zip(partitioned_input, partitioned_output):
+            assert not (a == "" and b == ""), "Changing to or from word boundary is not allowed: {} > {}".format(input_lst, output_lst)
         return partitioned_input, partitioned_output
 
     @staticmethod
@@ -157,14 +160,16 @@ class Rule:
             self.partition(classes)
         inp = self.input
         outp = self.output
-        print("getting specific cases of {}".format(self))
+        # print("getting specific cases of {}".format(self))
+        # print(inp, outp)
         n = len(inp)
+        assert n == len(outp)
         for i in range(n):
             is_replaceable = self.input_replaceability[i]
             if is_replaceable:
                 assert type(inp[i]) is type(outp[i]) is str, "{} and {} should be equal and replaceable, but one or both of them is not a string".format(inp[i], outp[i])
-                inp_seg = inp[i][0]
-                outp_seg = outp[i][0]
+                inp_seg = inp[i]
+                outp_seg = outp[i]
                 assert outp_seg == inp_seg or outp_seg not in classes
                 replace = outp_seg != inp_seg
                 res = []

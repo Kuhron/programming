@@ -60,6 +60,7 @@ class Word:
             return False
 
     def apply_rule(self, rule):
+        print("applying rule to word\ninp {}\noutp {}\nword {}".format(rule.input, rule.output, self))
         try:
             assert "#" not in self
             inp = rule.input
@@ -70,7 +71,7 @@ class Word:
             return self
         
         word2 = self.with_word_boundaries()
-        res_lst = sublist_replace(word2.lst,inp, outp)
+        res_lst = sublist_replace(word2.lst, inp, outp)
         res_lst = [x for x in res_lst if x not in ["#", ""]]
         if res_lst == []:
             print("Warning: blocking change {} that would make {} into a blank word".format(rule, self))
@@ -88,6 +89,7 @@ class Word:
         word = self
         for rule in rules:
             word = word.apply_rule(rule)
+            print("{} : -> {}".format(rule, word))
         return word
 
     def get_inputs_that_could_apply(self):

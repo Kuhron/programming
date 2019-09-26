@@ -74,6 +74,9 @@ mo = pb g:out out, outside, out of
 ja = n boat
 \inflect v eme = negation MAYBE
 taril = v jump
+# words to see what the sound changes do
+abrk = v throw
+kaaia = n flag
 
 # # should throw error if you try to inflect or instantiate an undefined POS
 # \inflect nx morphx = featurex valx
@@ -84,8 +87,20 @@ taril = v jump
 # xx = nx thingx
 
 # test handling of sound change rule types
-\sc b>mb
-\sc P#>k#
-\sc CC>-C
-\sc V-V>VrV
-\sc #V-CV>#arC-
+\sc ViV>VjV
+# \sc e>i
+# \sc o>u
+# \sc k>x
+# \sc b>mb
+# \sc P#>k#
+# \sc CC>-C
+# \sc V-V>VrV
+# \sc #V-CV>#arC-
+
+# invalid rules
+# \sc CC>C
+# \sc C>CC  # rejected
+# \sc k>C  # rejected
+# \sc #>k
+# \sc k>#
+# \sc C>V  # rejected

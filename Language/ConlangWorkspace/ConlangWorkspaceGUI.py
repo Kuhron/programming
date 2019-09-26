@@ -474,12 +474,16 @@ class ConlangWorkspaceGUI(QMainWindow):
 
     def apply_sound_change(self, rule):
         expanded_rules = rule.get_specific_cases(self.language.phoneme_classes, self.language.used_phonemes)
+        print("orig {}\ncases {}".format(rule, expanded_rules))
         new_lexicon = Lexicon([])
         for lexeme in self.language.lexicon.lexemes:
             new_citation_form = lexeme.citation_form.apply_rules(expanded_rules)
             new_forms = []
             for f in lexeme.forms:
                 new_form = f.apply_rules(expanded_rules)
+                print(new_form)
+                if new_form != f:
+                    print("{} -> {}".format(f, new_form))
                 new_forms.append(new_form)
             new_lexeme = Lexeme(new_citation_form, lexeme.part_of_speech, lexeme.gloss, forms=new_forms)
             new_lexicon.add_lexeme(new_lexeme)

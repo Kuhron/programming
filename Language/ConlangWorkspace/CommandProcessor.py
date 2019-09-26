@@ -187,7 +187,8 @@ class CommandProcessor:
         replacement_rule = Rule.from_input_and_output_strs(
             grapheme_str,
             phoneme_str,
-            is_orthographic_rule=True
+            is_orthographic_rule=True,
+            grapheme_classes=self.orthography_converter.grapheme_classes
         )
         cases = replacement_rule.get_specific_cases(
             phoneme_classes=self.gui.language.phoneme_classes,
