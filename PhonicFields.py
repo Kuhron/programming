@@ -112,7 +112,9 @@ class Grain:
 
         direction_change = lambda v: Vector(v.x, v.y, v.z)  # maybe this will depend on r and theta somehow, but simplest is that the whole field due to a single grain points the same direction
 
-        magnitude_factor = np.exp(-r/RADIUS_DECAY)  # the radius decay constant is arbitrary, could be a parameter of the grain, but I don't want to add that extra parameter
+        unitless_radius = r/RADIUS_DECAY
+        magnitude_factor = np.exp(-unitless_radius)  # the radius decay constant is arbitrary, could be a parameter of the grain, but I don't want to add that extra parameter
+        # magnitude_factor = 1/(unitless_radius**2)
 
         if self.phonic == "positic":
             magnitude_factor *= positic_magnitude_factor(theta)
@@ -156,14 +158,16 @@ class Desert:
         # print(field_magnitudes)
 
         plt.subplot(1, 3, 1)
-        plt.imshow(field_magnitudes, origin="lower")
+        plt.imshow(np.array(field_magnitudes).T, origin="lower")
         plt.colorbar()
 
         plt.subplot(1, 3, 2)
-        plt.scatter(field_xs, field_ys, c=flatten_grid(direction_colors_grid))
+        plt.scatter(field_xs, field_ys, c=flatten_grid(magnitude_color_product_grid))
+        plt.axis("equal")
 
         plt.subplot(1, 3, 3)
-        plt.scatter(field_xs, field_ys, c=flatten_grid(magnitude_color_product_grid))
+        plt.scatter(field_xs, field_ys, c=flatten_grid(direction_colors_grid))
+        plt.axis("equal")
         plt.show()
 
 
@@ -285,10 +289,18 @@ if __name__ == "__main__":
     # plot_magnitude_factor_functions()
 
     grains = [
-        Grain(choose_phonic(), Coordinates(r(-10,10,1), r(-10,10,1), r(-0.1,0.1,1)), Vector.get_random_unit_vector()) for _ in range(100)  # all mag 1, random directions
+        # Grain("positic", Coordinates(0, -1, 0), Vector(0, 1, 0)),
+        # Grain("positic", Coordinates(0, 1, 0), Vector(0, -1, 0)),
+        # Grain("positic", Coordinates(-1, 0, 0), Vector(1, 0, 0)),
+        # Grain("positic", Coordinates(1, 0, 0), Vector(-1, 0, 0)),
+
+        Grain("positic", Coordinates(-np.sin(t), np.cos(t), 0), Vector(-np.cos(t), -np.sin(t), 0)) for t in np.arange(0, 2*np.pi, 2*np.pi/36)
+        # Grain("negatic", Coordinates(np.cos(t), np.sin(t), 0), Vector(-np.cos(t), -np.sin(t), 0)) for t in np.arange(0, 2*np.pi, 2*np.pi/36)
+
+        # Grain(choose_phonic(), Coordinates(r(-10,10,1), r(-10,10,1), r(-0.1,0.1,1)), Vector.get_random_unit_vector()) for _ in range(100)  # all mag 1, random directions
         # Grain(Coordinates(r(-4,4,1), r(-4,4,1), 0), Vector(0, 0, 1)) for _ in range(100)  # all mag 1, same direction
     ]
 
     desert = Desert(grains)
     for fixed_z in [0]:
-        desert.plot_field(x_min=-12, x_max=12, y_min=-12, y_max=12, fixed_z=fixed_z, resolution_steps=100)
+        desert.plot_field(x_min=-3, x_max=3, y_min=-3, y_max=3, fixed_z=fixed_z, resolution_steps=100)
