@@ -142,6 +142,7 @@ alias sublime="/opt/sublime_text/sublime_text"
 alias ipa="vim /usr/share/kmfl/IPA14.kmn"
 alias zotero="/usr/bin/zotero/zotero"
 alias nwc="timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"
+alias flex="/usr/bin/fieldworks-flex"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
