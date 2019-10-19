@@ -1,106 +1,106 @@
-\include DefaultPhonology.cwg
+include DefaultPhonology.cwg
 
 # noun
-\pos n -{number}{case}
-\inflect n \null = number SG
-\inflect n i = number DL
-\inflect n ail = number PL
-\inflect n \null = case ABS
-\inflect n en = case ERG
-\inflect n ak = case OBL
+pos n -{number}{case}
+inflect n \null = number SG
+inflect n i = number DL
+inflect n ail = number PL
+inflect n \null = case ABS
+inflect n en = case ERG
+inflect n ak = case OBL
 
 # quantity/mass noun
-\pos nq -{case}
-\inflect nq \null = case ABS
-\inflect nq en = case ERG
-\inflect nq ak = case OBL
+pos nq -{case}
+inflect nq \null = case ABS
+inflect nq en = case ERG
+inflect nq ak = case OBL
 # later would be nice to be able to tell it to use the same case endings from noun POS
 
 # verb
-\pos v {negation}-{tense}{person}{number}
-\inflect v \null = negation POS
-\inflect v ra = negation NEG
-\inflect v \null = tense PRES
-\inflect v ta = tense PAST
-\inflect v ina = tense FUT
-\inflect v ku = person 1
-\inflect v su = person 2
-\inflect v \null = person 3
-\inflect v \null = number SG
-\inflect v n = number PL
+pos v {negation}-{tense}{person}{number}
+inflect v \null = negation POS
+inflect v ra = negation NEG
+inflect v \null = tense PRES
+inflect v ta = tense PAST
+inflect v ina = tense FUT
+inflect v ku = person 1
+inflect v su = person 2
+inflect v \null = person 3
+inflect v \null = number SG
+inflect v n = number PL
 
 # preposition type A, uninflectable
-\pos pa -
+pos pa -
 
 # preposition type B, inflectable for number of object and motion
-\pos pb {motion}-{number}
-\inflect pb \null = motion STATIC
-\inflect pb sa = motion MOVING
-\inflect pb n = number SG
-\inflect pb ni = number DL
-\inflect pb il = number PL
+pos pb {motion}-{number}
+inflect pb \null = motion STATIC
+inflect pb sa = motion MOVING
+inflect pb n = number SG
+inflect pb ni = number DL
+inflect pb il = number PL
 
-koh = n dog
-tom = n person
-asur = n fish
-puram = n house
-mit = n hand
-ul = nq fire
-nir = nq water
-kal = n storm
-lahas = n mountain
-alat = nq ground
-eril = n river
-erek = n lake
-iliandir = n animal
-pahal = nq wood
-ettel = nq salt
-risam = nq metal
-tamas = nq sand
-issol = n leaf
-maruk = n knife
-koratin = n nut
-sertem = n tool
-mak = v eat
-lam = v see
-kor = v chase
-teris = pa above
-kupur = pa under
-le = pb g:in in, inside
-mo = pb g:out out, outside, out of
+lex koh = n dog
+lex tom = n person
+lex asur = n fish
+lex puram = n house
+lex mit = n hand
+lex ul = nq fire
+lex nir = nq water
+lex kal = n storm
+lex lahas = n mountain
+lex alat = nq ground
+lex eril = n river
+lex erek = n lake
+lex iliandir = n animal
+lex pahal = nq wood
+lex ettel = nq salt
+lex risam = nq metal
+lex tamas = nq sand
+lex issol = n leaf
+lex maruk = n knife
+lex koratin = n nut
+lex sertem = n tool
+lex mak = v eat
+lex lam = v see
+lex kor = v chase
+lex teris = pa above
+lex kupur = pa under
+lex le = pb g:in in, inside
+lex mo = pb g:out out, outside, out of
 
 # test ability to add inflections after the fact
-\inflect n akin = number PCL
-ja = n boat
-\inflect v eme = negation MAYBE
-taril = v jump
+inflect n akin = number PCL
+lex ja = n boat
+inflect v eme = negation MAYBE
+lex taril = v jump
 # words to see what the sound changes do
-abrk = v throw
-kaaia = n flag
+lex abrk = v throw
+lex kaaia = n flag
 
 # # should throw error if you try to inflect or instantiate an undefined POS
-# \inflect nx morphx = featurex valx
-# x = nx thing
-# \pos nx -{featurex}
+# inflect nx morphx = featurex valx
+# lex x = nx thing
+# pos nx -{featurex}
 # # the morph "morphx" and the lexeme "x" should not have been added even though the POS "nx" was eventually defined
-# \inflect nx morphxx = featurex valxx
-# xx = nx thingx
+# inflect nx morphxx = featurex valxx
+# lex xx = nx thingx
 
 # test handling of sound change rule types
-\sc ViV>VjV
-# \sc e>i
-# \sc o>u
-# \sc k>x
-# \sc b>mb
-# \sc P#>k#
-# \sc CC>-C
-# \sc V-V>VrV
-# \sc #V-CV>#arC-
+sc ViV>VjV
+# sc e>i
+# sc o>u
+# sc k>x
+# sc b>mb
+# sc P#>k#
+# sc CC>-C
+# sc V-V>VrV
+# sc #V-CV>#arC-
 
 # invalid rules
-# \sc CC>C
-# \sc C>CC  # rejected
-# \sc k>C  # rejected
-# \sc #>k
-# \sc k>#
-# \sc C>V  # rejected
+# sc CC>C
+# sc C>CC  # rejected
+# sc k>C  # rejected
+# sc #>k
+# sc k>#
+# sc C>V  # rejected

@@ -1,6 +1,8 @@
 from InflectionForm import InflectionForm
 from Lexeme import Lexeme
 from Morpheme import Morpheme
+from Phone import Phone
+from Phoneme import Phoneme
 from Rule import Rule
 from Word import Word
 from OrthographyConverter import OrthographyConverter
@@ -12,6 +14,7 @@ from docx.shared import Pt
 class CommandProcessor:
     def __init__(self, gui, orthography_converter):
         self.command_history = []
+        self.time_history = []
         self.gui = gui
         self.orthography_converter = orthography_converter
 
@@ -24,13 +27,14 @@ class CommandProcessor:
 
     @staticmethod
     def is_command_entry(s):
-        return s[0] == "\\"
+        return s[0] != "#"
+        # return s[0] == "\\"
 
-    @staticmethod
-    def is_lexeme_entry(s):
-        return s[0] not in ["\\", "#"] and " = " in s
-        # use backslash to start special lines, such as defining a word class
-        # use '#' for comment lines
+    # @staticmethod
+    # def is_lexeme_entry(s):
+    #     return s[0] not in ["\\", "#"] and " = " in s
+    #     # use backslash to start special lines, such as defining a word class
+    #     # use '#' for comment lines
     
     def process_command(self, command_str):
         command_str = command_str.strip()
@@ -41,14 +45,8 @@ class CommandProcessor:
 
         if command_str == "" or command_str[0] == "#":
             pass
-        elif CommandProcessor.is_command_entry(command_str):
-            self.process_command_entry(command_str)
-        elif CommandProcessor.is_lexeme_entry(command_str):
-            self.process_lexeme_entry(command_str)
-            # self.expand_templates_for_new_lexeme()
         else:
-            print("command cannot be processed: {}".format(command_str))
-            return
+            self.process_command_entry(command_str)
 
         # update the lexicon based on any new features, new affixes for a feature, new lexemes, etc.
         # self.expand_templates()  # crashes computer!
@@ -59,41 +57,56 @@ class CommandProcessor:
 
     def process_command_entry(self, ce):
         command, *rest = ce.split(" ")
-        assert command[0] == "\\"
-        command = command[1:]
         print("got command {} with args {}".format(command, rest))
 
-        if False:
-            pass  # just so I don't have to keep changing "if" to "elif" when adding new commands
-        elif command == "include":
-            assert len(rest) == 1
-            self.load_input_file(rest[0])
-        elif command == "phone":
-            self.process_phone_command_entry(rest)
-        elif command == "pos":
-            self.process_pos_command_entry(rest)
-            # don't expand templates here because only declaring new pos, no inflections yet
-        elif command == "inflect":
-            self.process_inflect_command_entry(rest)
-            # templates for this pos will be expanded in the process_inflect_... method
-        elif command == "sc":
-            self.process_sound_change_command_entry(rest)
-        elif command == "graph":
-            self.process_graph_command_entry(rest)
-        elif command == "ortho":
-            self.process_ortho_command_entry(rest)
-        elif command == "write":
-            self.process_write_command_entry(rest)
-        elif command == "read":
-            self.process_read_command_entry(rest)
+        command_dict = {
+            "lex": self.process_lexeme_command_entry,
+            "include": self.process_include_command_entry,
+            "phone": self.process_phone_command_entry,
+            "phoneme": self.process_phoneme_command_entry,
+            "allophone": self.process_allophone_command_entry,
+            "pos": self.process_pos_command_entry,
+            "inflect": self.process_inflect_command_entry,
+            "sc": self.process_sound_change_command_entry,
+            "graph": self.process_graph_command_entry,
+            "ortho": self.process_ortho_command_entry,
+            "write": self.process_write_command_entry,
+            "read": self.process_read_command_entry,
+            "time": self.process_time_command_entry,
+        }
+
+        if command in command_dict:
+            func = command_dict[command]
+            func(rest)
         else:
-            print("unknown command \'{}\'".format(command))
+            raise NameError("unknown command \'{}\'".format(command))
+
+    def process_include_command_entry(self, args):
+        fp, = args
+        self.load_input_file(fp)
 
     def process_phone_command_entry(self, args):
+        phone_symbol, *features = args
+        features_dict = {}
+        for feature_str in features:
+            key, value = feature_str.split("=")
+            assert key not in features_dict
+            features_dict[key] = value
+        phone = Phone(phone_symbol, features_dict)
+        self.gui.language.add_phone(phone)
+        self.gui.update_phonology_displays()
+
+    def process_phoneme_command_entry(self, args):
         phoneme_symbol, classes_str = args
         classes = classes_str.split(",")
-        self.gui.language.add_phoneme(phoneme_symbol, classes)
+        phoneme = Phoneme(phoneme_symbol)
+        self.gui.language.add_phoneme(phoneme, classes)
         self.gui.update_phonology_displays()
+
+    def process_allophone_command_entry(self, args):
+        phoneme_symbol, rule = args
+        assert phoneme_symbol in self.gui.language.phonemes
+        
 
     def process_graph_command_entry(self, args):
         grapheme, classes_str = args
@@ -147,15 +160,17 @@ class CommandProcessor:
         self.gui.update_phonology_displays()
         self.gui.update_lexicon_displays()
 
-    def process_lexeme_entry(self, le):
+    def process_lexeme_command_entry(self, args):
         # e.g. lahas = n mountain
         #      mak = v eat
         #      mo = pb g:out out, outside, out of
+        le = args
         try:
-            citation_form, rest = le.split(" = ")
+            citation_form, *rest = le
             le_i = self.gui.language.lexicon.next_lexeme_designation
             citation_form = Word.from_str(citation_form, designation=str(le_i))
-            pos, *gloss = rest.split(" ")
+            assert rest[0] == "=", "equals sign expected after lexeme, instead got: {}".format(rest[0])
+            pos, *gloss = rest[1:]
             gloss = " ".join(gloss)
             assert pos in self.full_inflections_by_part_of_speech, "unknown part of speech \"{}\"; please declare it".format(pos)
             inflection_forms = self.full_inflections_by_part_of_speech.get(pos, [])
@@ -216,6 +231,13 @@ class CommandProcessor:
         grapheme_str = grapheme_str[1:-1]
         res = self.orthography_converter.convert_graphemes_to_phonemes(grapheme_str)
         print(res)
+
+    def process_time_command_entry(self, args):
+        t = " ".join(args)
+        # let the time designation be any string
+        # but enforce that the order they are presented is chronological
+        assert t not in self.time_history
+        self.time_history.append(t)
 
     def get_parts_of_speech(self):
         return sorted(self.full_inflections_by_part_of_speech.keys())
