@@ -5,6 +5,7 @@ class Language:
         self.phones = {}
         self.phonemes = {}
         # self.phoneme_classes = {}  # to be populated by commands later
+        self.symbol_dict = {}
         self.symbol_classes = {}
         self.update_used_phonemes()
 
@@ -18,6 +19,7 @@ class Language:
     def add_phone(self, phone):
         assert phone.symbol not in self.phones, "already have phone with symbol {}".format(phone.symbol)
         self.phones[phone.symbol] = phone
+        self.symbol_dict[phone.to_str()] = phone
 
     def add_phoneme(self, phoneme, classes_of_this_phoneme):
         assert phoneme.symbol not in self.phonemes, "already have phoneme with symbol {}".format(phoneme.symbol)
@@ -27,6 +29,7 @@ class Language:
             if cl not in self.symbol_classes:
                 self.symbol_classes[cl] = set()
             self.symbol_classes[cl].add(phoneme.symbol)
+        self.symbol_dict[phoneme.to_str()] = phoneme
 
     @staticmethod
     def unbracket_phoneme(p):

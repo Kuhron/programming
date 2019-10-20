@@ -12,7 +12,8 @@ from Phone import Phone
 
 class SegmentSequence(list):
     @staticmethod
-    def from_str(s):
+    def from_str(s, symbol_dict):
+        print("symbol dict\n{}\n".format(symbol_dict))
         types = [Grapheme, Phoneme, Phone]
         beginning_symbols = ["<", "/", "{"]
         ending_symbols = [">", "/", "}"]
@@ -52,8 +53,8 @@ class SegmentSequence(list):
                 segment_symbol = current_symbol
                 beginning_symbol = beginning_symbols[types.index(current_type)]
                 ending_symbol = ending_symbols[types.index(current_type)]
-                # segment_str = beginning_symbol + segment_symbol + ending_symbol
-                segment = current_type(segment_symbol)
+                segment_str = beginning_symbol + segment_symbol + ending_symbol
+                segment = symbol_dict[segment_str]
                 segments.append(segment)
             elif inside_brackets:
                 current_symbol += char
@@ -62,8 +63,8 @@ class SegmentSequence(list):
                 segment_symbol = char
                 beginning_symbol = beginning_symbols[types.index(current_type)]
                 ending_symbol = ending_symbols[types.index(current_type)]
-                # segment_str = beginning_symbol + segment_symbol + ending_symbol
-                segment = current_type(segment_symbol)
+                segment_str = beginning_symbol + segment_symbol + ending_symbol
+                segment = symbol_dict[segment_str]
                 segments.append(segment)
 
         assert len(type_stack) == 1, "mismatched bracketing: {}".format(s)

@@ -14,6 +14,7 @@ class OrthographyConverter:
             if cl not in self.language.symbol_classes:
                 self.language.symbol_classes[cl] = set()
             self.language.symbol_classes[cl].add(grapheme)
+        self.language.symbol_dict[grapheme.to_str()] = grapheme
 
     def add_pair(self, grapheme_str, phoneme_str):
         assert phoneme_str not in self.phoneme_to_grapheme or self.phoneme_to_grapheme[phoneme_str] == grapheme_str, "Warning: overwriting phoneme_str {} (current ortho {}, would be replaced by {})".format(phoneme_str, self.phoneme_to_grapheme[phoneme_str], grapheme_str)

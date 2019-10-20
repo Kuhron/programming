@@ -99,7 +99,7 @@ class CommandProcessor:
         assert phoneme_symbol in self.gui.language.phonemes
 
         inp, outp = rule_str.split(">")
-        rule = Rule.from_input_and_output_strs(inp, outp)
+        rule = Rule.from_input_and_output_strs(inp, outp, self.gui.language.symbol_dict)
         self.gui.language.phonemes[phoneme_symbol].add_allophone_rule(rule)
 
     def process_graph_command_entry(self, args):
@@ -199,6 +199,7 @@ class CommandProcessor:
         replacement_rule = Rule.from_input_and_output_strs(
             grapheme_str,
             phoneme_str,
+            self.gui.language.symbol_dict,
         )
         cases = replacement_rule.get_specific_cases(
             classes=self.gui.language.symbol_classes,

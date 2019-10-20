@@ -48,9 +48,9 @@ class Rule:
         return all_results
 
     @staticmethod
-    def from_input_and_output_strs(input_str, output_str):
-        input_seq = SegmentSequence.from_str(input_str)
-        output_seq = SegmentSequence.from_str(output_str)
+    def from_input_and_output_strs(input_str, output_str, symbol_dict):
+        input_seq = SegmentSequence.from_str(input_str, symbol_dict)
+        output_seq = SegmentSequence.from_str(output_str, symbol_dict)
         rule = Rule(input_seq, output_seq)
         return rule
         
