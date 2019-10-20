@@ -48,18 +48,7 @@ class Rule:
         return all_results
 
     @staticmethod
-    def from_input_and_output_strs(input_str, output_str, is_orthographic_rule=False, grapheme_classes=None):
-        # if is_orthographic_rule:
-        #     assert grapheme_classes is not None
-        #     # check for hybrid strings
-        #     grapheme_str = input_str
-        #     phoneme_str = output_str
-        #     grapheme_str_is_hybrid = "/" in grapheme_str
-        #     phoneme_str_is_hybrid = "<" in phoneme_str
-        #     if phoneme_str_is_hybrid:
-        #         assert ">" in phoneme_str, "hybrid phoneme str opens grapheme brackets but does not close them: {}".format(phoneme_str)
-        # else:
-        #     assert grapheme_classes is None
+    def from_input_and_output_strs(input_str, output_str):
         input_seq = SegmentSequence.from_str(input_str)
         output_seq = SegmentSequence.from_str(output_str)
         rule = Rule(input_seq, output_seq)
@@ -74,7 +63,6 @@ class Rule:
     def designate(self, s):
         assert type(s) is str, "designation must be str, got {}".format(type(s))
         self.designation = s
-        # print("designated {}".format(self))
 
     @staticmethod
     def get_replaceability_array(lst, classes):

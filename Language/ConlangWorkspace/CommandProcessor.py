@@ -28,28 +28,14 @@ class CommandProcessor:
     @staticmethod
     def is_command_entry(s):
         return s[0] != "#"
-        # return s[0] == "\\"
-
-    # @staticmethod
-    # def is_lexeme_entry(s):
-    #     return s[0] not in ["\\", "#"] and " = " in s
-    #     # use backslash to start special lines, such as defining a word class
-    #     # use '#' for comment lines
     
     def process_command(self, command_str):
         command_str = command_str.strip()
-        # if command_str == "" or command_str[0] == "#":
-        #     # do nothing on blank lines and comments
-        #     return
-        # print("command to process:", command_str)
 
         if command_str == "" or command_str[0] == "#":
             pass
         else:
             self.process_command_entry(command_str)
-
-        # update the lexicon based on any new features, new affixes for a feature, new lexemes, etc.
-        # self.expand_templates()  # crashes computer!
 
         # if command was processed successfully
         self.command_history.append(command_str)
@@ -82,10 +68,12 @@ class CommandProcessor:
             raise NameError("unknown command \'{}\'".format(command))
 
     def process_include_command_entry(self, args):
+        # e.g. include DefaultPhonology.cwg
         fp, = args
         self.load_input_file(fp)
 
     def process_phone_command_entry(self, args):
+        # e.g. phone m place=bilabial manner=nasal voicing=1
         phone_symbol, *features = args
         features_dict = {}
         for feature_str in features:
@@ -97,33 +85,34 @@ class CommandProcessor:
         self.gui.update_phonology_displays()
 
     def process_phoneme_command_entry(self, args):
+        # e.g. phoneme m
         phoneme_symbol, classes_str = args
         classes = classes_str.split(",")
+        classes = ["/"+c+"/" for c in classes]
         phoneme = Phoneme(phoneme_symbol)
         self.gui.language.add_phoneme(phoneme, classes)
         self.gui.update_phonology_displays()
 
     def process_allophone_command_entry(self, args):
+        # e.g. allophone m /mf/>/{ɱ}f/
         phoneme_symbol, rule_str = args
         assert phoneme_symbol in self.gui.language.phonemes
 
         inp, outp = rule_str.split(">")
         rule = Rule.from_input_and_output_strs(inp, outp)
-        print("got rule", rule)  # it is getting stuck in a loop somewhere before this
-
-        # raise NotImplementedError
-
         self.gui.language.phonemes[phoneme_symbol].add_allophone_rule(rule)
 
     def process_graph_command_entry(self, args):
+        # e.g. graph a V
         grapheme, classes_str = args
         classes = classes_str.split(",")
+        classes = ["<"+c+">" for c in classes]
         self.orthography_converter.add_grapheme_to_classes(grapheme, classes)
 
     def process_pos_command_entry(self, args):
-        # e.g. \pos v {negation}_{tense}{person}{number}
-        #      \pos pa _
-        #      \pos pb {motion}_{number}
+        # e.g. pos v {negation}-{tense}{person}{number}
+        #      pos pa -
+        #      pos pb {motion}-{number}
         pos, template = args
         # assert pos not in self.full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
         self.gui.add_pos(pos)
@@ -139,9 +128,9 @@ class CommandProcessor:
             # print(self.affixes_by_part_of_speech_and_feature)
 
     def process_inflect_command_entry(self, args):
-        # e.g. \inflect v ra = negation NEG
-        #      \inflect v ku = person 1
-        #      \inflect v \null = number SG
+        # e.g. inflect v ra = negation NEG
+        #      inflect v ku = person 1
+        #      inflect v \null = number SG
         pos, morpheme_string, equals_sign, feature, gloss = args
         if morpheme_string == "\\null":
             morpheme_string = ""
@@ -168,9 +157,9 @@ class CommandProcessor:
         self.gui.update_lexicon_displays()
 
     def process_lexeme_command_entry(self, args):
-        # e.g. lahas = n mountain
-        #      mak = v eat
-        #      mo = pb g:out out, outside, out of
+        # e.g. lex lahas = n mountain
+        #      lex mak = v eat
+        #      lex mo = pb g:out out, outside, out of
         le = args
         try:
             citation_form, *rest = le
@@ -192,6 +181,7 @@ class CommandProcessor:
             raise exc
 
     def process_sound_change_command_entry(self, sc):
+        # e.g. sc ViV>VjV
         sc = " ".join(sc)  # in case there were more spaces in there that for some reason are supposed to be there, but processor split it on them
         rules = Rule.from_str(sc)
         for rule in rules:
@@ -200,23 +190,21 @@ class CommandProcessor:
         self.gui.update_phonology_displays()
 
     def process_ortho_command_entry(self, args):
+        # e.g. ortho </#/llV> /#j<V>/
         grapheme_str, phoneme_str = args
         assert grapheme_str[0] == "<" and grapheme_str[-1] == ">"
-        grapheme_str = grapheme_str[1:-1]
         assert phoneme_str[0] == "/" and phoneme_str[-1] == "/"
-        phoneme_str = phoneme_str[1:-1]
 
         # replacement_rule = Rule.from_str("{}>{}".format(grapheme_str, phoneme_str), is_orthographic_rule=True, add_blanks=False)[0]  # rule is unidirectional, but should be able to use expansion this way and then extract both input and output from specific cases
         replacement_rule = Rule.from_input_and_output_strs(
             grapheme_str,
             phoneme_str,
-            is_orthographic_rule=True,
-            grapheme_classes=self.orthography_converter.grapheme_classes
         )
         cases = replacement_rule.get_specific_cases(
-            phoneme_classes=self.gui.language.phoneme_classes,
-            grapheme_classes=self.orthography_converter.grapheme_classes,
-            used_phonemes=None
+            # phoneme_classes=self.gui.language.phoneme_classes,
+            # grapheme_classes=self.orthography_converter.grapheme_classes,
+            classes=self.gui.language.symbol_classes,
+            used_phonemes=None,
         )
         if cases == []:
             raise RuntimeError("Got no cases of rule {}".format(replacement_rule))
@@ -227,6 +215,7 @@ class CommandProcessor:
             self.orthography_converter.add_pair(g, p)
 
     def process_write_command_entry(self, args):
+        # e.g. write /awi.a/
         phoneme_str, = args
         assert phoneme_str[0] == "/" and phoneme_str[-1] == "/"
         phoneme_str = phoneme_str[1:-1]
@@ -234,6 +223,7 @@ class CommandProcessor:
         print(res)
 
     def process_read_command_entry(self, args):
+        # e.g. read <aullha>
         grapheme_str, = args
         assert grapheme_str[0] == "<" and grapheme_str[-1] == ">"
         grapheme_str = grapheme_str[1:-1]
@@ -241,9 +231,11 @@ class CommandProcessor:
         print(res)
 
     def process_time_command_entry(self, args):
-        t = " ".join(args)
+        # e.g. time 2000 B.C.
+        # e.g. time Edo Period
         # let the time designation be any string
         # but enforce that the order they are presented is chronological
+        t = " ".join(args)
         assert t not in self.time_history
         self.time_history.append(t)
 

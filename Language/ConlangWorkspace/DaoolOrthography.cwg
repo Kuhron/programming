@@ -1,96 +1,98 @@
-\include DaoolPhonology.cwg
+include DaoolPhonology.cwg
 
-\graph m C
-\graph n C
-\graph t C
-\graph d C
-\graph v C
-\graph f C
-\graph s C
-\graph x C
-\graph h C
-\graph z C
-\graph r C
-\graph w C
-\graph l C
-\graph i V
-\graph e V
-\graph a V
-\graph u V
-\graph o V
+graph m C
+graph n C
+graph t C
+graph d C
+graph v C
+graph f C
+graph s C
+graph x C
+graph h C
+graph z C
+graph r C
+graph w C
+graph l C
+graph i V
+graph e V
+graph a V
+graph u V
+graph o V
 
-\ortho <m> /m/
-\ortho <n> /n/
-\ortho <nn> /ŋ/
 
-\ortho <t> /d/
-\ortho <tt> /[tʰ]/
-\ortho <d> /[d']/
+ortho </#/llV> /#j<V>/
+ortho <m> /m/
+ortho <n> /n/
+ortho <nn> /ŋ/
 
-\ortho <v> /β/
-\ortho <f> /v/
-\ortho <ff> /f/
-\ortho <tl> /ð/
-\ortho <ttl> /θ/
-\ortho <s> /z/
-\ortho <ss> /s/
-\ortho <zl> /ʃ/
-\ortho <x> /ɣ/
-\ortho <xx> /x/
-\ortho <h> /./
+ortho <t> /d/
+ortho <tt> /[tʰ]/
+ortho <d> /[d']/
 
-\ortho <z> /[tɕ]/
-\ortho <tzl> /[tʃ]/
-\ortho <tttl> /[tθ]/
+ortho <v> /β/
+ortho <f> /v/
+ortho <ff> /f/
+ortho <tl> /ð/
+ortho <ttl> /θ/
+ortho <s> /z/
+ortho <ss> /s/
+ortho <zl> /ʃ/
+ortho <x> /ɣ/
+ortho <xx> /x/
+ortho <h> /./
 
-\ortho <r> /ɹ/
-\ortho <rl> /ɾ/
-\ortho <w> /rʷ/
+ortho <z> /[tɕ]/
+ortho <tzl> /[tʃ]/
+ortho <tttl> /[tθ]/
 
-\ortho <#ll#> /#i#/
-\ortho <e> /e/
-\ortho <a> /a/
-\ortho <u> /u/
-\ortho <o> /o/
-\ortho <al> /aj/
-\ortho <el> /ej/
-\ortho <ol> /ʊl/
-\ortho <ul> /oj/
+ortho <r> /ɹ/
+ortho <rl> /ɾ/
+ortho <w> /rʷ/
 
-\ortho <#l> /#l/
-\ortho <#llV> /j/<V>
-\ortho <#llC> /i/<C>
+ortho <#ll#> /#i#/
+ortho <e> /e/
+ortho <a> /a/
+ortho <u> /u/
+ortho <o> /o/
+ortho <al> /aj/
+ortho <el> /ej/
+ortho <ol> /ʊl/
+ortho <ul> /oj/
 
-\ortho <Cll> <C>/i/
-\ortho <Vll> <V>/l/
-\ortho <Vu> <V>/w/
-\ortho <#uV> /#w/<V>
+ortho <#l> /#l/
+ortho <#llV> /j/<V>
+ortho <#llC> /i/<C>
 
-\read <ssllhu>
-\read <ll>
-\read <llsu>
-\read <llasu>
-\read <mal>
-\read <mall>
-\read <nalu>
-\read <nallu>
-\read <xolam>
-\read <uall>
-\write /wal/
-\read <aul>
-\write /awl/
-\read <ahul>
-\write /a.oj/
-\read <aull>
-\write /awi/
-\read <ahull>
-\write /a.ul/
-\read <aula>
-\write /awla/
-\read <aulla>
-\write /awja/
-\read <aullha>
-\write /awi.a/
+ortho <Cll> <C>/i/
+ortho <Vll> <V>/l/
+ortho <Vu> <V>/w/
+ortho <#uV> /#w/<V>
+
+read <ssllhu>
+read <ll>
+read <llsu>
+read <llasu>
+read <mal>
+read <mall>
+read <nalu>
+read <nallu>
+read <xolam>
+read <uall>
+write /wal/
+read <aul>
+write /awl/
+read <ahul>
+write /a.oj/
+read <aull>
+write /awi/
+read <ahull>
+write /a.ul/
+read <aula>
+write /awla/
+read <aulla>
+write /awja/
+read <aullha>
+write /awi.a/
 
 # this word is ambiguous, need to figure out how to get both readings (rank the rules so there is a tie here)
-\read <ull>
+read <ull>

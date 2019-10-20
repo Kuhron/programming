@@ -4,7 +4,8 @@ class Language:
         self.lexicon = lexicon
         self.phones = {}
         self.phonemes = {}
-        self.phoneme_classes = {}  # to be populated by commands later
+        # self.phoneme_classes = {}  # to be populated by commands later
+        self.symbol_classes = {}
         self.update_used_phonemes()
 
     def update_used_phonemes(self):
@@ -22,22 +23,25 @@ class Language:
         assert phoneme.symbol not in self.phonemes, "already have phoneme with symbol {}".format(phoneme.symbol)
         self.phonemes[phoneme.symbol] = phoneme
         for cl in classes_of_this_phoneme:
-            if cl not in self.phoneme_classes:
-                self.phoneme_classes[cl] = set()
-            self.phoneme_classes[cl].add(phoneme.symbol)
+            assert cl[0] == cl[-1] == "/", "invalid phoneme class {}".format(cl)
+            if cl not in self.symbol_classes:
+                self.symbol_classes[cl] = set()
+            self.symbol_classes[cl].add(phoneme.symbol)
 
     @staticmethod
     def unbracket_phoneme(p):
         return p.replace("[","").replace("]","")
 
     def get_phoneme_classes(self):
-        return sorted(self.phoneme_classes.keys(), key=Language.unbracket_phoneme)
+        keys = [k for k in self.symbol_classes.keys() if k[0] == k[-1] == "/"]
+        return sorted(keys, key=Language.unbracket_phoneme)
 
     def get_phonemes(self):
         res = set()
-        for cl in self.phoneme_classes:
-            for p in self.phoneme_classes[cl]:
-                res.add(p)
+        for cl in self.symbol_classes:
+            if cl[0] == cl[-1] == "/":
+                for p in self.symbol_classes[cl]:
+                    res.add(p)
         return sorted(res)
 
     def get_used_phonemes(self):

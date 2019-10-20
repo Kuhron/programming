@@ -6,11 +6,7 @@
 #   allophonic rules /Vz[HV]/ /V{r}[HV]/
 
 
-class SegmentSequence:
-    def __init__(self, segments):
-        self.segments = segments
-        self.iteration_index = 0
-
+class SegmentSequence(list):
     @staticmethod
     def from_str(s):
         types = ["Grapheme", "Phoneme", "Phone"]
@@ -27,7 +23,13 @@ class SegmentSequence:
         inside_brackets = False
         current_symbol = ""
         for char in s[1:-1]:
-            if char in beginning_symbols:
+            if char == "/" and type_stack[-1] == "Phoneme":
+                # this one acts different because the beginning and ending symbols are the same
+                assert not inside_brackets
+                closing_type = types[ending_symbols.index(char)]
+                assert closing_type == type_stack[-1], "mismatched bracketing: {}".format(s)
+                type_stack = type_stack[:-1]
+            elif char in beginning_symbols:
                 assert not inside_brackets
                 new_type = types[beginning_symbols.index(char)]
                 type_stack.append(new_type)
@@ -60,14 +62,5 @@ class SegmentSequence:
 
         assert len(type_stack) == 1, "mismatched bracketing: {}".format(s)
 
+        print("made segseq from str {} -> {}".format(s, segments))
         return SegmentSequence(segments)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        try:
-            return self.segments[self.iteration_index]
-            self.iteration_index += 1
-        except IndexError:
-            raise StopIteration
