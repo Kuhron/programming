@@ -1,4 +1,5 @@
 from LanguageEvolutionTools import parse_brackets_and_blanks
+from SegmentSequence import SegmentSequence
 
 import random
 
@@ -48,19 +49,21 @@ class Rule:
 
     @staticmethod
     def from_input_and_output_strs(input_str, output_str, is_orthographic_rule=False, grapheme_classes=None):
-        if is_orthographic_rule:
-            assert grapheme_classes is not None
-            # check for hybrid strings
-            grapheme_str = input_str
-            phoneme_str = output_str
-            grapheme_str_is_hybrid = "/" in grapheme_str
-            phoneme_str_is_hybrid = "<" in phoneme_str
-            if phoneme_str_is_hybrid:
-                assert ">" in phoneme_str, "hybrid phoneme str opens grapheme brackets but does not close them: {}".format(phoneme_str)
-        else:
-            assert grapheme_classes is None
-        
-        raise NotImplementedError
+        # if is_orthographic_rule:
+        #     assert grapheme_classes is not None
+        #     # check for hybrid strings
+        #     grapheme_str = input_str
+        #     phoneme_str = output_str
+        #     grapheme_str_is_hybrid = "/" in grapheme_str
+        #     phoneme_str_is_hybrid = "<" in phoneme_str
+        #     if phoneme_str_is_hybrid:
+        #         assert ">" in phoneme_str, "hybrid phoneme str opens grapheme brackets but does not close them: {}".format(phoneme_str)
+        # else:
+        #     assert grapheme_classes is None
+        input_seq = SegmentSequence.from_str(input_str)
+        output_seq = SegmentSequence.from_str(output_str)
+        rule = Rule(input_seq, output_seq)
+        return rule
         
     def to_str(self):
         return self.get_input_str() + " -> " + self.get_output_str()

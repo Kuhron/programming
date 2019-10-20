@@ -5,18 +5,15 @@
 #   orthographic rules <VgV> <V/z/V>
 #   allophonic rules /Vz[HV]/ /V{r}[HV]/
 
-from Grapheme import Grapheme
-from Phoneme import Phoneme
-from Phone import Phone
-
 
 class SegmentSequence:
     def __init__(self, segments):
         self.segments = segments
+        self.iteration_index = 0
 
     @staticmethod
-    def from_string(s):
-        types = [Grapheme, Phoneme, Phone]
+    def from_str(s):
+        types = ["Grapheme", "Phoneme", "Phone"]
         beginning_symbols = ["<", "/", "{"]
         ending_symbols = [">", "/", "}"]
         first_symbol = s[0]
@@ -47,16 +44,30 @@ class SegmentSequence:
                 inside_brackets = False
                 current_type = type_stack[-1]
                 segment_symbol = current_symbol
-                segment = current_type(segment_symbol)
-                segments.append(segment)
+                beginning_symbol = beginning_symbols[types.index(current_type)]
+                ending_symbol = ending_symbols[types.index(current_type)]
+                segment_str = beginning_symbol + segment_symbol + ending_symbol
+                segments.append(segment_str)
             elif inside_brackets:
                 current_symbol += char
             else:
                 current_type = type_stack[-1]
                 segment_symbol = char
-                segment = current_type(segment_symbol)
-                segments.append(segment)
+                beginning_symbol = beginning_symbols[types.index(current_type)]
+                ending_symbol = ending_symbols[types.index(current_type)]
+                segment_str = beginning_symbol + segment_symbol + ending_symbol
+                segments.append(segment_str)
 
         assert len(type_stack) == 1, "mismatched bracketing: {}".format(s)
 
         return SegmentSequence(segments)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        try:
+            return self.segments[self.iteration_index]
+            self.iteration_index += 1
+        except IndexError:
+            raise StopIteration

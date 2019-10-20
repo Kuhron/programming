@@ -109,7 +109,7 @@ class CommandProcessor:
 
         inp, outp = rule_str.split(">")
         rule = Rule.from_input_and_output_strs(inp, outp)
-        print(rule)
+        print("got rule", rule)  # it is getting stuck in a loop somewhere before this
 
         # raise NotImplementedError
 
