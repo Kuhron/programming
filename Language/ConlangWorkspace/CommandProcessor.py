@@ -201,8 +201,6 @@ class CommandProcessor:
             phoneme_str,
         )
         cases = replacement_rule.get_specific_cases(
-            # phoneme_classes=self.gui.language.phoneme_classes,
-            # grapheme_classes=self.orthography_converter.grapheme_classes,
             classes=self.gui.language.symbol_classes,
             used_phonemes=None,
         )

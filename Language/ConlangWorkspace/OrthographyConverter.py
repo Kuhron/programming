@@ -1,8 +1,8 @@
 class OrthographyConverter:
-    def __init__(self):
+    def __init__(self, language):
         self.grapheme_to_phoneme = OrthographyConverter.initial_dict()
         self.phoneme_to_grapheme = OrthographyConverter.initial_dict()
-        self.grapheme_classes = {}
+        self.language = language
 
     @staticmethod
     def initial_dict():
@@ -11,9 +11,9 @@ class OrthographyConverter:
 
     def add_grapheme_to_classes(self, grapheme, classes):
         for cl in classes:
-            if cl not in self.grapheme_classes:
-                self.grapheme_classes[cl] = set()
-            self.grapheme_classes[cl].add(grapheme)
+            if cl not in self.language.symbol_classes:
+                self.language.symbol_classes[cl] = set()
+            self.language.symbol_classes[cl].add(grapheme)
 
     def add_pair(self, grapheme_str, phoneme_str):
         assert phoneme_str not in self.phoneme_to_grapheme or self.phoneme_to_grapheme[phoneme_str] == grapheme_str, "Warning: overwriting phoneme_str {} (current ortho {}, would be replaced by {})".format(phoneme_str, self.phoneme_to_grapheme[phoneme_str], grapheme_str)

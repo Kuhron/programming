@@ -5,11 +5,15 @@
 #   orthographic rules <VgV> <V/z/V>
 #   allophonic rules /Vz[HV]/ /V{r}[HV]/
 
+from Grapheme import Grapheme
+from Phoneme import Phoneme
+from Phone import Phone
+
 
 class SegmentSequence(list):
     @staticmethod
     def from_str(s):
-        types = ["Grapheme", "Phoneme", "Phone"]
+        types = [Grapheme, Phoneme, Phone]
         beginning_symbols = ["<", "/", "{"]
         ending_symbols = [">", "/", "}"]
         first_symbol = s[0]
@@ -23,7 +27,7 @@ class SegmentSequence(list):
         inside_brackets = False
         current_symbol = ""
         for char in s[1:-1]:
-            if char == "/" and type_stack[-1] == "Phoneme":
+            if char == "/" and type_stack[-1] is Phoneme:
                 # this one acts different because the beginning and ending symbols are the same
                 assert not inside_brackets
                 closing_type = types[ending_symbols.index(char)]
@@ -48,8 +52,9 @@ class SegmentSequence(list):
                 segment_symbol = current_symbol
                 beginning_symbol = beginning_symbols[types.index(current_type)]
                 ending_symbol = ending_symbols[types.index(current_type)]
-                segment_str = beginning_symbol + segment_symbol + ending_symbol
-                segments.append(segment_str)
+                # segment_str = beginning_symbol + segment_symbol + ending_symbol
+                segment = current_type(segment_symbol)
+                segments.append(segment)
             elif inside_brackets:
                 current_symbol += char
             else:
@@ -57,8 +62,9 @@ class SegmentSequence(list):
                 segment_symbol = char
                 beginning_symbol = beginning_symbols[types.index(current_type)]
                 ending_symbol = ending_symbols[types.index(current_type)]
-                segment_str = beginning_symbol + segment_symbol + ending_symbol
-                segments.append(segment_str)
+                # segment_str = beginning_symbol + segment_symbol + ending_symbol
+                segment = current_type(segment_symbol)
+                segments.append(segment)
 
         assert len(type_stack) == 1, "mismatched bracketing: {}".format(s)
 

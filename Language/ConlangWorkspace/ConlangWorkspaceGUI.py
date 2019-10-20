@@ -36,7 +36,7 @@ class ConlangWorkspaceGUI(QMainWindow):
         self.language = language
         self.command_processor = CommandProcessor(
             gui=self,
-            orthography_converter=OrthographyConverter()
+            orthography_converter=OrthographyConverter(language)
         )
 
         self.setup_menu()

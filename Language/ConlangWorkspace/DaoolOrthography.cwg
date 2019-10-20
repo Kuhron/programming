@@ -19,8 +19,6 @@ graph a V
 graph u V
 graph o V
 
-
-ortho </#/llV> /#j<V>/
 ortho <m> /m/
 ortho <n> /n/
 ortho <nn> /ŋ/
@@ -60,13 +58,13 @@ ortho <ol> /ʊl/
 ortho <ul> /oj/
 
 ortho <#l> /#l/
-ortho <#llV> /j/<V>
-ortho <#llC> /i/<C>
+ortho <#llV> /j<V>/
+ortho <#llC> /i<C>/
 
-ortho <Cll> <C>/i/
-ortho <Vll> <V>/l/
-ortho <Vu> <V>/w/
-ortho <#uV> /#w/<V>
+ortho <Cll> /<C>i/
+ortho <Vll> /<V>l/
+ortho <Vu> /<V>w/
+ortho <#uV> /#w<V>/
 
 read <ssllhu>
 read <ll>

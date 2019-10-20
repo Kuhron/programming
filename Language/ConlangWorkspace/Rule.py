@@ -73,23 +73,38 @@ class Rule:
                 res.append(False)
             else:
                 res.append(seg in classes)
+        # print("lst {}\nclasses {}\nres {}".format(lst, classes, res))
+        return res
+
+    @staticmethod
+    def get_partition_assignment_array(replaceability_array):
+        res = [0]  # for item in input_lst, which partition does it go in?
+        for i in range(1, len(replaceability_array)):
+            if replaceability_array[i] == False and replaceability_array[i-1] == False:
+                res.append(res[-1])
+            else:
+                res.append(res[-1] + 1)
         return res
 
     @staticmethod
     def partition_input_and_output_lists(input_lst, output_lst, classes):
         input_replaceability = Rule.get_replaceability_array(input_lst, classes)
         output_replaceability = Rule.get_replaceability_array(output_lst, classes)
-        # check compatibility
-        for inp_r, outp_r in zip(input_replaceability, output_replaceability):
-            # reject an unreplaceable (e.g. /k/) turning into a replaceable (e.g. /C/)
-            assert not (outp_r and not inp_r), "incompatible replaceabilities: {} > {}".format(input_lst, output_lst)
-        # now make an array that they will both be partitioned according to
-        # want to "or" the boolean arrays
-        # but since you will only ever have T>T, F>F, or T>F, the or should be the same as the input
-        total_replaceability = [a or b for a, b in zip(input_replaceability, output_replaceability)]
-        assert total_replaceability == input_replaceability, "logic error in replaceability arrays {} > {}".format(input_replaceability, output_replaceability)
-        partitioned_input = Rule.partition_list(input_lst, replaceability=total_replaceability)
-        partitioned_output = Rule.partition_list(output_lst, replaceability=total_replaceability)
+        input_partition_assignment = Rule.get_partition_assignment_array(input_replaceability)
+        output_partition_assignment = Rule.get_partition_assignment_array(output_replaceability)
+        # print("ipa {}\nopa {}".format(input_partition_assignment, output_partition_assignment))
+        partitioned_input = Rule.partition_list(input_lst, assignment=input_partition_assignment)
+        partitioned_output = Rule.partition_list(output_lst, assignment=output_partition_assignment)
+
+        # # check compatibility
+        # for inp_r, outp_r in zip(input_replaceability, output_replaceability):
+        #     # reject an unreplaceable (e.g. /k/) turning into a replaceable (e.g. /C/)
+        #     assert not (outp_r and not inp_r), "incompatible replaceabilities: {} > {}".format(input_lst, output_lst)
+        # # now make an array that they will both be partitioned according to
+        # # want to "or" the boolean arrays
+        # # but since you will only ever have T>T, F>F, or T>F, the or should be the same as the input
+        # total_replaceability = [a or b for a, b in zip(input_replaceability, output_replaceability)]
+        # assert total_replaceability == input_replaceability, "logic error in replaceability arrays {} > {}".format(input_replaceability, output_replaceability)
 
         # disallow changing things into or from word boundaries
         for a, b in zip(partitioned_input, partitioned_output):
@@ -97,27 +112,33 @@ class Rule:
         return partitioned_input, partitioned_output
 
     @staticmethod
-    def partition_list(lst, replaceability=None, classes=None):
-        if replaceability is None:
-            assert classes is None, "either replaceability or classes must be supplied"
-            replaceability = Rule.get_replaceability_array(lst, classes)
+    def partition_list(lst, assignment):
+        # if replaceability is None:
+        #     assert classes is None, "either replaceability or classes must be supplied"
+        #     replaceability = Rule.get_replaceability_array(lst, classes)
         # put sequences of unreplaceables together
-        partitioned = []
-        current_unreplaceable_segment = []
-        for x, r in zip(lst, replaceability):
-            if r:
-                if current_unreplaceable_segment != []:
-                    partitioned.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
-                    current_unreplaceable_segment = []
-                partitioned.append(x)
-            else:
-                current_unreplaceable_segment.append(x)
+        # partitioned = []
+        # # current_unreplaceable_segment = []
+        # for x, r in zip(lst, replaceability):
+        #     if r:
+        #         if current_unreplaceable_segment != []:
+        #             partitioned.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
+        #             current_unreplaceable_segment = []
+        #         partitioned.append(x)
+        #     else:
+        #         current_unreplaceable_segment.append(x)
 
-        # at end ,add remaining replaceable stuff if any
-        if current_unreplaceable_segment != []:
-            partitioned.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
+        # # at end ,add remaining replaceable stuff if any
+        # if current_unreplaceable_segment != []:
+        #     partitioned.append(current_unreplaceable_segment[:])  # don't add object that will later be mutated
         
-        return partitioned
+        # return partitioned
+        assert len(lst) == len(assignment)
+        res_len = max(assignment) + 1
+        res = [[]] * res_len
+        for i in range(len(lst)):
+            res[assignment[i]].append(lst[i])
+        return res
 
     def partition(self, classes):
         self.input, self.output = Rule.partition_input_and_output_lists(self.input, self.output, classes)
@@ -208,14 +229,14 @@ class Rule:
             input_lst = Rule.flatten_partitioned_list(self.input)
         else:
             input_lst = self.input
-        return "".join(("-" if x == "" else x) for x in input_lst)
+        return "".join(("-" if x.symbol == "" else x.symbol) for x in input_lst)
         
     def get_output_str(self):
         if self.partitioned:
             output_lst = Rule.flatten_partitioned_list(self.output)
         else:
             output_lst = self.output
-        s = "".join(("-" if x == "" else x) for x in output_lst)
+        s = "".join(("-" if x.symbol == "" else x.symbol) for x in output_lst)
         return s
         
     def has_classes(self):
