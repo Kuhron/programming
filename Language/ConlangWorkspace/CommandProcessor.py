@@ -104,9 +104,16 @@ class CommandProcessor:
         self.gui.update_phonology_displays()
 
     def process_allophone_command_entry(self, args):
-        phoneme_symbol, rule = args
+        phoneme_symbol, rule_str = args
         assert phoneme_symbol in self.gui.language.phonemes
-        
+
+        inp, outp = rule_str.split(">")
+        rule = Rule.from_input_and_output_strs(inp, outp)
+        print(rule)
+
+        # raise NotImplementedError
+
+        self.gui.language.phonemes[phoneme_symbol].add_allophone_rule(rule)
 
     def process_graph_command_entry(self, args):
         grapheme, classes_str = args
@@ -118,7 +125,7 @@ class CommandProcessor:
         #      \pos pa _
         #      \pos pb {motion}_{number}
         pos, template = args
-        assert pos not in self.full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
+        # assert pos not in self.full_inflections_by_part_of_speech, "already have inflection template for pos \"{}\"".format(pos)
         self.gui.add_pos(pos)
         self.full_inflections_by_part_of_speech[pos] = []
         self.affixes_by_part_of_speech_and_feature[pos] = {}
@@ -169,6 +176,7 @@ class CommandProcessor:
             citation_form, *rest = le
             le_i = self.gui.language.lexicon.next_lexeme_designation
             citation_form = Word.from_str(citation_form, designation=str(le_i))
+            assert all(x in self.gui.language.phonemes for x in citation_form.get_phonemes_used()), "undeclared phoneme in {}".format(citation_form)
             assert rest[0] == "=", "equals sign expected after lexeme, instead got: {}".format(rest[0])
             pos, *gloss = rest[1:]
             gloss = " ".join(gloss)
