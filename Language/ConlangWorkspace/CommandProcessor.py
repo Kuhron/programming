@@ -1,3 +1,4 @@
+from Grapheme import Grapheme
 from InflectionForm import InflectionForm
 from Lexeme import Lexeme
 from Morpheme import Morpheme
@@ -104,7 +105,10 @@ class CommandProcessor:
 
     def process_graph_command_entry(self, args):
         # e.g. graph a V
-        grapheme, classes_str = args
+        grapheme_str, classes_str = args
+        assert "<" not in grapheme_str and ">" not in grapheme_str, "graph command takes grapheme without <>"
+        grapheme_str = "<" + grapheme_str + ">"
+        grapheme = Grapheme.from_str(grapheme_str)
         classes = classes_str.split(",")
         classes = ["<"+c+">" for c in classes]
         self.orthography_converter.add_grapheme_to_classes(grapheme, classes)

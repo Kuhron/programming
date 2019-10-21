@@ -13,7 +13,7 @@ from Phone import Phone
 class SegmentSequence(list):
     @staticmethod
     def from_str(s, symbol_dict):
-        print("symbol dict\n{}\n".format(symbol_dict))
+        # print("symbol dict\n{}\n".format(symbol_dict))
         types = [Grapheme, Phoneme, Phone]
         beginning_symbols = ["<", "/", "{"]
         ending_symbols = [">", "/", "}"]
@@ -46,9 +46,11 @@ class SegmentSequence(list):
             elif char == "[":
                 assert not inside_brackets
                 inside_brackets = True
+                current_symbol += char  # include the brackets in the symbol
             elif char == "]":
                 assert inside_brackets
                 inside_brackets = False
+                current_symbol += char  # include the brackets in the symbol
                 current_type = type_stack[-1]
                 segment_symbol = current_symbol
                 beginning_symbol = beginning_symbols[types.index(current_type)]

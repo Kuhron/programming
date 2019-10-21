@@ -1,3 +1,5 @@
+include DefaultPhonology.cwg
+
 phoneme m C,N
 phoneme n C,N
 phoneme ŋ C,N
@@ -23,7 +25,8 @@ phoneme [tθ] C,[AFF]
 
 phoneme l C
 phoneme ɹ C
-phoneme ɾ C
+phoneme r C
+allophone r /r/>{ɾ}
 phoneme [rʷ] C
 phoneme j C
 phoneme w C

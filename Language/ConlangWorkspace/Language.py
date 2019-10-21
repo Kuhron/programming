@@ -1,12 +1,19 @@
+from Phone import Phone
+from Phoneme import Phoneme
+from Grapheme import Grapheme
+
+
 class Language:
     def __init__(self, name, lexicon):
         self.name = name
         self.lexicon = lexicon
         self.phones = {}
         self.phonemes = {}
+        self.graphemes = {}
         # self.phoneme_classes = {}  # to be populated by commands later
         self.symbol_dict = {}
         self.symbol_classes = {}
+        self.add_universal_pseudosegments()
         self.update_used_phonemes()
 
     def update_used_phonemes(self):
@@ -30,6 +37,22 @@ class Language:
                 self.symbol_classes[cl] = set()
             self.symbol_classes[cl].add(phoneme.symbol)
         self.symbol_dict[phoneme.to_str()] = phoneme
+
+    def add_grapheme(self, grapheme, classes_of_this_grapheme):
+        for cl in classes_of_this_grapheme:
+            assert cl[0] == "<" and cl[-1] == ">", "invalid grapheme class {}".format(cl)
+            if cl not in self.symbol_classes:
+                self.symbol_classes[cl] = set()
+            self.symbol_classes[cl].add(grapheme)
+        self.symbol_dict[grapheme.to_str()] = grapheme
+
+    def add_universal_pseudosegments(self):
+        self.add_phone(Phone(".", {"syllable_boundary": 1}))
+        self.add_phoneme(Phoneme("."), [])
+        self.add_grapheme(Grapheme("."), [])
+        self.add_phone(Phone("#", {"word_boundary": 1}))
+        self.add_phoneme(Phoneme("#"), [])
+        self.add_grapheme(Grapheme("#"), [])
 
     @staticmethod
     def unbracket_phoneme(p):
