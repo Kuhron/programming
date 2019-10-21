@@ -205,6 +205,7 @@ class CommandProcessor:
             phoneme_str,
             self.gui.language.symbol_dict,
         )
+        print("reprule {}".format(replacement_rule))
         cases = replacement_rule.get_specific_cases(
             classes=self.gui.language.symbol_dict,
             used_phonemes=None,

@@ -98,6 +98,8 @@ class Rule:
         # print("ipa {}\nopa {}".format(input_partition_assignment, output_partition_assignment))
         partitioned_input = Rule.partition_list(input_lst, assignment=input_partition_assignment)
         partitioned_output = Rule.partition_list(output_lst, assignment=output_partition_assignment)
+        print("partin {}".format(input_partition_assignment))
+        print("partout {}".format(output_partition_assignment))
 
         # # check compatibility
         # for inp_r, outp_r in zip(input_replaceability, output_replaceability):
@@ -138,7 +140,7 @@ class Rule:
         # return partitioned
         assert len(lst) == len(assignment)
         res_len = max(assignment) + 1
-        res = [[]] * res_len
+        res = [[] for _ in range(res_len)]
         for i in range(len(lst)):
             res[assignment[i]].append(lst[i])
         return res
@@ -168,15 +170,18 @@ class Rule:
                     res.append(y)
             else:
                 res.append(x)
+        # print("flattened {} to {}".format(lst, res))
         return res
         
     def get_specific_cases(self, classes, used_phonemes=None):
+        print("self before partition {}".format(self))
         if not self.partitioned:
             self.partition(classes)
         inp = self.input
         outp = self.output
-        # print("getting specific cases of {}".format(self))
-        # print(inp, outp)
+        print("inp {inp}\noutp {outp}\nself {self}".format(**locals()))
+        print("getting specific cases of {}".format(self))
+        print(inp, outp)
         n = len(inp)
         assert n == len(outp)
         for i in range(n):
@@ -203,9 +208,12 @@ class Rule:
                     new_rule.designate(designation)
                     new_rule.unpartition()
                     res += new_rule.get_specific_cases(classes, used_phonemes)
+                print("\nreturning cases from\nrule: {self}\nclasses: {classes}\nused_phonemes: {used_phonemes}\nreturned: {res}\n".format(**locals()))
                 return res
         else:
-            return [self]  # may be a rule that does not change anything, but this is needed for orthography
+            res = [self]  # may be a rule that does not change anything, but this is needed for orthography
+            print("\nreturning cases from\nrule: {self}\nclasses: {classes}\nused_phonemes: {used_phonemes}\nreturned: {res}\n".format(**locals()))
+            return res
             
     @staticmethod
     def expand_classes(s, classes, used_phonemes):
