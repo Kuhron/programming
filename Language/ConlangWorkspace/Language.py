@@ -1,6 +1,7 @@
 from Phone import Phone
 from Phoneme import Phoneme
 from Grapheme import Grapheme
+from SegmentSet import SegmentSet
 
 
 class Language:
@@ -12,7 +13,7 @@ class Language:
         self.graphemes = {}
         # self.phoneme_classes = {}  # to be populated by commands later
         self.symbol_dict = {}
-        self.symbol_classes = {}
+        # self.symbol_classes = {}
         self.add_universal_pseudosegments()
         self.update_used_phonemes()
 
@@ -33,17 +34,17 @@ class Language:
         self.phonemes[phoneme.symbol] = phoneme
         for cl in classes_of_this_phoneme:
             assert cl[0] == cl[-1] == "/", "invalid phoneme class {}".format(cl)
-            if cl not in self.symbol_classes:
-                self.symbol_classes[cl] = set()
-            self.symbol_classes[cl].add(phoneme.symbol)
+            if cl not in self.symbol_dict:
+                self.symbol_dict[cl] = SegmentSet(Phoneme, cl)
+            self.symbol_dict[cl].add(phoneme)
         self.symbol_dict[phoneme.to_str()] = phoneme
 
     def add_grapheme(self, grapheme, classes_of_this_grapheme):
         for cl in classes_of_this_grapheme:
             assert cl[0] == "<" and cl[-1] == ">", "invalid grapheme class {}".format(cl)
-            if cl not in self.symbol_classes:
-                self.symbol_classes[cl] = set()
-            self.symbol_classes[cl].add(grapheme)
+            if cl not in self.symbol_dict:
+                self.symbol_dict[cl] = SegmentSet(Grapheme, cl)
+            self.symbol_dict[cl].add(grapheme)
         self.symbol_dict[grapheme.to_str()] = grapheme
 
     def add_universal_pseudosegments(self):
@@ -56,19 +57,15 @@ class Language:
 
     @staticmethod
     def unbracket_phoneme(p):
-        return p.replace("[","").replace("]","")
+        assert type(p) is Phoneme, "can't unbracket object of type {}: {}".format(type(p), p)
+        return p.symbol.replace("[","").replace("]","")
 
     def get_phoneme_classes(self):
-        keys = [k for k in self.symbol_classes.keys() if k[0] == k[-1] == "/"]
-        return sorted(keys, key=Language.unbracket_phoneme)
+        classes = [v for v in self.symbol_dict.values() if type(v) is SegmentSet and v.element_type is Phoneme]
+        return sorted(classes, key=lambda s: s.symbol)
 
     def get_phonemes(self):
-        res = set()
-        for cl in self.symbol_classes:
-            if cl[0] == cl[-1] == "/":
-                for p in self.symbol_classes[cl]:
-                    res.add(p)
-        return sorted(res)
+        return set(self.phonemes.values())
 
     def get_used_phonemes(self):
         return self.used_phonemes

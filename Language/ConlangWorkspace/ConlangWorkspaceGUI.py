@@ -373,26 +373,28 @@ class ConlangWorkspaceGUI(QMainWindow):
         self.phoneme_class_list.clear()
         phoneme_classes = self.language.get_phoneme_classes()
         for cl in phoneme_classes:
-            self.phoneme_class_list.addItem(cl)
+            self.phoneme_class_list.addItem(cl.symbol)
 
-    def populate_phoneme_inventory_list(self, phoneme_class=None):
+    def populate_phoneme_inventory_list(self, phoneme_class_str=None):
         self.phoneme_inventory_list.clear()
         phonemes = self.language.get_phonemes()
-        used_phonemes = sorted(self.language.get_used_phonemes(), key=Language.unbracket_phoneme)
-        unused_phonemes = sorted([x for x in phonemes if x not in used_phonemes], key=Language.unbracket_phoneme)
-        if phoneme_class is not None:
-            used_phonemes = [x for x in used_phonemes if x in self.language.phoneme_classes[phoneme_class]]
-            unused_phonemes = [x for x in unused_phonemes if x in self.language.phoneme_classes[phoneme_class]]
+        used_phonemes = self.language.get_used_phonemes()
+        unused_phonemes = phonemes - used_phonemes
+        used_phonemes = sorted(used_phonemes, key=lambda p: p.symbol)
+        unused_phonemes = sorted(unused_phonemes, key=lambda p: p.symbol)
+        if phoneme_class_str is not None:
+            used_phonemes = [x for x in used_phonemes if x in self.language.symbol_dict[phoneme_class_str]]
+            unused_phonemes = [x for x in unused_phonemes if x in self.language.symbol_dict[phoneme_class_str]]
         for p in used_phonemes:
-            item_str = p
+            item_str = p.symbol
             self.phoneme_inventory_list.addItem(item_str)
         for p in unused_phonemes:
-            item_str = p + " (unused)"
+            item_str = p.symbol + " (unused)"
             self.phoneme_inventory_list.addItem(item_str)
 
     def show_phonemes_in_class(self):
         cl = self.phoneme_class_list.currentItem().text()
-        self.populate_phoneme_inventory_list(phoneme_class=cl)
+        self.populate_phoneme_inventory_list(phoneme_class_str=cl)
 
     def createLexemeList(self):
         self.lexeme_list = QListWidget()

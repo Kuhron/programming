@@ -1,5 +1,6 @@
 from LanguageEvolutionTools import parse_brackets_and_blanks
 from SegmentSequence import SegmentSequence
+from SegmentSet import SegmentSet
 
 import random
 
@@ -71,6 +72,8 @@ class Rule:
             if type(seg) is list:
                 # unhashable type
                 res.append(False)
+            elif type(seg) is SegmentSet:
+                res.append(seg.symbol in classes)
             else:
                 res.append(seg in classes)
         # print("lst {}\nclasses {}\nres {}".format(lst, classes, res))

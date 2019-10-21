@@ -206,7 +206,7 @@ class CommandProcessor:
             self.gui.language.symbol_dict,
         )
         cases = replacement_rule.get_specific_cases(
-            classes=self.gui.language.symbol_classes,
+            classes=self.gui.language.symbol_dict,
             used_phonemes=None,
         )
         if cases == []:
