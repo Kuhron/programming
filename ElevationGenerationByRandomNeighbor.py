@@ -91,6 +91,9 @@ class Map:
             for y in range(self.y_size):
                 self.unfilled_inaccessible.add((x, y))
 
+    def size(self):
+        return self.x_size * self.y_size
+
     def fill_position(self, x, y, value):
         self.array[x, y] = value
         return
@@ -184,7 +187,8 @@ class Map:
         chosen_one = neighbors[chosen_one_index]
         return chosen_one
 
-    def get_random_contiguous_region(self, points_to_avoid=None, prioritize_internal_unfilled=False):
+    def get_random_contiguous_region(self, expected_size, points_to_avoid=None, prioritize_internal_unfilled=False):
+        assert expected_size > 1
         if points_to_avoid is None:
             points_to_avoid = set()
         center = None
@@ -204,7 +208,7 @@ class Map:
                 current_point = random.choice(neighbors)
             points.add(current_point)
             neighbors = [p for p in self.get_neighbors(*current_point) if p not in points_to_avoid | points]
-            if random.random() < 0.01:
+            if random.random() < 1/expected_size:
                 break
         return points
 
@@ -222,7 +226,7 @@ class Map:
         return res
 
     def make_random_elevation_change(self, positive_feedback=False):
-        reg = self.get_random_contiguous_region(prioritize_internal_unfilled=True)
+        reg = self.get_random_contiguous_region(1000, prioritize_internal_unfilled=True)
         raw_func = random.choice(ELEVATION_CHANGE_FUNCTIONS)
         distances = self.get_distances_from_edge(reg)
         max_d = max(distances.values())
@@ -233,9 +237,16 @@ class Map:
             # elevation_at_point = self.array[point_in_region[0], point_in_region[1]]
             elevations_in_region = [self.array[p[0], p[1]] for p in reg]
             average_elevation_in_region = np.mean(elevations_in_region)
-            mu = average_elevation_in_region
+            mu = average_elevation_in_region/2
         else:
             mu = 0
+
+        big_abs_elevation = 100
+        if abs(mu) > big_abs_elevation:
+            # decrease mu linearly down to 0 at 2*big_abs_elevation, and then drop more after that to decrease
+            big_elevation_signed = big_abs_elevation * (1 if mu > 0 else -1)
+            mu_excess = mu - big_elevation_signed
+            mu -= 2*mu_excess
 
         sigma = 10
         max_change = np.random.normal(mu, sigma)
@@ -355,15 +366,15 @@ class Map:
                     # then will have new list of neighbors
             self.draw()
 
-    def fill_elevations(self, n_steps, live_plot=False):
+    def fill_elevations(self, n_steps, plot_every_n_steps=None):
         # touched_points = set()
         # while len(touched_points) < 0.95 * self.x_size * self.y_size:
         #     reg = self.get_random
-        if live_plot:
+        if plot_every_n_steps is not None:
             plt.ion()
         for i in range(n_steps):
             self.make_random_elevation_change(positive_feedback=True)
-            if live_plot:
+            if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
                 self.draw()
 
     def plot(self):
@@ -411,12 +422,10 @@ class Map:
 
 
 if __name__ == "__main__":
-    m = Map(300, 500)
-    # m.add_random_zero_loop()
+    m = Map(60, 100)
     m.fill_all(0)
-    # reg = m.get_random_contiguous_region()
-    # m.fill_point_set(reg, value=0)
-    # m.plot()
-    # input("a")
-    m.fill_elevations(m.x_size * m.y_size, live_plot=True)
+    # n_steps = m.size()
+    n_steps = 100000
+    print("plotting {} steps".format(n_steps))
+    m.fill_elevations(n_steps, plot_every_n_steps=100)
     m.plot()
