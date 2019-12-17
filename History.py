@@ -940,9 +940,11 @@ class Map:
         if style=="contour":
             z = zo
         elif style=="land_contour":
+            # map water points to min elevation
             z = [i for i in map(lambda x: min(zo) if x < 0 else 0.5+(x/2.0) if x < 1 else x, zo)]
             # that else 0.5 + x/2.0 if x < 1 part was supposed to make the islands with elevation close to zero more visible, but whatevs
         elif style=="land_and_water":
+            # map each point to -1 for water or 1 for land
             z = [i for i in map(lambda x: 1.0*x/abs(x), zo)]
 
         r = np.array(r)

@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 
 
 def make_none_array(shape):
@@ -47,8 +48,36 @@ ELEVATION_CHANGE_FUNCTIONS = [
 ]
 
 
+def get_land_and_sea_colormap():
+    # see PrettyPlot.py
+    linspace_cmap_forward = np.linspace(0, 1, 128)
+    linspace_cmap_backward = np.linspace(1, 0, 128)
+    blue_to_black = mcolors.LinearSegmentedColormap.from_list('BlBk', [
+        mcolors.CSS4_COLORS["blue"], 
+        mcolors.CSS4_COLORS["black"],
+    ])
+    land_colormap = mcolors.LinearSegmentedColormap.from_list('land', [
+        mcolors.CSS4_COLORS["darkgreen"],
+        mcolors.CSS4_COLORS["limegreen"],
+        mcolors.CSS4_COLORS["gold"],
+        mcolors.CSS4_COLORS["darkorange"],
+        mcolors.CSS4_COLORS["red"],
+        mcolors.CSS4_COLORS["saddlebrown"],
+        mcolors.CSS4_COLORS["gray"],
+        mcolors.CSS4_COLORS["white"],
+        # mcolors.CSS4_COLORS[""],
+    ])
+    # colors_land = plt.cm.YlOrBr(linspace_cmap_backward)  # example of how to call existing colormap object
+    colors_land = land_colormap(linspace_cmap_forward)
+    colors_sea = blue_to_black(linspace_cmap_backward)
+    colors = np.vstack((colors_sea, colors_land))
+    colormap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
+    return colormap
+
+
 class Map:
     def __init__(self, x_size, y_size):
+        # really row size and column size, respectively
         self.x_size = x_size
         self.y_size = y_size
         self.array = make_none_array((x_size, y_size))
@@ -155,7 +184,7 @@ class Map:
         chosen_one = neighbors[chosen_one_index]
         return chosen_one
 
-    def get_random_contiguous_region(self, points_to_avoid=None):
+    def get_random_contiguous_region(self, points_to_avoid=None, prioritize_internal_unfilled=False):
         if points_to_avoid is None:
             points_to_avoid = set()
         center = None
@@ -166,7 +195,13 @@ class Map:
         while True:
             if len(neighbors) == 0:
                 break
-            current_point = random.choice(neighbors)
+            if prioritize_internal_unfilled:
+                n_filled_neighbors_of_neighbors = [sum(n2 in points for n2 in self.get_neighbors(*n)) for n in neighbors]
+                weights = [x/sum(n_filled_neighbors_of_neighbors) for x in n_filled_neighbors_of_neighbors]
+                chosen_index = np.random.choice(list(range(len(neighbors))), p=weights)
+                current_point = neighbors[chosen_index]
+            else:
+                current_point = random.choice(neighbors)
             points.add(current_point)
             neighbors = [p for p in self.get_neighbors(*current_point) if p not in points_to_avoid | points]
             if random.random() < 0.01:
@@ -186,12 +221,25 @@ class Map:
             res[p] = d + 1
         return res
 
-    def make_random_elevation_change(self):
-        reg = self.get_random_contiguous_region()
+    def make_random_elevation_change(self, positive_feedback=False):
+        reg = self.get_random_contiguous_region(prioritize_internal_unfilled=True)
         raw_func = random.choice(ELEVATION_CHANGE_FUNCTIONS)
         distances = self.get_distances_from_edge(reg)
         max_d = max(distances.values())
-        max_change = np.random.uniform(-10, 10)
+
+        if positive_feedback:
+            # land begets land, sea begets sea
+            # point_in_region = random.choice(list(reg))
+            # elevation_at_point = self.array[point_in_region[0], point_in_region[1]]
+            elevations_in_region = [self.array[p[0], p[1]] for p in reg]
+            average_elevation_in_region = np.mean(elevations_in_region)
+            mu = average_elevation_in_region
+        else:
+            mu = 0
+
+        sigma = 10
+        max_change = np.random.normal(mu, sigma)
+
         func = lambda d: raw_func(d, max_d, max_change)
         changes = {p: func(d) for p, d in distances.items()}
         for p, d_el in changes.items():
@@ -307,13 +355,16 @@ class Map:
                     # then will have new list of neighbors
             self.draw()
 
-    def fill_elevations(self, n_steps):
+    def fill_elevations(self, n_steps, live_plot=False):
         # touched_points = set()
         # while len(touched_points) < 0.95 * self.x_size * self.y_size:
         #     reg = self.get_random
+        if live_plot:
+            plt.ion()
         for i in range(n_steps):
-            self.make_random_elevation_change()
-            # self.draw()
+            self.make_random_elevation_change(positive_feedback=True)
+            if live_plot:
+                self.draw()
 
     def plot(self):
         self.pre_plot()
@@ -326,18 +377,46 @@ class Map:
         plt.pause(0.001)
 
     def pre_plot(self):
-        plt.imshow(self.array)
-        plt.colorbar()
+        # plt.imshow(self.array, interpolation="gaussian")  # History.py uses contourf rather than imshow
+        min_elevation = self.array.min()
+        max_elevation = self.array.max()
+        n_sea_contours = 10
+        n_land_contours = 30
+        if min_elevation < 0:
+            sea_contour_levels = np.linspace(min_elevation, 0, n_sea_contours)
+        else:
+            sea_contour_levels = [0]
+        if max_elevation > 0:
+            land_contour_levels = np.linspace(0, max_elevation, n_land_contours)
+        else:
+            land_contour_levels = [0]
+        assert sea_contour_levels[-1] == land_contour_levels[0] == 0
+        contour_levels = list(sea_contour_levels[:-1]) + list(land_contour_levels)
+        colormap = get_land_and_sea_colormap()
+        max_abs_elevation = abs(self.array).max()
+        max_color_value = max_abs_elevation
+        min_color_value = -1 * max_abs_elevation
+
+        # draw colored filled contours
+        plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
+
+        # draw contour lines, maybe just one at sea level
+        plt.contour(self.array, levels=[min_elevation, 0, max_elevation], colors="k")
+
+        try:
+            plt.colorbar()
+        except IndexError:
+            # np being stupid when there are too few contours
+            pass
 
 
 if __name__ == "__main__":
-    # plt.ion()
-    m = Map(100, 100)
+    m = Map(300, 500)
     # m.add_random_zero_loop()
     m.fill_all(0)
     # reg = m.get_random_contiguous_region()
     # m.fill_point_set(reg, value=0)
     # m.plot()
     # input("a")
-    m.fill_elevations(m.x_size * m.y_size)
+    m.fill_elevations(m.x_size * m.y_size, live_plot=True)
     m.plot()
