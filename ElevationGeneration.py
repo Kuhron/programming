@@ -2,11 +2,17 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from PIL import Image
 
 
-def make_none_array(shape):
+def make_nan_array(shape):
     a = np.empty(shape, dtype=float)
     a[:] = np.nan
+    return a
+
+def make_blank_condition_array(shape):
+    a = np.empty(shape, dtype=object)
+    a[:] = lambda x: True
     return a
 
 
@@ -80,42 +86,94 @@ class Map:
         # really row size and column size, respectively
         self.x_size = x_size
         self.y_size = y_size
-        self.array = make_none_array((x_size, y_size))
-        self.filled_positions = set()
-        self.unfilled_neighbors = set()
-        self.unfilled_inaccessible = set()
-        self.initialize_unfilled_inaccessible()
+        self.array = make_nan_array((x_size, y_size))
+        self.condition_array = make_blank_condition_array((x_size, y_size))
+        #self.filled_positions = set()
+        #self.unfilled_neighbors = set()
+        #self.unfilled_inaccessible = set()
+        #self.initialize_unfilled_inaccessible()
+        self.frozen_points = set()
+        self.neighbors_memoized = {}
+        self.memoize_all_neighbors()
+        self.untouched_points = self.get_all_points()
 
-    def initialize_unfilled_inaccessible(self):
+    #def initialize_unfilled_inaccessible(self):
+    #    for x in range(self.x_size):
+    #        for y in range(self.y_size):
+    #            self.unfilled_inaccessible.add((x, y))
+
+    def get_all_points(self):
+        return {(x, y) for x in range(self.x_size) for y in range(self.y_size)}
+
+    def touch(self, x, y):
+        self.untouched_points -= {(x, y)}
+
+    def untouch_all_unfrozen_points(self):
+        self.untouched_points = self.get_all_points() - self.frozen_points
+
+    def memoize_all_neighbors(self):
+        print("memoizing neighbors")
         for x in range(self.x_size):
             for y in range(self.y_size):
-                self.unfilled_inaccessible.add((x, y))
+                n = self.get_neighbors(x, y)
+                # function will memoize them
+        assert len(self.neighbors_memoized) == self.size()
 
     def size(self):
         return self.x_size * self.y_size
 
+    def filter_invalid_points(self, iterable):
+        res = set()
+        for p in iterable:
+            if 0 <= p[0] < self.x_size and 0 <= p[1] < self.y_size:
+                res.add(p)
+        return res
+
+    def freeze_point(self, x, y):
+        self.frozen_points.add((x, y))
+        self.touch(x, y)
+
+    def unfreeze_point(self, x, y):
+        self.frozen_points.remove((x, y))
+
+    def add_condition_at_position(self, x, y, func):
+        assert callable(func)
+        self.condition_array[x, y] = func
+
+    def new_value_satisfies_condition(self, x, y, value):
+        condition = self.condition_array[x, y]
+        if callable(condition):
+            res = condition(value)
+            assert type(res) in [bool, np.bool_], "invalid condition return value at {} for value {}: {} of type {}".format((x, y), value, res, type(res))
+            return res
+        else:
+            raise ValueError("invalid condition type {}".format(type(condition)))
+
     def fill_position(self, x, y, value):
+        assert (x, y) not in self.frozen_points, "can't change frozen point {}".format((x, y))
         self.array[x, y] = value
-        return
+        self.touch(x, y)
+
         # old way
-        raise Exception("do not use")
-        assert (x, y) not in self.filled_positions
-        assert self.filled_positions & self.unfilled_neighbors == set()
-        assert self.filled_positions & self.unfilled_inaccessible == set()
-        assert self.unfilled_neighbors & self.unfilled_inaccessible == set()
-        self.array[x, y] = value
-        self.filled_positions.add((x, y))
-        self.unfilled_neighbors -= {(x, y)}
-        self.unfilled_inaccessible -= {(x, y)}
-        for neighbor_coords in self.get_neighbors(x, y):
-            if neighbor_coords in self.unfilled_inaccessible:
-                assert neighbor_coords not in self.unfilled_neighbors
-                self.unfilled_neighbors.add(neighbor_coords)
-                self.unfilled_inaccessible -= {neighbor_coords}
+        # raise Exception("do not use")
+        # assert (x, y) not in self.filled_positions
+        # assert self.filled_positions & self.unfilled_neighbors == set()
+        # assert self.filled_positions & self.unfilled_inaccessible == set()
+        # assert self.unfilled_neighbors & self.unfilled_inaccessible == set()
+        # self.array[x, y] = value
+        # self.filled_positions.add((x, y))
+        # self.unfilled_neighbors -= {(x, y)}
+        # self.unfilled_inaccessible -= {(x, y)}
+        # for neighbor_coords in self.get_neighbors(x, y):
+        #     if neighbor_coords in self.unfilled_inaccessible:
+        #         assert neighbor_coords not in self.unfilled_neighbors
+        #         self.unfilled_neighbors.add(neighbor_coords)
+        #         self.unfilled_inaccessible -= {neighbor_coords}
 
     def fill_point_set(self, point_set, value):
         for p in point_set:
-            self.fill_position(p[0], p[1], value)
+            if p not in self.frozen_points:
+                self.fill_position(p[0], p[1], value)
 
     def fill_all(self, value):
         for x in range(self.x_size):
@@ -126,6 +184,9 @@ class Map:
         return self.array[x, y]
 
     def get_neighbors(self, x, y):
+        if (x, y) in self.neighbors_memoized:
+            return self.neighbors_memoized[(x, y)]
+
         res = set()
         for dx in [-1, 0, 1]:
             for dy in [-1, 0, 1]:
@@ -138,6 +199,7 @@ class Map:
                 if new_y < 0 or new_y >= self.y_size:
                     continue
                 res.add((new_x, new_y))
+        self.neighbors_memoized[(x, y)] = res
         return res
 
     def get_random_path(self, a, b, points_to_avoid):
@@ -187,17 +249,23 @@ class Map:
         chosen_one = neighbors[chosen_one_index]
         return chosen_one
 
-    def get_random_contiguous_region(self, expected_size, points_to_avoid=None, prioritize_internal_unfilled=False):
-        assert expected_size > 1
+    def get_random_contiguous_region(self, x=None, y=None, expected_size=None, points_to_avoid=None, prioritize_internal_unfilled=False):
+        assert expected_size > 1, "invalid expected size {}".format(expected_size)
         if points_to_avoid is None:
             points_to_avoid = set()
-        center = None
-        while center is None or center in points_to_avoid:
+        points_to_avoid |= self.frozen_points
+        center = (x, y)
+        while center is (None, None) or center in points_to_avoid:
             center = self.get_random_point()
         points = {center}
         neighbors = [p for p in self.get_neighbors(*center) if p not in points_to_avoid]
-        while True:
+        size = -1
+        while size < 1:
+            size = int(np.random.normal(expected_size, expected_size/2))
+        # print("making region of size {}".format(size))
+        for step in range(size-1):
             if len(neighbors) == 0:
+                # print("breaking because no neighbors")
                 break
             if prioritize_internal_unfilled:
                 n_filled_neighbors_of_neighbors = [sum(n2 in points for n2 in self.get_neighbors(*n)) for n in neighbors]
@@ -206,38 +274,59 @@ class Map:
                 current_point = neighbors[chosen_index]
             else:
                 current_point = random.choice(neighbors)
+            assert current_point not in points, "duplicating point in contiguous region selection"
             points.add(current_point)
-            neighbors = [p for p in self.get_neighbors(*current_point) if p not in points_to_avoid | points]
-            if random.random() < 1/expected_size:
-                break
+            neighbors.remove(current_point)
+            new_neighbors = self.get_neighbors(*current_point) - points - points_to_avoid
+            neighbors = list(set(neighbors) | set(new_neighbors))
+        # assert len(points) == size, "planned output size {}, got {}".format(size, len(points))
         return points
+
+    def get_circle_around_point(self, x, y, radius):
+        points = {(x, y)}
+        def get_dy_range(dx):
+            dy = int(round(np.sqrt(radius**2-dx**2)))
+            return range(-dy, dy+1)
+        starting_set = {(x+dx, y+dy) for dx in range(-radius, radius+1) for dy in get_dy_range(dx)}
+        res = self.filter_invalid_points(starting_set)
+        return res
 
     def get_distances_from_edge(self, point_set):
         if len(point_set) == 0:
             return {}
         res = {}
         points_on_edge = [p for p in point_set if any(n not in point_set for n in self.get_neighbors(*p))]
+        assert len(points_on_edge) > 0, "point set has no edge members:\n{}".format(sorted(point_set))
         for p in points_on_edge:
-            res[p] = 1
+            res[p] = 0
         interior_point_set = point_set - set(points_on_edge)
-        interior_distances = self.get_distances_from_edge(interior_point_set)
-        for p, d in interior_distances.items():
-            res[p] = d + 1
+        if len(interior_point_set) > 0:
+            interior_distances = self.get_distances_from_edge(interior_point_set)
+            for p, d in interior_distances.items():
+                res[p] = d + 1
         return res
 
     def make_random_elevation_change(self, positive_feedback=False):
-        reg = self.get_random_contiguous_region(1000, prioritize_internal_unfilled=True)
-        raw_func = random.choice(ELEVATION_CHANGE_FUNCTIONS)
-        distances = self.get_distances_from_edge(reg)
+        center = self.get_random_point()
+        # center = self.get_random_untouched_point()
+        # print("making change at {}".format(center))
+        changing_reg = self.get_random_contiguous_region(center[0], center[1], expected_size=1000, prioritize_internal_unfilled=False)
+        # reference_reg = self.get_circle_around_point(center[0], center[1], radius=20)
+        reference_reg = changing_reg
+        distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
+        if max_d == 0:
+            raw_func = elevation_change_constant
+        else:
+            raw_func = random.choice(ELEVATION_CHANGE_FUNCTIONS)
 
         if positive_feedback:
             # land begets land, sea begets sea
             # point_in_region = random.choice(list(reg))
             # elevation_at_point = self.array[point_in_region[0], point_in_region[1]]
-            elevations_in_region = [self.array[p[0], p[1]] for p in reg]
-            average_elevation_in_region = np.mean(elevations_in_region)
-            mu = average_elevation_in_region/2
+            elevations_in_refreg = [self.array[p[0], p[1]] for p in reference_reg]
+            average_elevation_in_refreg = np.mean(elevations_in_refreg)
+            mu = average_elevation_in_refreg/2
         else:
             mu = 0
 
@@ -252,16 +341,20 @@ class Map:
         max_change = np.random.normal(mu, sigma)
 
         func = lambda d: raw_func(d, max_d, max_change)
-        changes = {p: func(d) for p, d in distances.items()}
+        changes = {p: func(d) for p, d in distances.items() if p not in self.frozen_points}
         for p, d_el in changes.items():
             current_el = self.get_value_at_position(*p)
             new_el = current_el + d_el
-            self.fill_position(p[0], p[1], new_el)
+            if self.new_value_satisfies_condition(p[0], p[1], new_el):
+                self.fill_position(p[0], p[1], new_el)
 
     def get_random_point(self, border_width=0):
         x = random.randrange(border_width, self.x_size - border_width)
         y = random.randrange(border_width, self.y_size - border_width)
         return (x, y)
+
+    def get_random_untouched_point(self):
+        return random.choice(list(self.untouched_points))
 
     def get_random_zero_loop(self):
         x0_0, y0_0 = self.get_random_point(border_width=2)
@@ -367,13 +460,24 @@ class Map:
             self.draw()
 
     def fill_elevations(self, n_steps, plot_every_n_steps=None):
-        # touched_points = set()
-        # while len(touched_points) < 0.95 * self.x_size * self.y_size:
-        #     reg = self.get_random
         if plot_every_n_steps is not None:
             plt.ion()
-        for i in range(n_steps):
+        if n_steps is None:
+            def generate():
+                while True:
+                    yield len(self.untouched_points) > 0
+        else:
+            def generate():
+                i = 0
+                while True:
+                    yield i < n_steps
+                    i += 1
+        loop_condition = generate()
+        for boolean in loop_condition:
+            if not boolean:
+                break
             self.make_random_elevation_change(positive_feedback=True)
+            # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
                 self.draw()
 
@@ -410,22 +514,94 @@ class Map:
 
         # draw colored filled contours
         plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
-
-        # draw contour lines, maybe just one at sea level
-        plt.contour(self.array, levels=[min_elevation, 0, max_elevation], colors="k")
-
         try:
             plt.colorbar()
         except IndexError:
             # np being stupid when there are too few contours
             pass
 
+        # draw contour lines, maybe just one at sea level
+        plt.contour(self.array, levels=[min_elevation, 0, max_elevation], colors="k")
+
+        plt.gca().invert_yaxis()
+
+    @staticmethod
+    def from_image(image_fp, color_condition_dict, default_color):
+        # all points in image matching something in the color dict should be that color no matter what
+        # everything else is randomly generated
+        # i.e., put the determined points in points_to_avoid for functions that take it
+        if any(len(x) != 4 for x in color_condition_dict.keys()):
+            raise ValueError("all color keys must have length 4, RGBA:\n{}".format(color_condition_dict.keys()))
+        im = Image.open(image_fp)
+        width, height = im.size
+        m = Map(height, width)  # rows, columns
+        arr = np.array(im)
+        color_and_first_seen = {}
+        for x in range(m.x_size):
+            for y in range(m.y_size):
+                color = tuple(arr[x, y])
+                if color not in color_condition_dict:
+                    color = default_color
+                    arr[x, y] = color
+                if color not in color_and_first_seen:
+                    print("got new color {} at {}".format(color, (x, y)))
+                    color_and_first_seen[color] = (x, y)
+                if color in color_condition_dict:
+                    fill_value, condition, is_frozen = color_condition_dict[color]
+                    if fill_value is None:
+                        fill_value = 0
+                    m.fill_position(x, y, fill_value)
+                    m.add_condition_at_position(x, y, condition)
+                    if is_frozen:
+                        m.freeze_point(x, y)
+        return m
+
+    def freeze_coastlines(self):
+        coastal_points = set()
+        for x in range(self.x_size):
+            for y in range(self.y_size):
+                if self.array[x, y] < 0:
+                    neighbors = self.get_neighbors(x, y)
+                    for n in neighbors:
+                        if self.array[n[0], n[1]] >= 0:
+                            coastal_points.add(n)
+        for p in coastal_points:
+            self.fill_position(p[0], p[1], 0)
+            self.freeze_point(*p)
+            
+
+def defect():
+    # sea becomes land or vice versa
+    return random.random() < 0.05
+
+
 
 if __name__ == "__main__":
-    m = Map(60, 100)
-    m.fill_all(0)
+    from_image = True
+    if from_image:
+        image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
+        # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders.png"
+        image_fp_no_dir = "TestMap3_ThinnedBorders.png"
+        # image_fp_no_dir = "TestMap4.png"
+        image_fp = image_dir + image_fp_no_dir
+    
+        color_condition_dict = {
+            # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
+            (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
+            (  0,   0,   0, 255): (1, lambda x: x > 0, False),
+            # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
+            # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
+        }
+        default_color = (0, 0, 0, 255)
+        m = Map.from_image(image_fp, color_condition_dict, default_color)
+        m.freeze_coastlines()
+    else:
+        m = Map(300, 500)
+        m.fill_all(0)
+
+    m.untouch_all_unfrozen_points()  # so can keep track of which points are left to have their elevation changed (from their initial value) 
     # n_steps = m.size()
-    n_steps = 100000
-    print("plotting {} steps".format(n_steps))
-    m.fill_elevations(n_steps, plot_every_n_steps=100)
+    n_steps = None
+    print("filling elevation for {} steps".format(n_steps))
+    m.fill_elevations(n_steps, plot_every_n_steps=None)
     m.plot()

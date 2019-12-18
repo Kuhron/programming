@@ -1407,85 +1407,86 @@ class Map:
 
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("-s", type=int, default=int(time.time()*10**4), help="Seed")
-parser.add_argument("-d", default="16,48", help="Map dimensions, separated by comma")
-parser.add_argument("-p", type=int, default=100, help="Number of periods to simulate")
-parser.add_argument("--no-show", dest="show_mode", action="store_false", help="Show plots, etc.; store_false")
-parser.add_argument("--no-output", dest="output_mode", action="store_false", help="Output to file; store_false")
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", type=int, default=int(time.time()*10**4), help="Seed")
+    parser.add_argument("-d", default="16,48", help="Map dimensions, separated by comma")
+    parser.add_argument("-p", type=int, default=100, help="Number of periods to simulate")
+    parser.add_argument("--no-show", dest="show_mode", action="store_false", help="Show plots, etc.; store_false")
+    parser.add_argument("--no-output", dest="output_mode", action="store_false", help="Output to file; store_false")
 
-args = parser.parse_args()
+    args = parser.parse_args()
 
-seed = args.s
-print("Seed used:",seed)
-random.seed(seed)
-map_dimensions_input = args.d
-map_dimensions = [int(i) for i in map_dimensions_input.split(",")]
+    seed = args.s
+    print("Seed used:",seed)
+    random.seed(seed)
+    map_dimensions_input = args.d
+    map_dimensions = [int(i) for i in map_dimensions_input.split(",")]
 
-output_mode = args.output_mode
-if output_mode:
-    open("HistoryOutput.txt", "w").close() # clear file
+    output_mode = args.output_mode
+    if output_mode:
+        open("HistoryOutput.txt", "w").close() # clear file
 
-M = Map(map_dimensions[0], map_dimensions[1], output_mode)
+    M = Map(map_dimensions[0], map_dimensions[1], output_mode)
 
-n_p = args.p
-show_mode = args.show_mode
+    n_p = args.p
+    show_mode = args.show_mode
 
-if output_mode:
-    M.show_types()
-    #print("Populations:",sorted([city["population"] for city in M.cities]))
-    #print(M.states)
-    #print(M.rainfall)
-    #M.show_resources()
+    if output_mode:
+        M.show_types()
+        #print("Populations:",sorted([city["population"] for city in M.cities]))
+        #print(M.states)
+        #print(M.rainfall)
+        #M.show_resources()
 
-population_histories = {city.name:[] for city in M.cities}
+    population_histories = {city.name:[] for city in M.cities}
 
-print("Simulating {0} periods.".format(n_p))
-M.show_2d(style="contour", cities=True, t=0, trade_routes="all")
-for t in range(n_p):
-    M.output("\nCurrent period: {0}".format(t))
-    print("Current period: {0}".format(t), end="\r")
-    for volcano in M.volcanoes:
-        power = int(volcano.erupt())
-        if power > 0:
-            M.kill_people_from_volcano(volcano, power)
+    print("Simulating {0} periods.".format(n_p))
+    M.show_2d(style="contour", cities=True, t=0, trade_routes="all")
+    for t in range(n_p):
+        M.output("\nCurrent period: {0}".format(t))
+        print("Current period: {0}".format(t), end="\r")
+        for volcano in M.volcanoes:
+            power = int(volcano.erupt())
+            if power > 0:
+                M.kill_people_from_volcano(volcano, power)
 
-    for city in sorted(M.cities, key = lambda x: x.name):
-        M.mine_all_resources(city)
-        M.develop_technology(city)
-        M.move_people_out(city)
-        M.kill_people_at_random(city)
-        # to get the entire state for trade only along routes within the state
-        for partner_city in city.trade_neighbors:
-            M.trade_all_resources(city, partner_city)
-        population_histories[city.name].append(city.point.stockpiles["population"])
-        if city.point.stockpiles["population"] < 1:
-            print("No one lives in {0}. Attempting to destroy it.".format(city.name))
-            city.destroy()
+        for city in sorted(M.cities, key = lambda x: x.name):
+            M.mine_all_resources(city)
+            M.develop_technology(city)
+            M.move_people_out(city)
+            M.kill_people_at_random(city)
+            # to get the entire state for trade only along routes within the state
+            for partner_city in city.trade_neighbors:
+                M.trade_all_resources(city, partner_city)
+            population_histories[city.name].append(city.point.stockpiles["population"])
+            if city.point.stockpiles["population"] < 1:
+                print("No one lives in {0}. Attempting to destroy it.".format(city.name))
+                city.destroy()
 
-    for state in M.get_states_as_of_time(t):
-        state.go_on_conquest()
+        for state in M.get_states_as_of_time(t):
+            state.go_on_conquest()
 
-    M.show_2d(style="contour", cities=True, t=t, trade_routes="all")
+        M.show_2d(style="contour", cities=True, t=t, trade_routes="all")
 
-    M.show_stockpiles()
-print()
-if output_mode:
-    M.show_stockpiles()
+        M.show_stockpiles()
+    print()
+    if output_mode:
+        M.show_stockpiles()
 
-M.flush_output("HistoryOutput.txt")
+    M.flush_output("HistoryOutput.txt")
 
-if show_mode:
-    M.show_2d(style="contour", cities=True, t=0, trade_routes="all") # this is the one I like the most
+    if show_mode:
+        M.show_2d(style="contour", cities=True, t=0, trade_routes="all") # this is the one I like the most
 
-if show_mode:
-    for city in M.cities:
-        plt.plot(range(n_p),population_histories[city.name])
-    plt.show()
-    plt.close()
-    world_population_history = [sum([population_histories[c.name][t] for c in M.cities]) for t in range(n_p)]
-    plt.plot(world_population_history)
-    plt.show()
+    if show_mode:
+        for city in M.cities:
+            plt.plot(range(n_p),population_histories[city.name])
+        plt.show()
+        plt.close()
+        world_population_history = [sum([population_histories[c.name][t] for c in M.cities]) for t in range(n_p)]
+        plt.plot(world_population_history)
+        plt.show()
 
 
 
