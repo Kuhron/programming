@@ -95,7 +95,7 @@ class Map:
         self.frozen_points = set()
         self.neighbors_memoized = {}
         self.memoize_all_neighbors()
-        self.untouched_points = self.get_all_points()
+        # self.untouched_points = self.get_all_points()
 
     #def initialize_unfilled_inaccessible(self):
     #    for x in range(self.x_size):
@@ -105,33 +105,79 @@ class Map:
     def get_all_points(self):
         return {(x, y) for x in range(self.x_size) for y in range(self.y_size)}
 
-    def touch(self, x, y):
-        self.untouched_points -= {(x, y)}
+    # def touch(self, x, y):
+    #     self.untouched_points -= {(x, y)}
 
-    def untouch_all_unfrozen_points(self):
-        self.untouched_points = self.get_all_points() - self.frozen_points
+    # def untouch_all_unfrozen_points(self):
+    #     self.untouched_points = self.get_all_points() - self.frozen_points
+
+    def is_corner_pixel(self, x, y):
+        return x in [0, self.x_size-1] and y in [0, self.y_size-1]
+
+    def is_edge_pixel(self, x, y):
+        x_edge = x in [0, self.x_size-1]
+        y_edge = y in [0, self.y_size-1]
+        return (x_edge and not y_edge) or (y_edge and not x_edge)
+
+    def is_interior_pixel(self, x, y):
+        return 1 <= x < self.x_size-1 and 1 <= y < self.y_size-1
+
+    def get_representative_pixel(self, x, y):
+        # for corner pixel, return itself since all 4 have different neighbor shape
+        # for edge pixel, return one of the pixels on that edge
+        # for interior pixel, return (1, 1)
+        # then memoize only a total of 9 neighbor arrays for any size image, and just add offset
+        x_edge = x in [0, self.x_size-1]
+        y_edge = y in [0, self.y_size-1]
+        if x_edge and y_edge:
+            # corner
+            return (x, y)
+        elif x_edge or y_edge:
+            # but not both, as that would have been caught by the previous condition
+            # edge, replace the interior coordinate with 1
+            if x_edge:
+                return (x, 1)
+            if y_edge:
+                return (1, y)
+        else:
+            # interior
+            return (1, 1)
 
     def memoize_all_neighbors(self):
         print("memoizing neighbors")
-        for x in range(self.x_size):
-            for y in range(self.y_size):
-                n = self.get_neighbors(x, y)
-                # function will memoize them
-        assert len(self.neighbors_memoized) == self.size()
+        # just calling get_neighbors will memoize
+        # corner pixels
+        for x, y in (0, 0), (0, self.y_size-1), (self.x_size-1, 0), (self.x_size, self.y_size):
+            n = self.get_neighbors(x, y)
+        # edge representatives
+        for x, y in (0, 1), (1, 0), (1, self.y_size-1), (self.x_size-1, 1):
+            n = self.get_neighbors(x, y)
+        # interior representative
+        n = self.get_neighbors(1, 1)
+
+        # old way, memory hog
+        # for x in range(self.x_size):
+        #     for y in range(self.y_size):
+        #         n = self.get_neighbors(x, y)
+        #         # function will memoize them
+        # assert len(self.neighbors_memoized) == self.size()
 
     def size(self):
         return self.x_size * self.y_size
 
+    def is_valid_point(self, x, y):
+        return 0 <= x < self.x_size and 0 <= y < self.y_size
+
     def filter_invalid_points(self, iterable):
         res = set()
         for p in iterable:
-            if 0 <= p[0] < self.x_size and 0 <= p[1] < self.y_size:
+            if self.is_valid_point(*p):
                 res.add(p)
         return res
 
     def freeze_point(self, x, y):
         self.frozen_points.add((x, y))
-        self.touch(x, y)
+        # self.touch(x, y)
 
     def unfreeze_point(self, x, y):
         self.frozen_points.remove((x, y))
@@ -152,7 +198,7 @@ class Map:
     def fill_position(self, x, y, value):
         assert (x, y) not in self.frozen_points, "can't change frozen point {}".format((x, y))
         self.array[x, y] = value
-        self.touch(x, y)
+        # self.touch(x, y)
 
         # old way
         # raise Exception("do not use")
@@ -183,24 +229,38 @@ class Map:
     def get_value_at_position(self, x, y):
         return self.array[x, y]
 
-    def get_neighbors(self, x, y):
-        if (x, y) in self.neighbors_memoized:
-            return self.neighbors_memoized[(x, y)]
+    def get_neighbors(self, x, y, mode=8):
+        if mode == 4:
+            res = set()
+            for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+                p = (x+dx, y+dy)
+                if self.is_valid_point(*p):
+                    res.add(p)
+            return res
 
-        res = set()
-        for dx in [-1, 0, 1]:
-            for dy in [-1, 0, 1]:
-                if dx == 0 and dy == 0:
-                    continue
-                new_x = x + dx
-                new_y = y + dy
-                if new_x < 0 or new_x >= self.x_size:
-                    continue
-                if new_y < 0 or new_y >= self.y_size:
-                    continue
-                res.add((new_x, new_y))
-        self.neighbors_memoized[(x, y)] = res
-        return res
+        elif mode == 8:
+            rep = self.get_representative_pixel(x, y)
+            offset = (x - rep[0], y - rep[1])
+            if rep in self.neighbors_memoized:
+                rep_neighbors = self.neighbors_memoized[rep]
+                return {(n[0] + offset[0], n[1] + offset[1]) for n in rep_neighbors}  # flagged as slow: setcomp
+    
+            res = set()
+            for dx in [-1, 0, 1]:
+                for dy in [-1, 0, 1]:
+                    if dx == 0 and dy == 0:
+                        continue
+                    new_x = x + dx
+                    new_y = y + dy
+                    if new_x < 0 or new_x >= self.x_size:
+                        continue
+                    if new_y < 0 or new_y >= self.y_size:
+                        continue
+                    res.add((new_x, new_y))
+            self.neighbors_memoized[(x, y)] = res
+            return res
+        else:
+            raise ValueError("unknown mode {}".format(mode))
 
     def get_random_path(self, a, b, points_to_avoid):
         # start and end should inch toward each other
@@ -257,45 +317,138 @@ class Map:
         center = (x, y)
         while center is (None, None) or center in points_to_avoid:
             center = self.get_random_point()
-        points = {center}
         neighbors = [p for p in self.get_neighbors(*center) if p not in points_to_avoid]
         size = -1
         while size < 1:
             size = int(np.random.normal(expected_size, expected_size/2))
         # print("making region of size {}".format(size))
-        for step in range(size-1):
-            if len(neighbors) == 0:
-                # print("breaking because no neighbors")
-                break
-            if prioritize_internal_unfilled:
-                n_filled_neighbors_of_neighbors = [sum(n2 in points for n2 in self.get_neighbors(*n)) for n in neighbors]
-                weights = [x/sum(n_filled_neighbors_of_neighbors) for x in n_filled_neighbors_of_neighbors]
-                chosen_index = np.random.choice(list(range(len(neighbors))), p=weights)
-                current_point = neighbors[chosen_index]
-            else:
-                current_point = random.choice(neighbors)
-            assert current_point not in points, "duplicating point in contiguous region selection"
-            points.add(current_point)
-            neighbors.remove(current_point)
-            new_neighbors = self.get_neighbors(*current_point) - points - points_to_avoid
-            neighbors = list(set(neighbors) | set(new_neighbors))
-        # assert len(points) == size, "planned output size {}, got {}".format(size, len(points))
-        return points
 
-    def get_circle_around_point(self, x, y, radius):
+        radius = int(round(np.sqrt(size/np.pi)))
+        circle = self.get_circle_around_point(center[0], center[1], radius, barrier_points=points_to_avoid)
+        return circle
+
+        # this way looks better but is slow
+        # raise   
+        # points = {center}
+        # for step in range(size-1):
+        #     if len(neighbors) == 0:
+        #         break
+        #     if prioritize_internal_unfilled:
+        #         n_filled_neighbors_of_neighbors = [sum(n2 in points for n2 in self.get_neighbors(*n)) for n in neighbors]
+        #         weights = [x/sum(n_filled_neighbors_of_neighbors) for x in n_filled_neighbors_of_neighbors]
+        #         chosen_index = np.random.choice(list(range(len(neighbors))), p=weights)
+        #         current_point = neighbors[chosen_index]
+        #     else:
+        #         current_point = random.choice(neighbors)
+        #     assert current_point not in points, "duplicating point in contiguous region selection"
+        #     points.add(current_point)
+        #     neighbors.remove(current_point)
+        #     new_neighbors = self.get_neighbors(*current_point) - points - points_to_avoid
+        #     neighbors = list(set(neighbors) | set(new_neighbors))
+        # # assert len(points) == size, "planned output size {}, got {}".format(size, len(points))
+        # return points
+
+    def get_circle_around_point(self, x, y, radius, barrier_points=None):
+        # print("\ncenter {}\nbarrier points\n{}".format((x, y), sorted(barrier_points)))
+        # input("please debug")
+        if barrier_points is None:
+            barrier_points = set()
+        assert (x, y) not in barrier_points, "can't make circle with center in barrier"
         points = {(x, y)}
-        def get_dy_range(dx):
-            dy = int(round(np.sqrt(radius**2-dx**2)))
-            return range(-dy, dy+1)
-        starting_set = {(x+dx, y+dy) for dx in range(-radius, radius+1) for dy in get_dy_range(dx)}
-        res = self.filter_invalid_points(starting_set)
+        def get_max_dy(dx):
+            return int(round(np.sqrt(radius**2-dx**2)))
+
+        # can tell which points are on inside vs outside of barrier wall by doing this:
+        # starting in center, go left/right and count barrier crossings (+= 0.5 when is_in_barrier_set changes truth value)
+        # then go up/down from there and continue counting
+        # so each point in the set is associated with a number of barrier crossings
+        # those ending in 0.5 are in the barrier itself, those == 1 mod 2 are on the other side
+        # so take those == 0 mod 2
+
+        barrier_crossings_by_point = {(x, y): 0}
+        
+        # print("\nstarting circle around {}".format((x, y)))
+        # start with dx = 0 to create the central line
+        dy = 0
+        max_dx = radius
+        for direction in [-1, 1]:
+            # reset barrier crossings to center's value
+            n_barrier_crossings = barrier_crossings_by_point[(x, y)]
+            last_was_on_barrier = False
+            for abs_dx in range(max_dx+1):
+                dx = direction * abs_dx
+                this_x = x + dx
+                this_y = y + dy
+                # print("adding central line point at {}".format((this_x, this_y)))
+                if not self.is_valid_point(this_x, this_y):
+                    continue
+                is_on_barrier = (this_x, this_y) in barrier_points
+                if is_on_barrier != last_was_on_barrier:
+                    n_barrier_crossings += 0.5
+                barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
+                last_was_on_barrier = is_on_barrier
+
+        # now do the rest
+        for dx in range(-radius, radius+1):
+            this_x = x + dx
+            central_axis_point = (x, y)
+            assert central_axis_point in barrier_crossings_by_point, "can't find central axis point {}".format(central_axis_point)
+            max_dy = get_max_dy(dx)
+            for direction in [-1, 1]:
+                n_barrier_crossings = barrier_crossings_by_point[central_axis_point]
+                last_was_on_barrier = central_axis_point in barrier_points
+                for abs_dy in range(max_dy+1):
+                    dy = direction * abs_dy
+                    this_y = y + dy
+                    # print("adding non-central point at {}".format((this_x, this_y)))
+                    if not self.is_valid_point(this_x, this_y):
+                        continue
+                    is_on_barrier = (this_x, this_y) in barrier_points
+                    if is_on_barrier != last_was_on_barrier:
+                        n_barrier_crossings += 0.5
+                    barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
+                    last_was_on_barrier = is_on_barrier
+
+        res = {p for p, n in barrier_crossings_by_point.items() if n % 2 == 0}
+        # print("returning:\n{}".format(res))
+
+        # for dx in range(-radius, radius+1):
+        #     max_dy = get_max_dy(dx)
+        #     for ?
+        # starting_set = {(x+dx, y+dy) for dx in range(-radius, radius+1) for dy in get_dy_range(dx)}
+        # print("before barrier len = {}".format(len(res)))
+        # res = self.apply_barrier(res, barrier_points, x, y)
+        # print(" after barrier len = {}".format(len(res)))
         return res
+
+    # def apply_barrier(self, point_set, barrier_points, center_x, center_y):
+    #     # very slow!!
+    #     # start from center and emanate outward until can't anymore
+    #     # don't want it to jump past diagonal borders, so do horizontal/vertical neighbors only for this emanation
+    #     points = {(center_x, center_y)}
+    #     previous_points = {(center_x, center_y)}
+    #     while True:
+    #         # print("prev", sorted(previous_points))
+    #         # input("a")
+    #         horizvert_neighbors = set()
+    #         for p in previous_points:
+    #             ns = {n for n in self.get_neighbors(p[0], p[1], mode=4) if n in point_set and n not in barrier_points | points}
+    #             horizvert_neighbors |= ns
+    #         # print("hvn", sorted(horizvert_neighbors))
+    #         # input("a")
+    #         if len(horizvert_neighbors) == 0:
+    #             break
+    #         points |= horizvert_neighbors
+    #         # print("{} pts".format(len(points)))
+    #         # input("a")
+    #         previous_points = horizvert_neighbors
+    #     return points
 
     def get_distances_from_edge(self, point_set):
         if len(point_set) == 0:
             return {}
         res = {}
-        points_on_edge = [p for p in point_set if any(n not in point_set for n in self.get_neighbors(*p))]
+        points_on_edge = [p for p in point_set if any(n not in point_set for n in self.get_neighbors(*p))]  # flagged as slow: genexpr
         assert len(points_on_edge) > 0, "point set has no edge members:\n{}".format(sorted(point_set))
         for p in points_on_edge:
             res[p] = 0
@@ -310,9 +463,19 @@ class Map:
         center = self.get_random_point()
         # center = self.get_random_untouched_point()
         # print("making change at {}".format(center))
-        changing_reg = self.get_random_contiguous_region(center[0], center[1], expected_size=1000, prioritize_internal_unfilled=False)
-        # reference_reg = self.get_circle_around_point(center[0], center[1], radius=20)
-        reference_reg = changing_reg
+        expected_size = 1000
+        changing_reg = self.get_random_contiguous_region(center[0], center[1], expected_size=expected_size, points_to_avoid=self.frozen_points)
+        changing_reg_size = len(changing_reg)
+        # print("expected size {}, got {}".format(expected_size, changing_reg_size))
+        changing_reg_center_of_mass = (
+            int(round(1/changing_reg_size * sum(p[0] for p in changing_reg))),
+            int(round(1/changing_reg_size * sum(p[1] for p in changing_reg)))
+        )
+        radius_giving_equivalent_area = np.sqrt(changing_reg_size/np.pi)
+        desired_area_ratio = 5
+        radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
+        reference_reg = self.get_circle_around_point(center[0], center[1], radius=radius)
+        # reference_reg = changing_reg
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
         if max_d == 0:
@@ -353,8 +516,8 @@ class Map:
         y = random.randrange(border_width, self.y_size - border_width)
         return (x, y)
 
-    def get_random_untouched_point(self):
-        return random.choice(list(self.untouched_points))
+    # def get_random_untouched_point(self):
+    #     return random.choice(list(self.untouched_points))
 
     def get_random_zero_loop(self):
         x0_0, y0_0 = self.get_random_point(border_width=2)
@@ -462,24 +625,21 @@ class Map:
     def fill_elevations(self, n_steps, plot_every_n_steps=None):
         if plot_every_n_steps is not None:
             plt.ion()
-        if n_steps is None:
-            def generate():
-                while True:
-                    yield len(self.untouched_points) > 0
-        else:
-            def generate():
-                i = 0
-                while True:
-                    yield i < n_steps
-                    i += 1
-        loop_condition = generate()
-        for boolean in loop_condition:
-            if not boolean:
-                break
+        i = 0
+        while True:
+            if n_steps is None:
+                raise Exception("do not do this anymore, just run until there is sufficient convergence")
+                # if len(self.untouched_points) == 0:
+                #     break
+            else:
+                if i >= n_steps:
+                    break
             self.make_random_elevation_change(positive_feedback=True)
             # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
                 self.draw()
+                # input("debug")
+            i += 1
 
     def plot(self):
         self.pre_plot()
@@ -524,6 +684,9 @@ class Map:
         plt.contour(self.array, levels=[min_elevation, 0, max_elevation], colors="k")
 
         plt.gca().invert_yaxis()
+        # max_grad, pair = self.get_max_gradient()
+        # p, q = pair
+        # print("max gradient is {} from {} to {}".format(max_grad, p, q))
 
     @staticmethod
     def from_image(image_fp, color_condition_dict, default_color):
@@ -568,7 +731,24 @@ class Map:
         for p in coastal_points:
             self.fill_position(p[0], p[1], 0)
             self.freeze_point(*p)
-            
+
+    def get_max_gradient(self):
+        print("getting max grad")
+        from_point = None
+        to_point = None
+        max_grad = -np.inf
+        max_grad_pair = None
+        all_points = sorted(self.get_all_points())
+        for p in all_points:
+            for q in self.get_neighbors(*p):
+                dist = 1 if p[0] == q[0] or p[1] == q[1] else np.sqrt(2)
+                dh = self.array[q[0], q[1]] - self.array[p[0], p[1]]
+                grad = dh/dist
+                if grad > max_grad:
+                    max_grad = grad
+                    max_grad_pair = (p, q)
+        return max_grad, max_grad_pair
+
 
 def defect():
     # sea becomes land or vice versa
@@ -580,9 +760,13 @@ if __name__ == "__main__":
     from_image = True
     if from_image:
         image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
-        # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders.png"
-        image_fp_no_dir = "TestMap3_ThinnedBorders.png"
+        # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
+        # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap4.png"
+        # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
+        image_fp_no_dir = "TestMap_Jhorju.png"
+        # image_fp_no_dir = "TestMap_Mako.png"
+        # image_fp_no_dir = "TestMap_VerticalStripes.png"
         image_fp = image_dir + image_fp_no_dir
     
         color_condition_dict = {
@@ -599,9 +783,11 @@ if __name__ == "__main__":
         m = Map(300, 500)
         m.fill_all(0)
 
-    m.untouch_all_unfrozen_points()  # so can keep track of which points are left to have their elevation changed (from their initial value) 
+    # m.untouch_all_unfrozen_points()  # so can keep track of which points are left to have their elevation changed (from their initial value) 
     # n_steps = m.size()
-    n_steps = None
-    print("filling elevation for {} steps".format(n_steps))
-    m.fill_elevations(n_steps, plot_every_n_steps=None)
+    # n_steps = None
+    n_steps = np.inf
+    plot_every_n_steps = 100
+    print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
+    m.fill_elevations(n_steps, plot_every_n_steps)
     m.plot()
