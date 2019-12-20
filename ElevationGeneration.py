@@ -47,11 +47,21 @@ def elevation_change_constant(d, max_d, max_change):
 ELEVATION_CHANGE_FUNCTIONS = [
     elevation_change_parabolic,
     elevation_change_linear,
-    elevation_change_semicircle,
+    # elevation_change_semicircle,  # changes too fast near 0, makes very steep slopes too often
     elevation_change_inverted_semicircle,
     elevation_change_sinusoidal,
-    elevation_change_constant,
+    # elevation_change_constant,  # f(0) is not 0, makes cliffs
 ]
+
+def show_elevation_change_functions():
+    xs = np.linspace(0, 1, 20)
+    max_x = 1
+    max_change = 1
+    for i, f in enumerate(ELEVATION_CHANGE_FUNCTIONS):
+        ys = [f(x, max_x, max_change) for x in xs]
+        plt.plot(xs, ys)
+        plt.title("function index {}".format(i))
+        plt.show()
 
 
 def get_land_and_sea_colormap():
@@ -459,11 +469,10 @@ class Map:
                 res[p] = d + 1
         return res
 
-    def make_random_elevation_change(self, positive_feedback=False):
+    def make_random_elevation_change(self, expected_size, positive_feedback=False):
         center = self.get_random_point()
         # center = self.get_random_untouched_point()
         # print("making change at {}".format(center))
-        expected_size = 1000
         changing_reg = self.get_random_contiguous_region(center[0], center[1], expected_size=expected_size, points_to_avoid=self.frozen_points)
         changing_reg_size = len(changing_reg)
         # print("expected size {}, got {}".format(expected_size, changing_reg_size))
@@ -471,10 +480,13 @@ class Map:
             int(round(1/changing_reg_size * sum(p[0] for p in changing_reg))),
             int(round(1/changing_reg_size * sum(p[1] for p in changing_reg)))
         )
-        radius_giving_equivalent_area = np.sqrt(changing_reg_size/np.pi)
+        reference_x, reference_y = changing_reg_center_of_mass
+        # radius_giving_equivalent_area = np.sqrt(changing_reg_size/np.pi)
+        radius_giving_expected_area = np.sqrt(expected_size/np.pi)
         desired_area_ratio = 5
-        radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
-        reference_reg = self.get_circle_around_point(center[0], center[1], radius=radius)
+        # radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
+        radius = int(round(radius_giving_expected_area * np.sqrt(desired_area_ratio)))
+        reference_reg = self.get_circle_around_point(reference_x, reference_y, radius=radius)
         # reference_reg = changing_reg
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
@@ -489,16 +501,38 @@ class Map:
             # elevation_at_point = self.array[point_in_region[0], point_in_region[1]]
             elevations_in_refreg = [self.array[p[0], p[1]] for p in reference_reg]
             average_elevation_in_refreg = np.mean(elevations_in_refreg)
-            mu = average_elevation_in_refreg/2
+            e = average_elevation_in_refreg
+            big_abs_elevation = 1000
+            critical_abs_elevation = 10  # above this abs, go farther in that direction until reach big_abs_elevation
+            mu = \
+                0 if abs(e) > big_abs_elevation else \
+                10 if e > critical_abs_elevation else \
+                -10 if e < -1*critical_abs_elevation else \
+                0
+            # elevation_sign = (1 if average_elevation_in_refreg > 0 else -1)
+            # big_elevation_signed = elevation_sign * big_abs_elevation
+            # remainder_elevation_change = big_elevation_signed - average_elevation_in_refreg
+            # mu = remainder_elevation_change
+
+            # try another idea, extreme elevations have expected movement of zero
+            # but moderate ones move more in their direction
+            # if abs(average_elevation_in_refreg) < abs(big_elevation_signed):
+            #     mu = average_elevation_in_refreg
+            # else:
+            #     mu = 0
+
+            # old correction to mu, I think this is causing overcorrection, might be responsible for mountain rings
+            # because it sees mountains that are taller than big_abs, wants to drop them, ends up creating lowlands in the rest of the
+            # changing region, could this cause a mountain ring to propagate toward shore, leaving central valley?
+            # mu = average_elevation_in_refreg
+            # if abs(mu) > big_abs_elevation:
+            #     # decrease mu linearly down to 0 at 2*big_abs_elevation, and then drop more after that to decrease
+            #     big_elevation_signed = big_abs_elevation * (1 if mu > 0 else -1)
+            #     mu_excess = mu - big_elevation_signed
+            #     mu -= 2*mu_excess
+
         else:
             mu = 0
-
-        big_abs_elevation = 100
-        if abs(mu) > big_abs_elevation:
-            # decrease mu linearly down to 0 at 2*big_abs_elevation, and then drop more after that to decrease
-            big_elevation_signed = big_abs_elevation * (1 if mu > 0 else -1)
-            mu_excess = mu - big_elevation_signed
-            mu -= 2*mu_excess
 
         sigma = 10
         max_change = np.random.normal(mu, sigma)
@@ -622,7 +656,7 @@ class Map:
                     # then will have new list of neighbors
             self.draw()
 
-    def fill_elevations(self, n_steps, plot_every_n_steps=None):
+    def fill_elevations(self, n_steps, expected_change_size, plot_every_n_steps=None):
         if plot_every_n_steps is not None:
             plt.ion()
         i = 0
@@ -634,7 +668,9 @@ class Map:
             else:
                 if i >= n_steps:
                     break
-            self.make_random_elevation_change(positive_feedback=True)
+            if i % 1000 == 0:
+                print("step {}".format(i))
+            self.make_random_elevation_change(expected_change_size, positive_feedback=True)
             # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
                 self.draw()
@@ -650,6 +686,10 @@ class Map:
         self.pre_plot()
         plt.draw()
         plt.pause(0.001)
+
+    def save_plot_image(self, output_fp):
+        self.pre_plot()
+        plt.savefig(output_fp)
 
     def pre_plot(self):
         # plt.imshow(self.array, interpolation="gaussian")  # History.py uses contourf rather than imshow
@@ -668,9 +708,9 @@ class Map:
         assert sea_contour_levels[-1] == land_contour_levels[0] == 0
         contour_levels = list(sea_contour_levels[:-1]) + list(land_contour_levels)
         colormap = get_land_and_sea_colormap()
-        max_abs_elevation = abs(self.array).max()
-        max_color_value = max_abs_elevation
-        min_color_value = -1 * max_abs_elevation
+        # care more about seeing detail in land contour; displaying deep sea doesn't matter much
+        max_color_value = max_elevation
+        min_color_value = -1 * max_elevation
 
         # draw colored filled contours
         plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
@@ -749,6 +789,29 @@ class Map:
                     max_grad_pair = (p, q)
         return max_grad, max_grad_pair
 
+    def save_elevation_data(self, output_fp):
+        # format is just grid of comma-separated numbers
+        # if not confirm_overwrite_file:
+        #     return
+        open(output_fp, "w").close()  # clear file
+        for x in range(self.x_size):
+            this_row = ""
+            for y in range(self.y_size):
+                el = self.array[x, y]
+                this_row += "{:.1f},".format(el)
+            assert this_row[-1] == ","
+            this_row = this_row[:-1] + "\n"
+            open(output_fp, "a").write(this_row)
+        print("finished saving elevation data to {}".format(output_fp))
+
+
+def confirm_overwrite_file(output_fp):
+    if os.path.exists(output_fp):
+        yn = input("Warning! Overwriting file {}\ncontinue? (y/n, default n)".format(output_fp))
+        if yn != "y":
+            print("aborting")
+            return False
+    return True
 
 def defect():
     # sea becomes land or vice versa
@@ -757,17 +820,23 @@ def defect():
 
 
 if __name__ == "__main__":
+    # show_elevation_change_functions()
     from_image = True
     if from_image:
         image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
+        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
-        # image_fp_no_dir = "TestMap4.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
         image_fp_no_dir = "TestMap_Jhorju.png"
         # image_fp_no_dir = "TestMap_Mako.png"
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
+        # image_fp_no_dir = "TestMap_AllLand.png"
+        # image_fp_no_dir = "TestMap_CircleIsland.png"
         image_fp = image_dir + image_fp_no_dir
+
+        elevation_data_output_fp = image_dir + "ElevationGenerationOutputData_" + image_fp_no_dir.replace(".png", ".txt")
+        plot_image_output_fp = image_dir + "ElevationGenerationOutputPlot_" + image_fp_no_dir
     
         color_condition_dict = {
             # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
@@ -782,12 +851,20 @@ if __name__ == "__main__":
     else:
         m = Map(300, 500)
         m.fill_all(0)
+        elevation_data_output_fp = "/home/wesley/programming/ElevationGenerationOutputData_Random.png"
+        plot_image_output_fp = "/home/wesley/programming/ElevationGenerationOutputPlot_Random.png"
+        
+    print("map size {} pixels".format(m.size()))
 
     # m.untouch_all_unfrozen_points()  # so can keep track of which points are left to have their elevation changed (from their initial value) 
-    # n_steps = m.size()
-    # n_steps = None
+    expected_change_size = 1000
+    expected_touches_per_point = 50
+    # n_steps = int(expected_touches_per_point / expected_change_size * m.size())
     n_steps = np.inf
+    # n_steps = 10000
     plot_every_n_steps = 100
     print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
-    m.fill_elevations(n_steps, plot_every_n_steps)
-    m.plot()
+    m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
+    # m.plot()
+    # m.save_elevation_data(elevation_data_output_fp)
+    m.save_plot_image(plot_image_output_fp)
