@@ -500,19 +500,32 @@ class Map:
             # point_in_region = random.choice(list(reg))
             # elevation_at_point = self.array[point_in_region[0], point_in_region[1]]
             elevations_in_refreg = [self.array[p[0], p[1]] for p in reference_reg]
-            average_elevation_in_refreg = np.mean(elevations_in_refreg)
-            e = average_elevation_in_refreg
-            big_abs_elevation = 1000
-            critical_abs_elevation = 10  # above this abs, go farther in that direction until reach big_abs_elevation
+            e_avg = np.mean(elevations_in_refreg)
+            e_max = np.max(elevations_in_refreg)  # for detecting mountain nearby, chain should propagate
+            e_min = np.min(elevations_in_refreg)
+            elevation_sign = (1 if e_avg > 0 else -1)
+            big_abs = 1000
+            big_signed = elevation_sign * big_abs
+            critical_abs = 10  # above this abs, go farther in that direction until reach big_abs_elevation
+            critical_signed = elevation_sign * critical_abs
+            critical_excess = e_avg - critical_signed
+            big_remainder = big_signed - e_avg
+            mountain_or_trench_nearby = abs(e_max) >= big_abs or abs(e_min) >= big_abs
+  
             mu = \
-                0 if abs(e) > big_abs_elevation else \
-                10 if e > critical_abs_elevation else \
-                -10 if e < -1*critical_abs_elevation else \
+                0 if abs(e_avg) > big_abs else \
+                10 if e_avg > critical_abs else \
+                -10 if e_avg < -1*critical_abs else \
                 0
-            # elevation_sign = (1 if average_elevation_in_refreg > 0 else -1)
-            # big_elevation_signed = elevation_sign * big_abs_elevation
-            # remainder_elevation_change = big_elevation_signed - average_elevation_in_refreg
-            # mu = remainder_elevation_change
+
+            # if False: #mountain_or_trench_nearby:
+            #     pass
+            #     # try to propagate it in a line, i.e., the closer e_avg is to mountain size, the more likely it is to rise
+            #     alpha_between_critical_and_big = (e_avg - critical_signed)/(big_signed - critical_signed)
+            #     # closer to big = bigger alpha, bigger expected rise
+            #     a = np.random.uniform(alpha_between_critical_and_big)
+            #     mu = a * big_remainder
+            # else:
 
             # try another idea, extreme elevations have expected movement of zero
             # but moderate ones move more in their direction
@@ -534,7 +547,7 @@ class Map:
         else:
             mu = 0
 
-        sigma = 10
+        sigma = abs(e_avg) if abs(e_avg) < big_abs else 10
         max_change = np.random.normal(mu, sigma)
 
         func = lambda d: raw_func(d, max_d, max_change)
@@ -825,10 +838,10 @@ if __name__ == "__main__":
     if from_image:
         image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
+        image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
-        image_fp_no_dir = "TestMap_Jhorju.png"
+        # image_fp_no_dir = "TestMap_Jhorju.png"
         # image_fp_no_dir = "TestMap_Mako.png"
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
@@ -858,11 +871,11 @@ if __name__ == "__main__":
 
     # m.untouch_all_unfrozen_points()  # so can keep track of which points are left to have their elevation changed (from their initial value) 
     expected_change_size = 1000
-    expected_touches_per_point = 50
-    # n_steps = int(expected_touches_per_point / expected_change_size * m.size())
-    n_steps = np.inf
+    expected_touches_per_point = 200
+    n_steps = int(expected_touches_per_point / expected_change_size * m.size())
+    # n_steps = np.inf
     # n_steps = 10000
-    plot_every_n_steps = 100
+    plot_every_n_steps = None
     print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
     m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
     # m.plot()
