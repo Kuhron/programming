@@ -1,8 +1,11 @@
 import random
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from PIL import Image
+from scipy import ndimage
+from datetime import datetime, timedelta
 
 
 def make_nan_array(shape):
@@ -175,8 +178,9 @@ class Map:
     def size(self):
         return self.x_size * self.y_size
 
-    def is_valid_point(self, x, y):
-        return 0 <= x < self.x_size and 0 <= y < self.y_size
+    def is_valid_point(self, x, y):  # flagged as slow due to sheer number of calls
+        raise Exception("do not use")
+        # return 0 <= x < self.x_size and 0 <= y < self.y_size
 
     def filter_invalid_points(self, iterable):
         res = set()
@@ -244,7 +248,8 @@ class Map:
             res = set()
             for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
                 p = (x+dx, y+dy)
-                if self.is_valid_point(*p):
+                #if self.is_valid_point(*p):
+                if 0 <= x+dx < self.x_size and 0 <= y+dy < self.y_size:
                     res.add(p)
             return res
 
@@ -358,7 +363,7 @@ class Map:
         # # assert len(points) == size, "planned output size {}, got {}".format(size, len(points))
         # return points
 
-    def get_circle_around_point(self, x, y, radius, barrier_points=None):
+    def get_circle_around_point(self, x, y, radius, barrier_points=None):  # flagged as slow, look for existing algorithms
         # print("\ncenter {}\nbarrier points\n{}".format((x, y), sorted(barrier_points)))
         # input("please debug")
         if barrier_points is None:
@@ -454,20 +459,53 @@ class Map:
     #         previous_points = horizvert_neighbors
     #     return points
 
-    def get_distances_from_edge(self, point_set):
-        if len(point_set) == 0:
-            return {}
-        res = {}
-        points_on_edge = [p for p in point_set if any(n not in point_set for n in self.get_neighbors(*p))]  # flagged as slow: genexpr
-        assert len(points_on_edge) > 0, "point set has no edge members:\n{}".format(sorted(point_set))
-        for p in points_on_edge:
-            res[p] = 0
-        interior_point_set = point_set - set(points_on_edge)
-        if len(interior_point_set) > 0:
-            interior_distances = self.get_distances_from_edge(interior_point_set)
-            for p, d in interior_distances.items():
-                res[p] = d + 1
-        return res
+    def get_distances_from_edge(self, point_set, use_scipy_method=True):
+        if use_scipy_method:
+            min_x = np.inf
+            max_x = -np.inf
+            min_y = np.inf
+            max_y = -np.inf
+            for p in point_set:
+                x, y = p
+                min_x = min(x, min_x)
+                max_x = max(x, max_x)
+                min_y = min(y, min_y)
+                max_y = max(y, max_y)
+            
+            # put them in an array
+            to_relative_coords = lambda p: (p[0]-min_x, p[1]-min_y)
+            to_absolute_coords = lambda p: (p[0]+min_x, p[1]+min_y)
+            arr_x_size = max_x - min_x + 1
+            arr_y_size = max_y - min_y + 1
+            arr = np.zeros((arr_x_size, arr_y_size))
+            rels = {}
+            for p in point_set:
+                xrel, yrel = to_relative_coords(p)
+                rels[p] = (xrel, yrel)
+                arr[xrel, yrel] = 1
+            distance_transform_matrix = ndimage.morphology.distance_transform_edt(arr)
+            res = {}
+            for p in point_set:
+                xrel, yrel = rels[p]
+                d = distance_transform_matrix[xrel, yrel]
+                res[p] = d - 1
+            return res
+
+        else:
+            # old way, slower than scipy
+            if len(point_set) == 0:
+                return {}
+            res = {}
+            points_on_edge = [p for p in point_set if any(n not in point_set for n in self.get_neighbors(*p))]  # flagged as slow: genexpr
+            assert len(points_on_edge) > 0, "point set has no edge members:\n{}".format(sorted(point_set))
+            for p in points_on_edge:
+                res[p] = 0
+            interior_point_set = point_set - set(points_on_edge)
+            if len(interior_point_set) > 0:
+                interior_distances = self.get_distances_from_edge(interior_point_set, use_scipy_method=False)
+                for p, d in interior_distances.items():
+                    res[p] = d + 1
+            return res
 
     def make_random_elevation_change(self, expected_size, positive_feedback=False):
         center = self.get_random_point()
@@ -673,6 +711,7 @@ class Map:
         if plot_every_n_steps is not None:
             plt.ion()
         i = 0
+        t0 = datetime.now()
         while True:
             if n_steps is None:
                 raise Exception("do not do this anymore, just run until there is sufficient convergence")
@@ -681,8 +720,16 @@ class Map:
             else:
                 if i >= n_steps:
                     break
-            if i % 1000 == 0:
-                print("step {}".format(i))
+            if i % 100 == 0:
+                try:
+                    dt = datetime.now() - t0
+                    n_left = n_steps - i
+                    secs_per_step = dt/i
+                    eta = secs_per_step * n_left
+                    eta_str = str(eta)
+                    print("step {}, {} elapsed, {} ETA".format(i, dt, eta_str))
+                except ZeroDivisionError:
+                    print("div/0!")
             self.make_random_elevation_change(expected_change_size, positive_feedback=True)
             # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
@@ -838,14 +885,14 @@ if __name__ == "__main__":
     if from_image:
         image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
+        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
         # image_fp_no_dir = "TestMap_Jhorju.png"
         # image_fp_no_dir = "TestMap_Mako.png"
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
-        # image_fp_no_dir = "TestMap_CircleIsland.png"
+        image_fp_no_dir = "TestMap_CircleIsland.png"
         image_fp = image_dir + image_fp_no_dir
 
         elevation_data_output_fp = image_dir + "ElevationGenerationOutputData_" + image_fp_no_dir.replace(".png", ".txt")
