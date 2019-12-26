@@ -3,6 +3,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import matplotlib.collections as mcollections
 from PIL import Image
 from scipy import ndimage
 from datetime import datetime, timedelta
@@ -48,11 +49,11 @@ def elevation_change_constant(d, max_d, max_change):
     return max_change
 
 ELEVATION_CHANGE_FUNCTIONS = [
-    elevation_change_parabolic,
-    elevation_change_linear,
+    elevation_change_linear,  # default to linear, should be fastest non-constant
+    # elevation_change_parabolic,
     # elevation_change_semicircle,  # changes too fast near 0, makes very steep slopes too often
-    elevation_change_inverted_semicircle,
-    elevation_change_sinusoidal,
+    # elevation_change_inverted_semicircle,  # slow
+    # elevation_change_sinusoidal,  # slow
     # elevation_change_constant,  # f(0) is not 0, makes cliffs
 ]
 
@@ -95,11 +96,16 @@ def get_land_and_sea_colormap():
 
 
 class Map:
-    def __init__(self, x_size, y_size):
+    def __init__(self, x_size, y_size, array=None):
         # really row size and column size, respectively
         self.x_size = x_size
         self.y_size = y_size
-        self.array = make_nan_array((x_size, y_size))
+        self.x_range = np.arange(self.x_size)
+        self.y_range = np.arange(self.y_size)
+        if array is None:
+            self.array = make_nan_array((x_size, y_size))
+        else:
+            self.array = array
         self.condition_array = make_blank_condition_array((x_size, y_size))
         #self.filled_positions = set()
         #self.unfilled_neighbors = set()
@@ -157,7 +163,6 @@ class Map:
             return (1, 1)
 
     def memoize_all_neighbors(self):
-        print("memoizing neighbors")
         # just calling get_neighbors will memoize
         # corner pixels
         for x, y in (0, 0), (0, self.y_size-1), (self.x_size-1, 0), (self.x_size, self.y_size):
@@ -179,8 +184,7 @@ class Map:
         return self.x_size * self.y_size
 
     def is_valid_point(self, x, y):  # flagged as slow due to sheer number of calls
-        raise Exception("do not use")
-        # return 0 <= x < self.x_size and 0 <= y < self.y_size
+        return 0 <= x < self.x_size and 0 <= y < self.y_size
 
     def filter_invalid_points(self, iterable):
         res = set()
@@ -248,8 +252,8 @@ class Map:
             res = set()
             for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
                 p = (x+dx, y+dy)
-                #if self.is_valid_point(*p):
-                if 0 <= x+dx < self.x_size and 0 <= y+dy < self.y_size:
+                if self.is_valid_point(*p):
+                # if 0 <= x+dx < self.x_size and 0 <= y+dy < self.y_size:
                     res.add(p)
             return res
 
@@ -518,10 +522,22 @@ class Map:
             int(round(1/changing_reg_size * sum(p[0] for p in changing_reg))),
             int(round(1/changing_reg_size * sum(p[1] for p in changing_reg)))
         )
+        e_center_of_mass = self.array[changing_reg_center_of_mass[0], changing_reg_center_of_mass[1]]
         reference_x, reference_y = changing_reg_center_of_mass
         # radius_giving_equivalent_area = np.sqrt(changing_reg_size/np.pi)
         radius_giving_expected_area = np.sqrt(expected_size/np.pi)
-        desired_area_ratio = 5
+        desired_area_ratio_at_sea_level = 5
+        desired_area_ratio_at_big_abs = 0.1
+        big_abs = 1000
+
+        # try to get mountain chains to propagate:
+        # if center point is low abs, look at bigger region, might catch mountain
+        # if center point is high abs, look at smaller region, don't let lowland water it down
+        if abs(e_center_of_mass) >= big_abs:
+            desired_area_ratio = desired_area_ratio_at_big_abs
+        else:
+            slope = (desired_area_ratio_at_big_abs - desired_area_ratio_at_sea_level) / (big_abs - 0)
+            desired_area_ratio = desired_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
         # radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
         radius = int(round(radius_giving_expected_area * np.sqrt(desired_area_ratio)))
         reference_reg = self.get_circle_around_point(reference_x, reference_y, radius=radius)
@@ -535,16 +551,13 @@ class Map:
 
         if positive_feedback:
             # land begets land, sea begets sea
-            # point_in_region = random.choice(list(reg))
-            # elevation_at_point = self.array[point_in_region[0], point_in_region[1]]
             elevations_in_refreg = [self.array[p[0], p[1]] for p in reference_reg]
             e_avg = np.mean(elevations_in_refreg)
             e_max = np.max(elevations_in_refreg)  # for detecting mountain nearby, chain should propagate
             e_min = np.min(elevations_in_refreg)
             elevation_sign = (1 if e_avg > 0 else -1)
-            big_abs = 1000
             big_signed = elevation_sign * big_abs
-            critical_abs = 10  # above this abs, go farther in that direction until reach big_abs_elevation
+            critical_abs = 100  # above this abs, go farther in that direction until reach big_abs_elevation
             critical_signed = elevation_sign * critical_abs
             critical_excess = e_avg - critical_signed
             big_remainder = big_signed - e_avg
@@ -585,7 +598,7 @@ class Map:
         else:
             mu = 0
 
-        sigma = abs(e_avg) if abs(e_avg) < big_abs else 10
+        sigma = max(10, abs(e_avg)) if abs(e_avg) < big_abs else 10
         max_change = np.random.normal(mu, sigma)
 
         func = lambda d: raw_func(d, max_d, max_change)
@@ -733,11 +746,15 @@ class Map:
             self.make_random_elevation_change(expected_change_size, positive_feedback=True)
             # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
-                self.draw()
+                try:
+                    self.draw()
+                except ValueError:
+                    print("skipping ValueError")
                 # input("debug")
             i += 1
 
     def plot(self):
+        plt.gcf()
         self.pre_plot()
         plt.show()
 
@@ -751,12 +768,12 @@ class Map:
         self.pre_plot()
         plt.savefig(output_fp)
 
-    def pre_plot(self):
+    def pre_plot(self, alpha=1):
         # plt.imshow(self.array, interpolation="gaussian")  # History.py uses contourf rather than imshow
         min_elevation = self.array.min()
         max_elevation = self.array.max()
-        n_sea_contours = 10
-        n_land_contours = 30
+        n_sea_contours = 20
+        n_land_contours = 100
         if min_elevation < 0:
             sea_contour_levels = np.linspace(min_elevation, 0, n_sea_contours)
         else:
@@ -773,7 +790,7 @@ class Map:
         min_color_value = -1 * max_elevation
 
         # draw colored filled contours
-        plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
+        plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value, alpha=alpha)
         try:
             plt.colorbar()
         except IndexError:
@@ -787,6 +804,180 @@ class Map:
         # max_grad, pair = self.get_max_gradient()
         # p, q = pair
         # print("max gradient is {} from {} to {}".format(max_grad, p, q))
+
+    def plot_gradient(self):
+        varray = self.array
+        vgrad = np.gradient(varray)
+        grad_mag = np.sqrt(vgrad[0]**2 + vgrad[1]**2)
+        grad_angle = np.angle(vgrad[0] + 1j*vgrad[1])
+        angle_colormap = plt.cm.hsv  # something cyclic
+        angle_color = angle_colormap(grad_angle)
+        plt.imshow(grad_angle, cmap=angle_colormap, vmin=-np.pi, vmax=np.pi)
+        plt.colorbar()
+        plt.show()
+
+    def create_rainfall_array(self):
+        if hasattr(self, "rainfall_array") and self.rainfall_array is not None:
+            return
+        self.rainfall_array = np.random.uniform(-100, 100, size=self.array.shape)
+        # negative values correspond to more evaporation than rain
+        # treat units as height units per tick of time, for flow simulation
+
+    def create_flow_array(self):
+        # div(water_flow) is zero everywhere, whether it leaves by flowing or evaporating or whatever
+        # so water flow array should tell what the volumetric flow *through* the point is
+        self.create_rainfall_array()
+        flow_array = np.zeros((self.x_size, self.y_size))
+        flow_destination_array = np.full((self.x_size, self.y_size), None)
+        # treat sea level as fixed, water flow into and out of elevations below 0 is ignored
+        points_sorted_by_decreasing_elevation = []
+        for x in self.x_range:
+            for y in self.y_range:
+                if self.is_land(x, y):
+                    elevation = self.array[x, y]
+                    tup = (elevation, x, y)
+                    points_sorted_by_decreasing_elevation.append(tup)
+        points_sorted_by_decreasing_elevation = sorted(points_sorted_by_decreasing_elevation, reverse=True)
+        gx, gy = np.gradient(-1*self.array)
+        downhill_neighbor_offset = {
+            -180: (-1, 0),
+            -135: (-1, -1),
+            -90:  (0, -1),
+            -45:  (1, -1),
+            0:    (1, 0),
+            45:   (1, 1),
+            90:   (0, 1),
+            135:  (-1, 1),
+            180:  (-1, 0),
+        }
+        for el, x, y in points_sorted_by_decreasing_elevation:
+            dx = gx[x, y]
+            dy = gy[x, y]
+            grad_angle = np.angle(dx + 1j*dy, deg=True)
+            # print("dx {} dy {} angle {} deg".format(dx, dy, grad_angle))
+            rounded_to_45_deg = int(45*round(grad_angle/45))
+            # input("rounded to {}".format(rounded_to_45_deg))
+            downhill_x_offset, downhill_y_offset = downhill_neighbor_offset[rounded_to_45_deg]
+            downhill_neighbor = (x + downhill_x_offset, y + downhill_y_offset)
+            nx, ny = downhill_neighbor
+            flow_array[x, y] += self.rainfall_array[x, y]
+            if self.is_valid_point(nx, ny):
+                flow_array[nx, ny] += flow_array[x, y]
+                flow_destination_array[x, y] = (nx, ny)
+            # else:
+            #     input("invalid neighbor {}".format((nx, ny)))
+        self.flow_array = flow_array
+        self.flow_destination_array = flow_destination_array
+
+        qs = np.linspace(0, 1, 100)
+        flow_array_no_zeros = flow_array[flow_array != 0]
+        quantiles = {q: np.quantile(flow_array_no_zeros, q) for q in qs}
+        def get_nearest_quantile(x):
+            if x < quantiles[qs[0]]:
+                return 0
+            if x > quantiles[qs[-1]]:
+                return 1
+            for q0, q1 in zip(qs[:-1], qs[1:]):
+                v0 = quantiles[q0]
+                v1 = quantiles[q1]
+                # print(v0, x, v1)
+                if v0 <= x <= v1:
+                    # input("match")
+                    if abs(q0-x) > abs(q1-x):
+                        return q0
+                    else:
+                        return q1
+            raise RuntimeError("no quantile found for value {}".format(x))
+
+        flow_quantile_array = np.zeros((self.x_size, self.y_size))
+        for x in self.x_range:
+            for y in self.y_range:
+                flow_quantile_array[x, y] = get_nearest_quantile(flow_array[x, y])
+        self.flow_quantile_array = flow_quantile_array
+        
+    def is_land(self, x, y):
+        # TODO: make it possible for land to be below sea level
+        return self.array[x, y] >= 0
+
+    def plot_flow_amounts(self):
+        self.create_flow_array()
+        # arr = self.flow_array  # max is too high for linear cmap
+        arr = self.flow_quantile_array
+        plt.imshow(arr, cmap=plt.cm.inferno)
+        plt.colorbar()
+        plt.show()
+
+    def plot_rivers(self):
+        self.pre_plot(alpha=1)
+        self.create_flow_array()
+        print("flow stats: min {} median {} mean {} max {}".format(
+            np.min(self.flow_array),
+            np.median(self.flow_array),
+            np.mean(self.flow_array),
+            np.max(self.flow_array),
+        ))
+        mean_flow = np.mean(self.flow_array)
+
+        # blue_value = lambda x: get_nearest_quantile(x)
+        # alpha_value = lambda x: get_nearest_quantile(x)
+        # river_rgba_array = []
+        line_segments = []
+        colors = []
+        for x in self.x_range:
+            # this_row = []
+            for y in self.y_range:
+                flow = self.flow_array[x, y]
+                flow_destination = self.flow_destination_array[x, y]
+                flow_quantile = self.flow_quantile_array[x, y]
+                if flow_destination is not None:
+                    # seg = [(x, y), flow_destination]
+                    # transpose
+                    seg = [(y, x), flow_destination[::-1]]
+                    # print(seg)
+                    line_segments.append(seg)
+                    # b = blue_value(flow)
+                    # a = alpha_value(flow)
+                    # r = 0
+                    # g = b  # make it cyan
+                    # color = (r, g, b, a)
+                    # color = (0, 0, 1, a)
+                    # if a > 0:
+                    #     input("flow {} from {} to {} gave rgba {}".format(flow, (x, y), flow_destination, color))
+                    cmap = plt.cm.GnBu
+                    r, g, b, a = cmap(flow_quantile)
+                    color = (r, g, b, a*0.5)
+                    colors.append(color)
+                # this_row.append(color)
+            # river_rgba_array.append(this_row)
+        # river_rgba_array = np.array(river_rgba_array)
+        # print(test_array)
+        # print(f(test_array))
+        # print(river_rgba_array[150:152, 150:153])
+        # plt.imshow(self.water_flow_array)
+        # plt.imshow(river_rgba_array, origin="lower")
+        lc = mcollections.LineCollection(line_segments, colors=colors)
+        plt.gca().add_collection(lc)
+        plt.gca().autoscale()
+        # n_segments = len(line_segments)
+        # i = 0
+        # for seg, color in zip(line_segments, colors):
+        #     if i % 100 == 1:
+        #         print(i, n_segments)
+        #     i += 1
+        #     p0, p1 = seg
+        #     plt.plot(p0, p1, c=color)
+        plt.show()
+
+        # https://stackoverflow.com/questions/16529892/adding-water-flow-arrows-to-matplotlib-contour-plot
+        # self.pre_plot()
+        # xi, yi = np.meshgrid(self.x_range, self.y_range)
+        # zi = self.array
+        # dy, dx = np.gradient(-zi.T)
+        # print(xi.shape, yi.shape, dx.shape, dy.shape, zi.shape)
+        # plt.streamplot(self.x_range, self.y_range, dx, dy, color='0.8', density=2)
+        # contours = plt.contour(xi, yi, zi, linewidths=2)
+        # plt.clabel(contours)
+        # plt.show()
 
     @staticmethod
     def from_image(image_fp, color_condition_dict, default_color):
@@ -819,6 +1010,15 @@ class Map:
                         m.freeze_point(x, y)
         return m
 
+    @staticmethod
+    def load_elevation_data(data_fp):
+        with open(data_fp) as f:
+            lines = f.readlines()
+        lines = [[float(x) for x in line.split(",")] for line in lines]
+        array = np.array(lines)
+        x_size, y_size = array.shape
+        return Map(x_size, y_size, array=array)
+
     def freeze_coastlines(self):
         coastal_points = set()
         for x in range(self.x_size):
@@ -831,6 +1031,21 @@ class Map:
         for p in coastal_points:
             self.fill_position(p[0], p[1], 0)
             self.freeze_point(*p)
+
+    # def get_min_gradient_array(self):
+    #     if hasattr(self, "min_gradient_array") and self.min_gradient_array is not None:
+    #         return self.min_gradient_array
+    #     res = make_nan_array(self.x_size, self.y_size)
+    #     for p in self.get_all_points():
+    #         min_grad_this_point = np.inf
+    #         for q in self.get_neighbors(*p):
+    #             dist = 1 if p[0] == q[0] or p[1] == q[1] else np.sqrt(2)
+    #             dh = self.array[q[0], q[1]] - self.array[p[0], p[1]]
+    #             grad = dh/dist
+    #             min_grad_this_point = min(grad, min_grad_this_point)
+    #         res[p[0], p[1]] = min_grad_this_point
+    #     self.min_gradient_array = res
+    #     return res
 
     def get_max_gradient(self):
         print("getting max grad")
@@ -881,18 +1096,22 @@ def defect():
 
 if __name__ == "__main__":
     # show_elevation_change_functions()
-    from_image = True
+    from_image = False
+    from_data = True
+    image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
-        image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
         # image_fp_no_dir = "TestMap_Jhorju.png"
+        # image_fp_no_dir = "TestMap_Amphoto.png"
         # image_fp_no_dir = "TestMap_Mako.png"
+        # image_fp_no_dir = "TestMap_Myst.png"
+        image_fp_no_dir = "TestMap_Ilausa.png"
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
-        image_fp_no_dir = "TestMap_CircleIsland.png"
+        # image_fp_no_dir = "TestMap_CircleIsland.png"
         image_fp = image_dir + image_fp_no_dir
 
         elevation_data_output_fp = image_dir + "ElevationGenerationOutputData_" + image_fp_no_dir.replace(".png", ".txt")
@@ -908,23 +1127,42 @@ if __name__ == "__main__":
         default_color = (0, 0, 0, 255)
         m = Map.from_image(image_fp, color_condition_dict, default_color)
         m.freeze_coastlines()
+        generate_elevation_changes = True
+    elif from_data:
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Mako.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Amphoto.txt"
+        data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Jhorju.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_NorthernMystIslands.txt"
+        data_fp = image_dir + data_fp_no_dir
+        m = Map.load_elevation_data(data_fp)
+        generate_elevation_changes = False
     else:
         m = Map(300, 500)
         m.fill_all(0)
         elevation_data_output_fp = "/home/wesley/programming/ElevationGenerationOutputData_Random.png"
         plot_image_output_fp = "/home/wesley/programming/ElevationGenerationOutputPlot_Random.png"
+        generate_elevation_changes = True
         
     print("map size {} pixels".format(m.size()))
 
-    # m.untouch_all_unfrozen_points()  # so can keep track of which points are left to have their elevation changed (from their initial value) 
-    expected_change_size = 1000
-    expected_touches_per_point = 200
-    n_steps = int(expected_touches_per_point / expected_change_size * m.size())
-    # n_steps = np.inf
-    # n_steps = 10000
-    plot_every_n_steps = None
-    print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
-    m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-    # m.plot()
-    # m.save_elevation_data(elevation_data_output_fp)
-    m.save_plot_image(plot_image_output_fp)
+    if generate_elevation_changes:
+        expected_change_size = 10000
+        expected_touches_per_point = 200
+        n_steps = int(expected_touches_per_point / expected_change_size * m.size())
+        # n_steps = np.inf
+        # n_steps = 10000
+        plot_every_n_steps = None
+        print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
+        m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
+        # m.plot()
+        m.save_elevation_data(elevation_data_output_fp)
+        m.save_plot_image(plot_image_output_fp)
+    else:
+        # m.plot()
+        # m.plot_gradient()
+        m.plot_flow_amounts()
+        m.plot_rivers()
