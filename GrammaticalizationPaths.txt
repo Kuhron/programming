@@ -1,0 +1,396 @@
+ability	permissive
+ability	possibility
+ablative	agent
+ablative	comparative
+ablative	material
+ablative	partitive
+ablative	past, near
+ablative	a-possessive
+ablative	since (temporal)
+all	plural
+all	superlative
+allative	complementizer
+allative	dative
+allative	infinitive
+allative	patient
+allative	purpose
+allative	temporal
+allative	until (temporal)
+alone	only
+also	np-and
+vp-and	subordinator
+anticausative	passive
+area	locative
+arrive	ability
+arrive	allative
+arrive	succeed
+arrive	until (temporal)
+back	after
+back	behind
+back	cause
+back	earlier
+back	then
+back	up (spatial)
+bad	intensifier
+beat	pro-verb
+begin	first (numeral)
+begin	first (temporal)
+begin	inceptive
+behind (spatial)	after
+belly	in (spatial)
+belly	in (temporal)
+benefactive	dative
+benefactive	a-possessive
+benefactive	purpose
+body	intensive-refl
+body	middle
+body	reciprocal
+body	reflexive
+bottom	down (spatial)
+boundary	until
+bowels	in (spatial)
+branch	classifier
+breast	front
+buttocks	behind
+buttocks	down
+center	between
+center	in (spatial)
+change-of-state	copula
+change-of-state	future
+child	classifier
+child	diminutive
+child	partitive
+children	plural
+circle	around (spatial)
+come	consecutive
+come	continuous
+come	hortative
+come	venitive
+come from	ablative (locative, temporal)
+come from	near past
+come to	benefactive
+come to	change-of-state
+come to	future
+come to	proximative
+come to	purpose
+comitative	agent
+comitative	np-and
+comitative	s-and
+comitative	continuous
+comitative	exist
+comitative	instrument
+comitative	manner
+comitative	passive
+comitative	h-possessive
+comitative	temporal
+comparative (+ negation)	no longer
+complementizer	purpose
+comrade	comitative
+comrade	reciprocal
+conditional	concessive
+continuous	habitual
+continuous	present
+copula	avertive
+copula	conditional
+copula	consecutive
+copula	focus
+copula	future
+copula	obligation
+copula, locative	continuous
+copula, locative	copula, equative
+copula, locative	exist
+copula, locative	locative
+copula, locative	h-possessive
+cross	across
+dative	comparative
+dative	patient
+dative	a-possessive
+dative	b-possessive
+dative	h-possessive
+definite	superlative
+demonstrative	complementizer
+demonstrative	conjunction
+demonstrative	copula
+demonstrative	definite
+demonstrative	focus
+demonstrative	pers-pron, third
+demonstrative	relative
+demonstrative	subordinator
+deontic modality	epistemic modality
+deontic modality	future
+descend	down
+do	causative
+do	continuous
+do	emphasis
+do	obligation
+do	pro-verb
+dual	np-and
+ear	locative
+earth	down
+eat	passive
+edge	locative
+environs	around (spatial)
+exceed	comparative
+exceed	elative
+exist	continuous
+exist	h-possessive
+eye	before
+eye	front
+face	front
+face	up
+fail	avertive
+fall	down
+fall	passive
+father	male
+field	out
+finish	after
+finish	already
+finish	completive
+finish	consecutive
+finish	perfective
+first (temporal)	before
+flank	side (spatial)
+follow	according to
+follow	behind
+follow	comitative
+foot	down
+footprint	behind
+forehead	front
+front	before
+front	later
+future	epistemic modality
+get	ability
+get	change-of-state
+get	obligation
+get	passive
+get	past
+get	permissive
+get	h-possessive
+get	possibility
+get	succeed
+give	benefactive
+give	causative
+give	concern
+give	dative
+give	purpose
+go	andative
+go	change-of-state
+go	consecutive
+go	continuous
+go	distal demonstrative
+go	habitual
+go	hortative
+go to	allative
+go to	future
+go to	purpose
+hand	agent
+hand	five
+hand	locative
+hand	h-possessive
+head	front
+head	intensive-refl
+head	middle
+head	reflexive
+head	up
+heart	in (spatial)
+here	cause
+here	demonstrative
+here	pers-pron
+here	relative
+home	locative
+home	a-possessive
+hour	temporal
+house	locative
+how? (w-question)	comparative
+how? (w-question)	simile
+in (spatial)	continuous
+in (spatial)	temporal
+indefinite	common
+instrument	ergative
+instrument	manner
+intensive-refl	even
+intensive-refl	reflexive
+interior	in (spatial)
+interior	temporal
+iterative	habitual
+iterative	still
+keep	continuous
+keep	h-possessive
+know	ability
+know	habitual
+lack	negation
+leave	ablative
+leave	completive
+leave	egressive
+leave	hortative
+leave	negation
+leave	permissive
+lie	continuous
+limit	until
+lip	locative
+live	continuous
+live	habitual
+live	locative copula
+live	exist
+liver	locative
+locative	agent
+locative	cause
+locative	comparative
+locative	concern
+locative	continuous
+locative	exist
+locative	pers-pron
+locative	a-possessive
+locative	h-possessive
+locative	subordinator
+locative	temporal
+love	avertive
+love	future
+love	intention
+love	proximative
+man	classifier
+man	exclamation
+man	indefinite pronoun
+man	male
+man	third pers-pron
+manner	simile
+matter	cause
+matter	complementizer
+matter	purpose
+mirative	evidential, inferential
+mother	female
+mouth	front
+near	after
+near	avertive, proximative
+neck	locative
+need	obligation
+negation	s-question
+negation, exist	no, negation
+now (temporal)	still
+obligation	future
+obligation	probability
+one	alone
+one	indefinite
+one	indefinite pronoun
+one	only
+one	other
+one	same
+one	singulative
+one	some
+one	together
+or	s-question
+owe	obligation
+owner	intensive-refl
+pass	after
+pass	comparative
+pass	past
+pass	path
+people	plural
+perfect	past
+perfect	perfective
+person	indefinite pronoun
+person	pers-pron, first plural
+pers-pron, plural	singular (honorific)
+pers-pron, third	agreement
+pers-pron, third	copula
+pers-pron, third plural	impersonal
+pers-pron, third plural	passive
+pers-pron, third plural	plural
+piece	classifier
+place	cause
+place	instead
+place	locative
+a-possessive	partitive
+h-possessive	exist
+h-possessive	future
+h-possessive	obligation
+h-possessive	perfect
+property	a-possessive
+purpose	cause
+purpose	infinitive
+put	completive
+s-question	conditional
+w-question	complementizer
+w-question	indefinite pronoun
+w-question	relative
+reflexive	anticausative
+reflexive	middle
+reflexive	passive
+reflexive	reciprocal
+relative	complementizer
+remain	durative
+remain	habitual
+resemble	comparative
+resemble	complementizer
+resemble	simile
+return	iterative
+same	intensive-refl
+say	cause
+say	complementizer
+say	conditional
+say	evidential
+say	purpose
+say	quotative
+say	simile
+say	subordinator
+see	allative
+see	passive
+shoulder	up
+side	beside
+side	locative
+side	near
+simile	complementizer
+simile	quotative
+since (temporal)	cause
+sit	continuous
+sit	copula
+sit	habitual
+sky	up
+song	classifier
+stand	continuous
+stand	copula
+stop	prohibitive
+suffer	passive
+suitable	ability
+suitable	obligation
+surround	around (spatial)
+take	causative
+take	comitative
+take	completive
+take	future
+take	instrument
+take	patient
+take	h-possessive
+temporal	adversative
+temporal	cause
+temporal	concessive
+temporal	conditional
+then	future
+there	demonstrative
+thing	complementizer
+thing	indefinite pronoun
+thing	a-possessive
+three	trial, plural
+throw	perfect
+time	temporal
+tomorrow	future
+tomorrow	next
+top	up
+trace	after
+trace	behind
+tree	classifier
+true	intensifier
+two	dual
+two	np-and
+until	equative comparative
+up	additive
+up	comparative
+up	concern
+use	habitual
+venitive	future
+want (past)	avertive
+want (past)	future
+want (past)	proximative
+woman	classifier
+woman	female
+yesterday	past
