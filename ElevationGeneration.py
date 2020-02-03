@@ -107,28 +107,12 @@ class Map:
         else:
             self.array = array
         self.condition_array = make_blank_condition_array((x_size, y_size))
-        #self.filled_positions = set()
-        #self.unfilled_neighbors = set()
-        #self.unfilled_inaccessible = set()
-        #self.initialize_unfilled_inaccessible()
         self.frozen_points = set()
         self.neighbors_memoized = {}
         self.memoize_all_neighbors()
-        # self.untouched_points = self.get_all_points()
-
-    #def initialize_unfilled_inaccessible(self):
-    #    for x in range(self.x_size):
-    #        for y in range(self.y_size):
-    #            self.unfilled_inaccessible.add((x, y))
 
     def get_all_points(self):
         return {(x, y) for x in range(self.x_size) for y in range(self.y_size)}
-
-    # def touch(self, x, y):
-    #     self.untouched_points -= {(x, y)}
-
-    # def untouch_all_unfrozen_points(self):
-    #     self.untouched_points = self.get_all_points() - self.frozen_points
 
     def is_corner_pixel(self, x, y):
         return x in [0, self.x_size-1] and y in [0, self.y_size-1]
@@ -216,23 +200,6 @@ class Map:
     def fill_position(self, x, y, value):
         assert (x, y) not in self.frozen_points, "can't change frozen point {}".format((x, y))
         self.array[x, y] = value
-        # self.touch(x, y)
-
-        # old way
-        # raise Exception("do not use")
-        # assert (x, y) not in self.filled_positions
-        # assert self.filled_positions & self.unfilled_neighbors == set()
-        # assert self.filled_positions & self.unfilled_inaccessible == set()
-        # assert self.unfilled_neighbors & self.unfilled_inaccessible == set()
-        # self.array[x, y] = value
-        # self.filled_positions.add((x, y))
-        # self.unfilled_neighbors -= {(x, y)}
-        # self.unfilled_inaccessible -= {(x, y)}
-        # for neighbor_coords in self.get_neighbors(x, y):
-        #     if neighbor_coords in self.unfilled_inaccessible:
-        #         assert neighbor_coords not in self.unfilled_neighbors
-        #         self.unfilled_neighbors.add(neighbor_coords)
-        #         self.unfilled_inaccessible -= {neighbor_coords}
 
     def fill_point_set(self, point_set, value):
         for p in point_set:
@@ -346,27 +313,6 @@ class Map:
         circle = self.get_circle_around_point(center[0], center[1], radius, barrier_points=points_to_avoid)
         return circle
 
-        # this way looks better but is slow
-        # raise   
-        # points = {center}
-        # for step in range(size-1):
-        #     if len(neighbors) == 0:
-        #         break
-        #     if prioritize_internal_unfilled:
-        #         n_filled_neighbors_of_neighbors = [sum(n2 in points for n2 in self.get_neighbors(*n)) for n in neighbors]
-        #         weights = [x/sum(n_filled_neighbors_of_neighbors) for x in n_filled_neighbors_of_neighbors]
-        #         chosen_index = np.random.choice(list(range(len(neighbors))), p=weights)
-        #         current_point = neighbors[chosen_index]
-        #     else:
-        #         current_point = random.choice(neighbors)
-        #     assert current_point not in points, "duplicating point in contiguous region selection"
-        #     points.add(current_point)
-        #     neighbors.remove(current_point)
-        #     new_neighbors = self.get_neighbors(*current_point) - points - points_to_avoid
-        #     neighbors = list(set(neighbors) | set(new_neighbors))
-        # # assert len(points) == size, "planned output size {}, got {}".format(size, len(points))
-        # return points
-
     def get_circle_around_point(self, x, y, radius, barrier_points=None):  # flagged as slow, look for existing algorithms
         # print("\ncenter {}\nbarrier points\n{}".format((x, y), sorted(barrier_points)))
         # input("please debug")
@@ -439,29 +385,6 @@ class Map:
         # res = self.apply_barrier(res, barrier_points, x, y)
         # print(" after barrier len = {}".format(len(res)))
         return res
-
-    # def apply_barrier(self, point_set, barrier_points, center_x, center_y):
-    #     # very slow!!
-    #     # start from center and emanate outward until can't anymore
-    #     # don't want it to jump past diagonal borders, so do horizontal/vertical neighbors only for this emanation
-    #     points = {(center_x, center_y)}
-    #     previous_points = {(center_x, center_y)}
-    #     while True:
-    #         # print("prev", sorted(previous_points))
-    #         # input("a")
-    #         horizvert_neighbors = set()
-    #         for p in previous_points:
-    #             ns = {n for n in self.get_neighbors(p[0], p[1], mode=4) if n in point_set and n not in barrier_points | points}
-    #             horizvert_neighbors |= ns
-    #         # print("hvn", sorted(horizvert_neighbors))
-    #         # input("a")
-    #         if len(horizvert_neighbors) == 0:
-    #             break
-    #         points |= horizvert_neighbors
-    #         # print("{} pts".format(len(points)))
-    #         # input("a")
-    #         previous_points = horizvert_neighbors
-    #     return points
 
     def get_distances_from_edge(self, point_set, use_scipy_method=True):
         if use_scipy_method:
@@ -614,9 +537,6 @@ class Map:
         y = random.randrange(border_width, self.y_size - border_width)
         return (x, y)
 
-    # def get_random_untouched_point(self):
-    #     return random.choice(list(self.untouched_points))
-
     def get_random_zero_loop(self):
         x0_0, y0_0 = self.get_random_point(border_width=2)
         dx = 0
@@ -636,62 +556,6 @@ class Map:
         res = path_0 | path_1
         # print(res)
         return res
-
-
-        raise Exception("go no further")
-        # old way
-        # trajectory_0 = [source_0]
-        # trajectory_1 = [source_1]
-        # display_arr = make_none_array((self.x_size, self.y_size))  # for debugging
-        # display_arr = display_arr.astype(str)
-        # display_arr[x, y] = "S"
-        # LEFT = 0
-        # RIGHT = -1
-        # 
-        # while True:
-        #     # two starting points, each has two paths coming away from it
-        #     # the paths from the same starting point are not allowed to intersect each other or themselves
-        #     # when paths from different sources meet, cut off the paths and take the trajectories up to that point
-        #     neighbors_0_left  = self.get_neighbors(*trajectory_0[0])
-        #     neighbors_0_right = self.get_neighbors(*trajectory_0[-1])
-        #     neighbors_1_left  = self.get_neighbors(*trajectory_1[0])
-        #     neighbors_1_right = self.get_neighbors(*trajectory_1[-1])
-        #     coords_0_left  = random.choice([p for p in neighbors_0_left if p not in trajectory_0])
-        #     coords_0_right = random.choice([p for p in neighbors_0_right if p not in trajectory_0])
-        #     coords_1_left  = random.choice([p for p in neighbors_1_left if p not in trajectory_1])
-        #     coords_1_right = random.choice([p for p in neighbors_1_right if p not in trajectory_1])
-        # 
-        #     if coords_0_left in trajectory_1:
-        #         cut_point = coords_0_left
-        #         trajectory_0 = [coords_0_left] + trajectory_0
-        #         # display_arr[coords_0] = "0"
-        #         break
-        #     elif coords_1_left in trajectory_0:
-        #         cut_point = coords_1_left
-        #         trajectory_1 = [coords_1_left] + trajectory_1
-        #         # display_arr[coords_1] = "1"
-        #         break
-        # 
-        #     trajectory_0 = [coords_0_left] + trajectory_0 + [coords_0_right]
-        #     trajectory_1 = [coords_1_left] + trajectory_1 + [coords_1_right]
-        #     # display_arr[coords_0] = "0"
-        #     # display_arr[coords_1] = "1"
-        #     # print(display_arr)
-        #     # input("debug")
-        # 
-        # cut_index_0 = trajectory_0.index(cut_point)
-        # cut_index_1 = trajectory_1.index(cut_point)
-        # source_index_0 = trajectory_0.index(source_0)
-        # source_index_1 = trajectory_1.index(source_1)
-        # begin_0 = min(cut_index_0, source_index_0)
-        # end_0 = max(cut_index_0, source_index_0)
-        # begin_1 = min(cut_index_1, source_index_1)
-        # end_1 = max(cut_index_1, source_index_1)
-        # trajectory_0_cut = trajectory_0[begin_0 : end_0]
-        # trajectory_1_cut = trajectory_1[begin_1 : end_1]
-        # points = set(trajectory_0_cut) | set(trajectory_1_cut) | {cut_point}
-        # for p in points:
-        #     self.fill_position(p[0], p[1], 0)
 
     def add_random_zero_loop(self):
         points = self.get_random_zero_loop()
@@ -768,8 +632,7 @@ class Map:
         self.pre_plot()
         plt.savefig(output_fp)
 
-    def pre_plot(self, alpha=1):
-        # plt.imshow(self.array, interpolation="gaussian")  # History.py uses contourf rather than imshow
+    def pre_plot(self):
         min_elevation = self.array.min()
         max_elevation = self.array.max()
         n_sea_contours = 20
@@ -790,7 +653,7 @@ class Map:
         min_color_value = -1 * max_elevation
 
         # draw colored filled contours
-        plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value, alpha=alpha)
+        plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
         try:
             plt.colorbar()
         except IndexError:
@@ -819,11 +682,13 @@ class Map:
     def create_rainfall_array(self):
         if hasattr(self, "rainfall_array") and self.rainfall_array is not None:
             return
-        self.rainfall_array = np.random.uniform(-100, 100, size=self.array.shape)
-        # negative values correspond to more evaporation than rain
+        self.rainfall_array = np.random.uniform(0, 1, size=self.array.shape)
+        water_points = self.array < 0  # is_land changes means this changes
+        self.rainfall_array[water_points] = 0
+        # could have negative values correspond to more evaporation than rain
         # treat units as height units per tick of time, for flow simulation
 
-    def create_flow_array(self):
+    def create_flow_arrays(self):
         # div(water_flow) is zero everywhere, whether it leaves by flowing or evaporating or whatever
         # so water flow array should tell what the volumetric flow *through* the point is
         self.create_rainfall_array()
@@ -841,23 +706,25 @@ class Map:
         gx, gy = np.gradient(-1*self.array)
         downhill_neighbor_offset = {
             -180: (-1, 0),
-            -135: (-1, -1),
+            # -135: (-1, -1),
             -90:  (0, -1),
-            -45:  (1, -1),
+            # -45:  (1, -1),
             0:    (1, 0),
-            45:   (1, 1),
+            # 45:   (1, 1),
             90:   (0, 1),
-            135:  (-1, 1),
+            # 135:  (-1, 1),
             180:  (-1, 0),
         }
+        # 8 neighbors allows rivers to cross each other diagonally, so use 4
         for el, x, y in points_sorted_by_decreasing_elevation:
             dx = gx[x, y]
             dy = gy[x, y]
             grad_angle = np.angle(dx + 1j*dy, deg=True)
             # print("dx {} dy {} angle {} deg".format(dx, dy, grad_angle))
-            rounded_to_45_deg = int(45*round(grad_angle/45))
+            # rounded_to_45_deg = int(45*round(grad_angle/45))
+            rounded_to_90_deg = int(90*round(grad_angle/90))
             # input("rounded to {}".format(rounded_to_45_deg))
-            downhill_x_offset, downhill_y_offset = downhill_neighbor_offset[rounded_to_45_deg]
+            downhill_x_offset, downhill_y_offset = downhill_neighbor_offset[rounded_to_90_deg]
             downhill_neighbor = (x + downhill_x_offset, y + downhill_y_offset)
             nx, ny = downhill_neighbor
             flow_array[x, y] += self.rainfall_array[x, y]
@@ -894,13 +761,136 @@ class Map:
             for y in self.y_range:
                 flow_quantile_array[x, y] = get_nearest_quantile(flow_array[x, y])
         self.flow_quantile_array = flow_quantile_array
+
+        self.water_depth_array = np.zeros((self.x_size, self.y_size))
+        water_points = self.array < 0  # is_land change means this changes
+        self.water_depth_array[water_points] = -1*self.array[water_points]
         
     def is_land(self, x, y):
         # TODO: make it possible for land to be below sea level
         return self.array[x, y] >= 0
 
+    def apply_rainfall(self):
+        self.water_depth_array += self.rainfall_array
+        total_height_array = self.array + self.water_depth_array
+        depth_changes_array = np.zeros((self.x_size, self.y_size))
+        for x in self.x_range:
+            for y in self.y_range:
+                if not self.is_land(x, y):
+                    # don't transfer from sea to anywhere else
+                    continue
+                h_this_point = total_height_array[x, y]
+                ns = self.get_neighbors(x, y, mode=4)
+                neighbors_leq_total = [n for n in ns if total_height_array[n[0], n[1]] <= h_this_point]
+                if len(neighbors_leq_total) == 0:
+                    continue
+                n_heights = [total_height_array[n[0], n[1]] for n in neighbors_leq_total]
+                heights_and_neighbors_increasing = sorted(zip(n_heights, neighbors_leq_total))
+                # print("\n{} h={}\nneighbors sorted {}".format((x, y), h_this_point, heights_and_neighbors_increasing))
+                # now distribute the height difference to the neighbors such that:
+                # lowest heights first, add to all the heights currently ranked lowest until they tie with the next rank
+                # then add to all those equally, etc. until they are equal to the remaining height of this point
+                while True:
+                    lowest_h = heights_and_neighbors_increasing[0][0]
+                    lowest_to_this_point_dh = h_this_point - lowest_h
+                    current_water_depth_this_point = self.water_depth_array[x, y] + depth_changes_array[x, y]
+                    max_amount_can_transfer = current_water_depth_this_point  # times 1 for the area of the spot it is on
+                    max_amount_can_transfer /= 4  # viscosity?? will hopefully prevent checkerboard alternation
+                    next_h = None
+                    lowest_rank = [heights_and_neighbors_increasing[0]]
+                    for nh, n in heights_and_neighbors_increasing[1:]:
+                        if nh > lowest_h:
+                            next_h = nh
+                            break  # for
+                        lowest_rank.append((nh, n))
+                    if next_h is None:
+                        # everything in neighbors was same height
+                        next_h = h_this_point
+
+                    # all points that are tied for lowest height will get an equal share of the flow
+                    n_receivers = len(lowest_rank)
+                    # first, get how much would be transferred to them to equalize with this point
+                    average_h = 1/(n_receivers+1) * (n_receivers*lowest_h + 1*h_this_point)
+                    lowest_to_average_dh = average_h - lowest_h
+                    # but if this is more than they would take to go to the next highest neighbor,
+                    # then they will equilibrate with it so we loop again
+                    lowest_to_next_dh = next_h - lowest_h
+                    dh_to_implement = min(lowest_to_average_dh, lowest_to_next_dh)
+                    assert dh_to_implement >= 0
+
+                    amount_to_transfer = dh_to_implement * n_receivers
+                    if amount_to_transfer > max_amount_can_transfer:
+                        amount_to_transfer = max_amount_can_transfer
+                        will_break = True
+                    else:
+                        will_break = False
+
+                    amount_to_transfer_to_each = amount_to_transfer / n_receivers
+                    # print("lowest_rank {} with {} receivers".format(lowest_rank, n_receivers))
+                    
+                    if amount_to_transfer == 0:
+                        break
+                    for i in range(n_receivers):
+                        n = lowest_rank[i][1]
+                        if not self.is_land(*n):
+                            # sea will pull higher water level toward it, but then acts like an infinite sink, sea level will not rise
+                            continue
+                        depth_changes_array[n[0], n[1]] += amount_to_transfer_to_each
+                        heights_and_neighbors_increasing[i] = (
+                            heights_and_neighbors_increasing[i][0] + amount_to_transfer_to_each,
+                            heights_and_neighbors_increasing[i][1]
+                        )
+                    depth_changes_array[x, y] -= amount_to_transfer  # total transferred
+                    resulting_depth = self.water_depth_array[x, y] + depth_changes_array[x, y]
+                    # print("depth change at {} -= {} --> {}\nwill give depth {}".format((x, y), amount_to_transfer, depth_changes_array[x, y], resulting_depth))
+                    if resulting_depth < 0:
+                        if abs(resulting_depth) > 1e-6:
+                            print("uh oh, negative depth created")
+                            input("check")
+                    if will_break:
+                        break  # while
+                # next point, don't apply depth changes until very end so you do all points at once based on what they wanted to do at this time
+        # print("\ngot depth changes array with sum {}, max abs {}:\n{}".format(depth_changes_array.sum(), abs(depth_changes_array).max(), depth_changes_array))
+        self.water_depth_array += depth_changes_array
+        # print("resulting water depth array:\n{}".format(self.water_depth_array))
+        # input("check")
+        assert self.water_depth_array.min() >= -1e-6, "no negative water depth allowed"
+
+    def get_average_water_depth(self, initial_steps, averaging_steps):
+        for i in range(initial_steps):
+            print("initialization step", i)
+            # don't average over these, let it try to reach a stable state
+            self.apply_rainfall()
+        sum_water_depth_array = np.zeros((self.x_size, self.y_size))
+        for i in range(averaging_steps):
+            print("averaging step", i)
+            self.apply_rainfall()
+            sum_water_depth_array += self.water_depth_array
+        return sum_water_depth_array / averaging_steps
+
+    def plot_flow_steps(self, n_steps):
+        plt.ion()
+        for _ in range(n_steps):
+            self.apply_rainfall()
+            plt.gcf().clear()
+            plt.imshow(self.array + self.water_depth_array)
+            plt.colorbar()
+            plt.draw()
+            plt.pause(0.001)
+
+    def plot_average_water_location(self):
+        average_water_depth_array = self.get_average_water_depth(100, 100)
+        average_water_depth_array[self.array < 0] = 0  # is_land changes means this changes
+        average_height_array = self.array + average_water_depth_array
+        plt.subplot(1, 2, 1)
+        plt.imshow(average_water_depth_array)
+        plt.subplot(1, 2, 2)
+        plt.imshow(average_height_array)
+        plt.colorbar()
+        plt.show()
+
     def plot_flow_amounts(self):
-        self.create_flow_array()
+        self.create_flow_arrays()
         # arr = self.flow_array  # max is too high for linear cmap
         arr = self.flow_quantile_array
         plt.imshow(arr, cmap=plt.cm.inferno)
@@ -909,7 +899,7 @@ class Map:
 
     def plot_rivers(self):
         self.pre_plot(alpha=1)
-        self.create_flow_array()
+        self.create_flow_arrays()
         print("flow stats: min {} median {} mean {} max {}".format(
             np.min(self.flow_array),
             np.median(self.flow_array),
@@ -958,26 +948,7 @@ class Map:
         lc = mcollections.LineCollection(line_segments, colors=colors)
         plt.gca().add_collection(lc)
         plt.gca().autoscale()
-        # n_segments = len(line_segments)
-        # i = 0
-        # for seg, color in zip(line_segments, colors):
-        #     if i % 100 == 1:
-        #         print(i, n_segments)
-        #     i += 1
-        #     p0, p1 = seg
-        #     plt.plot(p0, p1, c=color)
         plt.show()
-
-        # https://stackoverflow.com/questions/16529892/adding-water-flow-arrows-to-matplotlib-contour-plot
-        # self.pre_plot()
-        # xi, yi = np.meshgrid(self.x_range, self.y_range)
-        # zi = self.array
-        # dy, dx = np.gradient(-zi.T)
-        # print(xi.shape, yi.shape, dx.shape, dy.shape, zi.shape)
-        # plt.streamplot(self.x_range, self.y_range, dx, dy, color='0.8', density=2)
-        # contours = plt.contour(xi, yi, zi, linewidths=2)
-        # plt.clabel(contours)
-        # plt.show()
 
     @staticmethod
     def from_image(image_fp, color_condition_dict, default_color):
@@ -1088,14 +1059,9 @@ def confirm_overwrite_file(output_fp):
             return False
     return True
 
-def defect():
-    # sea becomes land or vice versa
-    return random.random() < 0.05
-
 
 
 if __name__ == "__main__":
-    # show_elevation_change_functions()
     from_image = False
     from_data = True
     image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
@@ -1108,10 +1074,11 @@ if __name__ == "__main__":
         # image_fp_no_dir = "TestMap_Amphoto.png"
         # image_fp_no_dir = "TestMap_Mako.png"
         # image_fp_no_dir = "TestMap_Myst.png"
-        image_fp_no_dir = "TestMap_Ilausa.png"
+        # image_fp_no_dir = "TestMap_Ilausa.png"
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
         # image_fp_no_dir = "TestMap_CircleIsland.png"
+        image_fp_no_dir = "TestMap_CircleIsland50x50.png"
         image_fp = image_dir + image_fp_no_dir
 
         elevation_data_output_fp = image_dir + "ElevationGenerationOutputData_" + image_fp_no_dir.replace(".png", ".txt")
@@ -1129,14 +1096,16 @@ if __name__ == "__main__":
         m.freeze_coastlines()
         generate_elevation_changes = True
     elif from_data:
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
+        data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland50x50.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Mako.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Amphoto.txt"
-        data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Jhorju.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Jhorju.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_NorthernMystIslands.txt"
+        # data_fp_no_dir = "TestElevationData10x10.txt"
         data_fp = image_dir + data_fp_no_dir
         m = Map.load_elevation_data(data_fp)
         generate_elevation_changes = False
@@ -1164,5 +1133,8 @@ if __name__ == "__main__":
     else:
         # m.plot()
         # m.plot_gradient()
-        m.plot_flow_amounts()
-        m.plot_rivers()
+        m.create_flow_arrays()
+        # m.plot_flow_amounts()
+        # m.plot_rivers()
+        # m.plot_flow_steps(10000)
+        m.plot_average_water_location()
