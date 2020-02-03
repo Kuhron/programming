@@ -3,6 +3,8 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import collections  as mc
+from mpl_toolkits.mplot3d import Axes3D
+
 
 # generate random grains of sand with nega moment vectors
 # see what kinds of configurations will result in strong fields
@@ -320,15 +322,75 @@ def test_math():
     #     ms.append(prod.magnitude)
     # plt.plot(ns, ms)
     # plt.show()
-    
-
     return True
-    
+
+
+def plot_motions():
+    # types = ["experiment"]
+    types = ["positic", "negatic"]
+    n_repetitions = 1
+    ts = np.arange(0, 2*np.pi * n_repetitions, 0.01)
+    thetas = np.linspace(-np.pi, np.pi, 48)
+    scaled_sin = lambda k: lambda t: 1/k * np.sin(k * t)
+    for phonic_type in types:
+        # print(phonic_type)
+        if phonic_type == "positic":
+            z_of_t = scaled_sin(1)
+            r_of_t = scaled_sin(2)
+        elif phonic_type == "negatic":
+            z_of_t = scaled_sin(2)
+            r_of_t = scaled_sin(1)
+        elif phonic_type == "experiment":
+            z_of_t = lambda t: np.sin(t)
+            r_of_t = lambda t: np.sin(t) ** 2
+        else:
+            raise KeyError
+
+        # show path cross section without theta variation
+        plt.figure()
+        xs = r_of_t(ts)
+        ys = z_of_t(ts)
+        plt.plot(xs, ys)
+        plt.xlim(-1.25, 1.25)
+        plt.ylim(-1.25, 1.25)
+        plt.title("path of {}".format(phonic_type))
+        plt.show()
+
+        plt.ion()
+        fig = plt.figure()
+        ax = plt.gcf().add_subplot(111, projection="3d")
+       
+        for t in ts:
+            # print("t = {}".format(t))
+            R = r_of_t(t)
+            Z_pos = z_of_t(t)
+            X = R * np.cos(thetas)
+            Y = R * np.sin(thetas)
+            Z_neg = -1 * Z_pos  # mirror over xy-plane, only abs(phi) matters for the function, so there will be two circles unless phi=0
+            ax.clear()
+            for Z in [Z_pos, Z_neg]:
+                # ax.plot_surface(
+                #     X, Y, Z, cmap=plt.get_cmap('jet'),
+                #     linewidth=0, antialiased=False, alpha=0.5)
+                ax.plot(X, Y, Z)
+
+            ax.set_xlim3d(-1.25, 1.25)
+            ax.set_ylim3d(-1.25, 1.25)
+            ax.set_zlim3d(-1.25, 1.25)
+            plt.draw()
+            # else:
+            #     surface.set_data(X, Y, Z)
+            #     fig.canvas.draw()
+            #     fig.canvas.flush_events()
+            plt.pause(0.0001)
+
+   
 
 if __name__ == "__main__":
     # test_math()
-    test_magnitude_addition_function()
+    # test_magnitude_addition_function()
     # grains = get_grains(100)
     # reference_point = (0, 0, 0)
     # field = get_field_at_reference_point(grains, reference_point)
     # print("field at origin is {} with magnitude {}".format(field.vector, field.magnitude))
+    plot_motions()
