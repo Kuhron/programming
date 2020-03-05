@@ -664,20 +664,48 @@ class Map:
         plt.contour(self.array, levels=[min_elevation, 0, max_elevation], colors="k")
 
         plt.gca().invert_yaxis()
+        plt.axis("scaled")  # maintain aspect ratio
+        plt.title("elevation")
         # max_grad, pair = self.get_max_gradient()
         # p, q = pair
         # print("max gradient is {} from {} to {}".format(max_grad, p, q))
 
     def plot_gradient(self):
+        ax1 = plt.subplot(1, 2, 1)
+        self.create_gradient_direction_plot()
+        plt.subplot(1, 2, 2, sharex=ax1, sharey=ax1)
+        self.create_gradient_magnitude_plot()
+        plt.show()
+
+    def plot_gradient_magnitude(self):
+        self.create_gradient_magnitude_plot()
+        plt.show()
+
+    def plot_map_and_gradient_magnitude(self):
+        ax1 = plt.subplot(1, 2, 1)
+        self.pre_plot()
+        plt.subplot(1, 2, 2, sharex=ax1, sharey=ax1)
+        self.create_gradient_magnitude_plot()
+        plt.show()
+
+    def create_gradient_direction_plot(self):
+        plt.title("gradient direction")
         varray = self.array
         vgrad = np.gradient(varray)
-        grad_mag = np.sqrt(vgrad[0]**2 + vgrad[1]**2)
         grad_angle = np.angle(vgrad[0] + 1j*vgrad[1])
         angle_colormap = plt.cm.hsv  # something cyclic
         angle_color = angle_colormap(grad_angle)
         plt.imshow(grad_angle, cmap=angle_colormap, vmin=-np.pi, vmax=np.pi)
         plt.colorbar()
-        plt.show()
+
+    def create_gradient_magnitude_plot(self):
+        plt.title("gradient magnitude")
+        varray = self.array
+        vgrad = np.gradient(varray)
+        grad_mag = np.sqrt(vgrad[0]**2 + vgrad[1]**2)
+        mag_colormap = plt.cm.gist_rainbow  # most gradients are near zero, want even slightly higher ones to stand out
+        plt.imshow(grad_mag, cmap=mag_colormap)
+        plt.colorbar()
 
     def create_rainfall_array(self):
         if hasattr(self, "rainfall_array") and self.rainfall_array is not None:
@@ -1062,12 +1090,12 @@ def confirm_overwrite_file(output_fp):
 
 
 if __name__ == "__main__":
-    from_image = False
-    from_data = True
+    from_image = True
+    from_data = False
     image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
+        image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
         # image_fp_no_dir = "TestMap_Jhorju.png"
@@ -1078,8 +1106,10 @@ if __name__ == "__main__":
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
         # image_fp_no_dir = "TestMap_CircleIsland.png"
-        image_fp_no_dir = "TestMap_CircleIsland50x50.png"
+        # image_fp_no_dir = "TestMap_CircleIsland50x50.png"
         image_fp = image_dir + image_fp_no_dir
+
+        print("from image {}".format(image_fp))
 
         elevation_data_output_fp = image_dir + "ElevationGenerationOutputData_" + image_fp_no_dir.replace(".png", ".txt")
         plot_image_output_fp = image_dir + "ElevationGenerationOutputPlot_" + image_fp_no_dir
@@ -1096,9 +1126,9 @@ if __name__ == "__main__":
         m.freeze_coastlines()
         generate_elevation_changes = True
     elif from_data:
-        data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland50x50.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
+        data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Mako.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Amphoto.txt"
@@ -1107,6 +1137,7 @@ if __name__ == "__main__":
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_NorthernMystIslands.txt"
         # data_fp_no_dir = "TestElevationData10x10.txt"
         data_fp = image_dir + data_fp_no_dir
+        print("from data {}".format(data_fp))
         m = Map.load_elevation_data(data_fp)
         generate_elevation_changes = False
     else:
@@ -1132,9 +1163,9 @@ if __name__ == "__main__":
         m.save_plot_image(plot_image_output_fp)
     else:
         # m.plot()
-        # m.plot_gradient()
-        m.create_flow_arrays()
+        m.plot_map_and_gradient_magnitude()
+        # m.create_flow_arrays()
         # m.plot_flow_amounts()
         # m.plot_rivers()
         # m.plot_flow_steps(10000)
-        m.plot_average_water_location()
+        # m.plot_average_water_location()
