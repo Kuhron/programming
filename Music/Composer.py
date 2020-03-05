@@ -204,5 +204,5 @@ else:
 	]
 
 
-with open("Music\Composition.mid", "wb") as f:
+with open("Composition.mid", "wb") as f:
 	f.write(midi.score2midi(my_score))

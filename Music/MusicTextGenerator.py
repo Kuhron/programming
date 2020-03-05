@@ -6,7 +6,7 @@ import Music.WavUtil as wav
 
 
 def get_note():
-    a = random.choice(structure.PITCH_CLASSES)
+    a = random.choice(list(structure.PITCH_CLASS_TO_NUMBER.keys()))
     if random.random() < 0.3:
         a += random.choice("+-")
     return a
@@ -49,10 +49,11 @@ def get_text():
 
 if __name__ == "__main__":
     text = get_text()
-    with open("Music\\MusicOutput.txt", "w") as f:
+    with open("MusicTextGenerator_Output.txt", "w") as f:
         f.write(text)
-    res = parser.parse_text(text)
+    tempo = 120
+    res = parser.parse_text(text, tempo)
     # print(res)
     signal = wav.get_signal_from_notes(res)
     # wav.send_signal_to_audio_out(signal)
-    wav.write_signal_to_wav(signal, "Music\\MusicOutput.wav")
+    wav.write_signal_to_wav(signal, "MusicTextGenerator_Output.wav")

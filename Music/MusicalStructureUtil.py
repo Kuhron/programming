@@ -265,7 +265,7 @@ def get_pitch_number_from_note_name(s):
     if s is None:
         return None
 
-    if any([i not in "AMBCKDHEFXGL#b0123456789" for i in s]) or len(s) > 3:
+    if any([i not in "AMRBCKDHEFXGLJ#b0123456789" for i in s]) or len(s) > 3:
         raise ValueError("Invalid note name {0}".format(s))
 
     n = s[:1]

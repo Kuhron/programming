@@ -225,14 +225,14 @@ def parse_file(filepath, tempo):
 
 
 if __name__ == "__main__":
-    res = parse_file("Music\\MusicParserTestInput.txt", TEMPO)
-    # res = parse_file("Music\\MusicParserTestInputAdvanced.txt", TEMPO)
-    # res = parse_file("Music\\MusicOutput.txt", TEMPO)
+    res = parse_file("MusicParserTestInput.txt", TEMPO)
+    # res = parse_file("MusicParserTestInputAdvanced.txt", TEMPO)
+    # res = parse_file("MusicTextGenerator_Output.txt", TEMPO)
     # print(res)
     signal = wav.get_signal_from_notes(res)
-    wav.send_signal_to_audio_out(signal)
-    # wav.write_signal_to_wav(signal, "Music\\MusicOutput.wav")
-    # midi_input, midi_output = mu.get_input_and_output_devices()
-    # mu.send_notes_to_midi_out(res, midi_output)
-    # midi_input.close()
-    # midi_output.close()
+    # wav.send_signal_to_audio_out(signal)
+    wav.write_signal_to_wav(signal, "MusicParser_Output.wav")
+    midi_input, midi_output = mu.get_input_and_output_devices()
+    mu.send_notes_to_midi_out(res, midi_output)
+    midi_input.close()
+    midi_output.close()
