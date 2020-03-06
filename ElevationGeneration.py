@@ -184,6 +184,9 @@ class Map:
     def unfreeze_point(self, x, y):
         self.frozen_points.remove((x, y))
 
+    def unfreeze_all(self):
+        self.frozen_points = set()
+
     def add_condition_at_position(self, x, y, func):
         assert callable(func)
         self.condition_array[x, y] = func
@@ -1090,12 +1093,14 @@ def confirm_overwrite_file(output_fp):
 
 
 if __name__ == "__main__":
-    from_image = True
-    from_data = False
+    from_image = False
+    from_data = True
+    generate_further_elevation_changes = False
     image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
+        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
+        image_fp_no_dir = "OligraZitomoDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
         # image_fp_no_dir = "TestMap_Jhorju.png"
@@ -1124,32 +1129,40 @@ if __name__ == "__main__":
         default_color = (0, 0, 0, 255)
         m = Map.from_image(image_fp, color_condition_dict, default_color)
         m.freeze_coastlines()
-        generate_elevation_changes = True
+        generate_initial_elevation_changes = True
     elif from_data:
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland50x50.txt"
-        data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final_FurtherChanges.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final.txt"
+        data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final_FurtherChanges.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Mako.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Amphoto.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Jhorju.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa_FurtherChanges.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa_FurtherChanges_Bay.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_NorthernMystIslands.txt"
         # data_fp_no_dir = "TestElevationData10x10.txt"
         data_fp = image_dir + data_fp_no_dir
         print("from data {}".format(data_fp))
         m = Map.load_elevation_data(data_fp)
-        generate_elevation_changes = False
+        generate_initial_elevation_changes = False
+        if generate_further_elevation_changes:
+            elevation_data_output_fp = data_fp.replace(".txt", "_FurtherChanges.txt")
+            plot_image_output_fp = data_fp.replace("OutputData", "OutputPlot").replace(".txt", "_FurtherChanges.png")
     else:
         m = Map(300, 500)
         m.fill_all(0)
         elevation_data_output_fp = "/home/wesley/programming/ElevationGenerationOutputData_Random.png"
         plot_image_output_fp = "/home/wesley/programming/ElevationGenerationOutputPlot_Random.png"
-        generate_elevation_changes = True
+        generate_initial_elevation_changes = True
         
     print("map size {} pixels".format(m.size()))
 
-    if generate_elevation_changes:
+    if generate_initial_elevation_changes:
         expected_change_size = 10000
         expected_touches_per_point = 200
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
@@ -1161,9 +1174,19 @@ if __name__ == "__main__":
         # m.plot()
         m.save_elevation_data(elevation_data_output_fp)
         m.save_plot_image(plot_image_output_fp)
+    elif generate_further_elevation_changes:
+        m.unfreeze_all()  # allow coastlines to change
+        expected_change_size = 10000
+        expected_touches_per_point = 5
+        n_steps = int(expected_touches_per_point / expected_change_size * m.size())
+        plot_every_n_steps = None
+        print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
+        m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
+        m.save_elevation_data(elevation_data_output_fp)
+        m.save_plot_image(plot_image_output_fp)
     else:
-        # m.plot()
-        m.plot_map_and_gradient_magnitude()
+        m.plot()
+        # m.plot_map_and_gradient_magnitude()
         # m.create_flow_arrays()
         # m.plot_flow_amounts()
         # m.plot_rivers()
