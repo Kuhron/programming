@@ -4,9 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.collections as mcollections
+from mpl_toolkits.basemap import Basemap
 from PIL import Image
 from scipy import ndimage
 from datetime import datetime, timedelta
+import MapCoordinateMath as mcm
 
 
 def make_nan_array(shape):
@@ -96,12 +98,16 @@ def get_land_and_sea_colormap():
 
 
 class Map:
-    def __init__(self, x_size, y_size, array=None):
+    def __init__(self, x_size, y_size, latlon00, latlon01, latlon10, latlon11, array=None):
         # really row size and column size, respectively
         self.x_size = x_size
         self.y_size = y_size
         self.x_range = np.arange(self.x_size)
         self.y_range = np.arange(self.y_size)
+        self.lat00, self.lon00 = latlon00
+        self.lat01, self.lon01 = latlon01
+        self.lat10, self.lon10 = latlon10
+        self.lat11, self.lon11 = latlon11
         if array is None:
             self.array = make_nan_array((x_size, y_size))
         else:
@@ -110,6 +116,17 @@ class Map:
         self.frozen_points = set()
         self.neighbors_memoized = {}
         self.memoize_all_neighbors()
+
+    def average_latlon(self):
+        half_x = self.x_size/2
+        half_y = self.y_size/2
+        return mcm.get_lat_lon_of_point_on_map(half_x, half_y, self.x_size, self.y_size,
+            self.lat00, self.lon00,
+            self.lat01, self.lon01,
+            self.lat10, self.lon10,
+            self.lat11, self.lon11,
+            deg=True
+        )
 
     def get_all_points(self):
         return {(x, y) for x in range(self.x_size) for y in range(self.y_size)}
@@ -620,9 +637,44 @@ class Map:
                 # input("debug")
             i += 1
 
-    def plot(self):
+    def get_xy_meshgrid(self):
+        return np.meshgrid(range(self.x_size), range(self.y_size))
+
+    def get_latlon_meshgrid(self):
+        lats_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
+        lons_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
+        n_ps = self.x_size * self.y_size
+        i = 0
+        for x in range(self.x_size):
+            for y in range(self.y_size):
+                if i % 1000 == 0:
+                    print("i = {}/{}".format(i, n_ps))
+                p_lat, p_lon = mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
+                    self.lat00, self.lon00,
+                    self.lat01, self.lon01,
+                    self.lat10, self.lon10,
+                    self.lat11, self.lon11,
+                    deg=True
+                )
+                lats_grid[x, y] = p_lat
+                lons_grid[x, y] = p_lon
+                i += 1
+
+        # x_grid, y_grid = self.get_xy_meshgrid()
+        # f = lambda x, y: mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
+        #             self.lat00, self.lon00,
+        #             self.lat01, self.lon01,
+        #             self.lat10, self.lon10,
+        #             self.lat11, self.lon11,
+        #             deg=True
+        #         )
+        # f = np.vectorize(f)
+        # lats_grid, lons_grid = f(x_grid, y_grid)
+        return lats_grid, lons_grid
+
+    def plot(self, projection=None):
         plt.gcf()
-        self.pre_plot()
+        self.pre_plot(projection=projection)
         plt.show()
 
     def draw(self):
@@ -635,7 +687,21 @@ class Map:
         self.pre_plot()
         plt.savefig(output_fp)
 
-    def pre_plot(self):
+    def pre_plot(self, projection=None):
+        if projection is None:
+            projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
+        average_lat, average_lon = self.average_latlon()
+        m = Basemap(projection=projection, lon_0=average_lon, lat_0=average_lat, resolution='l')
+        # m.drawcoastlines()  # Earth
+        # m.fillcontinents(color='coral',lake_color='aqua')  # Earth
+        # draw parallels and meridians.
+        m.drawparallels(np.arange(-90.,120.,30.))
+        m.drawmeridians(np.arange(0.,420.,60.))
+        # m.drawmapboundary(fill_color='aqua')
+        # plt.title("Full Disk Orthographic Projection")
+        # plt.show()
+        # ax = plt.subplot(projection=projection)
+
         min_elevation = self.array.min()
         max_elevation = self.array.max()
         n_sea_contours = 20
@@ -654,9 +720,13 @@ class Map:
         # care more about seeing detail in land contour; displaying deep sea doesn't matter much
         max_color_value = max_elevation
         min_color_value = -1 * max_elevation
+        X, Y = self.get_latlon_meshgrid()
+        print("X =", X)
+        print("Y =", Y)
+        X, Y = m(X, Y)  # https://stackoverflow.com/questions/48191593/
 
         # draw colored filled contours
-        plt.contourf(self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
+        m.contourf(X, Y, self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
         try:
             plt.colorbar()
         except IndexError:
@@ -664,7 +734,7 @@ class Map:
             pass
 
         # draw contour lines, maybe just one at sea level
-        plt.contour(self.array, levels=[min_elevation, 0, max_elevation], colors="k")
+        m.contour(X, Y, self.array, levels=[min_elevation, 0, max_elevation], colors="k")
 
         plt.gca().invert_yaxis()
         plt.axis("scaled")  # maintain aspect ratio
@@ -1013,13 +1083,13 @@ class Map:
         return m
 
     @staticmethod
-    def load_elevation_data(data_fp):
+    def load_elevation_data(data_fp, latlon00, latlon01, latlon10, latlon11):
         with open(data_fp) as f:
             lines = f.readlines()
         lines = [[float(x) for x in line.split(",")] for line in lines]
         array = np.array(lines)
         x_size, y_size = array.shape
-        return Map(x_size, y_size, array=array)
+        return Map(x_size, y_size, latlon00, latlon01, latlon10, latlon11, array=array)
 
     def freeze_coastlines(self):
         coastal_points = set()
@@ -1132,12 +1202,12 @@ if __name__ == "__main__":
         generate_initial_elevation_changes = True
     elif from_data:
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland50x50.txt"
+        data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland50x50.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final_FurtherChanges.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final.txt"
-        data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final_FurtherChanges.txt"
+        # data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final_FurtherChanges.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Mako.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Amphoto.txt"
         # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Jhorju.txt"
@@ -1148,7 +1218,8 @@ if __name__ == "__main__":
         # data_fp_no_dir = "TestElevationData10x10.txt"
         data_fp = image_dir + data_fp_no_dir
         print("from data {}".format(data_fp))
-        m = Map.load_elevation_data(data_fp)
+        latlon00, latlon01, latlon10, latlon11 = [(60, -60), (60, 60), (-60, -60), (-60, 60)]
+        m = Map.load_elevation_data(data_fp, latlon00, latlon01, latlon10, latlon11)
         generate_initial_elevation_changes = False
         if generate_further_elevation_changes:
             elevation_data_output_fp = data_fp.replace(".txt", "_FurtherChanges.txt")
@@ -1185,7 +1256,7 @@ if __name__ == "__main__":
         m.save_elevation_data(elevation_data_output_fp)
         m.save_plot_image(plot_image_output_fp)
     else:
-        m.plot()
+        m.plot(projection="ortho")
         # m.plot_map_and_gradient_magnitude()
         # m.create_flow_arrays()
         # m.plot_flow_amounts()
