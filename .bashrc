@@ -121,6 +121,9 @@ fi
 
 alias vbrc="vim ~/.bashrc"
 alias sbrc="source ~/.bashrc"
+function gbrc() { 
+  grep -i "$1" ~/.bashrc 
+}
 # alias python2="/usr/bin/python"
 alias python="/usr/bin/python3"
 # alias pip2="pip"
@@ -137,12 +140,14 @@ alias xo="xdg-open"
 alias ff="firefox"
 alias cr="chrome"
 alias lynx="lynx -accept_all_cookies"
-alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar"
-alias sublime="/opt/sublime_text/sublime_text"
+alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar &"
+alias sublime="/opt/sublime_text/sublime_text &"
 alias ipa="vim /usr/share/kmfl/IPA14.kmn"
-alias zotero="/usr/bin/zotero/zotero"
+alias zotero="/usr/bin/zotero/zotero &"
 alias nwc="timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"
 alias flex="/usr/bin/fieldworks-flex"
+alias antlr4='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
+alias grun='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
@@ -172,6 +177,7 @@ export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
 export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
 export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
 export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH
+export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
 
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
