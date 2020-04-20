@@ -1,213 +1,38 @@
-import random
-import time
 import numpy as np
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import matplotlib.collections as mcollections
-from mpl_toolkits.basemap import Basemap
-from mpl_toolkits.mplot3d import Axes3D
 from PIL import Image
-from scipy import ndimage
-from datetime import datetime, timedelta
-import MapCoordinateMath as mcm
+from ArrayUtil import make_blank_condition_array, make_nan_array
 
 
-def make_nan_array(shape):
-    a = np.empty(shape, dtype=float)
-    a[:] = np.nan
-    return a
-
-def make_blank_condition_array(shape):
-    a = np.empty(shape, dtype=object)
-    a[:] = lambda x: True
-    return a
-
-
-def elevation_change_parabolic(d, max_d, max_change):
-    b = max_d
-    h = max_change
-    return -h/(b**2) * (d**2) + 2*h/b * d
-
-def elevation_change_linear(d, max_d, max_change):
-    b = max_d
-    h = max_change
-    return h/b * d
-
-def elevation_change_semicircle(d, max_d, max_change):
-    b = max_d
-    h = max_change
-    return h/b * np.sqrt(2*b*d - d**2)
-
-def elevation_change_inverted_semicircle(d, max_d, max_change):
-    b = max_d
-    h = max_change
-    return h - h/b * np.sqrt(b**2 - d**2)
-
-def elevation_change_sinusoidal(d, max_d, max_change):
-    b = max_d
-    h = max_change
-    return h/2 * (1 + np.sin(np.pi/b * (d - b/2)))
-
-def elevation_change_constant(d, max_d, max_change):
-    return max_change
-
-ELEVATION_CHANGE_FUNCTIONS = [
-    elevation_change_linear,  # default to linear, should be fastest non-constant
-    # elevation_change_parabolic,
-    # elevation_change_semicircle,  # changes too fast near 0, makes very steep slopes too often
-    # elevation_change_inverted_semicircle,  # slow
-    # elevation_change_sinusoidal,  # slow
-    # elevation_change_constant,  # f(0) is not 0, makes cliffs
-]
-
-def show_elevation_change_functions():
-    xs = np.linspace(0, 1, 20)
-    max_x = 1
-    max_change = 1
-    for i, f in enumerate(ELEVATION_CHANGE_FUNCTIONS):
-        ys = [f(x, max_x, max_change) for x in xs]
-        plt.plot(xs, ys)
-        plt.title("function index {}".format(i))
-        plt.show()
-
-
-def get_land_and_sea_colormap():
-    # see PrettyPlot.py
-    linspace_cmap_forward = np.linspace(0, 1, 128)
-    linspace_cmap_backward = np.linspace(1, 0, 128)
-    blue_to_black = mcolors.LinearSegmentedColormap.from_list('BlBk', [
-        mcolors.CSS4_COLORS["blue"], 
-        mcolors.CSS4_COLORS["black"],
-    ])
-    land_colormap = mcolors.LinearSegmentedColormap.from_list('land', [
-        mcolors.CSS4_COLORS["darkgreen"],
-        mcolors.CSS4_COLORS["limegreen"],
-        mcolors.CSS4_COLORS["gold"],
-        mcolors.CSS4_COLORS["darkorange"],
-        mcolors.CSS4_COLORS["red"],
-        mcolors.CSS4_COLORS["saddlebrown"],
-        mcolors.CSS4_COLORS["gray"],
-        mcolors.CSS4_COLORS["white"],
-        # mcolors.CSS4_COLORS[""],
-    ])
-    # colors_land = plt.cm.YlOrBr(linspace_cmap_backward)  # example of how to call existing colormap object
-    colors_land = land_colormap(linspace_cmap_forward)
-    colors_sea = blue_to_black(linspace_cmap_backward)
-    colors = np.vstack((colors_sea, colors_land))
-    colormap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-    return colormap
-
-
-class Map:
-    def __init__(self, x_size, y_size, latlon00, latlon01, latlon10, latlon11, array=None):
+class ElevationGenerationMap:
+    def __init__(self, lattice, array=None):
         # really row size and column size, respectively
-        self.x_size = x_size
-        self.y_size = y_size
-        self.x_range = np.arange(self.x_size)
-        self.y_range = np.arange(self.y_size)
-        self.lat00, self.lon00 = latlon00
-        self.lat01, self.lon01 = latlon01
-        self.lat10, self.lon10 = latlon10
-        self.lat11, self.lon11 = latlon11
-        if array is None:
-            self.array = make_nan_array((x_size, y_size))
-        else:
-            self.array = array
-        self.condition_array = make_blank_condition_array((x_size, y_size))
+        self.lattice = lattice
+        # if array is None:
+        #     self.array = make_nan_array((x_size, y_size))
+        # else:
+        #     self.array = array
+        # self.condition_array = make_blank_condition_array((x_size, y_size))
         self.frozen_points = set()
-        self.neighbors_memoized = {}
-        self.memoize_all_neighbors()
+        # self.neighbors_memoized = {}
+        # self.memoize_all_neighbors()
 
-    def average_latlon(self):
-        half_x = self.x_size/2
-        half_y = self.y_size/2
-        return mcm.get_lat_lon_of_point_on_map(half_x, half_y, self.x_size, self.y_size,
-            self.lat00, self.lon00,
-            self.lat01, self.lon01,
-            self.lat10, self.lon10,
-            self.lat11, self.lon11,
-            deg=True
-        )
+    # def memoize_all_neighbors(self):  # now should be handled by the lattice
+    #     # just calling get_neighbors will memoize
+    #     # corner pixels
+    #     for x, y in (0, 0), (0, self.y_size-1), (self.x_size-1, 0), (self.x_size, self.y_size):
+    #         n = self.get_neighbors(x, y)
+    #     # edge representatives
+    #     for x, y in (0, 1), (1, 0), (1, self.y_size-1), (self.x_size-1, 1):
+    #         n = self.get_neighbors(x, y)
+    #     # interior representative
+    #     n = self.get_neighbors(1, 1)
 
-    def get_all_points(self):
-        return {(x, y) for x in range(self.x_size) for y in range(self.y_size)}
-
-    def is_corner_pixel(self, x, y):
-        return x in [0, self.x_size-1] and y in [0, self.y_size-1]
-
-    def is_edge_pixel(self, x, y):
-        x_edge = x in [0, self.x_size-1]
-        y_edge = y in [0, self.y_size-1]
-        return (x_edge and not y_edge) or (y_edge and not x_edge)
-
-    def is_interior_pixel(self, x, y):
-        return 1 <= x < self.x_size-1 and 1 <= y < self.y_size-1
-
-    def get_representative_pixel(self, x, y):
-        # for corner pixel, return itself since all 4 have different neighbor shape
-        # for edge pixel, return one of the pixels on that edge
-        # for interior pixel, return (1, 1)
-        # then memoize only a total of 9 neighbor arrays for any size image, and just add offset
-        x_edge = x in [0, self.x_size-1]
-        y_edge = y in [0, self.y_size-1]
-        if x_edge and y_edge:
-            # corner
-            return (x, y)
-        elif x_edge or y_edge:
-            # but not both, as that would have been caught by the previous condition
-            # edge, replace the interior coordinate with 1
-            if x_edge:
-                return (x, 1)
-            if y_edge:
-                return (1, y)
-        else:
-            # interior
-            return (1, 1)
-
-    def memoize_all_neighbors(self):
-        # just calling get_neighbors will memoize
-        # corner pixels
-        for x, y in (0, 0), (0, self.y_size-1), (self.x_size-1, 0), (self.x_size, self.y_size):
-            n = self.get_neighbors(x, y)
-        # edge representatives
-        for x, y in (0, 1), (1, 0), (1, self.y_size-1), (self.x_size-1, 1):
-            n = self.get_neighbors(x, y)
-        # interior representative
-        n = self.get_neighbors(1, 1)
-
-        # old way, memory hog
-        # for x in range(self.x_size):
-        #     for y in range(self.y_size):
-        #         n = self.get_neighbors(x, y)
-        #         # function will memoize them
-        # assert len(self.neighbors_memoized) == self.size()
-
-    def size(self):
-        return self.x_size * self.y_size
-
-    def is_valid_point(self, x, y):  # flagged as slow due to sheer number of calls
-        return 0 <= x < self.x_size and 0 <= y < self.y_size
-
-    def filter_invalid_points(self, iterable):
-        res = set()
-        for p in iterable:
-            if self.is_valid_point(*p):
-                res.add(p)
-        return res
-
-    def freeze_point(self, x, y):
-        self.frozen_points.add((x, y))
-        # self.touch(x, y)
-
-    def unfreeze_point(self, x, y):
-        self.frozen_points.remove((x, y))
-
-    def unfreeze_all(self):
-        self.frozen_points = set()
-
-    def add_condition_at_position(self, x, y, func):
-        assert callable(func)
-        self.condition_array[x, y] = func
+    #     # old way, memory hog
+    #     # for x in range(self.x_size):
+    #     #     for y in range(self.y_size):
+    #     #         n = self.get_neighbors(x, y)
+    #     #         # function will memoize them
+    #     # assert len(self.neighbors_memoized) == self.size()
 
     def new_value_satisfies_condition(self, x, y, value):
         condition = self.condition_array[x, y]
@@ -673,137 +498,6 @@ class Map:
         # lats_grid, lons_grid = f(x_grid, y_grid)
         return lats_grid, lons_grid
 
-    def get_geodesic_latlon_meshgrid(self, edge_length_km):
-        # edge_length_km determines how high the resolution is
-        earth_radius_km = 6371
-        cada_ii_radius_factor = 2.27444
-        cada_ii_radius_km = cada_ii_radius_factor * earth_radius_km
-        icosahedron_original_points_latlon = {
-            # north pole
-            "NP": (90, 0),
-            # north ring of five points, star with a point at lon 0
-            "NR0": (30, 0), "NRp72": (30, 72), "NRp144": (30, 144), "NRm72": (30, -72), "NRm144": (30, -144),
-            # south ring of five points, star with a point at lon 180
-            "SR180": (-30, 180), "SRp108": (-30, 108), "SRp36": (-30, 36), "SRm108": (-30, -108), "SRm36": (-30, -36),
-            # south pole
-            "SP": (-90, 0),
-        }
-        neighbors_by_name = {
-            "NP": ["NR0", "NRp72", "NRp144", "NRm72", "NRm144"],
-            "NR0": ["NP", "NRp72", "NRm72", "SRp36", "SRm36"],
-            "NRp72": ["NP", "NR0", "NRp144", "SRp36", "SRp108"],
-            "NRp144": ["NP", "NRp72", "NRm144", "SRp108", "SR180"],
-            "NRm72": ["NP", "NR0", "NRm144", "SRm36", "SRm108"],
-            "NRm144": ["NP", "NRm72", "NRp144", "SRm108", "SR180"],
-            "SR180": ["SP", "SRp108", "SRm108", "NRp144", "NRm144"],
-            "SRp108": ["SP", "SR180", "SRp36", "NRp144", "NRp72"],
-            "SRp36": ["SP", "SRp108", "SRm36", "NRp72", "NR0"],
-            "SRm108": ["SP", "SR180", "SRm36", "NRm144", "NRm72"],
-            "SRm36": ["SP", "SRm108", "SRp36", "NRm72", "NR0"],
-            "SP": ["SR180", "SRp108", "SRp36", "SRm108", "SRm36"],
-        }
-        assert len(neighbors_by_name) == 12 and all(len(vals) == 5 for vals in neighbors_by_name.values())
-        # check transitivity of neighborliness, since I input the lists manually
-        for point_name, neighbors in neighbors_by_name.items():
-            for neigh in neighbors:
-                assert point_name in neighbors_by_name[neigh], "intransitive adjacency with {} and {}".format(point_name, neigh)
-        # icosahedron points are correct now; time to divide edges
-
-        adjacencies_xyz = {}
-        for point_name, point_latlon in icosahedron_original_points_latlon.items():
-            neighbor_latlons_lst = []
-            for neighbor_name in neighbors_by_name[point_name]:
-                neighbor_latlons_lst.append(icosahedron_original_points_latlon[neighbor_name])
-            point_xyz = mcm.unit_vector_lat_lon_to_cartesian(*point_latlon)
-            neighbor_xyz_lst = [tuple(mcm.unit_vector_lat_lon_to_cartesian(*n)) for n in neighbor_latlons_lst]
-            adjacencies_xyz[tuple(point_xyz)] = neighbor_xyz_lst
-
-        # bisect edges until reach resolution
-        iteration_i = 0
-        while True:
-            random_point = random.choice(list(adjacencies_xyz.keys()))
-            neigh = random.choice(adjacencies_xyz[random_point])
-            # v0 = mcm.unit_vector_lat_lon_to_cartesian(*random_point)
-            # v1 = mcm.unit_vector_lat_lon_to_cartesian(*neigh)
-            angle_radians = mcm.angle_between_vectors(random_point, neigh)
-            edge_length = cada_ii_radius_km * angle_radians
-            print("edge_length = {} km, iteration {}".format(edge_length, iteration_i))
-            if edge_length <= edge_length_km:
-                break
-
-            # bisection and neighbor updating
-            # start by getting all edges
-            all_edges = set()
-            for v0, neighs in adjacencies_xyz.items():
-                for v1 in neighs:
-                    e = tuple(sorted((v0, v1)))
-                    all_edges.add(e)
-            
-            # then get midpoint of each edge, still indexed by endpoints
-            midpoints = {e: None for e in all_edges}
-            for e in all_edges:
-                # midpoint is normalized average
-                v0, v1 = e
-                midpoint_raw = (np.array(v0)+np.array(v1))/2
-                midpoint = tuple((midpoint_raw / np.linalg.norm(midpoint_raw)).reshape(3))
-                midpoints[e] = midpoint
-
-            # then redo neighbor array. existing point neighbors -> midpoints of all its edges (whether there are 5 or 6)
-            # new point neighbors -> endpoints of its edge (2) + midpoints of the edges from its endpoints to the two neighbors they have in common (in the OLD adjacencies) (4), so all new points have 6 new neighbors
-            new_adjacencies_xyz = {}
-            for existing_point, neighs in adjacencies_xyz.items():
-                new_neighs = []
-                for neigh in neighs:
-                    e = tuple(sorted((existing_point, neigh)))
-                    midpoint = midpoints[e]
-                    new_neighs.append(midpoint)
-                new_adjacencies_xyz[existing_point] = new_neighs
-            for e in all_edges:
-                new_point = midpoints[e]
-                new_neighs = []
-                v0, v1 = e
-                new_neighs += [v0, v1]
-                v0_neighs_old = adjacencies_xyz[v0]
-                v1_neighs_old = adjacencies_xyz[v1]
-                in_common = set(v0_neighs_old) & set(v1_neighs_old)
-                assert len(in_common) == 2
-                va, vb = in_common
-                four_edges = [(v0, va), (v0, vb), (v1, va), (v1, vb)]
-                for e4 in four_edges:
-                    e4 = tuple(sorted(e4))
-                    mp4 = midpoints[e4]
-                    new_neighs.append(mp4)
-                new_adjacencies_xyz[new_point] = new_neighs
-            # done creating new adjacencies
-            adjacencies_xyz = new_adjacencies_xyz
-
-            print("now have {} points, iteration {}".format(len(adjacencies_xyz), iteration_i))
-            iteration_i += 1
-
-        # test: plot them
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ps = list(adjacencies_xyz.keys())
-        xs = [p[0] for p in ps]
-        ys = [p[1] for p in ps]
-        zs = [p[2] for p in ps]
-        ax.scatter(xs, ys, zs)
-        plt.show()
-
-        # convert to latlon
-        conversions = {}
-        for v in adjacencies_xyz:
-            latlon = mcm.unit_vector_cartesian_to_lat_lon(*v)
-            conversions[tuple(v)] = tuple(latlon)
-        adjacencies_latlon = {}
-        for v0, neighs in adjacencies_xyz.items():
-            neighs_latlon = []
-            for v1 in neighs:
-                neighs_latlon.append(conversions[v1])
-            adjacencies_latlon[conversions[v0]] = neighs_latlon
-        return adjacencies_latlon
-
-
     def plot(self, projection=None):
         plt.gcf()
         self.pre_plot(projection=projection)
@@ -1188,11 +882,15 @@ class Map:
         # all points in image matching something in the color dict should be that color no matter what
         # everything else is randomly generated
         # i.e., put the determined points in points_to_avoid for functions that take it
+
         if any(len(x) != 4 for x in color_condition_dict.keys()):
             raise ValueError("all color keys must have length 4, RGBA:\n{}".format(color_condition_dict.keys()))
+
+        lattice = LatitudeLongitudeLattice  # image is x-y grid
+
         im = Image.open(image_fp)
         width, height = im.size
-        m = Map(height, width)  # rows, columns
+        m = ElevationGenerationMap(height, width)  # rows, columns
         arr = np.array(im)
         color_and_first_seen = {}
         for x in range(m.x_size):
@@ -1221,7 +919,7 @@ class Map:
         lines = [[float(x) for x in line.split(",")] for line in lines]
         array = np.array(lines)
         x_size, y_size = array.shape
-        return Map(x_size, y_size, latlon00, latlon01, latlon10, latlon11, array=array)
+        return ElevationGenerationMap(x_size, y_size, latlon00, latlon01, latlon10, latlon11, array=array)
 
     def freeze_coastlines(self):
         coastal_points = set()
@@ -1282,125 +980,3 @@ class Map:
             this_row = this_row[:-1] + "\n"
             open(output_fp, "a").write(this_row)
         print("finished saving elevation data to {}".format(output_fp))
-
-
-def confirm_overwrite_file(output_fp):
-    if os.path.exists(output_fp):
-        yn = input("Warning! Overwriting file {}\ncontinue? (y/n, default n)".format(output_fp))
-        if yn != "y":
-            print("aborting")
-            return False
-    return True
-
-
-
-if __name__ == "__main__":
-    from_image = False
-    from_data = True
-    generate_further_elevation_changes = False
-    # grid_type = "latlon"
-    grid_type = "geodesic"
-    image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
-    if from_image:
-        # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
-        image_fp_no_dir = "OligraZitomoDigitization_ThinnedBorders_Final.png"
-        # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
-        # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
-        # image_fp_no_dir = "TestMap_Jhorju.png"
-        # image_fp_no_dir = "TestMap_Amphoto.png"
-        # image_fp_no_dir = "TestMap_Mako.png"
-        # image_fp_no_dir = "TestMap_Myst.png"
-        # image_fp_no_dir = "TestMap_Ilausa.png"
-        # image_fp_no_dir = "TestMap_VerticalStripes.png"
-        # image_fp_no_dir = "TestMap_AllLand.png"
-        # image_fp_no_dir = "TestMap_CircleIsland.png"
-        # image_fp_no_dir = "TestMap_CircleIsland50x50.png"
-        image_fp = image_dir + image_fp_no_dir
-
-        print("from image {}".format(image_fp))
-
-        elevation_data_output_fp = image_dir + "ElevationGenerationOutputData_" + image_fp_no_dir.replace(".png", ".txt")
-        plot_image_output_fp = image_dir + "ElevationGenerationOutputPlot_" + image_fp_no_dir
-    
-        color_condition_dict = {
-            # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
-            (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
-            (  0,   0,   0, 255): (1, lambda x: x > 0, False),
-            # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
-            # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
-        }
-        default_color = (0, 0, 0, 255)
-        m = Map.from_image(image_fp, color_condition_dict, default_color)
-        m.freeze_coastlines()
-        generate_initial_elevation_changes = True
-    elif from_data:
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland50x50.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final_FurtherChanges.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final_FurtherChanges.txt"
-        data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Mako.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Amphoto.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Jhorju.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa_FurtherChanges.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa_FurtherChanges_Bay.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_NorthernMystIslands.txt"
-        # data_fp_no_dir = "TestElevationData10x10.txt"
-        data_fp = image_dir + data_fp_no_dir
-        print("from data {}".format(data_fp))
-        latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
-        m = Map.load_elevation_data(data_fp, latlon00, latlon01, latlon10, latlon11)
-        
-        # test geodesic
-        print("testing geodesic")
-        edge_length_km = 5000
-        geod = m.get_geodesic_latlon_meshgrid(edge_length_km)
-        print("done testing geodesic")
-
-        generate_initial_elevation_changes = False
-        if generate_further_elevation_changes:
-            elevation_data_output_fp = data_fp.replace(".txt", "_FurtherChanges.txt")
-            plot_image_output_fp = data_fp.replace("OutputData", "OutputPlot").replace(".txt", "_FurtherChanges.png")
-    else:
-        m = Map(300, 500)
-        m.fill_all(0)
-        elevation_data_output_fp = "/home/wesley/programming/ElevationGenerationOutputData_Random.png"
-        plot_image_output_fp = "/home/wesley/programming/ElevationGenerationOutputPlot_Random.png"
-        generate_initial_elevation_changes = True
-        
-    print("map size {} pixels".format(m.size()))
-
-    if generate_initial_elevation_changes:
-        expected_change_size = 10000
-        expected_touches_per_point = 200
-        n_steps = int(expected_touches_per_point / expected_change_size * m.size())
-        # n_steps = np.inf
-        # n_steps = 10000
-        plot_every_n_steps = None
-        print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
-        m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        # m.plot()
-        m.save_elevation_data(elevation_data_output_fp)
-        m.save_plot_image(plot_image_output_fp)
-    elif generate_further_elevation_changes:
-        m.unfreeze_all()  # allow coastlines to change
-        expected_change_size = 10000
-        expected_touches_per_point = 5
-        n_steps = int(expected_touches_per_point / expected_change_size * m.size())
-        plot_every_n_steps = None
-        print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
-        m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        m.save_elevation_data(elevation_data_output_fp)
-        m.save_plot_image(plot_image_output_fp)
-    else:
-        m.plot(projection="ortho")
-        # m.plot_map_and_gradient_magnitude()
-        # m.create_flow_arrays()
-        # m.plot_flow_amounts()
-        # m.plot_rivers()
-        # m.plot_flow_steps(10000)
-        # m.plot_average_water_location()
