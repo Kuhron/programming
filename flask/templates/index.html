@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html><body>
+
+<form action="/" method="post">
+    <input type="submit" name="download" value="Download">
+    <input type="submit" name="watch" value="Watch">
+</form>
+
+<p><a href="{{ url_for('cool_form') }}">Check out this cool form!</a></p>
+
+<h2>Button Region A</h2>
+<form action="/" method="post">
+    Text 1:<br />
+    <input type="text" name="text_1"><br />
+    Text 2:<br />
+    <input type="text" name="text_2"><br />
+    <input type="submit" name="button_a" value="A">
+</form>
+<p>test text A:
+{% if responseA is not none %}
+    {{ responseA }}
+{% endif %}
+</p>
+
+<h2>Button Region B</h2>
+<form action="/" method="post">
+    <input type="submit" name="button_b1" value="B1"><br />
+    <input type="submit" name="button_b2" value="B2"><br />
+</form>
+<p>test text B:
+{% if responseB is not none %}
+    {{ responseB }}
+{% endif %}
+</p>
+
+</body></html>
