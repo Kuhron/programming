@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 from ArrayUtil import make_blank_condition_array, make_nan_array
+from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 
 
 class ElevationGenerationMap:

@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import MapCoordinateMath as mcm
 from ElevationGenerationMap import ElevationGenerationMap
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
+from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 
 
 def get_land_and_sea_colormap():
@@ -89,7 +90,7 @@ if __name__ == "__main__":
             # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
         }
         default_color = (0, 0, 0, 255)
-        m = Map.from_image(image_fp, color_condition_dict, default_color)
+        m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color)
         m.freeze_coastlines()
         generate_initial_elevation_changes = True
     elif from_data:

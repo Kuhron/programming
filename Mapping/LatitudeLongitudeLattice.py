@@ -7,7 +7,7 @@ class LatitudeLongitudeLattice(Lattice):
     # these points are called p00, p01, p10, p11 (row-column nomenclature)
     # e.g. p00 = Seattle, p01 = NYC, p10 = San Diego, p11 = Miami
 
-    def __init__(self, lat_size, lon_size, latlon00, latlon01, latlon10, latlon11):
+    def __init__(self, x_size, y_size, latlon00, latlon01, latlon10, latlon11):
         self.x_size = x_size
         self.y_size = y_size
         self.x_range = np.arange(self.x_size)
@@ -83,7 +83,7 @@ class LatitudeLongitudeLattice(Lattice):
         self.frozen_points.add((x, y))
         # self.touch(x, y)
 
-        def unfreeze_point(self, x, y):
+    def unfreeze_point(self, x, y):
         self.frozen_points.remove((x, y))
 
     def unfreeze_all(self):
