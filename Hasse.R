@@ -28,26 +28,30 @@ addPair <- function(x, y, labels, M) {
 # main
 
 labels <- c(
-  # "Umlaut",
-  # "H Loss",
-  # "O Creation",
-  "Weak Final I Loss",
-  # "Strong Final I Loss",
-  "M Degemination",
-  # "Stop Voicing",
-  # "Weak Final A Loss",
-  "Strong Final A Loss",
-  "Superheavy Prohibition",
-  "I Creation",
-  # "Progressive Harmony",
-  # "Palatalization",
-  "Ash Merger"
+  "Develarization",
+  "Grimm's Law",
+  "Fricative Voicing",
+  "Stress Shift",
+  "Vowel Deletion",
+  "Epenthesis",
+  "RS Reduction",
+  "Nasal Assimilation",
+  "Lowering",
+  "Great Gothic Vowel Shift",
+  "Long A Changes"
 )
 
 M <- matrix(data=FALSE, nrow=length(labels), ncol=length(labels))
 
-M <- addPair("Weak Final I Loss", "M Degemination", labels, M)
-M <- addPair("Superheavy Prohibition", "I Creation", labels, M)
-M <- addPair("I Creation", "Strong Final A Loss", labels, M)
+M <- addPair("Stress Shift", "Vowel Deletion", labels, M)
+# M <- addPair("Vowel Deletion", "Great Gothic Vowel Shift", labels, M)  # WRONG
+M <- addPair("Great Gothic Vowel Shift", "Stress Shift", labels, M)
+M <- addPair("Grimm's Law", "Fricative Voicing", labels, M)
+M <- addPair("Develarization", "Nasal Assimilation", labels, M)
+M <- addPair("Vowel Deletion", "RS Reduction", labels, M)
+M <- addPair("Great Gothic Vowel Shift", "Long A Changes", labels, M)
+M <- addPair("Vowel Deletion", "Long A Changes", labels, M)
+M <- addPair("Fricative Voicing", "Stress Shift", labels, M)
+M <- addPair("Great Gothic Vowel Shift", "Lowering", labels, M)
 
 hasse(M, labels)
