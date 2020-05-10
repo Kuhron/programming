@@ -5,6 +5,8 @@ import random
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import interp1d
+from Music.WavUtil import write_signal_to_wav
 
 
 def get_random_genome(length):
@@ -69,7 +71,7 @@ def get_trajectory(g, initial_condition):
         return None
     # print("{} constituents".format(len(constituents)))
     x = initial_condition
-    t_max = 100
+    t_max = 1000
     xs = [x]
     for t in range(t_max):
         try:
@@ -110,10 +112,13 @@ def trajectory_survives(xs):
 def score_trajectory(xs):
     # use component simpler scoring functions, can play with their weights
     components = []
-    components.append(mean_abs_diff_score(xs, 1) * 1)
+    components.append(proportion_small_diffs_score(xs, 1) * -100)
+    components.append(mean_abs_diff_score(xs, 1) * -1)
     components.append(mean_abs_diff_score(xs, 2) * -1)
-    components.append(mean_abs_diff_score(xs, 3) * 1)
-    # components.append(sign_diff_score(xs, 1, 1))
+    components.append(mean_abs_diff_score(xs, 3) * -1)
+    components.append(mean_abs_diff_score(xs, 5) * 1)
+    components.append(mean_abs_diff_score(xs, 7) * 1)
+    components.append(mean_abs_diff_score(xs, 11) * 1)
 
     return sum(components)
 
@@ -132,9 +137,18 @@ def sign_diff_score(xs, n_x_diff, n_sign_diff):
     return np.mean(abs(d_signs))
 
 
+def proportion_small_diffs_score(xs, n):
+    dxs = np.diff(xs, n)
+    full_range = max(xs) - min(xs)
+    small_diff_proportion = 0.01
+    small_diff = small_diff_proportion * full_range
+    n_small_diffs = (abs(dxs) <= small_diff).sum()
+    return n_small_diffs / len(xs)
+
+
 def mutate(g):
     # flip bits at random, but only do it rarely
-    while random.random() < 0.03:
+    while random.random() < 0.1:
         i = random.choice(range(len(g)))
         other_bit = {"0":"1", "1":"0"}[g[i]]
         g = g[:i] + other_bit + g[i+1:]
@@ -222,9 +236,42 @@ def plot_sample_gallery(organisms):
     plt.show()
 
 
+def convert_trajectories_to_wav(trajectories):
+    signal_array = []
+    framerate = 1000
+    wav_rate = 44100
+    # will interpolate so the oscillations in the function are not occurring at like 20kHz or something earsplitting
+    separator_secs = 0
+    separator = [0] * int(wav_rate * separator_secs)  # some number of seconds of silence
+    for xs in trajectories:
+        xs = np.array(xs)
+        max_amp = max(abs(xs))
+        xs = xs / max_amp  # normalize to 1=max
+        ts = np.arange(len(xs))
+        interp_func = interp1d(ts, xs, kind="cubic")
+        wav_sample_step = framerate/wav_rate  # how many t steps to go for each point in wav sample (e.g. framerate of 100 from function gives wav sample step of 1/441 second)
+        new_ts = np.arange(min(ts), max(ts)+wav_sample_step, wav_sample_step)
+        new_xs = interp_func(new_ts) 
+        signal_array += list(new_xs) + list(separator)
+    write_signal_to_wav(signal_array, "GeneticStochasticProcessOutput.wav")
+
+
+def create_sample_wav(organisms):
+    if type(organisms) is dict:
+        organisms = list(organisms.keys())
+    trajectories = []
+    for i in range(20):
+        organism_number = random.choice(range(len(organisms)))
+        g = organisms[organism_number]
+        initial_condition = random.random()
+        xs = get_trajectory(g, initial_condition)
+        trajectories.append(xs)
+    convert_trajectories_to_wav(trajectories)
+
+
 if __name__ == "__main__":
     organisms = [get_random_genome(100) for i in range(10)]
-    for generation in range(100):
+    for generation in range(25):
         print("generation {}".format(generation))
         organisms = get_next_generation(organisms)
 
@@ -238,3 +285,4 @@ if __name__ == "__main__":
 
     # plot_trajectories(organisms)
     plot_sample_gallery(organisms)
+    create_sample_wav(organisms)
