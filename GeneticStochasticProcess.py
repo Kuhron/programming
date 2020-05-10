@@ -6,6 +6,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
+from scipy.stats import pearsonr
 from Music.WavUtil import write_signal_to_wav
 
 
@@ -112,21 +113,27 @@ def trajectory_survives(xs):
 def score_trajectory(xs):
     # use component simpler scoring functions, can play with their weights
     components = []
-    components.append(proportion_small_diffs_score(xs, 1) * -100)
-    components.append(mean_abs_diff_score(xs, 1) * -1)
-    components.append(mean_abs_diff_score(xs, 2) * -1)
-    components.append(mean_abs_diff_score(xs, 3) * -1)
-    components.append(mean_abs_diff_score(xs, 5) * 1)
-    components.append(mean_abs_diff_score(xs, 7) * 1)
-    components.append(mean_abs_diff_score(xs, 11) * 1)
+    components.append(proportion_small_diffs_score(xs, 1) * -1000)
+    components.append(autocorr(xs, 1) * -100)
+    components.append(autocorr(xs, 2) * -100)
+    components.append(autocorr(xs, 3) * -100)
+    components.append(autocorr(xs, 5) * -100)
+    components.append(autocorr(xs, 7) * -100)
+    components.append(autocorr(xs, 11) * -100)
+    components.append(median_abs_diff_score(xs, 1) * 1)
+    components.append(median_abs_diff_score(xs, 2) * 1)
+    components.append(median_abs_diff_score(xs, 3) * 1)
+    components.append(median_abs_diff_score(xs, 5) * 1)
+    components.append(median_abs_diff_score(xs, 7) * 1)
+    components.append(median_abs_diff_score(xs, 11) * 1)
 
     return sum(components)
 
 
-def mean_abs_diff_score(xs, n):
+def median_abs_diff_score(xs, n):
     # reward lots of movement, less boring processes
     dxs = np.diff(xs, n)
-    return np.mean(abs(dxs))
+    return np.median(abs(dxs))
 
 
 def sign_diff_score(xs, n_x_diff, n_sign_diff):
@@ -144,6 +151,19 @@ def proportion_small_diffs_score(xs, n):
     small_diff = small_diff_proportion * full_range
     n_small_diffs = (abs(dxs) <= small_diff).sum()
     return n_small_diffs / len(xs)
+
+
+def autocorr(xs, n_diff):
+    a = xs[:-n_diff]
+    b = xs[n_diff:]
+    return corr(a, b)
+
+
+def corr(a, b):
+    r, p_value = pearsonr(a, b)
+    if np.isnan(r):
+        return 1  # treat it as fully correlated with itself; NaN happens if the series doesn't move
+    return r
 
 
 def mutate(g):
