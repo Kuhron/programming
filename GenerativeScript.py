@@ -47,20 +47,21 @@ def plot_glyph(segments, lower_left_corner_coords):
 
 def get_random_glyph_shape():
     segments = []
-    n_segments = random.randint(2, 6)
+    n_segments = random.randint(1, 8)
     points_of_interest = set()  # can draw from these points sometimes instead of just random points
 
-    def get_point():
-        if len(points_of_interest) != 0 and random.random() < 0.7:
-            return random.choice(list(points_of_interest))
+    def get_point(current_points):
+        candidates = points_of_interest - set(current_points)
+        if len(candidates) != 0 and random.random() < 0.7:
+            return random.choice(list(candidates))
         return tuple(np.random.rand(2))
 
     def get_point_set(n_points):
         res = []
         for i in range(n_points):
-            p = get_point()
+            p = get_point(res)
             while p in res:
-                p = get_point()
+                p = get_point(res)
             res.append(p)
         return res
 
