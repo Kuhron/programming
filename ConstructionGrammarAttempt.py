@@ -1,17 +1,21 @@
 import random
 
 constructions = {
-    "{AtTime}": "{TimeNP} lum",
+    # "{AtTime}": "{TimeNP} lum",  # orig
+    "{AtTime}": "luma {TimeNP}",
     "{AtPlace}": "{PlaceNP} lan",
-    "{ItSeemsLike}": "lirlattl mall {S}",
+    # "{ItSeemsLike}": "lirlattl mall {S}",  # orig
+    "{ItSeemsLike}": "lirlattl {S} mallu",
     "{XNeedsTo}": "aunn{SubjectSuffix} {VPInf}",
     "{VPInf}": ["{VtInfObj}", "{ViInf}"],
     "{VtInfObj}": "{VtInf} {Obj}",
     "{Obj}": ["{NP}", "{NPost}"],
-    "{NPost}": "{NP} {PostP}",
+    # "{NPost}": "{NP} {PostP}",  # orig
+    "{NPost}": "{PostP} ollan {NP}",
     "{PostP}": ["{AtTime}", "{AtPlace}"],
     "{S}": ["{XNeedsTo}", "{PersonS}", "{VPPronInfl}"],
-    "{PersonS}": "{PersonNP} {VPInfl}",
+    # "{PersonS}": "{PersonNP} {VPInfl}",  # orig
+    "{PersonS}": "{VPInfl} a, {PersonNP} ta",
     "{VPInfl}": ["{VtInfl}", "{ViInfl}"],
     "{VtInfl}": "{VtInf}arl {Obj}",
     "{ViInfl}": "{ViInf}arl",
