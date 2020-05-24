@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <!-- <title>Document</title> -->
+    {% block head %} {% endblock %} <!-- this is Jinja, the template engine that Flask uses; when other pages inherit from this template, they can insert stuff in this block while inheriting the rest of the html from this base file -->
+</head>
+<body>
+    <!-- HelloWorld2 -->
+    {% block body %} {% endblock %}
+</body>
+</html>
