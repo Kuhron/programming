@@ -3,6 +3,13 @@
 # this class should implement the methods that exist regardless of the grid topology
 # e.g. finding nearest neighbors, finding all neighbors, converting to xyz, etc.
 
+import random
+import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.tri as tri  # interpolation of irregularly spaced data
+import numpy as np
+
 from UnitSpherePoint import UnitSpherePoint
 
 
@@ -14,10 +21,69 @@ class Lattice:
         # specific to the subclasses, depending on type of lattice
         raise NotImplementedError
 
+    def get_points(self):
+        return list(self.adjacencies.keys())
+
     def get_nearest_lattice_point_to_input_point(p):
         assert type(p) is UnitSpherePoint
         # first pass: brute force
         return min(self.adjacencies, key=lambda x: x.distance(p))
 
         # later could optimize somehow, e.g. take only a box of +/- dx,dy,dz and sort those
+
+    def plot_points(self):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+        ps = self.get_points()
+        ps_xyz = [p.get_coords("xyz") for p in ps]
+        xs = [p[0] for p in ps_xyz]
+        ys = [p[1] for p in ps_xyz]
+        zs = [p[2] for p in ps_xyz]
+        ax.scatter(xs, ys, zs)
+        plt.show()
+
+    def place_random_data(self):
+        data = {p: 0 for p in self.points}
+        n_patches = 100
+        for i in range(n_patches):
+            starting_point = random.choice(self.points)
+            patch = {starting_point}
+            # the outward-moving edge is the next points that are not yet in the patch
+            edge = set(self.adjacencies[starting_point])
+            while True:
+                chosen = random.choice(list(edge))
+                patch.add(chosen)
+                edge |= set(self.adjacencies[chosen])
+                edge -= patch
+                if random.random() < 0.01:
+                    break
+                if len(edge) == 0:  # can happen if whole lattice is in patch
+                    break
+            # change elevation on the patch
+            d_el = random.uniform(-100, 100)
+            # might want to put the data in a Pandas DataFrame later, for ease of doing stuff like this
+            for p in patch:
+                data[p] += d_el
+
+        return data
+
+    def plot_data(self, data):
+        data_points = list(data.keys())  # UnitSpherePoint objects
+        latlons_deg = [p.get_coords("latlondeg") for p in data_points]
+        lats_deg = np.array([ll[0] for ll in latlons_deg])
+        lons_deg = np.array([ll[1] for ll in latlons_deg])
+        vals = np.array([data[p] for p in data_points])
+        # print("lat0 = {}, lon0 = {}, val0 = {}".format(lats_deg[0], lons_deg[0], vals[0]))
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        levels = 20
+        m = Basemap(projection="ortho", lat_0=0., lon_0=0., resolution='l')
+        MC = m.contourf(lats_deg, lons_deg, vals, levels, ax=ax, tri=True, latlon=True)
+        # m.contour(lats_deg, lons_deg, vals, levels=[min(vals), 0, max(vals)], colors="k", ax=ax, latlon=True)
+        m.drawparallels(np.arange(-90,91,15))
+        m.drawmeridians(np.arange(-180,181,15))
+
+        plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
+        plt.show()
 

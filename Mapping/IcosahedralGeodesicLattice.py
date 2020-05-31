@@ -1,6 +1,11 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import random
 
 from Lattice import Lattice
+from UnitSpherePoint import UnitSpherePoint
+import MapCoordinateMath as mcm
 
 
 class IcosahedralGeodesicLattice(Lattice):
@@ -10,9 +15,12 @@ class IcosahedralGeodesicLattice(Lattice):
 
     def __init__(self, edge_length_km):
         self.edge_length_km = edge_length_km
+        self.adjacencies = self.get_adjacencies()
+        self.points = self.get_points()
 
     def get_adjacencies(self):
         # edge_length_km determines how high the resolution is
+        cada_ii_radius_km = IcosahedralGeodesicLattice.CADA_II_RADIUS_KM
 
         icosahedron_original_points_latlon = {
             # north pole
@@ -116,25 +124,24 @@ class IcosahedralGeodesicLattice(Lattice):
             print("now have {} points, iteration {}".format(len(adjacencies_xyz), iteration_i))
             iteration_i += 1
 
-        # test: plot them
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-        ps = list(adjacencies_xyz.keys())
-        xs = [p[0] for p in ps]
-        ys = [p[1] for p in ps]
-        zs = [p[2] for p in ps]
-        ax.scatter(xs, ys, zs)
-        plt.show()
-
-        # convert to latlon
+        # convert to UnitSpherePoint
         conversions = {}
         for v in adjacencies_xyz:
-            latlon = mcm.unit_vector_cartesian_to_lat_lon(*v)
-            conversions[tuple(v)] = tuple(latlon)
-        adjacencies_latlon = {}
+            usp = UnitSpherePoint(v, "xyz")
+            conversions[tuple(v)] = usp
+        adjacencies_usp = {}
         for v0, neighs in adjacencies_xyz.items():
-            neighs_latlon = []
+            neighs_usp = []
             for v1 in neighs:
-                neighs_latlon.append(conversions[v1])
-            adjacencies_latlon[conversions[v0]] = neighs_latlon
-        return adjacencies_latlon
+                neighs_usp.append(conversions[v1])
+            adjacencies_usp[conversions[v0]] = neighs_usp
+        return adjacencies_usp
+
+
+if __name__ == "__main__":
+    edge_length_km = 1000
+    test_lattice = IcosahedralGeodesicLattice(edge_length_km)
+    # test_lattice.plot_points()
+    data = test_lattice.place_random_data()
+    test_lattice.plot_data(data)
+    

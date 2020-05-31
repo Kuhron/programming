@@ -4,7 +4,7 @@ import MapCoordinateMath as mcm
 
 
 class UnitSpherePoint:
-    def __init__(coords_tuple, coords_system):
+    def __init__(self, coords_tuple, coords_system):
         self.tuples = {
             "xyz": None,
             "latlondeg": None,
