@@ -65,12 +65,17 @@ class IcosahedralGeodesicLattice(Lattice):
         # bisect edges until reach resolution
         iteration_i = 0
         while True:
-            random_point = random.choice(list(adjacencies_xyz.keys()))
-            neigh = random.choice(adjacencies_xyz[random_point])
-            # v0 = mcm.unit_vector_lat_lon_to_cartesian(*random_point)
-            # v1 = mcm.unit_vector_lat_lon_to_cartesian(*neigh)
-            angle_radians = mcm.angle_between_vectors(random_point, neigh)
-            edge_length = cada_ii_radius_km * angle_radians
+            # check some random edges to get average edge length
+            edge_lengths = []
+            for _ in range(100):
+                random_point = random.choice(list(adjacencies_xyz.keys()))
+                neigh = random.choice(adjacencies_xyz[random_point])
+                # v0 = mcm.unit_vector_lat_lon_to_cartesian(*random_point)
+                # v1 = mcm.unit_vector_lat_lon_to_cartesian(*neigh)
+                angle_radians = mcm.angle_between_vectors(random_point, neigh)
+                edge_length = cada_ii_radius_km * angle_radians
+                edge_lengths.append(edge_length)
+            edge_length = np.mean(edge_lengths)
             print("edge_length = {} km, iteration {}".format(edge_length, iteration_i))
             if edge_length <= edge_length_km:
                 break
@@ -139,7 +144,7 @@ class IcosahedralGeodesicLattice(Lattice):
 
 
 if __name__ == "__main__":
-    edge_length_km = 1000
+    edge_length_km = 100
     test_lattice = IcosahedralGeodesicLattice(edge_length_km)
     # test_lattice.plot_points()
     data = test_lattice.place_random_data()

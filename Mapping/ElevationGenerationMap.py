@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image
 from ArrayUtil import make_blank_condition_array, make_nan_array
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
+import PlottingUtil as pu
 
 
 class ElevationGenerationMap:
@@ -531,19 +532,8 @@ class ElevationGenerationMap:
 
         min_elevation = self.array.min()
         max_elevation = self.array.max()
-        n_sea_contours = 20
-        n_land_contours = 100
-        if min_elevation < 0:
-            sea_contour_levels = np.linspace(min_elevation, 0, n_sea_contours)
-        else:
-            sea_contour_levels = [0]
-        if max_elevation > 0:
-            land_contour_levels = np.linspace(0, max_elevation, n_land_contours)
-        else:
-            land_contour_levels = [0]
-        assert sea_contour_levels[-1] == land_contour_levels[0] == 0
-        contour_levels = list(sea_contour_levels[:-1]) + list(land_contour_levels)
-        colormap = get_land_and_sea_colormap()
+        contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
+        colormap = pu.get_land_and_sea_colormap()
         # care more about seeing detail in land contour; displaying deep sea doesn't matter much
         max_color_value = max_elevation
         min_color_value = -1 * max_elevation

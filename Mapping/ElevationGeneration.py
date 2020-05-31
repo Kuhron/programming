@@ -15,33 +15,6 @@ from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 
 
-def get_land_and_sea_colormap():
-    # see PrettyPlot.py
-    linspace_cmap_forward = np.linspace(0, 1, 128)
-    linspace_cmap_backward = np.linspace(1, 0, 128)
-    blue_to_black = mcolors.LinearSegmentedColormap.from_list('BlBk', [
-        mcolors.CSS4_COLORS["blue"], 
-        mcolors.CSS4_COLORS["black"],
-    ])
-    land_colormap = mcolors.LinearSegmentedColormap.from_list('land', [
-        mcolors.CSS4_COLORS["darkgreen"],
-        mcolors.CSS4_COLORS["limegreen"],
-        mcolors.CSS4_COLORS["gold"],
-        mcolors.CSS4_COLORS["darkorange"],
-        mcolors.CSS4_COLORS["red"],
-        mcolors.CSS4_COLORS["saddlebrown"],
-        mcolors.CSS4_COLORS["gray"],
-        mcolors.CSS4_COLORS["white"],
-        # mcolors.CSS4_COLORS[""],
-    ])
-    # colors_land = plt.cm.YlOrBr(linspace_cmap_backward)  # example of how to call existing colormap object
-    colors_land = land_colormap(linspace_cmap_forward)
-    colors_sea = blue_to_black(linspace_cmap_backward)
-    colors = np.vstack((colors_sea, colors_land))
-    colormap = mcolors.LinearSegmentedColormap.from_list('my_colormap', colors)
-    return colormap
-
-
 def confirm_overwrite_file(output_fp):
     if os.path.exists(output_fp):
         yn = input("Warning! Overwriting file {}\ncontinue? (y/n, default n)".format(output_fp))
