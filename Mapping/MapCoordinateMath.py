@@ -23,16 +23,63 @@ def unit_vector_lat_lon_to_cartesian(lat, lon, deg=True):
     x = np.cos(lon) * np.cos(lat)
     y = np.sin(lon) * np.cos(lat)
     z = np.sin(lat)
+    assert abs(1-np.linalg.norm([x, y, z])) < 1e-6, "need unit vector"
     return np.array([x, y, z])
 
 def unit_vector_cartesian_to_lat_lon(x, y, z, deg=True):
+    # latlon [0, 0] maps to xyz [1, 0, 0] (positive x comes out of Gulf of Guinea)
+    # latlon [0, 90deg] maps to xyz [0, 1, 0] (positive y comes out of Indian Ocean)
     assert abs(1-np.linalg.norm([x, y, z])) < 1e-6, "need unit vector"
     lat = np.arcsin(z)
     assert abs(np.cos(lat) - np.sqrt(1 - z**2)) < 1e-6, "math error in sin cos lat"
-    xy_dilation = abs(np.cos(lat))
+    # arcsin :: [-1, 1] -> [-pi/2 = -90deg , pi/2 = 90deg]  # always gives you front hemisphere
+    # arccos :: [-1, 1] -> [pi = 180deg , 0 = 0deg]  # always gives you eastern hemisphere
+    # cos(lat) is 0 at both poles and 1 at equator, always non-negative, so don't need to worry about abs of it
+    # neither inverse function alone will unambiguously give you lon, since range of longitude is total of 360 deg
+    # have to use knowledge of which quadrant you are in
+    coslon = x / np.cos(lat)
+    sinlon = y / np.cos(lat)
+    # if x > 0, you're in the front hemisphere (centered on Africa), if x < 0, you're in the back hemisphere (centered on Pacific)
+    # if y > 0, you're in the eastern hemisphere, if y < 0, you're in the western hemisphere
+    # lon is angle from standard position pointing along positive x, visualize normal unit circle
+    # sin(lon) is 0 at prime meridian and antimeridian, 1 in India, and -1 in South America
+    # cos(lon) is 1 at prime meridian, -1 at antimeridian, and 0 in India and South America
+    front_or_back = "front" if x >= 0 else "back"
+    east_or_west = "east" if y >= 0 else "west"
+    raw_arccos_lon = np.arccos(coslon)
+    raw_arcsin_lon = np.arcsin(sinlon)
+    if front_or_back == "back":
+        # the arcsin will be wrong, need to reflect over +/- 90 deg
+        if raw_arcsin_lon >= 0:
+            arcsin_lon = 180 - raw_arcsin_lon
+        else:
+            arcsin_lon = -180 - raw_arcsin_lon
+    else:
+        arcsin_lon = raw_arcsin_lon
+    if east_or_west == "west":
+        # the arccos will be wrong, need to change eastern to western
+        arccos_lon = -1 * raw_arccos_lon
+    else:
+        arccos_lon = raw_arccos_lon
+
+    assert abs(arcsin_lon - arccos_lon) < 1e-6, "methods for correcting sin and cos longitudes do not agree:\nxyz = {} {} {}\nhemispheres = {} {}\nraw_arcsin_lon = {}, raw_arccos_lon = {}\narcsin_lon = {}, arccos_lon = {}".format(x, y, z, front_or_back, east_or_west, raw_arcsin_lon, raw_arccos_lon, arcsin_lon, arccos_lon)
+    lon = arcsin_lon
+
+    if front_or_back == "front":
+        assert -90 <= lon <= 90
+    else:
+        assert -180 <= lon <= -90 or 90 <= lon <= 180
+    if east_or_west == "east":
+        assert 0 <= lon <= 180
+    else:
+        assert -180 <= lon <= 0
+    
+    # old way, mistakenly always maps negative x to positive
+    # xy_dilation = np.cos(lat)
     # lon2 = np.arccos(x / xy_dilation)  # don't use arccos because its range is only positive
-    lon = np.arcsin(y / xy_dilation)
+    # lon = np.arcsin(y / xy_dilation)
     # assert abs(lon - lon2) < 1e-6, "math error\nx {} y {} z {}\nlat {} lon {} lon2 {}".format(x, y, z, lat, lon, lon2)
+
     if deg:
         # must give deg to user
         lat = rad_to_deg(lat)

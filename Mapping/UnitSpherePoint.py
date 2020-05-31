@@ -12,9 +12,17 @@ class UnitSpherePoint:
         if coords_system == "xyz":
             self.tuples["xyz"] = coords_tuple
             self.tuples["latlondeg"] = mcm.unit_vector_cartesian_to_lat_lon(*coords_tuple, deg=True)
+            check = mcm.unit_vector_lat_lon_to_cartesian(*self.tuples["latlondeg"], deg=True)
+            diff = np.array(check) - np.array(coords_tuple)
+            if np.linalg.norm(diff) > 1e-6:
+                print("bad conversion:\ncoords_tuple: {}\ncheck: {}\ntuples: {}".format(coords_tuple, check, self.tuples))
         elif coords_system == "latlondeg":
             self.tuples["latlondeg"] = coords_tuple
             self.tuples["xyz"] = mcm.unit_vector_lat_lon_to_cartesian(*coords_tuple, deg=True)
+            check = mcm.unit_vector_cartesian_to_lat_lon(*self.tuples["xyz"], deg=True)
+            diff = np.array(check) - np.array(coords_tuple)
+            if np.linalg.norm(diff) > 1e-6:
+                print("bad conversion:\ncoords_tuple: {}\ncheck: {}\ntuples: {}".format(coords_tuple, check, self.tuples))
         else:
             raise ValueError("unrecognized coordinate system: {}".format(coords_system))
 
