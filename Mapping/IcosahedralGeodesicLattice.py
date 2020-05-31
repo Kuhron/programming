@@ -141,7 +141,7 @@ class IcosahedralGeodesicLattice(Lattice):
 if __name__ == "__main__":
     edge_length_km = 1000
     test_lattice = IcosahedralGeodesicLattice(edge_length_km)
-    test_lattice.plot_points()
+    # test_lattice.plot_points()
     data = test_lattice.place_random_data()
     test_lattice.plot_data(data)
     

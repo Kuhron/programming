@@ -74,19 +74,22 @@ class Lattice:
         lats_deg = np.array([ll[0] for ll in latlons_deg])
         lons_deg = np.array([ll[1] for ll in latlons_deg])
         vals = np.array([data[p] for p in data_points])
-        # print("lat0 = {}, lon0 = {}, val0 = {}".format(lats_deg[0], lons_deg[0], vals[0]))
+        # print("lat range {} to {}\nlon range {} to {}".format(min(lats_deg), max(lats_deg), min(lons_deg), max(lons_deg)))
+        # plt.scatter(lats_deg, lons_deg)
+        # plt.show()
         
         fig = plt.figure()
         ax = fig.add_subplot(111)
         levels = 20
-        m = Basemap(projection="cyl")
-        # m = Basemap(projection="ortho", lat_0=0., lon_0=0., resolution='l')
-        MC = m.contourf(lats_deg, lons_deg, vals, levels, ax=ax, tri=True, latlon=True)
+        # m = Basemap(projection="cyl")
+        m = Basemap(projection="ortho", lat_0=0., lon_0=0., resolution='l')
+        MC = m.contourf(lons_deg, lats_deg, vals, levels, ax=ax, tri=True, latlon=True)  # latlon=True interprets first two args as LON and LAT RESPECTIVELY
         # m.contour(lats_deg, lons_deg, vals, levels=[min(vals), 0, max(vals)], colors="k", ax=ax, latlon=True)
-        parallel_labels_bools = [1, 1, 0, 0]  # are labels placed at [left right top bottom]
-        meridian_labels_bools = [0, 0, 1, 1]  # are labels placed at [left right top bottom]
-        m.drawparallels(np.arange(-90,91,15), labels=parallel_labels_bools)
-        m.drawmeridians(np.arange(-180,181,15), labels=meridian_labels_bools)
+
+        # parallel_labels_bools = [1, 1, 0, 0]  # are labels placed at [left right top bottom]
+        # meridian_labels_bools = [0, 0, 1, 1]  # are labels placed at [left right top bottom]
+        # m.drawparallels(np.arange(-90,91,30), labels=parallel_labels_bools)
+        # m.drawmeridians(np.arange(-180,181,30), labels=meridian_labels_bools)
 
         plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
         plt.show()
