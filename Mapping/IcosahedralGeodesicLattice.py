@@ -77,7 +77,7 @@ class IcosahedralGeodesicLattice(Lattice):
                 edge_lengths.append(edge_length)
             edge_length = np.mean(edge_lengths)
             print("edge_length = {} km, iteration {}".format(edge_length, iteration_i))
-            if edge_length <= edge_length_km:
+            if edge_length <= self.edge_length_km:
                 break
 
             # bisection and neighbor updating
@@ -144,7 +144,7 @@ class IcosahedralGeodesicLattice(Lattice):
 
 
 if __name__ == "__main__":
-    edge_length_km = 100
+    edge_length_km = 250
     test_lattice = IcosahedralGeodesicLattice(edge_length_km)
     # test_lattice.plot_points()
     data = test_lattice.place_random_data()

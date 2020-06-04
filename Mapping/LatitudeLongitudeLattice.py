@@ -1,4 +1,9 @@
+import numpy as np
+import random
+
 from Lattice import Lattice
+from UnitSpherePoint import UnitSpherePoint
+import MapCoordinateMath as mcm
 
 
 class LatitudeLongitudeLattice(Lattice):
@@ -16,9 +21,52 @@ class LatitudeLongitudeLattice(Lattice):
         self.lat01, self.lon01 = latlon01
         self.lat10, self.lon10 = latlon10
         self.lat11, self.lon11 = latlon11
+
+        self.create_point_dict()
+        self.adjacencies = self.get_adjacencies()
     
+    def create_point_dict(self):
+        print("creating point dict for LatitudeLongitudeLattice")
+        # creates dict to look up coordinates of point, e.g. {(x, y): UnitSpherePoint(...)}
+        self.point_dict = {}
+        for x in range(self.x_size):
+            for y in range(self.y_size):
+                latlon = mcm.get_lat_lon_of_point_on_map(
+                    x, y, 
+                    self.x_size, self.y_size, 
+                    self.lat00, self.lon00, 
+                    self.lat01, self.lon01, 
+                    self.lat10, self.lon10, 
+                    self.lat11, self.lon11,
+                    deg=True
+                )
+                p = UnitSpherePoint(latlon, coords_system="latlondeg")
+                self.point_dict[(x, y)] = p
+        print("- done creating point dict")
+
     def get_adjacencies(self):
-        raise
+        print("getting adjacencies for LatitudeLongitudeLattice")
+        # build it from x, y first and then convert to UnitSpherePoint using the point_dict
+        d = {}
+        for x in range(self.x_size):
+            for y in range(self.y_size):
+                # 4 neighbors, not 8 (8 causes problems because rivers can flow through each other, for example)
+                neighbors = [
+                    (x+1, y), (x-1, y),
+                    (x, y+1), (x, y-1),
+                ]
+                neighbors = self.filter_invalid_points(neighbors)
+                d[(x, y)] = neighbors
+
+        # convert to UnitSpherePoint
+        d_usp = {}
+        for k, neighbors_list in d.items():
+            k_usp = self.point_dict[k]
+            ns_usp = [self.point_dict[n] for n in neighbors_list]
+            d_usp[k_usp] = ns_usp
+
+        print("- done getting adjacencies")
+        return d_usp
 
     def average_latlon(self):
         half_x = self.x_size/2
@@ -79,16 +127,8 @@ class LatitudeLongitudeLattice(Lattice):
                 res.add(p)
         return res
 
-    def freeze_point(self, x, y):
-        self.frozen_points.add((x, y))
-        # self.touch(x, y)
+    def get_random_point(self, border_width=0):
+        x = random.randrange(border_width, self.x_size - border_width)
+        y = random.randrange(border_width, self.y_size - border_width)
+        return (x, y)
 
-    def unfreeze_point(self, x, y):
-        self.frozen_points.remove((x, y))
-
-    def unfreeze_all(self):
-        self.frozen_points = set()
-
-    def add_condition_at_position(self, x, y, func):
-        assert callable(func)
-        self.condition_array[x, y] = func

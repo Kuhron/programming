@@ -1,43 +1,25 @@
 import numpy as np
+import random
+from datetime import datetime
 from PIL import Image
 from ArrayUtil import make_blank_condition_array, make_nan_array
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
+from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 import PlottingUtil as pu
 
 
 class ElevationGenerationMap:
-    def __init__(self, lattice, array=None):
-        # really row size and column size, respectively
+    def __init__(self, lattice, data_dict=None):
         self.lattice = lattice
-        # if array is None:
-        #     self.array = make_nan_array((x_size, y_size))
-        # else:
-        #     self.array = array
-        # self.condition_array = make_blank_condition_array((x_size, y_size))
+        if data_dict is None:
+            self.data_dict = {}
+        else:
+            self.data_dict = data_dict
+        self.condition_dict = {}
         self.frozen_points = set()
-        # self.neighbors_memoized = {}
-        # self.memoize_all_neighbors()
 
-    # def memoize_all_neighbors(self):  # now should be handled by the lattice
-    #     # just calling get_neighbors will memoize
-    #     # corner pixels
-    #     for x, y in (0, 0), (0, self.y_size-1), (self.x_size-1, 0), (self.x_size, self.y_size):
-    #         n = self.get_neighbors(x, y)
-    #     # edge representatives
-    #     for x, y in (0, 1), (1, 0), (1, self.y_size-1), (self.x_size-1, 1):
-    #         n = self.get_neighbors(x, y)
-    #     # interior representative
-    #     n = self.get_neighbors(1, 1)
-
-    #     # old way, memory hog
-    #     # for x in range(self.x_size):
-    #     #     for y in range(self.y_size):
-    #     #         n = self.get_neighbors(x, y)
-    #     #         # function will memoize them
-    #     # assert len(self.neighbors_memoized) == self.size()
-
-    def new_value_satisfies_condition(self, x, y, value):
-        condition = self.condition_array[x, y]
+    def new_value_satisfies_condition(self, p, value):
+        condition = self.condition_dict.get(p)
         if callable(condition):
             res = condition(value)
             assert type(res) in [bool, np.bool_], "invalid condition return value at {} for value {}: {} of type {}".format((x, y), value, res, type(res))
@@ -45,56 +27,40 @@ class ElevationGenerationMap:
         else:
             raise ValueError("invalid condition type {}".format(type(condition)))
 
-    def fill_position(self, x, y, value):
-        assert (x, y) not in self.frozen_points, "can't change frozen point {}".format((x, y))
-        self.array[x, y] = value
+    def fill_position(self, p, value):
+        assert p not in self.frozen_points, "can't change frozen point {}".format(p)
+        self.data_dict[p] = value
 
     def fill_point_set(self, point_set, value):
         for p in point_set:
             if p not in self.frozen_points:
-                self.fill_position(p[0], p[1], value)
+                self.fill_position(p, value)
 
     def fill_all(self, value):
-        for x in range(self.x_size):
-            for y in range(self.y_size):
-                self.fill_position(x, y, value)
+        for p in self.lattice.get_points():
+            self.fill_position(p, value)
 
-    def get_value_at_position(self, x, y):
-        return self.array[x, y]
+    def get_value_at_position(self, p):
+        return self.data_dict[p]
 
-    def get_neighbors(self, x, y, mode=8):
-        if mode == 4:
-            res = set()
-            for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
-                p = (x+dx, y+dy)
-                if self.is_valid_point(*p):
-                # if 0 <= x+dx < self.x_size and 0 <= y+dy < self.y_size:
-                    res.add(p)
-            return res
+    def freeze_point(self, p):
+        self.frozen_points.add(p)
 
-        elif mode == 8:
-            rep = self.get_representative_pixel(x, y)
-            offset = (x - rep[0], y - rep[1])
-            if rep in self.neighbors_memoized:
-                rep_neighbors = self.neighbors_memoized[rep]
-                return {(n[0] + offset[0], n[1] + offset[1]) for n in rep_neighbors}  # flagged as slow: setcomp
-    
-            res = set()
-            for dx in [-1, 0, 1]:
-                for dy in [-1, 0, 1]:
-                    if dx == 0 and dy == 0:
-                        continue
-                    new_x = x + dx
-                    new_y = y + dy
-                    if new_x < 0 or new_x >= self.x_size:
-                        continue
-                    if new_y < 0 or new_y >= self.y_size:
-                        continue
-                    res.add((new_x, new_y))
-            self.neighbors_memoized[(x, y)] = res
-            return res
-        else:
-            raise ValueError("unknown mode {}".format(mode))
+    def unfreeze_point(self, p):
+        self.frozen_points.remove(p)
+
+    def unfreeze_all(self):
+        self.frozen_points = set()
+
+    def size(self):
+        return self.lattice.n_points()
+
+    def add_condition_at_position(self, p, func):
+        assert callable(func)
+        self.condition_dict[p] = func
+
+    def get_neighbors(self, p):
+        return self.lattice.adjacencies[p]
 
     def get_random_path(self, a, b, points_to_avoid):
         # start and end should inch toward each other
@@ -118,58 +84,59 @@ class ElevationGenerationMap:
 
             points_in_path.add(next_step)
 
-            if current_a in self.get_neighbors(*current_b):
+            if current_a in self.get_neighbors(current_b):
                 break
 
             i += 1
         return points_in_path
 
-    def get_next_step_in_path(self, current_point, objective, points_to_avoid):
-        dx = objective[0] - current_point[0]
-        dy = objective[1] - current_point[1]
-        z = dx + dy*1j
-        objective_angle = np.angle(z, deg=True)
-        neighbors = self.get_neighbors(*current_point)
-        neighbors = [n for n in neighbors if n not in points_to_avoid]
-        neighbor_angles = [np.angle((n[0]-current_point[0]) + (n[1]-current_point[1])*1j, deg=True) for n in neighbors]
-        # set objective angle to zero for purposes of determining weight
-        neighbor_effective_angles = [abs(a - objective_angle) % 360 for a in neighbor_angles]
-        neighbor_effective_angles = [a-360 if a>180 else a for a in neighbor_effective_angles]
-        neighbor_weights = [180-abs(a) for a in neighbor_effective_angles]
-        assert all(0 <= w <= 180 for w in neighbor_weights), "{}\n{}\n{}".format(neighbors, neighbor_effective_angles, neighbor_weights)
-        total_weight = sum(neighbor_weights)
-        norm_weights = [w / total_weight for w in neighbor_weights]
-        chosen_one_index = np.random.choice([x for x in range(len(neighbors))], p=norm_weights)
-        chosen_one = neighbors[chosen_one_index]
-        return chosen_one
+    # def get_next_step_in_path(self, current_point, objective, points_to_avoid):
+    #     # TODO this function can be adapted to the Lattice class, not relying on x and y
+    #     dx = objective[0] - current_point[0]
+    #     dy = objective[1] - current_point[1]
+    #     z = dx + dy*1j
+    #     objective_angle = np.angle(z, deg=True)
+    #     neighbors = self.get_neighbors(*current_point)
+    #     neighbors = [n for n in neighbors if n not in points_to_avoid]
+    #     neighbor_angles = [np.angle((n[0]-current_point[0]) + (n[1]-current_point[1])*1j, deg=True) for n in neighbors]
+    #     # set objective angle to zero for purposes of determining weight
+    #     neighbor_effective_angles = [abs(a - objective_angle) % 360 for a in neighbor_angles]
+    #     neighbor_effective_angles = [a-360 if a>180 else a for a in neighbor_effective_angles]
+    #     neighbor_weights = [180-abs(a) for a in neighbor_effective_angles]
+    #     assert all(0 <= w <= 180 for w in neighbor_weights), "{}\n{}\n{}".format(neighbors, neighbor_effective_angles, neighbor_weights)
+    #     total_weight = sum(neighbor_weights)
+    #     norm_weights = [w / total_weight for w in neighbor_weights]
+    #     chosen_one_index = np.random.choice([x for x in range(len(neighbors))], p=norm_weights)
+    #     chosen_one = neighbors[chosen_one_index]
+    #     return chosen_one
 
-    def get_random_contiguous_region(self, x=None, y=None, expected_size=None, points_to_avoid=None, prioritize_internal_unfilled=False):
+    def get_random_contiguous_region(self, p=None, expected_size=None, points_to_avoid=None, prioritize_internal_unfilled=False):
         assert expected_size > 1, "invalid expected size {}".format(expected_size)
         if points_to_avoid is None:
             points_to_avoid = set()
         points_to_avoid |= self.frozen_points
-        center = (x, y)
-        while center is (None, None) or center in points_to_avoid:
+        center = p
+        while center is None or center in points_to_avoid:
             center = self.get_random_point()
-        neighbors = [p for p in self.get_neighbors(*center) if p not in points_to_avoid]
+        neighbors = [p for p in self.get_neighbors(center) if p not in points_to_avoid]
         size = -1
         while size < 1:
             size = int(np.random.normal(expected_size, expected_size/2))
         # print("making region of size {}".format(size))
 
         radius = int(round(np.sqrt(size/np.pi)))
-        circle = self.get_circle_around_point(center[0], center[1], radius, barrier_points=points_to_avoid)
+        circle = self.get_circle_around_point(center, radius, barrier_points=points_to_avoid)
         return circle
 
-    def get_circle_around_point(self, x, y, radius, barrier_points=None):  # flagged as slow, look for existing algorithms
+    def get_circle_around_point(self, p, radius, barrier_points=None):  # flagged as slow, look for existing algorithms
         # print("\ncenter {}\nbarrier points\n{}".format((x, y), sorted(barrier_points)))
         # input("please debug")
         if barrier_points is None:
             barrier_points = set()
-        assert (x, y) not in barrier_points, "can't make circle with center in barrier"
-        points = {(x, y)}
-        def get_max_dy(dx):
-            return int(round(np.sqrt(radius**2-dx**2)))
+        assert p not in barrier_points, "can't make circle with center in barrier"
+        points = {p}
+        # def get_max_dy(dx):
+        #     return int(round(np.sqrt(radius**2-dx**2)))
 
         # can tell which points are on inside vs outside of barrier wall by doing this:
         # starting in center, go left/right and count barrier crossings (+= 0.5 when is_in_barrier_set changes truth value)
@@ -178,49 +145,55 @@ class ElevationGenerationMap:
         # those ending in 0.5 are in the barrier itself, those == 1 mod 2 are on the other side
         # so take those == 0 mod 2
 
-        barrier_crossings_by_point = {(x, y): 0}
+        barrier_crossings_by_point = {p: 0}
         
-        # print("\nstarting circle around {}".format((x, y)))
-        # start with dx = 0 to create the central line
-        dy = 0
-        max_dx = radius
-        for direction in [-1, 1]:
-            # reset barrier crossings to center's value
-            n_barrier_crossings = barrier_crossings_by_point[(x, y)]
-            last_was_on_barrier = False
-            for abs_dx in range(max_dx+1):
-                dx = direction * abs_dx
-                this_x = x + dx
-                this_y = y + dy
-                # print("adding central line point at {}".format((this_x, this_y)))
-                if not self.is_valid_point(this_x, this_y):
-                    continue
-                is_on_barrier = (this_x, this_y) in barrier_points
-                if is_on_barrier != last_was_on_barrier:
-                    n_barrier_crossings += 0.5
-                barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
-                last_was_on_barrier = is_on_barrier
+        # # print("\nstarting circle around {}".format((x, y)))
+        # # start with dx = 0 to create the central line
+        # dy = 0
+        # max_dx = radius
+        # for direction in [-1, 1]:
+        #     # reset barrier crossings to center's value
+        #     n_barrier_crossings = barrier_crossings_by_point[(x, y)]
+        #     last_was_on_barrier = False
+        #     for abs_dx in range(max_dx+1):
+        #         dx = direction * abs_dx
+        #         this_x = x + dx
+        #         this_y = y + dy
+        #         # print("adding central line point at {}".format((this_x, this_y)))
+        #         if not self.is_valid_point(this_x, this_y):
+        #             continue
+        #         is_on_barrier = (this_x, this_y) in barrier_points
+        #         if is_on_barrier != last_was_on_barrier:
+        #             n_barrier_crossings += 0.5
+        #         barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
+        #         last_was_on_barrier = is_on_barrier
 
-        # now do the rest
-        for dx in range(-radius, radius+1):
-            this_x = x + dx
-            central_axis_point = (x, y)
-            assert central_axis_point in barrier_crossings_by_point, "can't find central axis point {}".format(central_axis_point)
-            max_dy = get_max_dy(dx)
-            for direction in [-1, 1]:
-                n_barrier_crossings = barrier_crossings_by_point[central_axis_point]
-                last_was_on_barrier = central_axis_point in barrier_points
-                for abs_dy in range(max_dy+1):
-                    dy = direction * abs_dy
-                    this_y = y + dy
-                    # print("adding non-central point at {}".format((this_x, this_y)))
-                    if not self.is_valid_point(this_x, this_y):
-                        continue
-                    is_on_barrier = (this_x, this_y) in barrier_points
-                    if is_on_barrier != last_was_on_barrier:
-                        n_barrier_crossings += 0.5
-                    barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
-                    last_was_on_barrier = is_on_barrier
+        # # now do the rest
+        # for dx in range(-radius, radius+1):
+        #     this_x = x + dx
+        #     central_axis_point = (x, y)
+        #     assert central_axis_point in barrier_crossings_by_point, "can't find central axis point {}".format(central_axis_point)
+        #     max_dy = get_max_dy(dx)
+        #     for direction in [-1, 1]:
+        #         n_barrier_crossings = barrier_crossings_by_point[central_axis_point]
+        #         last_was_on_barrier = central_axis_point in barrier_points
+        #         for abs_dy in range(max_dy+1):
+        #             dy = direction * abs_dy
+        #             this_y = y + dy
+        #             # print("adding non-central point at {}".format((this_x, this_y)))
+        #             if not self.is_valid_point(this_x, this_y):
+        #                 continue
+        #             is_on_barrier = (this_x, this_y) in barrier_points
+        #             if is_on_barrier != last_was_on_barrier:
+        #                 n_barrier_crossings += 0.5
+        #             barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
+        #             last_was_on_barrier = is_on_barrier
+
+        # method for arbitrary lattice, probably inefficienet but worry about that later
+        edge = self.get_neighbors(p)
+        for p1 in edge:
+            is_on_barrier = p1 in barrier_points
+            raise # TODO
 
         res = {p for p, n in barrier_crossings_by_point.items() if n % 2 == 0}
         # print("returning:\n{}".format(res))
@@ -235,43 +208,45 @@ class ElevationGenerationMap:
         return res
 
     def get_distances_from_edge(self, point_set, use_scipy_method=True):
-        if use_scipy_method:
-            min_x = np.inf
-            max_x = -np.inf
-            min_y = np.inf
-            max_y = -np.inf
-            for p in point_set:
-                x, y = p
-                min_x = min(x, min_x)
-                max_x = max(x, max_x)
-                min_y = min(y, min_y)
-                max_y = max(y, max_y)
-            
-            # put them in an array
-            to_relative_coords = lambda p: (p[0]-min_x, p[1]-min_y)
-            to_absolute_coords = lambda p: (p[0]+min_x, p[1]+min_y)
-            arr_x_size = max_x - min_x + 1
-            arr_y_size = max_y - min_y + 1
-            arr = np.zeros((arr_x_size, arr_y_size))
-            rels = {}
-            for p in point_set:
-                xrel, yrel = to_relative_coords(p)
-                rels[p] = (xrel, yrel)
-                arr[xrel, yrel] = 1
-            distance_transform_matrix = ndimage.morphology.distance_transform_edt(arr)
-            res = {}
-            for p in point_set:
-                xrel, yrel = rels[p]
-                d = distance_transform_matrix[xrel, yrel]
-                res[p] = d - 1
-            return res
+        # if use_scipy_method:  # TODO see if there is an equivalent "distance transform" function for arbitrary lattice points
+        if False:
+            pass
+        #     min_x = np.inf
+        #     max_x = -np.inf
+        #     min_y = np.inf
+        #     max_y = -np.inf
+        #     for p in point_set:
+        #         x, y = p
+        #         min_x = min(x, min_x)
+        #         max_x = max(x, max_x)
+        #         min_y = min(y, min_y)
+        #         max_y = max(y, max_y)
+        #     
+        #     # put them in an array
+        #     to_relative_coords = lambda p: (p[0]-min_x, p[1]-min_y)
+        #     to_absolute_coords = lambda p: (p[0]+min_x, p[1]+min_y)
+        #     arr_x_size = max_x - min_x + 1
+        #     arr_y_size = max_y - min_y + 1
+        #     arr = np.zeros((arr_x_size, arr_y_size))
+        #     rels = {}
+        #     for p in point_set:
+        #         xrel, yrel = to_relative_coords(p)
+        #         rels[p] = (xrel, yrel)
+        #         arr[xrel, yrel] = 1
+        #     distance_transform_matrix = ndimage.morphology.distance_transform_edt(arr)
+        #     res = {}
+        #     for p in point_set:
+        #         xrel, yrel = rels[p]
+        #         d = distance_transform_matrix[xrel, yrel]
+        #         res[p] = d - 1
+        #     return res
 
         else:
             # old way, slower than scipy
             if len(point_set) == 0:
                 return {}
             res = {}
-            points_on_edge = [p for p in point_set if any(n not in point_set for n in self.get_neighbors(*p))]  # flagged as slow: genexpr
+            points_on_edge = [p for p in point_set if any(n not in point_set for n in self.get_neighbors(p))]  # flagged as slow: genexpr
             assert len(points_on_edge) > 0, "point set has no edge members:\n{}".format(sorted(point_set))
             for p in points_on_edge:
                 res[p] = 0
@@ -286,15 +261,14 @@ class ElevationGenerationMap:
         center = self.get_random_point()
         # center = self.get_random_untouched_point()
         # print("making change at {}".format(center))
-        changing_reg = self.get_random_contiguous_region(center[0], center[1], expected_size=expected_size, points_to_avoid=self.frozen_points)
+        changing_reg = self.get_random_contiguous_region(center, expected_size=expected_size, points_to_avoid=self.frozen_points)
         changing_reg_size = len(changing_reg)
         # print("expected size {}, got {}".format(expected_size, changing_reg_size))
-        changing_reg_center_of_mass = (
-            int(round(1/changing_reg_size * sum(p[0] for p in changing_reg))),
-            int(round(1/changing_reg_size * sum(p[1] for p in changing_reg)))
-        )
-        e_center_of_mass = self.array[changing_reg_center_of_mass[0], changing_reg_center_of_mass[1]]
-        reference_x, reference_y = changing_reg_center_of_mass
+        ps_xyz = [np.array(p.get_coords("xyz")) for p in changing_reg]
+        changing_reg_center_of_mass_raw = np.mean(ps_xyz)
+        changing_reg_center_of_mass = self.lattice.closest_point_to(changing_reg_center_of_mass_raw)
+        e_center_of_mass = self.data_dict[changing_reg_center_of_mass]
+        reference_p = changing_reg_center_of_mass
         # radius_giving_equivalent_area = np.sqrt(changing_reg_size/np.pi)
         radius_giving_expected_area = np.sqrt(expected_size/np.pi)
         desired_area_ratio_at_sea_level = 5
@@ -311,7 +285,7 @@ class ElevationGenerationMap:
             desired_area_ratio = desired_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
         # radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
         radius = int(round(radius_giving_expected_area * np.sqrt(desired_area_ratio)))
-        reference_reg = self.get_circle_around_point(reference_x, reference_y, radius=radius)
+        reference_reg = self.get_circle_around_point(reference_p, radius=radius)
         # reference_reg = changing_reg
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
@@ -380,57 +354,55 @@ class ElevationGenerationMap:
             if self.new_value_satisfies_condition(p[0], p[1], new_el):
                 self.fill_position(p[0], p[1], new_el)
 
-    def get_random_point(self, border_width=0):
-        x = random.randrange(border_width, self.x_size - border_width)
-        y = random.randrange(border_width, self.y_size - border_width)
-        return (x, y)
+    def get_random_point(self, *args, **kwargs):
+        return self.lattice.get_random_point(*args, **kwargs)
 
-    def get_random_zero_loop(self):
-        x0_0, y0_0 = self.get_random_point(border_width=2)
-        dx = 0
-        dy = 0
-        while np.sqrt(dx**2 + dy**2) < self.x_size * 1/2 * np.sqrt(2):
-            x0_1 = random.randrange(2, self.x_size - 2)
-            y0_1 = random.randrange(2, self.y_size - 2)
-            dx = x0_1 - x0_0
-            dy = y0_1 - y0_0
-        # x0_1 = (x0_0 + self.x_size // 2) % self.x_size  # force it to be considerably far away to get more interesting result
-        # y0_1 = (y0_0 + self.y_size // 2) % self.y_size
-        source_0 = (x0_0, y0_0)
-        source_1 = (x0_1, y0_1)
-        path_0 = self.get_random_path(source_0, source_1, points_to_avoid=set())
-        path_1 = self.get_random_path(source_0, source_1, points_to_avoid=path_0)
+    # def get_random_zero_loop(self):
+    #     x0_0, y0_0 = self.get_random_point(border_width=2)
+    #     dx = 0
+    #     dy = 0
+    #     while np.sqrt(dx**2 + dy**2) < self.x_size * 1/2 * np.sqrt(2):
+    #         x0_1 = random.randrange(2, self.x_size - 2)
+    #         y0_1 = random.randrange(2, self.y_size - 2)
+    #         dx = x0_1 - x0_0
+    #         dy = y0_1 - y0_0
+    #     # x0_1 = (x0_0 + self.x_size // 2) % self.x_size  # force it to be considerably far away to get more interesting result
+    #     # y0_1 = (y0_0 + self.y_size // 2) % self.y_size
+    #     source_0 = (x0_0, y0_0)
+    #     source_1 = (x0_1, y0_1)
+    #     path_0 = self.get_random_path(source_0, source_1, points_to_avoid=set())
+    #     path_1 = self.get_random_path(source_0, source_1, points_to_avoid=path_0)
 
-        res = path_0 | path_1
-        # print(res)
-        return res
+    #     res = path_0 | path_1
+    #     # print(res)
+    #     return res
 
-    def add_random_zero_loop(self):
-        points = self.get_random_zero_loop()
-        for p in points:
-            self.fill_position(p[0], p[1], 0)
+    # def add_random_zero_loop(self):
+    #     points = self.get_random_zero_loop()
+    #     for p in points:
+    #         self.fill_position(p[0], p[1], 0)
 
-    def fill_elevations_outward_propagation(self):
-        # old
-        raise Exception("do not use")
-        # try filling the neighbors in "shells", get all the neighbors at one step and do all of them first before moving on
-        # but that leads to a square propagating outward, so should sometimes randomly restart the list
-        while len(self.unfilled_neighbors) + len(self.unfilled_inaccessible) > 0:
-            to_fill_this_round = [x for x in self.unfilled_neighbors]
-            random.shuffle(to_fill_this_round)
-            for p in to_fill_this_round:
-                # p = random.choice(list(self.unfilled_neighbors))
-                # neighbor = random.choice([x for x in self.get_neighbors(*p) if x in self.filled_positions])
-                # neighbor_el = self.get_value_at_position(*neighbor)
-                filled_neighbors = [x for x in self.get_neighbors(*p) if x in self.filled_positions]
-                average_neighbor_el = np.mean([self.get_value_at_position(*n) for n in filled_neighbors])
-                d_el = np.random.normal(0, 100)
-                el = average_neighbor_el + d_el
-                self.fill_position(p[0], p[1], el)
-                if random.random() < 0.02:
-                    break  # for
-                    # then will have new list of neighbors
-            self.draw()
+    # def fill_elevations_outward_propagation(self):
+    #     # old
+    #     raise Exception("do not use")
+    #     # try filling the neighbors in "shells", get all the neighbors at one step and do all of them first before moving on
+    #     # but that leads to a square propagating outward, so should sometimes randomly restart the list
+    #     while len(self.unfilled_neighbors) + len(self.unfilled_inaccessible) > 0:
+    #         to_fill_this_round = [x for x in self.unfilled_neighbors]
+    #         random.shuffle(to_fill_this_round)
+    #         for p in to_fill_this_round:
+    #             # p = random.choice(list(self.unfilled_neighbors))
+    #             # neighbor = random.choice([x for x in self.get_neighbors(*p) if x in self.filled_positions])
+    #             # neighbor_el = self.get_value_at_position(*neighbor)
+    #             filled_neighbors = [x for x in self.get_neighbors(*p) if x in self.filled_positions]
+    #             average_neighbor_el = np.mean([self.get_value_at_position(*n) for n in filled_neighbors])
+    #             d_el = np.random.normal(0, 100)
+    #             el = average_neighbor_el + d_el
+    #             self.fill_position(p[0], p[1], el)
+    #             if random.random() < 0.02:
+    #                 break  # for
+    #                 # then will have new list of neighbors
+    #         self.draw()
 
     def fill_elevations(self, n_steps, expected_change_size, plot_every_n_steps=None):
         if plot_every_n_steps is not None:
@@ -465,40 +437,40 @@ class ElevationGenerationMap:
                 # input("debug")
             i += 1
 
-    def get_xy_meshgrid(self):
-        return np.meshgrid(range(self.x_size), range(self.y_size))
+    # def get_xy_meshgrid(self):
+    #     return np.meshgrid(range(self.x_size), range(self.y_size))
 
-    def get_latlon_meshgrid(self):
-        lats_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
-        lons_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
-        n_ps = self.x_size * self.y_size
-        i = 0
-        for x in range(self.x_size):
-            for y in range(self.y_size):
-                if i % 1000 == 0:
-                    print("i = {}/{}".format(i, n_ps))
-                p_lat, p_lon = mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
-                    self.lat00, self.lon00,
-                    self.lat01, self.lon01,
-                    self.lat10, self.lon10,
-                    self.lat11, self.lon11,
-                    deg=True
-                )
-                lats_grid[x, y] = p_lat
-                lons_grid[x, y] = p_lon
-                i += 1
+    # def get_latlon_meshgrid(self):
+    #     lats_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
+    #     lons_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
+    #     n_ps = self.x_size * self.y_size
+    #     i = 0
+    #     for x in range(self.x_size):
+    #         for y in range(self.y_size):
+    #             if i % 1000 == 0:
+    #                 print("i = {}/{}".format(i, n_ps))
+    #             p_lat, p_lon = mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
+    #                 self.lat00, self.lon00,
+    #                 self.lat01, self.lon01,
+    #                 self.lat10, self.lon10,
+    #                 self.lat11, self.lon11,
+    #                 deg=True
+    #             )
+    #             lats_grid[x, y] = p_lat
+    #             lons_grid[x, y] = p_lon
+    #             i += 1
 
-        # x_grid, y_grid = self.get_xy_meshgrid()
-        # f = lambda x, y: mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
-        #             self.lat00, self.lon00,
-        #             self.lat01, self.lon01,
-        #             self.lat10, self.lon10,
-        #             self.lat11, self.lon11,
-        #             deg=True
-        #         )
-        # f = np.vectorize(f)
-        # lats_grid, lons_grid = f(x_grid, y_grid)
-        return lats_grid, lons_grid
+    #     # x_grid, y_grid = self.get_xy_meshgrid()
+    #     # f = lambda x, y: mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
+    #     #             self.lat00, self.lon00,
+    #     #             self.lat01, self.lon01,
+    #     #             self.lat10, self.lon10,
+    #     #             self.lat11, self.lon11,
+    #     #             deg=True
+    #     #         )
+    #     # f = np.vectorize(f)
+    #     # lats_grid, lons_grid = f(x_grid, y_grid)
+    #     return lats_grid, lons_grid
 
     def plot(self, projection=None):
         plt.gcf()
@@ -516,49 +488,50 @@ class ElevationGenerationMap:
         plt.savefig(output_fp)
 
     def pre_plot(self, projection=None):
-        if projection is None:
-            projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
-        average_lat, average_lon = self.average_latlon()
-        m = Basemap(projection=projection, lon_0=average_lon, lat_0=average_lat, resolution='l')
-        # m.drawcoastlines()  # Earth
-        # m.fillcontinents(color='coral',lake_color='aqua')  # Earth
-        # draw parallels and meridians.
-        m.drawparallels(np.arange(-90.,91.,30.))
-        m.drawmeridians(np.arange(-180.,181.,60.))
-        # m.drawmapboundary(fill_color='aqua')
-        # plt.title("Full Disk Orthographic Projection")
-        # plt.show()
-        # ax = plt.subplot(projection=projection)
+        self.lattice.plot_data(self.data_dict, projection=projection)
+        # if projection is None:
+        #     projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
+        # average_lat, average_lon = self.average_latlon()
+        # m = Basemap(projection=projection, lon_0=average_lon, lat_0=average_lat, resolution='l')
+        # # m.drawcoastlines()  # Earth
+        # # m.fillcontinents(color='coral',lake_color='aqua')  # Earth
+        # # draw parallels and meridians.
+        # m.drawparallels(np.arange(-90.,91.,30.))
+        # m.drawmeridians(np.arange(-180.,181.,60.))
+        # # m.drawmapboundary(fill_color='aqua')
+        # # plt.title("Full Disk Orthographic Projection")
+        # # plt.show()
+        # # ax = plt.subplot(projection=projection)
 
-        min_elevation = self.array.min()
-        max_elevation = self.array.max()
-        contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
-        colormap = pu.get_land_and_sea_colormap()
-        # care more about seeing detail in land contour; displaying deep sea doesn't matter much
-        max_color_value = max_elevation
-        min_color_value = -1 * max_elevation
-        X, Y = self.get_latlon_meshgrid()
-        print("X =", X)
-        print("Y =", Y)
-        X, Y = m(X, Y)  # https://stackoverflow.com/questions/48191593/
+        # min_elevation = self.array.min()
+        # max_elevation = self.array.max()
+        # contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
+        # colormap = pu.get_land_and_sea_colormap()
+        # # care more about seeing detail in land contour; displaying deep sea doesn't matter much
+        # max_color_value = max_elevation
+        # min_color_value = -1 * max_elevation
+        # X, Y = self.get_latlon_meshgrid()
+        # print("X =", X)
+        # print("Y =", Y)
+        # X, Y = m(X, Y)  # https://stackoverflow.com/questions/48191593/
 
-        # draw colored filled contours
-        m.contourf(X, Y, self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
-        try:
-            plt.colorbar()
-        except IndexError:
-            # np being stupid when there are too few contours
-            pass
+        # # draw colored filled contours
+        # m.contourf(X, Y, self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
+        # try:
+        #     plt.colorbar()
+        # except IndexError:
+        #     # np being stupid when there are too few contours
+        #     pass
 
-        # draw contour lines, maybe just one at sea level
-        m.contour(X, Y, self.array, levels=[min_elevation, 0, max_elevation], colors="k")
+        # # draw contour lines, maybe just one at sea level
+        # m.contour(X, Y, self.array, levels=[min_elevation, 0, max_elevation], colors="k")
 
-        plt.gca().invert_yaxis()
-        plt.axis("scaled")  # maintain aspect ratio
-        plt.title("elevation")
-        # max_grad, pair = self.get_max_gradient()
-        # p, q = pair
-        # print("max gradient is {} from {} to {}".format(max_grad, p, q))
+        # plt.gca().invert_yaxis()
+        # plt.axis("scaled")  # maintain aspect ratio
+        # plt.title("elevation")
+        # # max_grad, pair = self.get_max_gradient()
+        # # p, q = pair
+        # # print("max gradient is {} from {} to {}".format(max_grad, p, q))
 
     def plot_gradient(self):
         ax1 = plt.subplot(1, 2, 1)
@@ -869,7 +842,7 @@ class ElevationGenerationMap:
         plt.show()
 
     @staticmethod
-    def from_image(image_fp, color_condition_dict, default_color):
+    def from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11):
         # all points in image matching something in the color dict should be that color no matter what
         # everything else is randomly generated
         # i.e., put the determined points in points_to_avoid for functions that take it
@@ -877,15 +850,19 @@ class ElevationGenerationMap:
         if any(len(x) != 4 for x in color_condition_dict.keys()):
             raise ValueError("all color keys must have length 4, RGBA:\n{}".format(color_condition_dict.keys()))
 
-        lattice = LatitudeLongitudeLattice  # image is x-y grid
-
         im = Image.open(image_fp)
         width, height = im.size
-        m = ElevationGenerationMap(height, width)  # rows, columns
+        image_lattice = LatitudeLongitudeLattice(
+            height, width,  # rows, columns
+            latlon00, latlon01, latlon10, latlon11
+        )  # we are not actually going to add data to this lattice, but we will use it to get point coordinates more easily
+        map_lattice = IcosahedralGeodesicLattice(edge_length_km=1000)
+        # later will need to be able to adjust edge length dynamically based on how fine the image grid is
+        m = ElevationGenerationMap(map_lattice)
         arr = np.array(im)
         color_and_first_seen = {}
-        for x in range(m.x_size):
-            for y in range(m.y_size):
+        for x in range(height):
+            for y in range(width):
                 color = tuple(arr[x, y])
                 if color not in color_condition_dict:
                     color = default_color
@@ -897,10 +874,13 @@ class ElevationGenerationMap:
                     fill_value, condition, is_frozen = color_condition_dict[color]
                     if fill_value is None:
                         fill_value = 0
-                    m.fill_position(x, y, fill_value)
-                    m.add_condition_at_position(x, y, condition)
+
+                    image_point = image_lattice.point_dict[(x, y)]
+                    p = map_lattice.closest_point_to(image_point)  # closest point on lattice to this x, y point on the image
+                    m.fill_position(p, fill_value)
+                    m.add_condition_at_position(p, condition)
                     if is_frozen:
-                        m.freeze_point(x, y)
+                        m.freeze_point(p)
         return m
 
     @staticmethod
@@ -914,16 +894,15 @@ class ElevationGenerationMap:
 
     def freeze_coastlines(self):
         coastal_points = set()
-        for x in range(self.x_size):
-            for y in range(self.y_size):
-                if self.array[x, y] < 0:
-                    neighbors = self.get_neighbors(x, y)
-                    for n in neighbors:
-                        if self.array[n[0], n[1]] >= 0:
-                            coastal_points.add(n)
+        for p in self.lattice.get_points():
+            if p in self.data_dict and self.data_dict[p] < 0:
+                neighbors = self.get_neighbors(p)
+                for n in neighbors:
+                    if n in self.data_dict and self.data_dict[n] >= 0:
+                        coastal_points.add(n)
         for p in coastal_points:
-            self.fill_position(p[0], p[1], 0)
-            self.freeze_point(*p)
+            self.fill_position(p, 0)
+            self.freeze_point(p)
 
     # def get_min_gradient_array(self):
     #     if hasattr(self, "min_gradient_array") and self.min_gradient_array is not None:

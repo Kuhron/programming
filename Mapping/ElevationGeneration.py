@@ -41,13 +41,13 @@ if __name__ == "__main__":
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
         # image_fp_no_dir = "TestMap_Jhorju.png"
         # image_fp_no_dir = "TestMap_Amphoto.png"
-        image_fp_no_dir = "TestMap_Mako.png"
+        # image_fp_no_dir = "TestMap_Mako.png"
         # image_fp_no_dir = "TestMap_Myst.png"
         # image_fp_no_dir = "TestMap_Ilausa.png"
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
         # image_fp_no_dir = "TestMap_CircleIsland.png"
-        # image_fp_no_dir = "TestMap_CircleIsland50x50.png"
+        image_fp_no_dir = "TestMap_CircleIsland50x50.png"
         image_fp = image_dir + image_fp_no_dir
 
         print("from image {}".format(image_fp))
@@ -63,7 +63,8 @@ if __name__ == "__main__":
             # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
         }
         default_color = (0, 0, 0, 255)
-        m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color)
+        latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
+        m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11)
         m.freeze_coastlines()
         generate_initial_elevation_changes = True
     elif from_data:

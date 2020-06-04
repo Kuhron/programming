@@ -22,13 +22,28 @@ class Lattice:
         # specific to the subclasses, depending on type of lattice
         raise NotImplementedError
 
-    def get_points(self):
-        return list(self.adjacencies.keys())
+    def get_points(self, coords_system=None):
+        points = list(self.adjacencies.keys())
+        if coords_system is not None:
+            return [p.get_coords(coords_system) for p in points]
+        return points
 
-    def get_nearest_lattice_point_to_input_point(p):
+    def n_points(self):
+        return len(self.adjacencies)
+
+    def get_random_point(self):
+        return random.choice(list(self.adjacencies.keys()))
+
+    def closest_point_to(self, p):
         assert type(p) is UnitSpherePoint
-        # first pass: brute force
-        return min(self.adjacencies, key=lambda x: x.distance(p))
+
+        x, y, z = p.get_coords("xyz")
+        d_xyz = 0.1
+        is_candidate = lambda x1, y1, z1: abs(x-x1) < d_xyz and abs(y-y1) < d_xyz and abs(z-z1) < d_xyz
+        ps = self.get_points()
+        candidates = [p1 for p1 in ps if is_candidate(*p1.get_coords("xyz"))]
+
+        return min(candidates, key=lambda x: x.distance(p))
 
         # later could optimize somehow, e.g. take only a box of +/- dx,dy,dz and sort those
 
@@ -47,18 +62,17 @@ class Lattice:
     def place_random_data(self):
         data = {p: 0 for p in self.points}
         n_patches = 1000
+        size_per_patch = int(1/100 * self.n_points())
         for i in range(n_patches):
             starting_point = random.choice(self.points)
             patch = {starting_point}
             # the outward-moving edge is the next points that are not yet in the patch
             edge = set(self.adjacencies[starting_point])
-            while True:
+            for p_i in range(size_per_patch):
                 chosen = random.choice(list(edge))
                 patch.add(chosen)
                 edge |= set(self.adjacencies[chosen])
                 edge -= patch
-                if random.random() < 0.01:
-                    break
                 if len(edge) == 0:  # can happen if whole lattice is in patch
                     break
             # change elevation on the patch
