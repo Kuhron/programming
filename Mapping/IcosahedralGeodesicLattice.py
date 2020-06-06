@@ -17,6 +17,7 @@ class IcosahedralGeodesicLattice(Lattice):
         self.edge_length_km = edge_length_km
         self.adjacencies = self.get_adjacencies()
         self.points = self.get_points()
+        self.graph = self.get_graph()
 
     def get_adjacencies(self):
         # edge_length_km determines how high the resolution is

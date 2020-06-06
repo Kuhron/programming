@@ -9,6 +9,7 @@ from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as tri  # interpolation of irregularly spaced data
 import numpy as np
+import networkx as nx
 
 from UnitSpherePoint import UnitSpherePoint
 import PlottingUtil as pu
@@ -21,6 +22,15 @@ class Lattice:
     def get_adjacencies(self):
         # specific to the subclasses, depending on type of lattice
         raise NotImplementedError
+
+    def get_graph(self):
+        g = nx.Graph()
+        for p in self.adjacencies:  # add nodes first
+            g.add_node(p)
+        for p, neighs in self.adjacencies.items():  # now put edges between them
+            for p1 in neighs:
+                g.add_edge(p, p1)
+        return g
 
     def get_points(self, coords_system=None):
         points = list(self.adjacencies.keys())
@@ -98,7 +108,7 @@ class Lattice:
         lon_0s = [[-120, -60, 0], [60, 120, 180]]
         n_rows = len(lon_0s)
         n_cols = len(lon_0s[0])
-        fig = plt.figure()
+        fig = plt.gcf()
         cmap = pu.get_land_and_sea_colormap()
         contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
         for i, row in enumerate(lon_0s):
@@ -117,5 +127,4 @@ class Lattice:
     
                 plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
                 plt.title("lon {}".format(lon_0))
-        plt.show()
 

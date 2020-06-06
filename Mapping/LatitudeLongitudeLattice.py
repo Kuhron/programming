@@ -24,6 +24,8 @@ class LatitudeLongitudeLattice(Lattice):
 
         self.create_point_dict()
         self.adjacencies = self.get_adjacencies()
+        self.graph = self.get_graph()
+        self.points = self.get_points()
     
     def create_point_dict(self):
         print("creating point dict for LatitudeLongitudeLattice")

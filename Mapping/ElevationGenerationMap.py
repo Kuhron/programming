@@ -1,21 +1,25 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import random
 from datetime import datetime
+import networkx as nx
 from PIL import Image
 from ArrayUtil import make_blank_condition_array, make_nan_array
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 import PlottingUtil as pu
+from UnitSpherePoint import UnitSpherePoint
+import ElevationChangeFunctions as elfs
 
 
 class ElevationGenerationMap:
-    def __init__(self, lattice, data_dict=None):
+    def __init__(self, lattice, data_dict=None, default_elevation=0):
         self.lattice = lattice
-        if data_dict is None:
-            self.data_dict = {}
-        else:
-            self.data_dict = data_dict
-        self.condition_dict = {}
+        self.data_dict = {p: default_elevation for p in self.lattice.points}
+        if data_dict is not None:
+            self.data_dict.update(data_dict)
+        default_condition = lambda x: True
+        self.condition_dict = {p: default_condition for p in self.lattice.points}
         self.frozen_points = set()
 
     def new_value_satisfies_condition(self, p, value):
@@ -128,84 +132,40 @@ class ElevationGenerationMap:
         circle = self.get_circle_around_point(center, radius, barrier_points=points_to_avoid)
         return circle
 
-    def get_circle_around_point(self, p, radius, barrier_points=None):  # flagged as slow, look for existing algorithms
-        # print("\ncenter {}\nbarrier points\n{}".format((x, y), sorted(barrier_points)))
-        # input("please debug")
+    def get_circle_around_point(self, p, radius, barrier_points=None):
         if barrier_points is None:
             barrier_points = set()
         assert p not in barrier_points, "can't make circle with center in barrier"
-        points = {p}
-        # def get_max_dy(dx):
-        #     return int(round(np.sqrt(radius**2-dx**2)))
 
         # can tell which points are on inside vs outside of barrier wall by doing this:
-        # starting in center, go left/right and count barrier crossings (+= 0.5 when is_in_barrier_set changes truth value)
-        # then go up/down from there and continue counting
-        # so each point in the set is associated with a number of barrier crossings
+        # assign weight of 0.5 to each transition into and out of the barrier (edges in the lattice's graph)
+        # so each point in the lattice is associated with a number of barrier crossings
         # those ending in 0.5 are in the barrier itself, those == 1 mod 2 are on the other side
         # so take those == 0 mod 2
 
-        barrier_crossings_by_point = {p: 0}
-        
-        # # print("\nstarting circle around {}".format((x, y)))
-        # # start with dx = 0 to create the central line
-        # dy = 0
-        # max_dx = radius
-        # for direction in [-1, 1]:
-        #     # reset barrier crossings to center's value
-        #     n_barrier_crossings = barrier_crossings_by_point[(x, y)]
-        #     last_was_on_barrier = False
-        #     for abs_dx in range(max_dx+1):
-        #         dx = direction * abs_dx
-        #         this_x = x + dx
-        #         this_y = y + dy
-        #         # print("adding central line point at {}".format((this_x, this_y)))
-        #         if not self.is_valid_point(this_x, this_y):
-        #             continue
-        #         is_on_barrier = (this_x, this_y) in barrier_points
-        #         if is_on_barrier != last_was_on_barrier:
-        #             n_barrier_crossings += 0.5
-        #         barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
-        #         last_was_on_barrier = is_on_barrier
+        g = self.lattice.graph
+        subgraph = nx.ego_graph(g, p, radius=radius)
+        # add weights of 0.5 to any edge transitioning between barrier and non-barrier
+        for n in subgraph.nodes:
+            subgraph.nodes[n]["in_barrier"] = n in barrier_points
+        for e in subgraph.edges:
+            p0, p1 = e
+            in_0 = 1 if p0 in barrier_points else 0
+            in_1 = 1 if p1 in barrier_points else 0
+            is_crossing = in_0 + in_1 == 1
+            subgraph.edges[p0, p1]["weight"] = 0.5 if is_crossing else 0
 
-        # # now do the rest
-        # for dx in range(-radius, radius+1):
-        #     this_x = x + dx
-        #     central_axis_point = (x, y)
-        #     assert central_axis_point in barrier_crossings_by_point, "can't find central axis point {}".format(central_axis_point)
-        #     max_dy = get_max_dy(dx)
-        #     for direction in [-1, 1]:
-        #         n_barrier_crossings = barrier_crossings_by_point[central_axis_point]
-        #         last_was_on_barrier = central_axis_point in barrier_points
-        #         for abs_dy in range(max_dy+1):
-        #             dy = direction * abs_dy
-        #             this_y = y + dy
-        #             # print("adding non-central point at {}".format((this_x, this_y)))
-        #             if not self.is_valid_point(this_x, this_y):
-        #                 continue
-        #             is_on_barrier = (this_x, this_y) in barrier_points
-        #             if is_on_barrier != last_was_on_barrier:
-        #                 n_barrier_crossings += 0.5
-        #             barrier_crossings_by_point[(this_x, this_y)] = n_barrier_crossings
-        #             last_was_on_barrier = is_on_barrier
+        # now get shortest paths from the center to every other point in the ego graph
+        # the weights of these paths will indicate whether they are on the same side of the barrier or not
+        points_on_same_side_of_barrier = set()
+        for p1 in subgraph.nodes:
+            shortest_path_length = nx.shortest_path_length(g, source=p, target=p1, weight="weight")
+            # if weight param is a string, it will use the edge data attribute with that name
+            if shortest_path_length % 2 == 0:
+                points_on_same_side_of_barrier.add(p1)
 
-        # method for arbitrary lattice, probably inefficienet but worry about that later
-        edge = self.get_neighbors(p)
-        for p1 in edge:
-            is_on_barrier = p1 in barrier_points
-            raise # TODO
-
-        res = {p for p, n in barrier_crossings_by_point.items() if n % 2 == 0}
-        # print("returning:\n{}".format(res))
-
-        # for dx in range(-radius, radius+1):
-        #     max_dy = get_max_dy(dx)
-        #     for ?
-        # starting_set = {(x+dx, y+dy) for dx in range(-radius, radius+1) for dy in get_dy_range(dx)}
-        # print("before barrier len = {}".format(len(res)))
-        # res = self.apply_barrier(res, barrier_points, x, y)
-        # print(" after barrier len = {}".format(len(res)))
-        return res
+        assert p in points_on_same_side_of_barrier  # should return itself
+        return points_on_same_side_of_barrier
 
     def get_distances_from_edge(self, point_set, use_scipy_method=True):
         # if use_scipy_method:  # TODO see if there is an equivalent "distance transform" function for arbitrary lattice points
@@ -265,7 +225,11 @@ class ElevationGenerationMap:
         changing_reg_size = len(changing_reg)
         # print("expected size {}, got {}".format(expected_size, changing_reg_size))
         ps_xyz = [np.array(p.get_coords("xyz")) for p in changing_reg]
-        changing_reg_center_of_mass_raw = np.mean(ps_xyz)
+        mean_ps_xyz = sum(ps_xyz) / len(ps_xyz)  # don't use np.mean here or it will give you a single scalar, mean of all values
+        assert len(mean_ps_xyz) == 3, "ya done goofed. look -> {}".format(mean_ps_xyz)
+        mean_ps_xyz = np.array(mean_ps_xyz)
+        mean_ps_xyz /= np.linalg.norm(mean_ps_xyz)  # normalize
+        changing_reg_center_of_mass_raw = UnitSpherePoint(tuple(mean_ps_xyz), "xyz")
         changing_reg_center_of_mass = self.lattice.closest_point_to(changing_reg_center_of_mass_raw)
         e_center_of_mass = self.data_dict[changing_reg_center_of_mass]
         reference_p = changing_reg_center_of_mass
@@ -290,13 +254,13 @@ class ElevationGenerationMap:
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
         if max_d == 0:
-            raw_func = elevation_change_constant
+            raw_func = elfs.elevation_change_constant
         else:
-            raw_func = random.choice(ELEVATION_CHANGE_FUNCTIONS)
+            raw_func = random.choice(elfs.ELEVATION_CHANGE_FUNCTIONS)
 
         if positive_feedback:
             # land begets land, sea begets sea
-            elevations_in_refreg = [self.array[p[0], p[1]] for p in reference_reg]
+            elevations_in_refreg = [self.data_dict[p] for p in reference_reg]
             e_avg = np.mean(elevations_in_refreg)
             e_max = np.max(elevations_in_refreg)  # for detecting mountain nearby, chain should propagate
             e_min = np.min(elevations_in_refreg)
@@ -349,10 +313,10 @@ class ElevationGenerationMap:
         func = lambda d: raw_func(d, max_d, max_change)
         changes = {p: func(d) for p, d in distances.items() if p not in self.frozen_points}
         for p, d_el in changes.items():
-            current_el = self.get_value_at_position(*p)
+            current_el = self.get_value_at_position(p)
             new_el = current_el + d_el
-            if self.new_value_satisfies_condition(p[0], p[1], new_el):
-                self.fill_position(p[0], p[1], new_el)
+            if self.new_value_satisfies_condition(p, new_el):
+                self.fill_position(p, new_el)
 
     def get_random_point(self, *args, **kwargs):
         return self.lattice.get_random_point(*args, **kwargs)
@@ -472,9 +436,9 @@ class ElevationGenerationMap:
     #     # lats_grid, lons_grid = f(x_grid, y_grid)
     #     return lats_grid, lons_grid
 
-    def plot(self, projection=None):
+    def plot(self):
         plt.gcf()
-        self.pre_plot(projection=projection)
+        self.pre_plot()
         plt.show()
 
     def draw(self):
@@ -487,8 +451,8 @@ class ElevationGenerationMap:
         self.pre_plot()
         plt.savefig(output_fp)
 
-    def pre_plot(self, projection=None):
-        self.lattice.plot_data(self.data_dict, projection=projection)
+    def pre_plot(self):
+        self.lattice.plot_data(self.data_dict)
         # if projection is None:
         #     projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
         # average_lat, average_lon = self.average_latlon()

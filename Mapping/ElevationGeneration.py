@@ -108,8 +108,8 @@ if __name__ == "__main__":
     print("map size {} pixels".format(m.size()))
 
     if generate_initial_elevation_changes:
-        expected_change_size = 10000
-        expected_touches_per_point = 200
+        expected_change_size = 10
+        expected_touches_per_point = 5
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
         # m.plot()
-        m.save_elevation_data(elevation_data_output_fp)
+        # m.save_elevation_data(elevation_data_output_fp)
         m.save_plot_image(plot_image_output_fp)
     elif generate_further_elevation_changes:
         m.unfreeze_all()  # allow coastlines to change
