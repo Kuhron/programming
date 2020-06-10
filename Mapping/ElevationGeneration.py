@@ -64,7 +64,8 @@ if __name__ == "__main__":
         }
         default_color = (0, 0, 0, 255)
         latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
-        map_lattice = IcosahedralGeodesicLattice(edge_length_km=3000)
+        lattice_edge_length_km = 500
+        map_lattice = IcosahedralGeodesicLattice(edge_length_km=lattice_edge_length_km)
         m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
         m.freeze_coastlines()
         generate_initial_elevation_changes = True
@@ -109,8 +110,8 @@ if __name__ == "__main__":
     print("map size {} pixels".format(m.size()))
 
     if generate_initial_elevation_changes:
-        expected_change_size = 10
-        expected_touches_per_point = 1
+        expected_change_size = 100
+        expected_touches_per_point = 5
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
