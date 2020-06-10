@@ -148,6 +148,7 @@ alias nwc="timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Fi
 alias flex="/usr/bin/fieldworks-flex"
 alias antlr4='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
 alias grun='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
+alias grepdocx="/home/wesley/grepdocx.sh"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}

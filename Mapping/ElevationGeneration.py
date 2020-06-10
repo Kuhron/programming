@@ -63,8 +63,9 @@ if __name__ == "__main__":
             # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
         }
         default_color = (0, 0, 0, 255)
-        latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
-        m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11)
+        latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
+        map_lattice = IcosahedralGeodesicLattice(edge_length_km=3000)
+        m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
         m.freeze_coastlines()
         generate_initial_elevation_changes = True
     elif from_data:
@@ -109,14 +110,14 @@ if __name__ == "__main__":
 
     if generate_initial_elevation_changes:
         expected_change_size = 10
-        expected_touches_per_point = 5
+        expected_touches_per_point = 1
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
         plot_every_n_steps = None
         print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        # m.plot()
+        m.plot()
         # m.save_elevation_data(elevation_data_output_fp)
         m.save_plot_image(plot_image_output_fp)
     elif generate_further_elevation_changes:

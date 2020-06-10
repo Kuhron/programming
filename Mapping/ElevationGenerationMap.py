@@ -145,24 +145,46 @@ class ElevationGenerationMap:
 
         g = self.lattice.graph
         subgraph = nx.ego_graph(g, p, radius=radius)
+        if len(barrier_points) == 0:
+            # don't do any graph computation, just return whole subgraph
+            return set(subgraph.nodes)
         # add weights of 0.5 to any edge transitioning between barrier and non-barrier
         for n in subgraph.nodes:
             subgraph.nodes[n]["in_barrier"] = n in barrier_points
         for e in subgraph.edges:
             p0, p1 = e
-            in_0 = 1 if p0 in barrier_points else 0
-            in_1 = 1 if p1 in barrier_points else 0
-            is_crossing = in_0 + in_1 == 1
+            in_0 = p0 in barrier_points
+            in_1 = p1 in barrier_points
+            is_crossing = (in_0 and not in_1) or (in_1 and not in_0)
             subgraph.edges[p0, p1]["weight"] = 0.5 if is_crossing else 0
+
+        # # debug
+        # for e in subgraph.edges:
+        #     p0, p1 = e
+        #     print("edge {} -> {} = {}".format(p0.get_coords("latlondeg"), p1.get_coords("latlondeg"), subgraph.edges[e]["weight"]))
 
         # now get shortest paths from the center to every other point in the ego graph
         # the weights of these paths will indicate whether they are on the same side of the barrier or not
         points_on_same_side_of_barrier = set()
+        other_points = set()  # for debugging, can look at what was selected and what wasn't
         for p1 in subgraph.nodes:
-            shortest_path_length = nx.shortest_path_length(g, source=p, target=p1, weight="weight")
+            shortest_path_length = nx.shortest_path_length(subgraph, source=p, target=p1, weight="weight")
+            # print("path {} -> {} = {}".format(p.get_coords("latlondeg"), p1.get_coords("latlondeg"), shortest_path_length))
             # if weight param is a string, it will use the edge data attribute with that name
             if shortest_path_length % 2 == 0:
                 points_on_same_side_of_barrier.add(p1)
+            else:
+                other_points.add(p1)
+
+        # # debug: plot the subgraph and whether points were chosen or not
+        # print("plotting subgraph for circle with radius {}".format(radius))
+        # chosen_points_latlon = [p.get_coords("latlondeg") for p in points_on_same_side_of_barrier]
+        # other_points_latlon = [p.get_coords("latlondeg") for p in other_points]
+        # xs = [ll[0] for ll in chosen_points_latlon] + [ll[0] for ll in other_points_latlon]
+        # ys = [ll[1] for ll in chosen_points_latlon] + [ll[1] for ll in other_points_latlon]
+        # colors = ["r" for ll in chosen_points_latlon] + ["b" for ll in other_points_latlon]
+        # plt.scatter(xs, ys, c=colors)
+        # plt.show()
 
         assert p in points_on_same_side_of_barrier  # should return itself
         return points_on_same_side_of_barrier
@@ -806,7 +828,7 @@ class ElevationGenerationMap:
         plt.show()
 
     @staticmethod
-    def from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11):
+    def from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice):
         # all points in image matching something in the color dict should be that color no matter what
         # everything else is randomly generated
         # i.e., put the determined points in points_to_avoid for functions that take it
@@ -820,7 +842,6 @@ class ElevationGenerationMap:
             height, width,  # rows, columns
             latlon00, latlon01, latlon10, latlon11
         )  # we are not actually going to add data to this lattice, but we will use it to get point coordinates more easily
-        map_lattice = IcosahedralGeodesicLattice(edge_length_km=1000)
         # later will need to be able to adjust edge length dynamically based on how fine the image grid is
         m = ElevationGenerationMap(map_lattice)
         arr = np.array(im)
