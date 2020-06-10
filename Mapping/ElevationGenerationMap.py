@@ -469,12 +469,14 @@ class ElevationGenerationMap:
         plt.draw()
         plt.pause(0.001)
 
-    def save_plot_image(self, output_fp):
-        self.pre_plot()
+    def save_plot_image(self, output_fp, size_inches=None):
+        print("saving plot image to {}".format(output_fp))
+        self.pre_plot(size_inches)
         plt.savefig(output_fp)
+        print("- done saving plot image")
 
-    def pre_plot(self):
-        self.lattice.plot_data(self.data_dict)
+    def pre_plot(self, size_inches=None):
+        self.lattice.plot_data(self.data_dict, size_inches)
         # if projection is None:
         #     projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
         # average_lat, average_lon = self.average_latlon()

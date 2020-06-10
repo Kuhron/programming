@@ -25,17 +25,14 @@ def confirm_overwrite_file(output_fp):
 
 
 if __name__ == "__main__":
-    lattice = IcosahedralGeodesicLattice(edge_length_km=1000)
-    m = ElevationGenerationMap(lattice)
-
-    from_image = True
+    from_image = False
     from_data = False
     generate_further_elevation_changes = False
     
     image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
+        image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "OligraZitomoDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
@@ -47,7 +44,7 @@ if __name__ == "__main__":
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
         # image_fp_no_dir = "TestMap_CircleIsland.png"
-        image_fp_no_dir = "TestMap_CircleIsland50x50.png"
+        # image_fp_no_dir = "TestMap_CircleIsland50x50.png"
         image_fp = image_dir + image_fp_no_dir
 
         print("from image {}".format(image_fp))
@@ -58,7 +55,8 @@ if __name__ == "__main__":
         color_condition_dict = {
             # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
             (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
-            (  0,   0,   0, 255): (1, lambda x: x > 0, False),
+            (255, 255, 255, 255): (1, lambda x: x > 0, False),  # white = land
+            (  0,   0,   0, 255): (0, lambda x: True, False),  # black = unspecified, anything goes
             # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
             # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
         }
@@ -101,17 +99,19 @@ if __name__ == "__main__":
             elevation_data_output_fp = data_fp.replace(".txt", "_FurtherChanges.txt")
             plot_image_output_fp = data_fp.replace("OutputData", "OutputPlot").replace(".txt", "_FurtherChanges.png")
     else:
-        m = Map(300, 500)
+        lattice = IcosahedralGeodesicLattice(edge_length_km=250)
+        m = ElevationGenerationMap(lattice)
+
         m.fill_all(0)
-        elevation_data_output_fp = "/home/wesley/programming/ElevationGenerationOutputData_Random.png"
-        plot_image_output_fp = "/home/wesley/programming/ElevationGenerationOutputPlot_Random.png"
+        elevation_data_output_fp = "/home/wesley/programming/Mapping/ElevationGenerationOutputData_Random.png"
+        plot_image_output_fp = "/home/wesley/programming/Mapping/ElevationGenerationOutputPlot_Random.png"
         generate_initial_elevation_changes = True
         
     print("map size {} pixels".format(m.size()))
 
     if generate_initial_elevation_changes:
         expected_change_size = 100
-        expected_touches_per_point = 5
+        expected_touches_per_point = 1
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
         m.plot()
         # m.save_elevation_data(elevation_data_output_fp)
-        m.save_plot_image(plot_image_output_fp)
+        m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
     elif generate_further_elevation_changes:
         m.unfreeze_all()  # allow coastlines to change
         expected_change_size = 10000

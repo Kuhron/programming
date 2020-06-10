@@ -93,7 +93,7 @@ class Lattice:
 
         return data
 
-    def plot_data(self, data):
+    def plot_data(self, data, size_inches=None):
         data_points = list(data.keys())  # UnitSpherePoint objects
         latlons_deg = [p.get_coords("latlondeg") for p in data_points]
         lats_deg = np.array([ll[0] for ll in latlons_deg])
@@ -108,7 +108,7 @@ class Lattice:
         lon_0s = [[-120, -60, 0], [60, 120, 180]]
         n_rows = len(lon_0s)
         n_cols = len(lon_0s[0])
-        fig = plt.gcf()
+        fig = plt.figure(figsize=size_inches)
         cmap = pu.get_land_and_sea_colormap()
         contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
         for i, row in enumerate(lon_0s):
