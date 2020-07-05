@@ -10,7 +10,7 @@ import MapCoordinateMath as mcm
 
 class IcosahedralGeodesicLattice(Lattice):
     EARTH_RADIUS_KM = 6371
-    CADA_II_RADIUS_FACTOR = 2.27444
+    CADA_II_RADIUS_FACTOR = 2.116
     CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
     def __init__(self, edge_length_km):
@@ -73,7 +73,7 @@ class IcosahedralGeodesicLattice(Lattice):
                 neigh = random.choice(adjacencies_xyz[random_point])
                 # v0 = mcm.unit_vector_lat_lon_to_cartesian(*random_point)
                 # v1 = mcm.unit_vector_lat_lon_to_cartesian(*neigh)
-                angle_radians = mcm.angle_between_vectors(random_point, neigh)
+                angle_radians = mcm.angle_between_vectors(np.array(random_point).reshape(3, 1), np.array(neigh).reshape(3, 1))
                 edge_length = cada_ii_radius_km * angle_radians
                 edge_lengths.append(edge_length)
             edge_length = np.mean(edge_lengths)

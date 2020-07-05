@@ -25,7 +25,7 @@ def confirm_overwrite_file(output_fp):
 
 
 if __name__ == "__main__":
-    from_image = False
+    from_image = True
     from_data = False
     generate_further_elevation_changes = False
     
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         }
         default_color = (0, 0, 0, 255)
         latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
-        lattice_edge_length_km = 500
+        lattice_edge_length_km = 1000
         map_lattice = IcosahedralGeodesicLattice(edge_length_km=lattice_edge_length_km)
         m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
         m.freeze_coastlines()

@@ -125,7 +125,7 @@ function gbrc() {
   grep -i "$1" ~/.bashrc 
 }
 # alias python2="/usr/bin/python"
-alias python="/usr/bin/python3"
+alias python="python3.5"
 # alias pip2="pip"
 alias pip="pip3"
 alias battery="upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep \"state\|percentage\""
@@ -147,7 +147,8 @@ alias zotero="/usr/bin/zotero/zotero &"
 alias nwc="timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"
 alias flex="/usr/bin/fieldworks-flex"
 alias antlr4='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
-alias grun='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
+alias grun='echo "do not use; use ParsingDebugging.py which I wrote instead"' #'java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
+alias antlrworks='java -jar ~/antlrworks-1.5.2-complete.jar'
 alias grepdocx="/home/wesley/grepdocx.sh"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
@@ -178,12 +179,10 @@ export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
 export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
 export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
 export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH
-export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
+# export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
 
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
 gsettings set com.canonical.indicator.datetime time-format "'custom'"
 gsettings set com.canonical.indicator.datetime custom-time-format "'%Y-%m-%d %H:%M:%S %Z  ||  %w  %j  %s'"
 
-# added by Anaconda3 installer
-export PATH="/home/wesley/anaconda3/bin:$PATH"

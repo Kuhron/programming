@@ -848,6 +848,8 @@ class ElevationGenerationMap:
         m = ElevationGenerationMap(map_lattice)
         arr = np.array(im)
         color_and_first_seen = {}
+        xy_to_fill_value = {}
+        xy_to_condition = {}
         for x in range(height):
             for y in range(width):
                 color = tuple(arr[x, y])
@@ -861,13 +863,28 @@ class ElevationGenerationMap:
                     fill_value, condition, is_frozen = color_condition_dict[color]
                     if fill_value is None:
                         fill_value = 0
+                    xy_to_fill_value[(x,y)] = fill_value
+                    xy_to_condition[(x,y)] = condition
 
-                    image_point = image_lattice.point_dict[(x, y)]
-                    p = map_lattice.closest_point_to(image_point)  # closest point on lattice to this x, y point on the image
-                    m.fill_position(p, fill_value)
-                    m.add_condition_at_position(p, condition)
-                    if is_frozen:
-                        m.freeze_point(p)
+        map_lattice_points = map_lattice.get_points()
+        image_points_that_will_be_referenced = set(image_lattice.closest_point_to(lattice_p) for lattice_p in map_lattice_points)
+        # now for each of these image points, get the closest lattice point and use the image point for that lattice point, not others
+        # because the others claiming the same closest image point will be outside the image boundaries, I think
+        lattice_points_to_image_points = {map_lattice.closest_point_to(image_p): image_p for image_p in image_points_that_will_be_referenced}
+
+        for lattice_p, image_p in lattice_points_to_image_points:
+            # faster to get the image point near each lattice point than the other way around, if the lattice is lower-resolution
+            # if the image is lower-resolution than the lattice, then start doing things the other way around, maybe?
+                # image_point = image_lattice.point_dict[(x, y)] 
+                # p = map_lattice.closest_point_to(image_point)  # closest point on lattice to this x, y point on the image
+            xy = image_p.coords
+            fill_value = xy_to_fill_value[xy]
+            condition = xy_to_condition[xy]
+            m.fill_position(p, fill_value)
+            m.add_condition_at_position(p, condition)
+            if is_frozen:
+                m.freeze_point(p)
+
         return m
 
     @staticmethod

@@ -31,19 +31,35 @@ class LatitudeLongitudeLattice(Lattice):
         print("creating point dict for LatitudeLongitudeLattice")
         # creates dict to look up coordinates of point, e.g. {(x, y): UnitSpherePoint(...)}
         self.point_dict = {}
-        for x in range(self.x_size):
-            for y in range(self.y_size):
-                latlon = mcm.get_lat_lon_of_point_on_map(
-                    x, y, 
-                    self.x_size, self.y_size, 
-                    self.lat00, self.lon00, 
-                    self.lat01, self.lon01, 
-                    self.lat10, self.lon10, 
-                    self.lat11, self.lon11,
-                    deg=True
-                )
-                p = UnitSpherePoint(latlon, coords_system="latlondeg")
-                self.point_dict[(x, y)] = p
+
+        # try to numpify, apply to whole array at once
+        rows, cols = np.meshgrid(range(self.x_size), range(self.y_size))
+        latlons_array = mcm.get_lat_lon_of_point_on_map(
+            rows, cols,
+            self.x_size, self.y_size,
+            self.lat00, self.lon00,
+            self.lat01, self.lon01,
+            self.lat10, self.lon10,
+            self.lat11, self.lon11,
+            deg=True
+        )
+        raise
+
+        # iterative
+        # for x in range(self.x_size):
+        #     print("x = {} / {}".format(x, self.x_size))
+        #     for y in range(self.y_size):
+        #         latlon = mcm.get_lat_lon_of_point_on_map(
+        #             x, y, 
+        #             self.x_size, self.y_size, 
+        #             self.lat00, self.lon00, 
+        #             self.lat01, self.lon01, 
+        #             self.lat10, self.lon10, 
+        #             self.lat11, self.lon11,
+        #             deg=True
+        #         )
+        #         p = UnitSpherePoint(latlon, coords_system="latlondeg")
+        #         self.point_dict[(x, y)] = p
         print("- done creating point dict")
 
     def get_adjacencies(self):
