@@ -4,27 +4,33 @@ import MapCoordinateMath as mcm
 
 
 class UnitSpherePoint:
-    def __init__(self, coords_tuple, coords_system):
+    def __init__(self, coords_dict):
         self.tuples = {
             "xyz": None,
             "latlondeg": None,
         }
-        if coords_system == "xyz":
-            self.tuples["xyz"] = coords_tuple
-            self.tuples["latlondeg"] = mcm.unit_vector_cartesian_to_lat_lon(*coords_tuple, deg=True)
-            check = mcm.unit_vector_lat_lon_to_cartesian(*self.tuples["latlondeg"], deg=True)
-            diff = np.array(check) - np.array(coords_tuple)
-            if np.linalg.norm(diff) > 1e-6:
-                print("bad conversion:\ncoords_tuple: {}\ncheck: {}\ntuples: {}".format(coords_tuple, check, self.tuples))
-        elif coords_system == "latlondeg":
-            self.tuples["latlondeg"] = coords_tuple
-            self.tuples["xyz"] = mcm.unit_vector_lat_lon_to_cartesian(*coords_tuple, deg=True)
-            check = mcm.unit_vector_cartesian_to_lat_lon(*self.tuples["xyz"], deg=True)
-            diff = np.array(check) - np.array(coords_tuple)
-            if np.linalg.norm(diff) > 1e-6:
-                print("bad conversion:\ncoords_tuple: {}\ncheck: {}\ntuples: {}".format(coords_tuple, check, self.tuples))
-        else:
-            raise ValueError("unrecognized coordinate system: {}".format(coords_system))
+
+        for coords_system, coords_tuple in coords_dict.items():
+            if coords_system == "xyz":
+                self.tuples["xyz"] = coords_tuple
+               #self.tuples["latlondeg"] = mcm.unit_vector_cartesian_to_lat_lon(*coords_tuple, deg=True)
+                #check = mcm.unit_vector_lat_lon_to_cartesian(*self.tuples["latlondeg"], deg=True)
+                #diff = np.array(check) - np.array(coords_tuple)
+                #if np.linalg.norm(diff) > 1e-6:
+                #    print("bad conversion:\ncoords_tuple: {}\ncheck: {}\ntuples: {}".format(coords_tuple, check, self.tuples))
+            elif coords_system == "latlondeg":
+                self.tuples["latlondeg"] = coords_tuple
+                #self.tuples["xyz"] = mcm.unit_vector_lat_lon_to_cartesian(*coords_tuple, deg=True)
+                #check = mcm.unit_vector_cartesian_to_lat_lon(*self.tuples["xyz"], deg=True)
+                #diff = np.array(check) - np.array(coords_tuple)
+                #if np.linalg.norm(diff) > 1e-6:
+                #    print("bad conversion:\ncoords_tuple: {}\ncheck: {}\ntuples: {}".format(coords_tuple, check, self.tuples))
+            else:
+                raise ValueError("unrecognized coordinate system: {}".format(coords_system))
+
+        # require the coords to all be specified from now on, don't calculate them here because you will not be able to take advantage of parallel array computing if you re-run the conversion function for every time this class is instantiated
+        if any(x is None for x in self.tuples.values()):
+            raise ValueError("passing both xyz and latlondeg is required, but got {}".format(self.tuples))
 
         self.point_data = {}
     

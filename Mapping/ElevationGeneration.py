@@ -32,7 +32,7 @@ if __name__ == "__main__":
     image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
+        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "OligraZitomoDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
         # image_fp_no_dir = "TestMap_CircleIsland.png"
-        # image_fp_no_dir = "TestMap_CircleIsland50x50.png"
+        image_fp_no_dir = "TestMap_CircleIsland50x50.png"
         image_fp = image_dir + image_fp_no_dir
 
         print("from image {}".format(image_fp))
@@ -63,8 +63,12 @@ if __name__ == "__main__":
         default_color = (0, 0, 0, 255)
         latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
         lattice_edge_length_km = 1000
+        print("creating map lattice")
         map_lattice = IcosahedralGeodesicLattice(edge_length_km=lattice_edge_length_km)
+        print("- done creating map lattice")
+        print("creating ElevationGenerationMap from image")
         m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
+        print("- done creating ElevationGenerationMap")
         m.freeze_coastlines()
         generate_initial_elevation_changes = True
     elif from_data:
@@ -110,6 +114,7 @@ if __name__ == "__main__":
     print("map size {} pixels".format(m.size()))
 
     if generate_initial_elevation_changes:
+        print("generating initial elevation changes")
         expected_change_size = 100
         expected_touches_per_point = 1
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
@@ -121,7 +126,9 @@ if __name__ == "__main__":
         m.plot()
         # m.save_elevation_data(elevation_data_output_fp)
         m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
+        print("- done generating initial elevation changes")
     elif generate_further_elevation_changes:
+        print("generating further elevation changes")
         m.unfreeze_all()  # allow coastlines to change
         expected_change_size = 10000
         expected_touches_per_point = 5
@@ -131,6 +138,7 @@ if __name__ == "__main__":
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
         m.save_elevation_data(elevation_data_output_fp)
         m.save_plot_image(plot_image_output_fp)
+        print("- done generating further elevation changes")
     else:
         m.plot(projection="ortho")
         # m.plot_map_and_gradient_magnitude()
@@ -139,3 +147,4 @@ if __name__ == "__main__":
         # m.plot_rivers()
         # m.plot_flow_steps(10000)
         # m.plot_average_water_location()
+        print("- done plotting")

@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import random
+from scipy.spatial import KDTree
 
 from Lattice import Lattice
 from UnitSpherePoint import UnitSpherePoint
@@ -16,7 +17,14 @@ class IcosahedralGeodesicLattice(Lattice):
     def __init__(self, edge_length_km):
         self.edge_length_km = edge_length_km
         self.adjacencies = self.get_adjacencies()
-        self.points = self.get_points()
+        self.points = list(self.adjacencies.keys())
+        self.xyz_coords = []
+        self.xyz_to_point_number = {}
+        for point_number, p in enumerate(self.points):
+            xyz = p.get_coords("xyz")
+            self.xyz_coords.append(xyz)
+            self.xyz_to_point_number[xyz] = point_number
+        self.kdtree = KDTree(self.xyz_coords)
         self.graph = self.get_graph()
 
     def get_adjacencies(self):
@@ -133,7 +141,9 @@ class IcosahedralGeodesicLattice(Lattice):
         # convert to UnitSpherePoint
         conversions = {}
         for v in adjacencies_xyz:
-            usp = UnitSpherePoint(v, "xyz")
+            v_latlon = mcm.unit_vector_cartesian_to_lat_lon(*v)  # can parallelize this later by putting points in an array, but this part doesn't take that long so far, even for many Icosahedron points
+            coords_dict = {"xyz": v, "latlondeg": v_latlon}
+            usp = UnitSpherePoint(coords_dict)
             conversions[tuple(v)] = usp
         adjacencies_usp = {}
         for v0, neighs in adjacencies_xyz.items():

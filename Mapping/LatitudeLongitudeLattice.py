@@ -1,5 +1,6 @@
 import numpy as np
 import random
+from scipy.spatial import KDTree
 
 from Lattice import Lattice
 from UnitSpherePoint import UnitSpherePoint
@@ -22,15 +23,18 @@ class LatitudeLongitudeLattice(Lattice):
         self.lat10, self.lon10 = latlon10
         self.lat11, self.lon11 = latlon11
 
-        self.create_point_dict()
+        self.create_point_dicts()
         self.adjacencies = self.get_adjacencies()
         self.graph = self.get_graph()
-        self.points = self.get_points()
+        self.xyz_coords = [p.get_coords("xyz") for p in self.points]
+        self.kdtree = KDTree(self.xyz_coords)  # for distance calculation
     
-    def create_point_dict(self):
+    def create_point_dicts(self):
         print("creating point dict for LatitudeLongitudeLattice")
         # creates dict to look up coordinates of point, e.g. {(x, y): UnitSpherePoint(...)}
-        self.point_dict = {}
+        self.lattice_position_to_point_number = {}
+        self.xyz_to_point_number = {}
+        self.points = []
 
         # try to numpify, apply to whole array at once
         rows, cols = np.meshgrid(range(self.x_size), range(self.y_size))
@@ -43,24 +47,46 @@ class LatitudeLongitudeLattice(Lattice):
             self.lat11, self.lon11,
             deg=True
         )
-        raise
 
-        # iterative
-        # for x in range(self.x_size):
-        #     print("x = {} / {}".format(x, self.x_size))
-        #     for y in range(self.y_size):
-        #         latlon = mcm.get_lat_lon_of_point_on_map(
-        #             x, y, 
-        #             self.x_size, self.y_size, 
-        #             self.lat00, self.lon00, 
-        #             self.lat01, self.lon01, 
-        #             self.lat10, self.lon10, 
-        #             self.lat11, self.lon11,
-        #             deg=True
-        #         )
-        #         p = UnitSpherePoint(latlon, coords_system="latlondeg")
-        #         self.point_dict[(x, y)] = p
+        # latlons_array should first have two elements, for lat and lon
+        assert latlons_array.shape[0] == 2
+        # beyond that, expect a rectangular (2d) array of points, so the whole array has rank 3
+        assert latlons_array.ndim == 3
+        point_array_shape = latlons_array.shape[1:]
+        assert point_array_shape == (self.y_size, self.x_size), "expected point array shape ({}, {}), got {}".format(self.x_size, self.y_size, point_array_shape)
+        lats = latlons_array[0]
+        lons = latlons_array[1]
+        xyzs_array = mcm.unit_vector_lat_lon_to_cartesian(lats, lons)
+        # now iterate over indices to create the individual point objects
+        print("creating UnitSpherePoints")
+        point_number = 0
+        for x_i in range(self.x_size):
+            if x_i % 100 == 0:
+                print("progress: row {}/{}".format(x_i, self.x_size))
+            for y_i in range(self.y_size):
+                # x and y are indices in the point array
+                lat = latlons_array[0, y_i, x_i]
+                lon = latlons_array[1, y_i, x_i]
+                latlon = (lat, lon)
+                # also get xyz (cartesian in 3d, not to be confused with x and y on the rectangular lattice)
+                x_coord = xyzs_array[0, y_i, x_i]
+                y_coord = xyzs_array[1, y_i, x_i]
+                z_coord = xyzs_array[2, y_i, x_i]
+                xyz = (x_coord, y_coord, z_coord)
+                coords_dict = {"xyz": xyz, "latlondeg": latlon}
+                p = UnitSpherePoint(coords_dict)
+                self.lattice_position_to_point_number[(x_i, y_i)] = point_number
+                self.xyz_to_point_number[xyz] = point_number
+                assert len(self.points) == point_number
+                self.points.append(p)
+                point_number += 1
+
         print("- done creating point dict")
+
+    def get_usp_from_lattice_position(self, xy):
+        point_number = self.lattice_position_to_point_number[xy]
+        usp = self.points[point_number]
+        return usp
 
     def get_adjacencies(self):
         print("getting adjacencies for LatitudeLongitudeLattice")
@@ -79,8 +105,8 @@ class LatitudeLongitudeLattice(Lattice):
         # convert to UnitSpherePoint
         d_usp = {}
         for k, neighbors_list in d.items():
-            k_usp = self.point_dict[k]
-            ns_usp = [self.point_dict[n] for n in neighbors_list]
+            k_usp = self.get_usp_from_lattice_position(k)
+            ns_usp = [self.get_usp_from_lattice_position(n) for n in neighbors_list]
             d_usp[k_usp] = ns_usp
 
         print("- done getting adjacencies")

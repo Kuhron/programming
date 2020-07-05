@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as tri  # interpolation of irregularly spaced data
 import numpy as np
 import networkx as nx
+from scipy.spatial import KDTree
 
 from UnitSpherePoint import UnitSpherePoint
 import PlottingUtil as pu
@@ -32,12 +33,6 @@ class Lattice:
                 g.add_edge(p, p1)
         return g
 
-    def get_points(self, coords_system=None):
-        points = list(self.adjacencies.keys())
-        if coords_system is not None:
-            return [p.get_coords(coords_system) for p in points]
-        return points
-
     def n_points(self):
         return len(self.adjacencies)
 
@@ -46,16 +41,12 @@ class Lattice:
 
     def closest_point_to(self, p):
         assert type(p) is UnitSpherePoint
-
-        x, y, z = p.get_coords("xyz")
-        d_xyz = 0.1
-        is_candidate = lambda x1, y1, z1: abs(x-x1) < d_xyz and abs(y-y1) < d_xyz and abs(z-z1) < d_xyz
-        ps = self.get_points()
-        candidates = [p1 for p1 in ps if is_candidate(*p1.get_coords("xyz"))]
-
-        return min(candidates, key=lambda x: x.distance(p))
-
-        # later could optimize somehow, e.g. take only a box of +/- dx,dy,dz and sort those
+        xyz = p.get_coords("xyz")
+        distance, index = self.kdtree.query(xyz)
+        point_xyz = tuple(self.kdtree.data[index])
+        point_number = self.xyz_to_point_number[point_xyz]
+        usp = self.points[point_number]
+        return usp
 
     def plot_points(self):
         fig = plt.figure()

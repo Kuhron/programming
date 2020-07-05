@@ -15,6 +15,13 @@ def verify_3d_match(v1, v2):
     assert v1.shape == v2.shape, "shape mismatch: {} and {}".format(v1.shape, v2.shape)
 
 
+def verify_unit_vector(x, y, z):
+    v = np.array([x, y, z])
+    assert v.shape[0] == 3
+    mag = mag_3d(v)
+    assert (abs(1 - mag) < 1e-6).all(), "need unit vector"
+
+
 def dot_3d(v1, v2):
     verify_3d_match(v1, v2)
     point_array_shape = v1.shape[1:]
@@ -65,18 +72,14 @@ def unit_vector_lat_lon_to_cartesian(lat, lon, deg=True):
     x = np.cos(lon) * np.cos(lat)
     y = np.sin(lon) * np.cos(lat)
     z = np.sin(lat)
-    assert abs(1-np.linalg.norm([x, y, z])) < 1e-6, "need unit vector"
+    verify_unit_vector(x, y, z)
     return np.array([x, y, z])
 
 
 def unit_vector_cartesian_to_lat_lon(x, y, z, deg=True):
     # latlon [0, 0] maps to xyz [1, 0, 0] (positive x comes out of Gulf of Guinea)
     # latlon [0, 90deg] maps to xyz [0, 1, 0] (positive y comes out of Indian Ocean)
-    v = np.array([x, y, z])
-    assert v.shape[0] == 3
-    point_array_shape = v.shape[1:]
-    mag = mag_3d(v)
-    assert (abs(1 - mag) < 1e-6).all(), "need unit vector"
+    verify_unit_vector(x, y, z)
     lat = np.arcsin(z)
     assert (abs(np.cos(lat) - np.sqrt(1 - z**2)) < 1e-6).all(), "math error in sin cos lat"
     lon = np.arctan2(y, x)  # this is the magic function I've been looking for

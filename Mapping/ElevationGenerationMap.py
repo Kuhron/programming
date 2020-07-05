@@ -831,6 +831,7 @@ class ElevationGenerationMap:
 
     @staticmethod
     def from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice):
+        print("called ElevationGenerationMap.from_image()")
         # all points in image matching something in the color dict should be that color no matter what
         # everything else is randomly generated
         # i.e., put the determined points in points_to_avoid for functions that take it
@@ -840,17 +841,22 @@ class ElevationGenerationMap:
 
         im = Image.open(image_fp)
         width, height = im.size
+        print("creating image lattice")
         image_lattice = LatitudeLongitudeLattice(
             height, width,  # rows, columns
             latlon00, latlon01, latlon10, latlon11
         )  # we are not actually going to add data to this lattice, but we will use it to get point coordinates more easily
         # later will need to be able to adjust edge length dynamically based on how fine the image grid is
+        print("- done creating image lattice")
         m = ElevationGenerationMap(map_lattice)
         arr = np.array(im)
         color_and_first_seen = {}
         xy_to_fill_value = {}
         xy_to_condition = {}
+        print("mapping image points to value and condition")
         for x in range(height):
+            if x % 100 == 0:
+                print("x = {}/{}".format(x, height))
             for y in range(width):
                 color = tuple(arr[x, y])
                 if color not in color_condition_dict:
@@ -865,14 +871,32 @@ class ElevationGenerationMap:
                         fill_value = 0
                     xy_to_fill_value[(x,y)] = fill_value
                     xy_to_condition[(x,y)] = condition
+        print("- done mapping points to value and condition")
 
-        map_lattice_points = map_lattice.get_points()
-        image_points_that_will_be_referenced = set(image_lattice.closest_point_to(lattice_p) for lattice_p in map_lattice_points)
+        print("creating map from lattice points to image points")
+        map_lattice_points = map_lattice.points
+        print("creating image points that will be referenced")
+        image_points_that_will_be_referenced = set()
+        for i, lattice_p in enumerate(map_lattice_points):
+            if True: #i % 100 == 0:
+                # can be optimized by not checking map lattice points that are too far away from the image edges, reduce number of distance calculations that will just be wasted
+                print("map point {}/{}".format(i, len(map_lattice_points)))
+            image_point = image_lattice.closest_point_to(lattice_p)
+            image_points_that_will_be_referenced.add(image_point)
+        print("- done creating image points that will be referenced")
         # now for each of these image points, get the closest lattice point and use the image point for that lattice point, not others
         # because the others claiming the same closest image point will be outside the image boundaries, I think
-        lattice_points_to_image_points = {map_lattice.closest_point_to(image_p): image_p for image_p in image_points_that_will_be_referenced}
+        lattice_points_to_image_points = {}
+        for i, image_p in enumerate(image_points_that_will_be_referenced):
+            if i % 100 == 0:
+                print("image point {}/{}".format(i, len(image_points_that_will_be_referenced)))
+            key = map_lattice.closest_point_to(image_p)
+            val = image_p
+            lattice_points_to_image_points[key] = val
+        print("- done creating map from lattice points to image points")
 
-        for lattice_p, image_p in lattice_points_to_image_points:
+        print("filling map values and conditions")
+        for lattice_p, image_p in lattice_points_to_image_points.items():
             # faster to get the image point near each lattice point than the other way around, if the lattice is lower-resolution
             # if the image is lower-resolution than the lattice, then start doing things the other way around, maybe?
                 # image_point = image_lattice.point_dict[(x, y)] 
@@ -884,7 +908,9 @@ class ElevationGenerationMap:
             m.add_condition_at_position(p, condition)
             if is_frozen:
                 m.freeze_point(p)
+        print("- done filling map values and conditions")
 
+        print("- returning ElevationGenerationMap from image")
         return m
 
     @staticmethod
