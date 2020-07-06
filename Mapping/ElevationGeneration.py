@@ -25,7 +25,7 @@ def confirm_overwrite_file(output_fp):
 
 
 if __name__ == "__main__":
-    from_image = True
+    from_image = False
     from_data = False
     generate_further_elevation_changes = False
     
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         # image_fp_no_dir = "TestMap_VerticalStripes.png"
         # image_fp_no_dir = "TestMap_AllLand.png"
         # image_fp_no_dir = "TestMap_CircleIsland.png"
-        image_fp_no_dir = "TestMap_CircleIsland50x50.png"
+        # image_fp_no_dir = "TestMap_CircleIsland50x50.png"
         image_fp = image_dir + image_fp_no_dir
 
         print("from image {}".format(image_fp))
@@ -62,7 +62,7 @@ if __name__ == "__main__":
         }
         default_color = (0, 0, 0, 255)
         latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
-        lattice_edge_length_km = 1000
+        lattice_edge_length_km = 500
         print("creating map lattice")
         map_lattice = IcosahedralGeodesicLattice(edge_length_km=lattice_edge_length_km)
         print("- done creating map lattice")
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     if generate_initial_elevation_changes:
         print("generating initial elevation changes")
         expected_change_size = 100
-        expected_touches_per_point = 1
+        expected_touches_per_point = 0.1
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
@@ -124,8 +124,10 @@ if __name__ == "__main__":
         print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
         m.plot()
-        # m.save_elevation_data(elevation_data_output_fp)
-        m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
+        if input("save data? (y/n, default n)\n").strip().lower() == "y":
+            m.save_elevation_data(elevation_data_output_fp)
+        if input("save image? (y/n, default n)\n").strip().lower() == "y":
+            m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
         print("- done generating initial elevation changes")
     elif generate_further_elevation_changes:
         print("generating further elevation changes")
@@ -136,8 +138,10 @@ if __name__ == "__main__":
         plot_every_n_steps = None
         print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        m.save_elevation_data(elevation_data_output_fp)
-        m.save_plot_image(plot_image_output_fp)
+        if input("save data? (y/n, default n)\n").strip().lower() == "y":
+            m.save_elevation_data(elevation_data_output_fp)
+        if input("save image? (y/n, default n)\n").strip().lower() == "y":
+            m.save_plot_image(plot_image_output_fp)
         print("- done generating further elevation changes")
     else:
         m.plot(projection="ortho")

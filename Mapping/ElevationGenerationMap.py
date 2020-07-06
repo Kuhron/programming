@@ -10,6 +10,16 @@ from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 import PlottingUtil as pu
 from UnitSpherePoint import UnitSpherePoint
 import ElevationChangeFunctions as elfs
+import MapCoordinateMath as mcm
+
+
+def add_datetime_to_fp(fp):
+    split = fp.split(".")
+    preceding = split[:-1]
+    extension = split[-1]
+    new_fp = ".".join(preceding) + "-" + datetime.utcnow().strftime("%Y%m%d-%H%M%S") + "." + extension
+    input("check new fp is okay: {}".format(new_fp))
+    return new_fp
 
 
 class ElevationGenerationMap:
@@ -41,7 +51,7 @@ class ElevationGenerationMap:
                 self.fill_position(p, value)
 
     def fill_all(self, value):
-        for p in self.lattice.get_points():
+        for p in self.lattice.points:
             self.fill_position(p, value)
 
     def get_value_at_position(self, p):
@@ -251,7 +261,9 @@ class ElevationGenerationMap:
         assert len(mean_ps_xyz) == 3, "ya done goofed. look -> {}".format(mean_ps_xyz)
         mean_ps_xyz = np.array(mean_ps_xyz)
         mean_ps_xyz /= np.linalg.norm(mean_ps_xyz)  # normalize
-        changing_reg_center_of_mass_raw = UnitSpherePoint(tuple(mean_ps_xyz), "xyz")
+        mean_ps_latlon = mcm.unit_vector_cartesian_to_lat_lon(*mean_ps_xyz, deg=True)
+        coords_dict = {"xyz": tuple(mean_ps_xyz), "latlondeg": tuple(mean_ps_latlon)}
+        changing_reg_center_of_mass_raw = UnitSpherePoint(coords_dict)
         changing_reg_center_of_mass = self.lattice.closest_point_to(changing_reg_center_of_mass_raw)
         e_center_of_mass = self.data_dict[changing_reg_center_of_mass]
         reference_p = changing_reg_center_of_mass
@@ -470,6 +482,7 @@ class ElevationGenerationMap:
         plt.pause(0.001)
 
     def save_plot_image(self, output_fp, size_inches=None):
+        output_fp = add_datetime_to_fp(output_fp)
         print("saving plot image to {}".format(output_fp))
         self.pre_plot(size_inches)
         plt.savefig(output_fp)
@@ -851,8 +864,8 @@ class ElevationGenerationMap:
         m = ElevationGenerationMap(map_lattice)
         arr = np.array(im)
         color_and_first_seen = {}
-        xy_to_fill_value = {}
-        xy_to_condition = {}
+        usp_to_fill_value = {}
+        usp_to_condition = {}
         print("mapping image points to value and condition")
         for x in range(height):
             if x % 100 == 0:
@@ -869,8 +882,10 @@ class ElevationGenerationMap:
                     fill_value, condition, is_frozen = color_condition_dict[color]
                     if fill_value is None:
                         fill_value = 0
-                    xy_to_fill_value[(x,y)] = fill_value
-                    xy_to_condition[(x,y)] = condition
+                    xy = (x, y)
+                    p = image_lattice.get_usp_from_lattice_position(xy)
+                    usp_to_fill_value[p] = fill_value
+                    usp_to_condition[p] = condition
         print("- done mapping points to value and condition")
 
         print("creating map from lattice points to image points")
@@ -878,7 +893,7 @@ class ElevationGenerationMap:
         print("creating image points that will be referenced")
         image_points_that_will_be_referenced = set()
         for i, lattice_p in enumerate(map_lattice_points):
-            if True: #i % 100 == 0:
+            if i % 100 == 0:
                 # can be optimized by not checking map lattice points that are too far away from the image edges, reduce number of distance calculations that will just be wasted
                 print("map point {}/{}".format(i, len(map_lattice_points)))
             image_point = image_lattice.closest_point_to(lattice_p)
@@ -901,13 +916,12 @@ class ElevationGenerationMap:
             # if the image is lower-resolution than the lattice, then start doing things the other way around, maybe?
                 # image_point = image_lattice.point_dict[(x, y)] 
                 # p = map_lattice.closest_point_to(image_point)  # closest point on lattice to this x, y point on the image
-            xy = image_p.coords
-            fill_value = xy_to_fill_value[xy]
-            condition = xy_to_condition[xy]
-            m.fill_position(p, fill_value)
-            m.add_condition_at_position(p, condition)
+            fill_value = usp_to_fill_value[image_p]
+            condition = usp_to_condition[image_p]
+            m.fill_position(lattice_p, fill_value)
+            m.add_condition_at_position(lattice_p, condition)
             if is_frozen:
-                m.freeze_point(p)
+                m.freeze_point(lattice_p)
         print("- done filling map values and conditions")
 
         print("- returning ElevationGenerationMap from image")
@@ -924,7 +938,7 @@ class ElevationGenerationMap:
 
     def freeze_coastlines(self):
         coastal_points = set()
-        for p in self.lattice.get_points():
+        for p in self.lattice.points:
             if p in self.data_dict and self.data_dict[p] < 0:
                 neighbors = self.get_neighbors(p)
                 for n in neighbors:
@@ -970,6 +984,8 @@ class ElevationGenerationMap:
         # format is just grid of comma-separated numbers
         # if not confirm_overwrite_file:
         #     return
+        output_fp = add_datetime_to_fp(output_fp)
+        print("saving elevation data to {}".format(output_fp))
         open(output_fp, "w").close()  # clear file
         for x in range(self.x_size):
             this_row = ""

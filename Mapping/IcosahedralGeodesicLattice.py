@@ -151,7 +151,17 @@ class IcosahedralGeodesicLattice(Lattice):
             for v1 in neighs:
                 neighs_usp.append(conversions[v1])
             adjacencies_usp[conversions[v0]] = neighs_usp
+
         return adjacencies_usp
+
+        # TODO implement something like this
+        # assert type(points_ordered) is list
+        # assert all(type(x) is UnitSpherePoint for x in points_ordered)
+        # assert type(adjacencies_point_indices) is dict
+        # assert all(type(x) is int and type(y) is list for x, y in adjacencies_point_indices.items())
+        # assert 0 in adjacencies_point_indices
+        # assert all(type(x) is int for x in adjacencies_point_indices[0])
+        # return points_ordered, adjacencies_point_indices
 
 
 if __name__ == "__main__":

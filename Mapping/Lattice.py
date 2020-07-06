@@ -51,7 +51,7 @@ class Lattice:
     def plot_points(self):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
-        ps = self.get_points()
+        ps = self.points
         ps_xyz = [p.get_coords("xyz") for p in ps]
         xs = [p[0] for p in ps_xyz]
         ys = [p[1] for p in ps_xyz]
