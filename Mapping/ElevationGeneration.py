@@ -115,8 +115,8 @@ if __name__ == "__main__":
 
     if generate_initial_elevation_changes:
         print("generating initial elevation changes")
-        expected_change_size = 100
-        expected_touches_per_point = 0.1
+        expected_change_size = 25
+        expected_touches_per_point = 100
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
