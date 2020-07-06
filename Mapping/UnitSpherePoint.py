@@ -33,6 +33,11 @@ class UnitSpherePoint:
             raise ValueError("passing both xyz and latlondeg is required, but got {}".format(self.tuples))
 
         self.point_data = {}
+
+    def __repr__(self):
+        x, y, z = self.get_coords("xyz")
+        lat, lon = self.get_coords("latlondeg")
+        return "USP:({}, {}, {}):({}, {})deg".format(x, y, z, lat, lon)
     
     def get_coords(self, coords_system):
         return self.tuples[coords_system]
@@ -49,3 +54,19 @@ class UnitSpherePoint:
         # and will make it easier to transfer data to another point, e.g. when snapping to lattice
         self.point_data[key] = value
     
+    @staticmethod
+    def get_midpoint(p0, p1):
+        xyz0 = p0.get_coords("xyz")
+        xyz1 = p1.get_coords("xyz")
+        midpoint_raw_xyz = (np.array(xyz0) + np.array(xyz1)) / 2
+        midpoint_normalized_xyz = tuple((midpoint_raw_xyz / np.linalg.norm(midpoint_raw_xyz)).reshape(3))
+        midpoint_normalized_latlon = mcm.unit_vector_cartesian_to_lat_lon(*midpoint_normalized_xyz, deg=True)
+        coords_dict = {"xyz": midpoint_normalized_xyz, "latlondeg": midpoint_normalized_latlon}
+        return UnitSpherePoint(coords_dict)
+
+    @staticmethod
+    def get_angle_radians_between(p0, p1):
+        xyz0 = p0.get_coords("xyz")
+        xyz1 = p1.get_coords("xyz")
+        return mcm.angle_between_vectors(xyz0, xyz1)
+
