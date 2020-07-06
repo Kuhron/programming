@@ -66,7 +66,7 @@ class UnitSpherePoint:
 
     @staticmethod
     def get_angle_radians_between(p0, p1):
-        xyz0 = p0.get_coords("xyz")
-        xyz1 = p1.get_coords("xyz")
+        xyz0 = np.array(p0.get_coords("xyz"))
+        xyz1 = np.array(p1.get_coords("xyz"))
         return mcm.angle_between_vectors(xyz0, xyz1)
 

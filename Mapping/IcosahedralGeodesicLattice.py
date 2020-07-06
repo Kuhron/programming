@@ -166,14 +166,17 @@ class IcosahedralGeodesicLattice(Lattice):
                     # add it to the list so it will be in order of creation
                     new_point_index = len(ordered_points)
                     ordered_points.append(midpoint)
-                    if neighbor_direction_i == 0:
-                        l_new_point_indices.append(new_point_index)
-                    elif neighbor_direction_i == 1:
-                        dl_new_point_indices.append(new_point_index)
-                    elif neighbor_direction_i == 2:
-                        d_new_point_indices.append(new_point_index)
-                    else:
-                        raise ValueError("neighbor direction should only be 0, 1, or 2, got {}".format(neighbor_direction_i))
+
+                    # no longer used; from dldl approach, which failed, but keep this code until have an approach that does work
+                    # if neighbor_direction_i == 0:
+                    #     l_new_point_indices.append(new_point_index)
+                    # elif neighbor_direction_i == 1:
+                    #     dl_new_point_indices.append(new_point_index)
+                    # elif neighbor_direction_i == 2:
+                    #     d_new_point_indices.append(new_point_index)
+                    # else:
+                    #     raise ValueError("neighbor direction should only be 0, 1, or 2, got {}".format(neighbor_direction_i))\
+
                     print("added new point {}, midpoint between {} and {}, at index {}".format(midpoint, p_i, n_i, new_point_index))
 
                     adjacencies_by_point_index[new_point_index] = [None] * 6  # all new points will have 6 neighbors, only the 12 original vertices have 5
@@ -205,9 +208,68 @@ class IcosahedralGeodesicLattice(Lattice):
 
             print("\nfilling in missing neighbors for new points this iteration (i={})\n".format(iteration_i))
 
+            # flanking approach to filling in missing neighbors:
+            # each new point will have six adjacencies total, two of them currently known, and those two will be directly opposite one another
+            # e.g. we know that 0 borders 36, 12, and 18 (in that counterclockwise order), and we know where 0 is in the adjacency list of 12
+            # - then the two which "flank" 12 in 0's list (i.e. 36 and 18) will be in the OPPOSITE order in 12's list, flanking 0.
+            # this can be seen by drawing a rhombus from the two triangles:
+            #  /- 18 -\
+            # 0 ------ 12
+            #  \- 36 -/
+
+            indices_to_fill_out = list(range(point_index_this_iteration_started_at, len(ordered_points)))
+            indices_filled_to_completion = list()
+
+            for p_i in indices_to_fill_out:
+                adjacencies_p = adjacencies_by_point_index[p_i]
+                print("filling out adjacencies for point {}: originally {}".format(p_i, adjacencies_p))
+                assert len(adjacencies_p) == 6, "all new points should have 6 neighbors but got {}".format(adjacencies_p)
+                assert sum(x is None for x in adjacencies_p) == 4, "expected 4 Nones and two known neighbors but got {}".format(adjacencies_p)
+                # get the 2 known neighbors
+                neighbor_0 = None
+                n_i_0 = None
+                neighbor_1 = None
+                n_i_1 = None
+                for n_i, neighbor in enumerate(adjacencies_p):
+                    if neighbor is not None:
+                        if n_i_0 is None:
+                            assert neighbor_0 is None
+                            n_i_0 = n_i
+                            neighbor_0 = neighbor
+                        else:
+                            assert neighbor_0 is not None
+                            assert n_i_1 is None
+                            assert neighbor_1 is None
+                            n_i_1 = n_i
+                            neighbor_1 = neighbor
+
+                for n_i, n in zip([n_i_0, n_i_1], [neighbor_0, neighbor_1]):
+                    adjacencies_n = adjacencies_by_point_index[n]
+                    index_p_in_n = adjacencies_n.index(p_i)
+                    position_plus_from_n = (index_p_in_n + 1) % len(adjacencies_n)
+                    position_minus_from_n = (index_p_in_n - 1) % len(adjacencies_n)
+                    flank_plus_from_n = adjacencies_n[position_plus_from_n]
+                    flank_minus_from_n = adjacencies_n[position_minus_from_n]
+                    # place the flanks in adjacencies_p so that they flank n but in the opposite order
+                    position_plus_from_p = (n_i + 1) % len(adjacencies_p)
+                    position_minus_from_p = (n_i - 1) % len(adjacencies_p)
+                    adjacencies_p[position_plus_from_p] = flank_minus_from_n  # OPPOSITE PLUS/MINUS
+                    adjacencies_p[position_minus_from_p] = flank_plus_from_n  # OPPOSITE PLUS/MINUS
+            
+                print("- got filled neighbors for {}: {}".format(p_i, adjacencies_p))
+                assert adjacencies_by_point_index[p_i] == adjacencies_p  # checking that modifying object by reference is working
+                indices_filled_to_completion.append(p_i)
+            
+            for p_i in indices_filled_to_completion:
+                # don't do this in the loop or it'll skip stuff
+                indices_to_fill_out.remove(p_i)
+
+            print("- finished filling out adjacencies for new points")
+            assert len(indices_to_fill_out) == 0, "leftover points did not get filled out: {}".format(indices_to_fill_out)
 
 
-            # this doesn't work, unfortunately
+
+            # dldl approach; this doesn't work, unfortunately
             # can use paths along known edges to work out the rest of the neighbors for a new point
             # know the parent point will be the neighbor in the opposite direction (e.g. create a DL neighbor, then parent is its UR neighbor)
             # e.g. a DL midpoint's L neighbor is found by the path (DL, U) (starting from the new point, go DL (to the original neighbor that it was created from), then U (the point that is a knight's jump 0.5*D + 1*L from the original parent point); easier to see graphically)
@@ -221,7 +283,6 @@ class IcosahedralGeodesicLattice(Lattice):
 
             # keep track of index_this_iteration_started_at (=10*2**(2*i)+2: 12, 42, 162, 642, etc.)
             # iterate from that index and fill in missing neighbors, all points starting at that index will have been new additions in this iteration
-            indices_to_fill_out = range(point_index_this_iteration_started_at, len(ordered_points))
             # for p_i in l_new_point_indices:
             #     # should have L and R neighbors, indices 0 and 3
             #     adjacencies_list = adjacencies_by_point_index[p_i]
@@ -257,7 +318,7 @@ class IcosahedralGeodesicLattice(Lattice):
             #     indices_to_fill_out.remove(p_i)
             # assert len(indices_to_fill_out) == 0, "leftover points did not get filled out: {}".format(indices_to_fill_out)
 
-            # old way
+            # old way, xyz4edge approach
             # new_adjacencies_xyz = {}
             # for existing_point, neighs in adjacencies_xyz.items():
             #     new_neighs = []
@@ -302,7 +363,7 @@ class IcosahedralGeodesicLattice(Lattice):
                     f.write(s)
             print("- done writing memoization files")
 
-            print("now have {} points, iteration {}".format(len(adjacencies_xyz), iteration_i))
+            print("now have {} points, iteration {}".format(len(ordered_points), iteration_i))
 
         # convert to UnitSpherePoint
         # conversions = {}
