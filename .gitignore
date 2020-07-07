@@ -11,3 +11,10 @@ _secret*
 
 # giant prime number text file
 primes.txt
+
+# mapping memoization files
+Mapping/MemoIcosa*.txt
+
+# giant map files
+*ElevationGenerationOutputData*.txt
+*EGD*.txt

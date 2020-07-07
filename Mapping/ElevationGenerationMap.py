@@ -930,11 +930,24 @@ class ElevationGenerationMap:
     @staticmethod
     def load_elevation_data(data_fp, latlon00, latlon01, latlon10, latlon11):
         with open(data_fp) as f:
-            lines = f.readlines()
-        lines = [[float(x) for x in line.split(",")] for line in lines]
-        array = np.array(lines)
-        x_size, y_size = array.shape
-        return ElevationGenerationMap(x_size, y_size, latlon00, latlon01, latlon10, latlon11, array=array)
+            contents = f.read()
+        vals = contents.split("\n")
+        if vals[-1] == "":
+            vals = vals[:-1]
+        vals = [float(x) for x in vals]
+        n_iterations = IcosahedralGeodesicLattice.get_iterations_from_number_of_points(len(vals))
+        lattice = IcosahedralGeodesicLattice(iterations=n_iterations)
+        data_dict = {}  # usp to value
+        for i, val in enumerate(vals):
+            usp = lattice.points[i]
+            data_dict[usp] = val
+        return ElevationGenerationMap(lattice=lattice, data_dict=data_dict)
+            
+
+        # older, for LatitudeLongitudeLattice
+        # array = np.array(lines)
+        # x_size, y_size = array.shape
+        # return ElevationGenerationMap(x_size, y_size, latlon00, latlon01, latlon10, latlon11, array=array)
 
     def freeze_coastlines(self):
         coastal_points = set()
@@ -986,13 +999,18 @@ class ElevationGenerationMap:
         #     return
         output_fp = add_datetime_to_fp(output_fp)
         print("saving elevation data to {}".format(output_fp))
-        open(output_fp, "w").close()  # clear file
-        for x in range(self.x_size):
-            this_row = ""
-            for y in range(self.y_size):
-                el = self.array[x, y]
-                this_row += "{:.1f},".format(el)
-            assert this_row[-1] == ","
-            this_row = this_row[:-1] + "\n"
-            open(output_fp, "a").write(this_row)
+        with open(output_fp, "w") as f:
+            s = ""
+            for p_i, usp in enumerate(self.lattice.points):
+                val = self.data_dict[usp]
+                s += str(val) + "\n"
+            f.write(s)
+        # for x in range(self.x_size):
+        #     this_row = ""
+        #     for y in range(self.y_size):
+        #         el = self.array[x, y]
+        #         this_row += "{:.1f},".format(el)
+        #     assert this_row[-1] == ","
+        #     this_row = this_row[:-1] + "\n"
+        #     open(output_fp, "a").write(this_row)
         print("finished saving elevation data to {}".format(output_fp))

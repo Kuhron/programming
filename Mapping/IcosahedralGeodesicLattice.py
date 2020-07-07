@@ -14,22 +14,48 @@ class IcosahedralGeodesicLattice(Lattice):
     CADA_II_RADIUS_FACTOR = 2.116
     CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
-    def __init__(self, edge_length_km):
+    def __init__(self, edge_length_km=None, iterations=None):
+        assert int(edge_length_km is None) + int(iterations is None) == 1, "need either edge_length_km or iterations, not both, got {} and {}".format(edge_length_km, iterations)
         self.edge_length_km = edge_length_km
-        self.adjacencies = self.get_adjacencies()
-        self.points = list(self.adjacencies.keys())
+        if iterations is not None:
+            assert iterations % 1 == 0, "need int value for iterations if supplied, got {}".format(iterations)
+            iterations = int(iterations)
+        self.iterations = iterations
+        ordered_points, adjacencies_by_point_index = self.get_adjacencies()
+        self.adjacencies_by_point_index = adjacencies_by_point_index
+        self.points = ordered_points
+        self.usp_to_index = self.get_usp_to_index()
+        self.adjacencies = self.convert_adjacencies_to_usp()
         self.xyz_coords = []
         self.xyz_to_point_number = {}
         for point_number, p in enumerate(self.points):
-            xyz = p.get_coords("xyz")
+            xyz = tuple(p.get_coords("xyz"))
             self.xyz_coords.append(xyz)
             self.xyz_to_point_number[xyz] = point_number
         self.kdtree = KDTree(self.xyz_coords)
         self.graph = self.get_graph()
 
     def get_adjacencies(self):
-        # edge_length_km determines how high the resolution is
         cada_ii_radius_km = IcosahedralGeodesicLattice.CADA_II_RADIUS_KM
+        if self.iterations is not None:
+            iterations_needed = self.iterations
+        elif self.edge_length_km is not None:
+            # edge_length_km determines how high the resolution is
+            # derive from the inverse formula at https://en.wikipedia.org/wiki/Regular_icosahedron
+            # radius of sphere that touches icosa at all vertices = (edge_length)/4 * sqrt(10 + 2*sqrt(5))
+            icosa_edge_length_from_radius_to_vertex = lambda r: r * 4 / np.sqrt(10 + 2 * np.sqrt(5))
+            initial_edge_length_km = icosa_edge_length_from_radius_to_vertex(cada_ii_radius_km)
+            factor = initial_edge_length_km / self.edge_length_km
+            # each iteration halves the edge length
+            iterations_needed = int(np.ceil(np.log2(factor)))
+        else:
+            raise
+
+        try:
+            return IcosahedralGeodesicLattice.get_adjacencies_from_memoization_file(iterations_needed)
+        except FileNotFoundError:
+            print("retrieving memoized files for {} iterations failed; constructing from scratch".format(iterations_needed))
+        
 
         icosahedron_original_points_latlon = {
             # north pole
@@ -104,6 +130,7 @@ class IcosahedralGeodesicLattice(Lattice):
             coords_dict = {"xyz": p_xyz, "latlondeg": p_latlon}
             usp = UnitSpherePoint(coords_dict)
             ordered_points.append(usp)
+        assert len(ordered_points) == 12, "initial icosa needs 12 vertices"
 
         # add their neighbors by index
         for point_index in range(len(ordered_points)):
@@ -114,27 +141,26 @@ class IcosahedralGeodesicLattice(Lattice):
             print("adjacencies now:\n{}\n".format(adjacencies_by_point_index))
 
         # bisect edges until reach resolution
-        iteration_i = 0
-        while True:
-            # check some random edges to get average edge length
-            edge_lengths = []
-            for _ in range(100):
-                random_point_index = random.choice(list(adjacencies_by_point_index.keys()))
-                neighbor_index = random.choice(adjacencies_by_point_index[random_point_index])
-                # v0 = mcm.unit_vector_lat_lon_to_cartesian(*random_point)
-                # v1 = mcm.unit_vector_lat_lon_to_cartesian(*neigh)
-                p0 = ordered_points[random_point_index]
-                p1 = ordered_points[neighbor_index]
-                angle_radians = UnitSpherePoint.get_angle_radians_between(p0, p1)
-                edge_length = cada_ii_radius_km * angle_radians
-                edge_lengths.append(edge_length)
-            edge_length = np.mean(edge_lengths)
-            print("edge_length = {} km, iteration {}".format(edge_length, iteration_i))
-            if edge_length <= self.edge_length_km:
-                break
-            else:
-                iteration_i += 1
-                # we checked e.g. iteration 0 the first time (just the icosahedron's 12 vertices), now are going to enter new iteration
+        print("bisecting for {} iterations".format(iterations_needed))
+        for iteration_i in range(1, iterations_needed+1):
+        # while True:
+            # # check some random edges to get average edge length
+            # edge_lengths = []
+            # for _ in range(100):
+            #     random_point_index = random.choice(list(adjacencies_by_point_index.keys()))
+            #     neighbor_index = random.choice(adjacencies_by_point_index[random_point_index])
+            #     p0 = ordered_points[random_point_index]
+            #     p1 = ordered_points[neighbor_index]
+            #     angle_radians = UnitSpherePoint.get_angle_radians_between(p0, p1)
+            #     edge_length = cada_ii_radius_km * angle_radians
+            #     edge_lengths.append(edge_length)
+            # edge_length = np.mean(edge_lengths)
+            # print("edge_length = {} km, iteration {}".format(edge_length, iteration_i))
+            # if edge_length <= self.edge_length_km:
+            #     break
+            # else:
+            #     iteration_i += 1
+            #     # we checked e.g. iteration 0 the first time (just the icosahedron's 12 vertices), now are going to enter new iteration
 
             point_index_this_iteration_started_at = len(ordered_points)
             last_iteration_i = iteration_i - 1
@@ -149,9 +175,6 @@ class IcosahedralGeodesicLattice(Lattice):
 
             # call the directions (on rectangle representation) L, DL, D, R, UR, U (in counterclockwise order, as they appear on the rectangle representation for a generic peel-internal point)
             get_opposite_neighbor_direction = lambda i: {0: 3, 3: 0, 1: 4, 4: 1, 2: 5, 5: 2}[i]  # map L vs R, DL vs UR, D vs U
-            l_new_point_indices = []
-            dl_new_point_indices = []
-            d_new_point_indices = []
 
             peel_point_indices = range(2, len(ordered_points))
             for p_i in peel_point_indices:
@@ -167,18 +190,6 @@ class IcosahedralGeodesicLattice(Lattice):
                     new_point_index = len(ordered_points)
                     ordered_points.append(midpoint)
 
-                    # no longer used; from dldl approach, which failed, but keep this code until have an approach that does work
-                    # if neighbor_direction_i == 0:
-                    #     l_new_point_indices.append(new_point_index)
-                    # elif neighbor_direction_i == 1:
-                    #     dl_new_point_indices.append(new_point_index)
-                    # elif neighbor_direction_i == 2:
-                    #     d_new_point_indices.append(new_point_index)
-                    # else:
-                    #     raise ValueError("neighbor direction should only be 0, 1, or 2, got {}".format(neighbor_direction_i))\
-
-                    print("added new point {}, midpoint between {} and {}, at index {}".format(midpoint, p_i, n_i, new_point_index))
-
                     adjacencies_by_point_index[new_point_index] = [None] * 6  # all new points will have 6 neighbors, only the 12 original vertices have 5
                     neighbor_direction_back_to_parent = get_opposite_neighbor_direction(neighbor_direction_i)
 
@@ -187,22 +198,22 @@ class IcosahedralGeodesicLattice(Lattice):
                     # print("pi>ni = {} , ni>pi = {}".format(pi_index_ni, ni_index_pi))
 
                     # update the adjacencies by replacing the original neighbor with the midpoint
-                    print("pre-replacement adjacency of parent {} = {}".format(p_i, adjacencies_by_point_index[p_i]))
+                    # print("pre-replacement adjacency of parent {} = {}".format(p_i, adjacencies_by_point_index[p_i]))
                     pi_index_ni = adjacencies_by_point_index[p_i].index(n_i)
                     adjacencies_by_point_index[p_i][pi_index_ni] = new_point_index
                     adjacencies_by_point_index[new_point_index][neighbor_direction_i] = n_i  # here use direction, not index, in case parent has 5 neighbors
-                    print("post-replacement adjacency of parent {} = {}".format(p_i, adjacencies_by_point_index[p_i]))
+                    # print("post-replacement adjacency of parent {} = {}".format(p_i, adjacencies_by_point_index[p_i]))
 
                     # the same must be done for the original neighbor as well
-                    print("pre-replacement adjacency of neighbor {} = {}".format(n_i, adjacencies_by_point_index[n_i]))
+                    # print("pre-replacement adjacency of neighbor {} = {}".format(n_i, adjacencies_by_point_index[n_i]))
                     ni_index_pi = adjacencies_by_point_index[n_i].index(p_i)
                     adjacencies_by_point_index[n_i][ni_index_pi] = new_point_index
                     adjacencies_by_point_index[new_point_index][neighbor_direction_back_to_parent] = p_i  # here use direction, not index, in case parent has 5 neighbors
-                    print("post-replacement adjacency of neighbor {} = {}".format(n_i, adjacencies_by_point_index[n_i]))
+                    # print("post-replacement adjacency of neighbor {} = {}".format(n_i, adjacencies_by_point_index[n_i]))
 
-                    print("post-replacement adjacency of new point {} = {}".format(new_point_index, adjacencies_by_point_index[new_point_index]))
+                    # print("post-replacement adjacency of new point {} = {}".format(new_point_index, adjacencies_by_point_index[new_point_index]))
 
-                print("finished bisecting first three neighbors for point {}".format(p_i))
+                # print("finished bisecting first three neighbors for point {}".format(p_i))
 
             print("finished bisecting edges for iteration {}".format(iteration_i))
 
@@ -222,7 +233,7 @@ class IcosahedralGeodesicLattice(Lattice):
 
             for p_i in indices_to_fill_out:
                 adjacencies_p = adjacencies_by_point_index[p_i]
-                print("filling out adjacencies for point {}: originally {}".format(p_i, adjacencies_p))
+                # print("filling out adjacencies for point {}: originally {}".format(p_i, adjacencies_p))
                 assert len(adjacencies_p) == 6, "all new points should have 6 neighbors but got {}".format(adjacencies_p)
                 assert sum(x is None for x in adjacencies_p) == 4, "expected 4 Nones and two known neighbors but got {}".format(adjacencies_p)
                 # get the 2 known neighbors
@@ -256,7 +267,7 @@ class IcosahedralGeodesicLattice(Lattice):
                     adjacencies_p[position_plus_from_p] = flank_minus_from_n  # OPPOSITE PLUS/MINUS
                     adjacencies_p[position_minus_from_p] = flank_plus_from_n  # OPPOSITE PLUS/MINUS
             
-                print("- got filled neighbors for {}: {}".format(p_i, adjacencies_p))
+                # print("- got filled neighbors for {}: {}".format(p_i, adjacencies_p))
                 assert adjacencies_by_point_index[p_i] == adjacencies_p  # checking that modifying object by reference is working
                 indices_filled_to_completion.append(p_i)
             
@@ -266,85 +277,8 @@ class IcosahedralGeodesicLattice(Lattice):
 
             print("- finished filling out adjacencies for new points")
             assert len(indices_to_fill_out) == 0, "leftover points did not get filled out: {}".format(indices_to_fill_out)
-
-
-
-            # dldl approach; this doesn't work, unfortunately
-            # can use paths along known edges to work out the rest of the neighbors for a new point
-            # know the parent point will be the neighbor in the opposite direction (e.g. create a DL neighbor, then parent is its UR neighbor)
-            # e.g. a DL midpoint's L neighbor is found by the path (DL, U) (starting from the new point, go DL (to the original neighbor that it was created from), then U (the point that is a knight's jump 0.5*D + 1*L from the original parent point); easier to see graphically)
-            # paths in this kind of lattice:
-            # L = (known=L) from L; (DL, U) from DL; (U, DL) from D
-            # DL = (L, D) from L; (known=DL) from DL; (D, L) from D
-            # D = (R, DL) from L; (DL, R) from DL; (known=D) from D
-            # R = (known=R) from L; (UR, D) from DL; (D, UR) from D
-            # UR = (R, U) from L; (known=UR) from DL; (U, R) from D
-            # U = (L, UR) from L; (UR, L) from DL; (known=U) from D
-
-            # keep track of index_this_iteration_started_at (=10*2**(2*i)+2: 12, 42, 162, 642, etc.)
-            # iterate from that index and fill in missing neighbors, all points starting at that index will have been new additions in this iteration
-            # for p_i in l_new_point_indices:
-            #     # should have L and R neighbors, indices 0 and 3
-            #     adjacencies_list = adjacencies_by_point_index[p_i]
-            #     print("filling adjacencies for point {}: {}".format(p_i, adjacencies_list))
-            #     print("adjacencies of known neighbors:")
-            #     for n_i in adjacencies_list:
-            #         if n_i is not None:
-            #             print("n_i {}: {}".format(n_i, adjacencies_by_point_index[n_i]))
-            #     assert adjacencies_list[0] is not None and adjacencies_list[3] is not None, "expected pre-filled neighbor value from creation of L point index {}, but have {}".format(p_i, adjacencies_list)
-            #     l = adjacencies_list[0]
-            #     r = adjacencies_list[3]
-            #     dl = adjacencies_by_point_index[l][2]  # (L, D)
-            #     d = adjacencies_by_point_index[r][1]  # (R, DL)
-            #     ur = adjacencies_by_point_index[r][5]  # (R, U)
-            #     u = adjacencies_by_point_index[l][4]  # (L, UR)
-            #     adjacencies_list = [l, dl, d, r, ur, u]
-            #     print("got filled neighbors for {}: {}".format(p_i, adjacencies_list))
-            #     assert adjacencies_by_point_index[p_i] == adjacencies_list  # checking that modifying object by reference is working
-            #     indices_to_fill_out.remove(p_i)
-            # for p_i in dl_new_point_indices:
-            #     # should have DL and UR neighbors, indices 1 and 4
-            #     adjacencies_list = adjacencies_by_point_index[p_i]
-            #     print("filling adjacencies for point {}: {}".format(p_i, adjacencies_list))
-            #     assert adjacencies_list[1] is not None and adjacencies_list[4] is not None, "expected pre-filled neighbor value from creation of DL point index {}, but have {}".format(p_i, adjacencies_list)
-            #     raise
-            #     indices_to_fill_out.remove(p_i)
-            # for p_i in d_new_point_indices:
-            #     # should have D and U neighbors, indices 2 and 5
-            #     adjacencies_list = adjacencies_by_point_index[p_i]
-            #     print("filling adjacencies for point {}: {}".format(p_i, adjacencies_list))
-            #     assert adjacencies_list[2] is not None and adjacencies_list[5] is not None, "expected pre-filled neighbor value from creation of D point index {}, but have {}".format(p_i, adjacencies_list)
-            #     raise
-            #     indices_to_fill_out.remove(p_i)
-            # assert len(indices_to_fill_out) == 0, "leftover points did not get filled out: {}".format(indices_to_fill_out)
-
-            # old way, xyz4edge approach
-            # new_adjacencies_xyz = {}
-            # for existing_point, neighs in adjacencies_xyz.items():
-            #     new_neighs = []
-            #     for neigh in neighs:
-            #         e = tuple(sorted((existing_point, neigh)))
-            #         midpoint = midpoints[e]
-            #         new_neighs.append(midpoint)
-            #     new_adjacencies_xyz[existing_point] = new_neighs
-            # for e in all_edges:
-            #     new_point = midpoints[e]
-            #     new_neighs = []
-            #     v0, v1 = e
-            #     new_neighs += [v0, v1]
-            #     v0_neighs_old = adjacencies_xyz[v0]
-            #     v1_neighs_old = adjacencies_xyz[v1]
-            #     in_common = set(v0_neighs_old) & set(v1_neighs_old)
-            #     assert len(in_common) == 2
-            #     va, vb = in_common
-            #     four_edges = [(v0, va), (v0, vb), (v1, va), (v1, vb)]
-            #     for e4 in four_edges:
-            #         e4 = tuple(sorted(e4))
-            #         mp4 = midpoints[e4]
-            #         new_neighs.append(mp4)
-            #     new_adjacencies_xyz[new_point] = new_neighs
-            # # done creating new adjacencies
-            # adjacencies_xyz = new_adjacencies_xyz
+            for p_i in range(len(ordered_points)):
+                assert all(x is not None for x in adjacencies_by_point_index[p_i]), "Nones left in adjacencies for {}: {}".format(p_i, adjacencies_by_point_index[p_i])
 
             position_memo_fp = "/home/wesley/programming/Mapping/MemoIcosaPosition_Iteration{}.txt".format(iteration_i)
             adjacency_memo_fp = "/home/wesley/programming/Mapping/MemoIcosaAdjacency_Iteration{}.txt".format(iteration_i)
@@ -354,7 +288,7 @@ class IcosahedralGeodesicLattice(Lattice):
                     usp = ordered_points[p_i]
                     x, y, z = usp.get_coords("xyz")
                     lat, lon = usp.get_coords("latlondeg")
-                    s = "{}:({},{},{}),({},{})\n".format(p_i, x, y, z, lat, lon)
+                    s = "{}:{},{},{};{},{}\n".format(p_i, x, y, z, lat, lon)
                     f.write(s)
             with open(adjacency_memo_fp, "w") as f:
                 for p_i in range(len(ordered_points)):
@@ -365,30 +299,74 @@ class IcosahedralGeodesicLattice(Lattice):
 
             print("now have {} points, iteration {}".format(len(ordered_points), iteration_i))
 
-        # convert to UnitSpherePoint
-        # conversions = {}
-        # for v in adjacencies_xyz:
-        #     v_latlon = mcm.unit_vector_cartesian_to_lat_lon(*v)  # can parallelize this later by putting points in an array, but this part doesn't take that long so far, even for many Icosahedron points
-        #     coords_dict = {"xyz": v, "latlondeg": v_latlon}
-        #     usp = UnitSpherePoint(coords_dict)
-        #     conversions[tuple(v)] = usp
-        # adjacencies_usp = {}
-        # for v0, neighs in adjacencies_xyz.items():
-        #     neighs_usp = []
-        #     for v1 in neighs:
-        #         neighs_usp.append(conversions[v1])
-        #     adjacencies_usp[conversions[v0]] = neighs_usp
-
         return ordered_points, adjacencies_by_point_index
 
-        # TODO implement something like this
-        # assert type(points_ordered) is list
-        # assert all(type(x) is UnitSpherePoint for x in points_ordered)
-        # assert type(adjacencies_point_indices) is dict
-        # assert all(type(x) is int and type(y) is list for x, y in adjacencies_point_indices.items())
-        # assert 0 in adjacencies_point_indices
-        # assert all(type(x) is int for x in adjacencies_point_indices[0])
-        # return points_ordered, adjacencies_point_indices
+    @staticmethod
+    def get_adjacencies_from_memoization_file(iteration):
+        # still not using this, can do so if creation of icosa is slow but for now it's fine
+        adjacencies_fp = "MemoIcosaAdjacency_Iteration{}.txt".format(iteration)
+        positions_fp = "MemoIcosaPosition_Iteration{}.txt".format(iteration)
+        adjacencies_by_point_index = {}
+        ordered_points = []
+
+        with open(adjacencies_fp) as f:
+            lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            p_i, adjacencies_list = line.split(":")
+            p_i = int(p_i)
+            adjacencies = [int(x) for x in adjacencies_list.split(",")]
+            adjacencies_by_point_index[p_i] = adjacencies
+
+        with open(positions_fp) as f:
+            lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            p_i, coords = line.split(":")
+            xyz_coords, latlon_coords = coords.split(";")
+            x, y, z = xyz_coords.split(",")
+            lat, lon = latlon_coords.split(",")
+            p_i = int(p_i)
+            assert p_i == len(ordered_points), "out-of-order point numbering in {} at p_i={}".format(positions_fp, p_i)
+            x = float(x)
+            y = float(y)
+            z = float(z)
+            lat = float(lat)
+            lon = float(lon)
+            coords_dict = {"xyz": (x, y, z), "latlondeg": (lat, lon)}
+            usp = UnitSpherePoint(coords_dict)
+            ordered_points.append(usp)
+
+        print("successfully retrieved memoization for {} iterations".format(iteration))
+        return ordered_points, adjacencies_by_point_index
+
+    def convert_adjacencies_to_usp(self):
+        adjacencies_usp = {}
+        for k, lst in self.adjacencies_by_point_index.items():
+            usp = self.points[k]
+            adj_usps = [self.points[n] for n in lst]
+            adjacencies_usp[usp] = adj_usps
+        return adjacencies_usp
+
+    def get_usp_to_index(self):
+        d = {}
+        for i in range(len(self.points)):
+            d[self.points[i]] = i
+        return d
+
+    @staticmethod
+    def get_iterations_from_number_of_points(n):
+        try:
+            return {12: 0, 42: 1, 162: 2, 642: 3, 2562: 4, 10242: 5}[n]
+        except KeyError:
+            power2 = (n - 2) / 10
+            assert power2 % 1 == 0, "invalid number of points {}, should be equal to power of 2 times 10 plus 2, e.g. 642 or 10242".format(n)
+            log2 = np.log2(power2)
+            assert log2 % 1 == 0, "invalid power of 2: {}".format(power2)
+            two_i = int(log2)
+            iterations = two_i / 2
+            assert iterations % 1 == 0, "invalid 2i: {}".format(two_i)
+            return iterations
 
 
 if __name__ == "__main__":
