@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+import os
 from datetime import datetime
 import networkx as nx
 from PIL import Image
@@ -415,7 +416,7 @@ class ElevationGenerationMap:
             else:
                 if i >= n_steps:
                     break
-            if i % 100 == 0:
+            if i % 100 == 0 or i in [1, 2, 3, 4, 5, 10, 25, 50, 75]:
                 try:
                     dt = datetime.now() - t0
                     n_left = n_steps - i
@@ -424,7 +425,7 @@ class ElevationGenerationMap:
                     eta_str = str(eta)
                     print("step {}, {} elapsed, {} ETA".format(i, dt, eta_str))
                 except ZeroDivisionError:
-                    print("div/0!")
+                    pass # print("div/0!")
             self.make_random_elevation_change(expected_change_size, positive_feedback=True)
             # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
@@ -482,7 +483,10 @@ class ElevationGenerationMap:
         plt.pause(0.001)
 
     def save_plot_image(self, output_fp, size_inches=None):
-        output_fp = add_datetime_to_fp(output_fp)
+        # output_fp = add_datetime_to_fp(output_fp)
+        while os.path.exists(output_fp):
+            print("file {} exists, renaming output fp".format(output_fp))
+            output_fp = output_fp.replace(".png", "-1.png")
         print("saving plot image to {}".format(output_fp))
         self.pre_plot(size_inches)
         plt.savefig(output_fp)
@@ -997,7 +1001,10 @@ class ElevationGenerationMap:
         # format is just grid of comma-separated numbers
         # if not confirm_overwrite_file:
         #     return
-        output_fp = add_datetime_to_fp(output_fp)
+        # output_fp = add_datetime_to_fp(output_fp)
+        while os.path.exists(output_fp):
+            print("file {} exists, renaming output fp".format(output_fp))
+            output_fp = output_fp.replace(".txt", "-1.txt")
         print("saving elevation data to {}".format(output_fp))
         with open(output_fp, "w") as f:
             s = ""

@@ -51,6 +51,10 @@ class IcosahedralGeodesicLattice(Lattice):
         else:
             raise
 
+        if iterations_needed > 7:
+            print("You requested {} iterations of precision IcosahedralGeodesicLattice, but it is memory-intensive to go above 7.".format(iterations_needed))
+            input("press enter to continue if desired")
+
         try:
             return IcosahedralGeodesicLattice.get_adjacencies_from_memoization_file(iterations_needed)
         except FileNotFoundError:

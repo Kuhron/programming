@@ -25,15 +25,29 @@ def confirm_overwrite_file(output_fp):
 
 
 if __name__ == "__main__":
-    from_image = False
-    from_data = True
-    generate_further_elevation_changes = True
+    from_image = input("from image? (y/n) ").strip().lower() == "y"
+    if from_image:
+        from_data = False
+        generate_initial_elevation_changes = True
+        generate_further_elevation_changes = False
+    else:
+        from_data = input("from data? (y/n) ").strip().lower() == "y"
+        if from_data:
+            generate_initial_elevation_changes = False
+            generate_further_elevation_changes = input("generate further changes? (y/n) ").strip().lower() == "y"
+        else:
+            print("generating new data at random")
+            generate_initial_elevation_changes = True
+            generate_further_elevation_changes = False
     
     image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
+
+        # DANGER OF MEMORY LEAKS if use big maps! Watch top!
         # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
         # image_fp_no_dir = "OligraZitomoDigitization_ThinnedBorders_Final.png"
+
         # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
         # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
         # image_fp_no_dir = "TestMap_Jhorju.png"
@@ -62,37 +76,35 @@ if __name__ == "__main__":
         }
         default_color = (0, 0, 0, 255)
         latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
-        lattice_edge_length_km = 500
         print("creating map lattice")
-        map_lattice = IcosahedralGeodesicLattice(edge_length_km=lattice_edge_length_km)
+        map_lattice = IcosahedralGeodesicLattice(iterations=6)
         print("- done creating map lattice")
         print("creating ElevationGenerationMap from image")
         m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
         print("- done creating ElevationGenerationMap")
         m.freeze_coastlines()
-        generate_initial_elevation_changes = True
     elif from_data:
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_CircleIsland50x50.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_LegronCombinedDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_MientaDigitization_ThinnedBorders_Final_FurtherChanges.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_OligraZitomoDigitization_ThinnedBorders_Final_FurtherChanges.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Mako.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Amphoto.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Jhorju.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa_FurtherChanges.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_Ilausa_FurtherChanges_Bay.txt"
-        # data_fp_no_dir = "ElevationGenerationOutputData_TestMap_NorthernMystIslands.txt"
+        # data_fp_no_dir = "EGD_TestMap_CircleIsland.txt"
+        # data_fp_no_dir = "EGD_TestMap_CircleIsland50x50.txt"
+        # data_fp_no_dir = "EGD_LegronCombinedDigitization_ThinnedBorders_Final.txt"
+        # data_fp_no_dir = "EGD_MientaDigitization_ThinnedBorders_Final.txt"
+        # data_fp_no_dir = "EGD_MientaDigitization_ThinnedBorders_Final_FurtherChanges.txt"
+        # data_fp_no_dir = "EGD_OligraZitomoDigitization_ThinnedBorders_Final.txt"
+        # data_fp_no_dir = "EGD_OligraZitomoDigitization_ThinnedBorders_Final_FurtherChanges.txt"
+        # data_fp_no_dir = "EGD_TestMap_Mako.txt"
+        # data_fp_no_dir = "EGD_TestMap_Amphoto.txt"
+        # data_fp_no_dir = "EGD_TestMap_Jhorju.txt"
+        # data_fp_no_dir = "EGD_TestMap_Ilausa.txt"
+        # data_fp_no_dir = "EGD_TestMap_Ilausa_FurtherChanges.txt"
+        # data_fp_no_dir = "EGD_TestMap_Ilausa_FurtherChanges_Bay.txt"
+        # data_fp_no_dir = "EGD_TestMap_NorthernMystIslands.txt"
         # data_fp_no_dir = "TestElevationData10x10.txt"
         # if using Cada WorldMapScanPNGs:
         # data_fp = image_dir + data_fp_no_dir
 
-        # data_fp = "/home/wesley/programming/Mapping/ElevationGenerationOutputData_Random-20200707-004152.txt"
-        # data_fp = "/home/wesley/programming/Mapping/ElevationGenerationOutputData_Random-20200707-004152_FurtherChanges-20200707-004639.txt"
-        data_fp = "/home/wesley/programming/Mapping/ElevationGenerationOutputData_Random-20200707-004152_FurtherChanges-20200707-004639_FurtherChanges-20200707-005113.txt"
+        project_name = input("project name to load: ")
+        project_version = int(input("project version number to load: "))
+        data_fp = "/home/wesley/programming/Mapping/EGD_{}_v{}.txt".format(project_name, project_version)
 
         print("from data {}".format(data_fp))
         # latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
@@ -101,23 +113,24 @@ if __name__ == "__main__":
 
         generate_initial_elevation_changes = False
         if generate_further_elevation_changes:
-            elevation_data_output_fp = data_fp.replace(".txt", "_FurtherChanges.txt")
-            plot_image_output_fp = data_fp.replace("OutputData", "OutputPlot").replace(".txt", "_FurtherChanges.png")
+            new_version_number = project_version + 1
+            elevation_data_output_fp = "/home/wesley/programming/Mapping/EGD_{}_v{}.txt".format(project_name, project_version)
+            plot_image_output_fp = "/home/wesley/programming/Mapping/EGP_{}_v{}.png".format(project_name, project_version)
     else:
-        lattice = IcosahedralGeodesicLattice(edge_length_km=250)
+        lattice = IcosahedralGeodesicLattice(iterations=6)
         m = ElevationGenerationMap(lattice)
-
         m.fill_all(0)
-        elevation_data_output_fp = "/home/wesley/programming/Mapping/ElevationGenerationOutputData_Random.txt"
-        plot_image_output_fp = "/home/wesley/programming/Mapping/ElevationGenerationOutputPlot_Random.png"
+        project_name = input("name for new project: ")
+        elevation_data_output_fp = "/home/wesley/programming/Mapping/EGD_{}_v0.txt".format(project_name)
+        plot_image_output_fp = "/home/wesley/programming/Mapping/EGP_{}_v0.png".format(project_name)
         generate_initial_elevation_changes = True
         
     print("map size {} pixels".format(m.size()))
 
     if generate_initial_elevation_changes:
         print("generating initial elevation changes")
-        expected_change_size = 100
-        expected_touches_per_point = 25
+        expected_change_size = 1000
+        expected_touches_per_point = 50
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
@@ -125,23 +138,23 @@ if __name__ == "__main__":
         print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
         m.plot()
-        if input("save data? (y/n, default n)\n").strip().lower() == "y":
+        if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
             m.save_elevation_data(elevation_data_output_fp)
-        if input("save image? (y/n, default n)\n").strip().lower() == "y":
+        if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
             m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
         print("- done generating initial elevation changes")
     elif generate_further_elevation_changes:
         print("generating further elevation changes")
         m.unfreeze_all()  # allow coastlines to change
-        expected_change_size = 50
-        expected_touches_per_point = 200
+        expected_change_size = 20
+        expected_touches_per_point = 100
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         plot_every_n_steps = None
         print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        if input("save data? (y/n, default n)\n").strip().lower() == "y":
+        if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
             m.save_elevation_data(elevation_data_output_fp)
-        if input("save image? (y/n, default n)\n").strip().lower() == "y":
+        if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
             m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
         print("- done generating further elevation changes")
     else:
