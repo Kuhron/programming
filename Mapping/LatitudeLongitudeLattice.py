@@ -1,6 +1,7 @@
 import numpy as np
 import random
-from scipy.spatial import KDTree
+# from scipy.spatial import KDTree
+from sklearn.neighbors import KDTree
 
 from Lattice import Lattice
 from UnitSpherePoint import UnitSpherePoint

@@ -10,7 +10,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as tri  # interpolation of irregularly spaced data
 import numpy as np
 import networkx as nx
-from scipy.spatial import KDTree
+# from scipy.spatial import KDTree
+from sklearn.neighbors import KDTree
 
 from UnitSpherePoint import UnitSpherePoint
 import PlottingUtil as pu
@@ -36,13 +37,19 @@ class Lattice:
     def n_points(self):
         return len(self.adjacencies)
 
-    def get_random_point(self):
-        return random.choice(list(self.adjacencies_by_point_index.keys()))
+    def get_random_point_index(self):
+        return random.randrange(len(self.points))
 
-    def closest_point_to(self, p):
-        assert type(p) is UnitSpherePoint
-        xyz = p.get_coords("xyz")
-        distance, index = self.kdtree.query(xyz)
+    def closest_point_to(self, usp):
+        assert type(usp) is UnitSpherePoint
+        xyz_as_one_sample = np.array([usp.get_coords("xyz"),])
+        indices = self.kdtree.query(xyz_as_one_sample, k=1, return_distance=False)
+        # print("got closest point indices:", indices)
+        assert type(indices) in [list, np.ndarray]
+        assert len(indices) == 1  # scikit-learn return type from these queries
+        index_array = indices[0]
+        assert index_array.shape == (1,)
+        index = index_array[0]
         point_xyz = tuple(self.kdtree.data[index])
         point_number = self.xyz_to_point_number[point_xyz]
         usp = self.points[point_number]
@@ -61,7 +68,7 @@ class Lattice:
         plt.show()
 
     def place_random_data(self):
-        data = {p: 0 for p in self.points}
+        data = {p_i: 0 for p_i in range(len(self.points))}
         n_patches = 1000
         size_per_patch = int(1/100 * self.n_points())
         for i in range(n_patches):
@@ -85,11 +92,12 @@ class Lattice:
         return data
 
     def plot_data(self, data, size_inches=None):
-        data_points = list(data.keys())  # UnitSpherePoint objects
+        data_point_indices = list(data.keys())
+        data_points = [self.points[p_i] for p_i in data_point_indices]
         latlons_deg = [p.get_coords("latlondeg") for p in data_points]
         lats_deg = np.array([ll[0] for ll in latlons_deg])
         lons_deg = np.array([ll[1] for ll in latlons_deg])
-        vals = np.array([data[p] for p in data_points])
+        vals = np.array([data[p_i] for p_i in data_point_indices])
         # print("lat range {} to {}\nlon range {} to {}".format(min(lats_deg), max(lats_deg), min(lons_deg), max(lons_deg)))
         # plt.scatter(lats_deg, lons_deg)
         # plt.show()

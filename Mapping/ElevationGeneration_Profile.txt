@@ -1,863 +1,322 @@
-wesley@lumen:~/programming/Mapping$ python -m cProfile --sort tottime ElevationGeneration.py 
+python -m cProfile --sort tottime ElevationGeneration.py 
 from image? (y/n) n
 from data? (y/n) n
 generating new data at random
 successfully retrieved memoization for 6 iterations
-name for new project: Uzuria
+name for new project: Profilia
 map size 40962 pixels
 generating initial elevation changes
-expected change size (suggestions: 25-1000): 50
-expected touches per point (suggestions: 10-100): 20 
-filling elevation for 16384 steps, plotting every None
-step 1, 0:00:00.026240 elapsed, 0:07:09.889920 ETA
-step 2, 0:00:00.045891 elapsed, 0:06:15.901372 ETA
-step 3, 0:00:00.064208 elapsed, 0:05:50.602543 ETA
-step 4, 0:00:00.079174 elapsed, 0:05:24.225720 ETA
-step 5, 0:00:00.102684 elapsed, 0:05:36.375523 ETA
-step 10, 0:00:00.189093 elapsed, 0:05:09.615966 ETA
-step 25, 0:00:00.452913 elapsed, 0:04:56.376003 ETA
-step 50, 0:00:00.882579 elapsed, 0:04:48.327768 ETA
-step 75, 0:00:01.318866 elapsed, 0:04:46.793765 ETA
-step 100, 0:00:01.756609 elapsed, 0:04:46.044744 ETA
-step 200, 0:00:03.494927 elapsed, 0:04:42.815400 ETA
-step 300, 0:00:05.308021 elapsed, 0:04:44.574212 ETA
-step 400, 0:00:07.152130 elapsed, 0:04:45.793920 ETA
-step 500, 0:00:08.981343 elapsed, 0:04:45.324292 ETA
-step 600, 0:00:10.719029 elapsed, 0:04:41.981160 ETA
-step 700, 0:00:12.650407 elapsed, 0:04:43.441248 ETA
-step 800, 0:00:14.769571 elapsed, 0:04:47.711808 ETA
-step 900, 0:00:16.589449 elapsed, 0:04:45.416572 ETA
-step 1000, 0:00:18.533589 elapsed, 0:04:45.127056 ETA
-step 1100, 0:00:20.372147 elapsed, 0:04:43.059680 ETA
-step 1200, 0:00:22.254474 elapsed, 0:04:41.587280 ETA
-step 1300, 0:00:24.065013 elapsed, 0:04:39.235008 ETA
-step 1400, 0:00:25.822588 elapsed, 0:04:36.379880 ETA
-step 1500, 0:00:27.664157 elapsed, 0:04:34.505612 ETA
-step 1600, 0:00:29.396962 elapsed, 0:04:31.626432 ETA
-step 1700, 0:00:31.247214 elapsed, 0:04:29.906604 ETA
-step 1800, 0:00:33.161674 elapsed, 0:04:28.681032 ETA
-step 1900, 0:00:35.091470 elapsed, 0:04:27.504996 ETA
-step 2000, 0:00:36.995389 elapsed, 0:04:26.075232 ETA
-step 2100, 0:00:38.890647 elapsed, 0:04:24.525396 ETA
-step 2200, 0:00:40.840819 elapsed, 0:04:23.311776 ETA
-step 2300, 0:00:42.736842 elapsed, 0:04:21.694804 ETA
-step 2400, 0:00:44.641526 elapsed, 0:04:20.116384 ETA
-step 2500, 0:00:46.624582 elapsed, 0:04:18.936600 ETA
-step 2600, 0:00:48.895969 elapsed, 0:04:19.221904 ETA
-step 2700, 0:00:50.929935 elapsed, 0:04:18.121292 ETA
-step 2800, 0:00:52.784246 elapsed, 0:04:16.085568 ETA
-step 2900, 0:00:54.670817 elapsed, 0:04:14.200368 ETA
-step 3000, 0:00:56.595849 elapsed, 0:04:12.489160 ETA
-step 3100, 0:00:58.457451 elapsed, 0:04:10.496388 ETA
-step 3200, 0:01:00.313889 elapsed, 0:04:08.492032 ETA
-step 3300, 0:01:02.165773 elapsed, 0:04:06.476392 ETA
-step 3400, 0:01:04.050123 elapsed, 0:04:04.592592 ETA
-step 3500, 0:01:05.984653 elapsed, 0:04:02.902052 ETA
-step 3600, 0:01:07.927368 elapsed, 0:04:01.221296 ETA
-step 3700, 0:01:10.188379 elapsed, 0:04:00.615480 ETA
-step 3800, 0:01:12.175466 elapsed, 0:03:59.020496 ETA
-step 3900, 0:01:14.402385 elapsed, 0:03:58.169752 ETA
-step 4000, 0:01:16.488111 elapsed, 0:03:56.806848 ETA
-step 4100, 0:01:18.783203 elapsed, 0:03:56.037060 ETA
-step 4200, 0:01:21.118677 elapsed, 0:03:55.321776 ETA
-step 4300, 0:01:23.206130 elapsed, 0:03:53.825400 ETA
-step 4400, 0:01:25.077525 elapsed, 0:03:51.722624 ETA
-step 4500, 0:01:27.043873 elapsed, 0:03:49.872212 ETA
-step 4600, 0:01:29.335000 elapsed, 0:03:48.857064 ETA
-step 4700, 0:01:31.320328 elapsed, 0:03:47.020120 ETA
-step 4800, 0:01:33.577324 elapsed, 0:03:45.830080 ETA
-step 4900, 0:01:35.514712 elapsed, 0:03:43.857612 ETA
-step 5000, 0:01:37.407046 elapsed, 0:03:41.771704 ETA
-step 5100, 0:01:39.338973 elapsed, 0:03:39.789752 ETA
-step 5200, 0:01:41.185914 elapsed, 0:03:37.629456 ETA
-step 5300, 0:01:43.508354 elapsed, 0:03:36.470520 ETA
-step 5400, 0:01:45.860135 elapsed, 0:03:35.330336 ETA
-step 5500, 0:01:48.166766 elapsed, 0:03:34.055628 ETA
-step 5600, 0:01:50.266072 elapsed, 0:03:32.336960 ETA
-step 5700, 0:01:52.203679 elapsed, 0:03:30.314540 ETA
-step 5800, 0:01:54.092882 elapsed, 0:03:28.197864 ETA
-step 5900, 0:01:56.262880 elapsed, 0:03:26.597704 ETA
-step 6000, 0:01:58.657842 elapsed, 0:03:25.353984 ETA
-step 6100, 0:02:01.000612 elapsed, 0:03:23.993424 ETA
-step 6200, 0:02:03.061824 elapsed, 0:03:22.142216 ETA
-step 6300, 0:02:05.082554 elapsed, 0:03:20.207736 ETA
-step 6400, 0:02:07.184037 elapsed, 0:03:18.412032 ETA
-step 6500, 0:02:09.435673 elapsed, 0:03:16.820092 ETA
-step 6600, 0:02:11.400648 elapsed, 0:03:14.789656 ETA
-step 6700, 0:02:13.310063 elapsed, 0:03:12.682548 ETA
-step 6800, 0:02:15.160694 elapsed, 0:03:10.501168 ETA
-step 6900, 0:02:17.284159 elapsed, 0:03:08.693664 ETA
-step 7000, 0:02:19.175688 elapsed, 0:03:06.572688 ETA
-step 7100, 0:02:21.108289 elapsed, 0:03:04.510216 ETA
-step 7200, 0:02:23.286679 elapsed, 0:03:02.770784 ETA
-step 7300, 0:02:25.313682 elapsed, 0:03:00.826104 ETA
-step 7400, 0:02:27.267128 elapsed, 0:02:58.790584 ETA
-step 7500, 0:02:29.317313 elapsed, 0:02:56.871556 ETA
-step 7600, 0:02:31.202610 elapsed, 0:02:54.757680 ETA
-step 7700, 0:02:33.291667 elapsed, 0:02:52.881072 ETA
-step 7800, 0:02:35.174200 elapsed, 0:02:50.770096 ETA
-step 7900, 0:02:37.141453 elapsed, 0:02:48.755244 ETA
-step 8000, 0:02:39.038159 elapsed, 0:02:46.673920 ETA
-step 8100, 0:02:40.994965 elapsed, 0:02:44.652784 ETA
-step 8200, 0:02:43.408397 elapsed, 0:02:43.090752 ETA
-step 8300, 0:02:45.388083 elapsed, 0:02:41.081784 ETA
-step 8400, 0:02:47.293969 elapsed, 0:02:39.009344 ETA
-step 8500, 0:02:49.314361 elapsed, 0:02:37.041396 ETA
-step 8600, 0:02:51.389510 elapsed, 0:02:35.127336 ETA
-step 8700, 0:02:53.290527 elapsed, 0:02:33.049912 ETA
-step 8800, 0:02:55.144946 elapsed, 0:02:30.944352 ETA
-step 8900, 0:02:56.923313 elapsed, 0:02:28.774436 ETA
-step 9000, 0:02:58.768916 elapsed, 0:02:26.668392 ETA
-step 9100, 0:03:00.780915 elapsed, 0:02:24.703944 ETA
-step 9200, 0:03:02.681779 elapsed, 0:02:22.652688 ETA
-step 9300, 0:03:04.552360 elapsed, 0:02:20.574896 ETA
-step 9400, 0:03:06.460312 elapsed, 0:02:18.534624 ETA
-step 9500, 0:03:08.509829 elapsed, 0:02:16.599212 ETA
-step 9600, 0:03:10.783145 elapsed, 0:02:14.818432 ETA
-step 9700, 0:03:12.681463 elapsed, 0:02:12.770976 ETA
-step 9800, 0:03:14.614978 elapsed, 0:02:10.751656 ETA
-step 9900, 0:03:16.619809 elapsed, 0:02:08.778724 ETA
-step 10000, 0:03:18.550866 elapsed, 0:02:06.754320 ETA
-step 10100, 0:03:20.452105 elapsed, 0:02:04.718548 ETA
-step 10200, 0:03:22.398033 elapsed, 0:02:02.709112 ETA
-step 10300, 0:03:24.336049 elapsed, 0:02:00.694392 ETA
-step 10400, 0:03:26.184139 elapsed, 0:01:58.632800 ETA
-step 10500, 0:03:28.043748 elapsed, 0:01:56.585576 ETA
-step 10600, 0:03:29.945897 elapsed, 0:01:54.557904 ETA
-step 10700, 0:03:31.794646 elapsed, 0:01:52.509096 ETA
-step 10800, 0:03:33.673752 elapsed, 0:01:50.479440 ETA
-step 10900, 0:03:35.557130 elapsed, 0:01:48.451584 ETA
-step 11000, 0:03:37.409971 elapsed, 0:01:46.414760 ETA
-step 11100, 0:03:39.266788 elapsed, 0:01:44.380136 ETA
-step 11200, 0:03:41.108953 elapsed, 0:01:42.342528 ETA
-step 11300, 0:03:42.977525 elapsed, 0:01:40.322572 ETA
-step 11400, 0:03:44.793715 elapsed, 0:01:38.279496 ETA
-step 11500, 0:03:46.641657 elapsed, 0:01:36.253872 ETA
-step 11600, 0:03:48.498373 elapsed, 0:01:34.235232 ETA
-step 11700, 0:03:50.351529 elapsed, 0:01:32.218592 ETA
-step 11800, 0:03:52.266623 elapsed, 0:01:30.231456 ETA
-step 11900, 0:03:54.119325 elapsed, 0:01:28.218216 ETA
-step 12000, 0:03:55.992566 elapsed, 0:01:26.215744 ETA
-step 12100, 0:03:57.942479 elapsed, 0:01:24.244860 ETA
-step 12200, 0:03:59.783606 elapsed, 0:01:22.232336 ETA
-step 12300, 0:04:01.611061 elapsed, 0:01:20.222012 ETA
-step 12400, 0:04:03.445873 elapsed, 0:01:18.217872 ETA
-step 12500, 0:04:05.286178 elapsed, 0:01:16.215732 ETA
-step 12600, 0:04:07.141610 elapsed, 0:01:14.219376 ETA
-step 12700, 0:04:08.959007 elapsed, 0:01:12.217452 ETA
-step 12800, 0:04:10.867584 elapsed, 0:01:10.242816 ETA
-step 12900, 0:04:13.174971 elapsed, 0:01:08.376984 ETA
-step 13000, 0:04:15.037044 elapsed, 0:01:06.387312 ETA
-step 13100, 0:04:16.913620 elapsed, 0:01:04.405808 ETA
-step 13200, 0:04:18.740458 elapsed, 0:01:02.412768 ETA
-step 13300, 0:04:20.562667 elapsed, 0:01:00.418644 ETA
-step 13400, 0:04:22.443691 elapsed, 0:00:58.441640 ETA
-step 13500, 0:04:24.470921 elapsed, 0:00:56.497560 ETA
-step 13600, 0:04:26.757602 elapsed, 0:00:54.608160 ETA
-step 13700, 0:04:28.751644 elapsed, 0:00:52.652028 ETA
-step 13800, 0:04:31.076258 elapsed, 0:00:50.757512 ETA
-step 13900, 0:04:33.065396 elapsed, 0:00:48.798180 ETA
-step 14000, 0:04:34.964746 elapsed, 0:00:46.821760 ETA
-step 14100, 0:04:36.806632 elapsed, 0:00:44.839488 ETA
-step 14200, 0:04:38.622674 elapsed, 0:00:42.852264 ETA
-step 14300, 0:04:40.403469 elapsed, 0:00:40.865156 ETA
-step 14400, 0:04:42.302591 elapsed, 0:00:38.894336 ETA
-step 14500, 0:04:44.103037 elapsed, 0:00:36.913212 ETA
-step 14600, 0:04:45.978661 elapsed, 0:00:34.944992 ETA
-step 14700, 0:04:47.800508 elapsed, 0:00:32.969352 ETA
-step 14800, 0:04:49.960488 elapsed, 0:00:31.033728 ETA
-step 14900, 0:04:51.902114 elapsed, 0:00:29.073044 ETA
-step 15000, 0:04:53.851299 elapsed, 0:00:27.112560 ETA
-step 15100, 0:04:55.805912 elapsed, 0:00:25.153560 ETA
-step 15200, 0:04:57.795052 elapsed, 0:00:23.196928 ETA
-step 15300, 0:04:59.710001 elapsed, 0:00:21.234476 ETA
-step 15400, 0:05:01.624100 elapsed, 0:00:19.272624 ETA
-step 15500, 0:05:03.513846 elapsed, 0:00:17.310488 ETA
-step 15600, 0:05:05.471137 elapsed, 0:00:15.351504 ETA
-step 15700, 0:05:07.347608 elapsed, 0:00:13.389984 ETA
-step 15800, 0:05:09.206689 elapsed, 0:00:11.428880 ETA
-step 15900, 0:05:11.078790 elapsed, 0:00:09.469460 ETA
-step 16000, 0:05:12.955653 elapsed, 0:00:07.511040 ETA
-step 16100, 0:05:14.905519 elapsed, 0:00:05.554756 ETA
-step 16200, 0:05:16.728024 elapsed, 0:00:03.597384 ETA
-step 16300, 0:05:18.479688 elapsed, 0:00:01.641276 ETA
+expected change size as proportion of sphere surface area: 0.00122064352
+expected touches per point (suggestions: 10-100): 20
+filling elevation for 16385 steps, plotting every None
+step 1, 0:00:00.011159 elapsed, 0:03:02.829056 ETA
+step 2, 0:00:00.021379 elapsed, 0:02:55.134270 ETA
+step 3, 0:00:00.030047 elapsed, 0:02:44.082112 ETA
+step 4, 0:00:00.035028 elapsed, 0:02:23.448417 ETA
+step 5, 0:00:00.039416 elapsed, 0:02:09.123540 ETA
+step 10, 0:00:00.051455 elapsed, 0:01:24.265750 ETA
+step 25, 0:00:00.079359 elapsed, 0:00:51.926640 ETA
+step 50, 0:00:00.120914 elapsed, 0:00:39.498030 ETA
+step 75, 0:00:00.162480 elapsed, 0:00:35.327460 ETA
+step 100, 0:00:00.205618 elapsed, 0:00:33.481960 ETA
+step 200, 0:00:00.365574 elapsed, 0:00:29.586180 ETA
+step 300, 0:00:00.526044 elapsed, 0:00:28.197005 ETA
+step 400, 0:00:00.683488 elapsed, 0:00:27.318365 ETA
+step 500, 0:00:00.842786 elapsed, 0:00:26.782110 ETA
+step 600, 0:00:00.998994 elapsed, 0:00:26.282025 ETA
+step 700, 0:00:01.153927 elapsed, 0:00:25.848880 ETA
+step 800, 0:00:01.311691 elapsed, 0:00:25.559400 ETA
+step 900, 0:00:01.470741 elapsed, 0:00:25.302490 ETA
+step 1000, 0:00:01.629723 elapsed, 0:00:25.077550 ETA
+step 1100, 0:00:01.785047 elapsed, 0:00:24.807555 ETA
+step 1200, 0:00:01.944102 elapsed, 0:00:24.599700 ETA
+step 1300, 0:00:02.102522 elapsed, 0:00:24.392445 ETA
+step 1400, 0:00:02.258331 elapsed, 0:00:24.170805 ETA
+step 1500, 0:00:02.415577 elapsed, 0:00:23.964850 ETA
+step 1600, 0:00:02.573042 elapsed, 0:00:23.774280 ETA
+step 1700, 0:00:02.728300 elapsed, 0:00:23.569425 ETA
+step 1800, 0:00:02.887108 elapsed, 0:00:23.394340 ETA
+step 1900, 0:00:03.044675 elapsed, 0:00:23.204970 ETA
+step 2000, 0:00:03.201584 elapsed, 0:00:23.030385 ETA
+step 2100, 0:00:03.359305 elapsed, 0:00:22.856000 ETA
+step 2200, 0:00:03.520268 elapsed, 0:00:22.696000 ETA
+step 2300, 0:00:03.677596 elapsed, 0:00:22.521915 ETA
+step 2400, 0:00:03.840154 elapsed, 0:00:22.376000 ETA
+step 2500, 0:00:04.008789 elapsed, 0:00:22.271540 ETA
+step 2600, 0:00:04.265491 elapsed, 0:00:22.621185 ETA
+step 2700, 0:00:04.471096 elapsed, 0:00:22.662360 ETA
+step 2800, 0:00:04.672843 elapsed, 0:00:22.673365 ETA
+step 2900, 0:00:04.836172 elapsed, 0:00:22.492980 ETA
+step 3000, 0:00:04.993819 elapsed, 0:00:22.286025 ETA
+step 3100, 0:00:05.152122 elapsed, 0:00:22.079670 ETA
+step 3200, 0:00:05.309872 elapsed, 0:00:21.873915 ETA
+step 3300, 0:00:05.466407 elapsed, 0:00:21.668760 ETA
+step 3400, 0:00:05.624167 elapsed, 0:00:21.477190 ETA
+step 3500, 0:00:05.779341 elapsed, 0:00:21.273135 ETA
+step 3600, 0:00:05.936223 elapsed, 0:00:21.082465 ETA
+step 3700, 0:00:06.097198 elapsed, 0:00:20.904880 ETA
+step 3800, 0:00:06.254933 elapsed, 0:00:20.714910 ETA
+step 3900, 0:00:06.413090 elapsed, 0:00:20.525340 ETA
+step 4000, 0:00:06.568735 elapsed, 0:00:20.336170 ETA
+step 4100, 0:00:06.724083 elapsed, 0:00:20.147400 ETA
+step 4200, 0:00:06.881158 elapsed, 0:00:19.959030 ETA
+step 4300, 0:00:07.037586 elapsed, 0:00:19.783145 ETA
+step 4400, 0:00:07.194194 elapsed, 0:00:19.595475 ETA
+step 4500, 0:00:07.351980 elapsed, 0:00:19.420090 ETA
+step 4600, 0:00:07.509936 elapsed, 0:00:19.244905 ETA
+step 4700, 0:00:07.664450 elapsed, 0:00:19.058235 ETA
+step 4800, 0:00:07.823970 elapsed, 0:00:18.883550 ETA
+step 4900, 0:00:07.998978 elapsed, 0:00:18.743520 ETA
+step 5000, 0:00:08.161006 elapsed, 0:00:18.580320 ETA
+step 5100, 0:00:08.323167 elapsed, 0:00:18.417120 ETA
+step 5200, 0:00:08.494507 elapsed, 0:00:18.276290 ETA
+step 5300, 0:00:08.654144 elapsed, 0:00:18.101805 ETA
+step 5400, 0:00:08.822780 elapsed, 0:00:17.949490 ETA
+step 5500, 0:00:09.004161 elapsed, 0:00:17.818745 ETA
+step 5600, 0:00:09.182475 elapsed, 0:00:17.687400 ETA
+step 5700, 0:00:09.393593 elapsed, 0:00:17.608880 ETA
+step 5800, 0:00:09.575761 elapsed, 0:00:17.475835 ETA
+step 5900, 0:00:09.735185 elapsed, 0:00:17.300250 ETA
+step 6000, 0:00:09.928463 elapsed, 0:00:17.187175 ETA
+step 6100, 0:00:10.110228 elapsed, 0:00:17.042245 ETA
+step 6200, 0:00:10.291264 elapsed, 0:00:16.907100 ETA
+step 6300, 0:00:10.486777 elapsed, 0:00:16.791525 ETA
+step 6400, 0:00:10.662912 elapsed, 0:00:16.635010 ETA
+step 6500, 0:00:10.854264 elapsed, 0:00:16.507950 ETA
+step 6600, 0:00:11.050163 elapsed, 0:00:16.380090 ETA
+step 6700, 0:00:11.250422 elapsed, 0:00:16.261115 ETA
+step 6800, 0:00:11.433264 elapsed, 0:00:16.112385 ETA
+step 6900, 0:00:11.614213 elapsed, 0:00:15.963255 ETA
+step 7000, 0:00:11.794605 elapsed, 0:00:15.813725 ETA
+step 7100, 0:00:11.957165 elapsed, 0:00:15.635940 ETA
+step 7200, 0:00:12.133678 elapsed, 0:00:15.476725 ETA
+step 7300, 0:00:12.294191 elapsed, 0:00:15.299140 ETA
+step 7400, 0:00:12.469574 elapsed, 0:00:15.139725 ETA
+step 7500, 0:00:12.651018 elapsed, 0:00:14.988995 ETA
+step 7600, 0:00:12.844620 elapsed, 0:00:14.846650 ETA
+step 7700, 0:00:13.020251 elapsed, 0:00:14.686335 ETA
+step 7800, 0:00:13.199336 elapsed, 0:00:14.525820 ETA
+step 7900, 0:00:13.459834 elapsed, 0:00:14.458440 ETA
+step 8000, 0:00:13.738379 elapsed, 0:00:14.397045 ETA
+step 8100, 0:00:14.001827 elapsed, 0:00:14.324765 ETA
+step 8200, 0:00:14.262005 elapsed, 0:00:14.233715 ETA
+step 8300, 0:00:14.442692 elapsed, 0:00:14.067900 ETA
+step 8400, 0:00:14.655259 elapsed, 0:00:13.933825 ETA
+step 8500, 0:00:14.825304 elapsed, 0:00:13.751440 ETA
+step 8600, 0:00:14.995151 elapsed, 0:00:13.577040 ETA
+step 8700, 0:00:15.169279 elapsed, 0:00:13.402640 ETA
+step 8800, 0:00:15.333518 elapsed, 0:00:13.213070 ETA
+step 8900, 0:00:15.496814 elapsed, 0:00:13.031385 ETA
+step 9000, 0:00:15.658597 elapsed, 0:00:12.849900 ETA
+step 9100, 0:00:15.817138 elapsed, 0:00:12.661330 ETA
+step 9200, 0:00:15.974128 elapsed, 0:00:12.473160 ETA
+step 9300, 0:00:16.144927 elapsed, 0:00:12.299560 ETA
+step 9400, 0:00:16.315064 elapsed, 0:00:12.125960 ETA
+step 9500, 0:00:16.486861 elapsed, 0:00:11.945475 ETA
+step 9600, 0:00:16.651903 elapsed, 0:00:11.771975 ETA
+step 9700, 0:00:16.809789 elapsed, 0:00:11.585105 ETA
+step 9800, 0:00:16.984011 elapsed, 0:00:11.411805 ETA
+step 9900, 0:00:17.161718 elapsed, 0:00:11.244990 ETA
+step 10000, 0:00:17.328412 elapsed, 0:00:11.065205 ETA
+step 10100, 0:00:17.509906 elapsed, 0:00:10.898190 ETA
+step 10200, 0:00:17.702311 elapsed, 0:00:10.737160 ETA
+step 10300, 0:00:17.964659 elapsed, 0:00:10.612240 ETA
+step 10400, 0:00:18.218420 elapsed, 0:00:10.485720 ETA
+step 10500, 0:00:18.522981 elapsed, 0:00:10.381140 ETA
+step 10600, 0:00:18.752301 elapsed, 0:00:10.233665 ETA
+step 10700, 0:00:19.009109 elapsed, 0:00:10.102245 ETA
+step 10800, 0:00:19.217826 elapsed, 0:00:09.935715 ETA
+step 10900, 0:00:19.425860 elapsed, 0:00:09.774270 ETA
+step 11000, 0:00:19.607666 elapsed, 0:00:09.601455 ETA
+step 11100, 0:00:19.777456 elapsed, 0:00:09.417870 ETA
+step 11200, 0:00:19.952141 elapsed, 0:00:09.234485 ETA
+step 11300, 0:00:20.114155 elapsed, 0:00:09.051300 ETA
+step 11400, 0:00:20.271292 elapsed, 0:00:08.863330 ETA
+step 11500, 0:00:20.427712 elapsed, 0:00:08.675760 ETA
+step 11600, 0:00:20.597184 elapsed, 0:00:08.498160 ETA
+step 11700, 0:00:20.754826 elapsed, 0:00:08.311190 ETA
+step 11800, 0:00:20.915833 elapsed, 0:00:08.129205 ETA
+step 11900, 0:00:21.072901 elapsed, 0:00:07.942935 ETA
+step 12000, 0:00:21.230731 elapsed, 0:00:07.757065 ETA
+step 12100, 0:00:21.388063 elapsed, 0:00:07.575880 ETA
+step 12200, 0:00:21.566065 elapsed, 0:00:07.399080 ETA
+step 12300, 0:00:21.721516 elapsed, 0:00:07.214110 ETA
+step 12400, 0:00:21.880159 elapsed, 0:00:07.033525 ETA
+step 12500, 0:00:22.038123 elapsed, 0:00:06.849255 ETA
+step 12600, 0:00:22.195308 elapsed, 0:00:06.669170 ETA
+step 12700, 0:00:22.356051 elapsed, 0:00:06.485600 ETA
+step 12800, 0:00:22.513362 elapsed, 0:00:06.306015 ETA
+step 12900, 0:00:22.669546 elapsed, 0:00:06.123145 ETA
+step 13000, 0:00:22.826909 elapsed, 0:00:05.944060 ETA
+step 13100, 0:00:23.004294 elapsed, 0:00:05.768460 ETA
+step 13200, 0:00:23.246401 elapsed, 0:00:05.608785 ETA
+step 13300, 0:00:23.401947 elapsed, 0:00:05.429600 ETA
+step 13400, 0:00:23.561333 elapsed, 0:00:05.247630 ETA
+step 13500, 0:00:23.717165 elapsed, 0:00:05.068945 ETA
+step 13600, 0:00:23.892116 elapsed, 0:00:04.893245 ETA
+step 13700, 0:00:24.087292 elapsed, 0:00:04.720230 ETA
+step 13800, 0:00:24.248444 elapsed, 0:00:04.541845 ETA
+step 13900, 0:00:24.405671 elapsed, 0:00:04.363660 ETA
+step 14000, 0:00:24.565831 elapsed, 0:00:04.185675 ETA
+step 14100, 0:00:24.724333 elapsed, 0:00:04.005605 ETA
+step 14200, 0:00:24.887047 elapsed, 0:00:03.830305 ETA
+step 14300, 0:00:25.045402 elapsed, 0:00:03.650835 ETA
+step 14400, 0:00:25.202311 elapsed, 0:00:03.473750 ETA
+step 14500, 0:00:25.359690 elapsed, 0:00:03.296865 ETA
+step 14600, 0:00:25.519920 elapsed, 0:00:03.120180 ETA
+step 14700, 0:00:25.675114 elapsed, 0:00:02.943695 ETA
+step 14800, 0:00:25.830986 elapsed, 0:00:02.765825 ETA
+step 14900, 0:00:25.995689 elapsed, 0:00:02.591325 ETA
+step 15000, 0:00:26.153937 elapsed, 0:00:02.415440 ETA
+step 15100, 0:00:26.317890 elapsed, 0:00:02.239755 ETA
+step 15200, 0:00:26.472210 elapsed, 0:00:02.064270 ETA
+step 15300, 0:00:26.630440 elapsed, 0:00:01.888985 ETA
+step 15400, 0:00:26.784001 elapsed, 0:00:01.712915 ETA
+step 15500, 0:00:26.946838 elapsed, 0:00:01.539015 ETA
+step 15600, 0:00:27.106869 elapsed, 0:00:01.364330 ETA
+step 15700, 0:00:27.264781 elapsed, 0:00:01.189845 ETA
+step 15800, 0:00:27.420038 elapsed, 0:00:01.014975 ETA
+step 15900, 0:00:27.580544 elapsed, 0:00:00.841475 ETA
+step 16000, 0:00:27.739018 elapsed, 0:00:00.667590 ETA
+step 16100, 0:00:27.901376 elapsed, 0:00:00.493905 ETA
+step 16200, 0:00:28.060977 elapsed, 0:00:00.320420 ETA
+step 16300, 0:00:28.216881 elapsed, 0:00:00.147135 ETA
+saving elevation data to /home/wesley/programming/Mapping/Projects/Profilia/Data/EGD_Profilia_v0.txt
+finished saving elevation data to /home/wesley/programming/Mapping/Projects/Profilia/Data/EGD_Profilia_v0.txt
+saving plot image to /home/wesley/programming/Mapping/Projects/Profilia/Plots/EGP_Profilia_v0.png
 /home/wesley/.local/lib/python3.5/site-packages/matplotlib/contour.py:1000: UserWarning: The following kwargs were not used by contour: 'tri'
   s)
-saving elevation data to /home/wesley/programming/Mapping/EGD_Uzuria_v0.txt
-finished saving elevation data to /home/wesley/programming/Mapping/EGD_Uzuria_v0.txt
-saving plot image to /home/wesley/programming/Mapping/EGP_Uzuria_v0.png
 - done saving plot image
 - done generating initial elevation changes
-         716569922 function calls (716384826 primitive calls) in 363.260 seconds
+         37966556 function calls (37848742 primitive calls) in 65.662 seconds
 
    Ordered by: internal time
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-    32768   49.385    0.002  205.042    0.006 graph.py:894(add_edges_from)
- 62598258   36.126    0.000   50.604    0.000 coreviews.py:322(new_node_ok)
- 46333156   28.432    0.000  127.375    0.000 _collections_abc.py:675(__iter__)
- 76594173   24.531    0.000   39.482    0.000 {method 'update' of 'dict' objects}
- 29968478   18.807    0.000  144.174    0.000 graph.py:1514(<genexpr>)
-    16384   18.488    0.001   18.636    0.001 Lattice.py:39(get_random_point)
- 35379680   15.586    0.000   40.044    0.000 coreviews.py:278(__getitem__)
- 35379680   12.577    0.000   39.719    0.000 coreviews.py:276(<genexpr>)
- 73486198   11.743    0.000   11.743    0.000 filters.py:58(__call__)
-        5    9.850    1.970    9.850    1.970 {built-in method builtins.input}
-    32768    9.789    0.000   23.148    0.001 graph.py:523(add_nodes_from)
-  5476738    6.502    0.000    6.520    0.000 coreviews.py:269(__iter__)
-  5443970    6.435    0.000    8.960    0.000 coreviews.py:320(__getitem__)
- 38106518    5.592    0.000    7.524    0.000 _collections_abc.py:652(__iter__)
- 40824074    5.121    0.000    5.121    0.000 {method 'copy' of 'dict' objects}
-  5476738    5.078    0.000   41.449    0.000 unweighted.py:69(_single_shortest_path_length)
-     3160    5.062    0.002    5.062    0.002 {method 'intersection' of '_geoslib.BaseGeometry' objects}
- 32662548    4.779    0.000    4.779    0.000 coreviews.py:53(__getitem__)
- 59871420    4.656    0.000    4.656    0.000 filters.py:24(no_filter)
-        1    4.602    4.602    6.621    6.621 {method 'mainloop' of '_tkinter.tkapp' objects}
-    16384    4.372    0.000  319.341    0.019 ElevationGenerationMap.py:253(make_random_elevation_change)
-     6180    4.290    0.001    4.290    0.001 {method 'intersects' of '_geoslib.BaseGeometry' objects}
- 31260128    3.707    0.000    3.707    0.000 {method 'get' of 'dict' objects}
-  5443970    3.470    0.000    4.153    0.000 coreviews.py:80(__getitem__)
-     1416    3.325    0.002    3.325    0.002 {method 'create_filled_contour' of 'matplotlib._tri.TriContourGenerator' objects}
-  5509506    2.343    0.000    3.243    0.000 _collections_abc.py:611(items)
-     2124    2.268    0.001    2.487    0.001 {method 'draw_path_collection' of 'matplotlib.backends._backend_agg.RendererAgg' objects}
-    16384    2.244    0.000    3.626    0.000 kdtree.py:318(__query)
-  5476738    2.083    0.000   11.734    0.000 graph.py:1513(<genexpr>)
-  5476738    1.964    0.000    1.964    0.000 coreviews.py:317(<genexpr>)
-  5443970    1.929    0.000    2.648    0.000 _collections_abc.py:607(keys)
-  1270433    1.917    0.000    1.917    0.000 {built-in method numpy.array}
-30728256/30727728    1.906    0.000    1.906    0.000 {built-in method builtins.len}
-  5476738    1.661    0.000    1.661    0.000 coreviews.py:275(<genexpr>)
-  5476738    1.621    0.000    1.621    0.000 coreviews.py:262(__init__)
- 10953476    1.619    0.000    1.619    0.000 _collections_abc.py:631(__init__)
-   159441    1.512    0.000    1.512    0.000 {method 'reduce' of 'numpy.ufunc' objects}
-     6396    1.490    0.000    1.490    0.000 {method 'is_valid' of '_geoslib.BaseGeometry' objects}
-    80382    1.480    0.000    4.224    0.000 ElevationGenerationMap.py:242(<listcomp>)
-       12    1.380    0.115    1.380    0.115 {built-in method qhull.delaunay}
-  5443970    1.354    0.000    1.932    0.000 coreviews.py:50(__iter__)
-    32768    1.329    0.000   42.910    0.001 unweighted.py:25(single_source_shortest_path_length)
-        1    1.258    1.258    1.258    1.258 {built-in method matplotlib._png.write_png}
- 11665787    1.194    0.000    1.194    0.000 ElevationGenerationMap.py:242(<genexpr>)
-    16384    1.134    0.000    1.134    0.000 ElevationGenerationMap.py:298(<listcomp>)
-  2248884    1.046    0.000    2.169    0.000 {built-in method builtins.any}
-       24    1.003    0.042   13.775    0.574 __init__.py:1220(_readboundarydata)
-  5476738    0.930    0.000    0.930    0.000 graph.py:1872(bunch_iter)
-  1011429    0.791    0.000    1.152    0.000 ElevationGenerationMap.py:36(new_value_satisfies_condition)
-80382/16384    0.722    0.000    4.983    0.000 ElevationGenerationMap.py:203(get_distances_from_edge)
-    16384    0.721    0.000   51.981    0.003 ElevationGenerationMap.py:128(get_random_contiguous_region)
-    16469    0.707    0.000    0.707    0.000 {built-in method builtins.sum}
-  5476738    0.706    0.000    0.706    0.000 coreviews.py:44(__init__)
-    16384    0.681    0.000    1.972    0.000 ElevationGenerationMap.py:260(<listcomp>)
-    32768    0.632    0.000    1.561    0.000 filters.py:55(__init__)
-        1    0.610    0.610  319.959  319.959 ElevationGenerationMap.py:406(fill_elevations)
-    33201    0.593    0.000    0.593    0.000 {method 'normal' of 'numpy.random.mtrand.RandomState' objects}
-  5489001    0.589    0.000    0.589    0.000 {built-in method builtins.iter}
-    32768    0.583    0.000  275.341    0.008 ElevationGenerationMap.py:146(get_circle_around_point)
-  2205055    0.563    0.000    0.563    0.000 ElevationGenerationMap.py:77(get_neighbors)
-    15662    0.530    0.000    0.540    0.000 {method '_fwd' of 'pyproj._proj.Proj' objects}
-    32768    0.527    0.000  274.614    0.008 ego.py:17(ego_graph)
-       12    0.471    0.039    0.536    0.045 __init__.py:1503(_getmapboundary)
-       72    0.464    0.006    0.464    0.006 {method 'union' of '_geoslib.BaseGeometry' objects}
-       12    0.354    0.029   14.747    1.229 __init__.py:591(__init__)
-    16384    0.331    0.000    0.841    0.000 ElevationGenerationMap.py:349(<dictcomp>)
-274821/254915    0.324    0.000    3.735    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
-    32768    0.308    0.000    0.607    0.000 graphviews.py:80(subgraph_view)
-   245760    0.301    0.000    0.349    0.000 graph.py:830(add_edge)
-  1150699    0.291    0.000    0.291    0.000 UnitSpherePoint.py:42(get_coords)
-   100945    0.289    0.000    1.433    0.000 fromnumeric.py:73(_wrapreduction)
-  1011429    0.281    0.000    0.281    0.000 ElevationChangeFunctions.py:9(elevation_change_linear)
-    29737    0.277    0.000    0.706    0.000 kdtree.py:15(minkowski_distance_p)
-    16384    0.274    0.000    0.890    0.000 MapCoordinateMath.py:79(unit_vector_cartesian_to_lat_lon)
-    32768    0.246    0.000  228.584    0.007 graph.py:1432(copy)
-  1011429    0.230    0.000    0.511    0.000 ElevationGenerationMap.py:348(<lambda>)
-    16384    0.222    0.000    0.433    0.000 linalg.py:2316(norm)
-  1011429    0.216    0.000    0.216    0.000 ElevationGenerationMap.py:58(get_value_at_position)
-  1052391    0.212    0.000    0.212    0.000 ElevationGenerationMap.py:45(fill_position)
-        1    0.206    0.206    0.533    0.533 IcosahedralGeodesicLattice.py:308(get_adjacencies_from_memoization_file)
-    16384    0.204    0.000    1.037    0.000 _methods.py:134(_mean)
-    57346    0.197    0.000    0.270    0.000 UnitSpherePoint.py:7(__init__)
-    16384    0.197    0.000    3.976    0.000 kdtree.py:400(query)
-     3230    0.193    0.000    0.198    0.000 {method '_inv' of 'pyproj._proj.Proj' objects}
-    32768    0.192    0.000    2.592    0.000 graph.py:1628(subgraph)
-    65537    0.184    0.000    0.197    0.000 graph.py:300(__init__)
-  307/301    0.180    0.001    0.850    0.003 {method 'call' of '_tkinter.tkapp' objects}
-    32777    0.178    0.000    0.178    0.000 {built-in method builtins.round}
-    16384    0.163    0.000    4.143    0.000 Lattice.py:42(closest_point_to)
-    65536    0.153    0.000    0.153    0.000 graph.py:416(__contains__)
-   545930    0.152    0.000    0.152    0.000 {built-in method _heapq.heappush}
-    61637    0.146    0.000    0.719    0.000 fromnumeric.py:2092(sum)
-   560110    0.142    0.000    0.142    0.000 {method 'split' of 'str' objects}
-    16384    0.140    0.000    0.140    0.000 MapCoordinateMath.py:47(mag_3d)
-  15311/1    0.135    0.000    0.265    0.265 kdtree.py:274(__build)
-   327774    0.131    0.000    0.131    0.000 {built-in method _heapq.heappop}
-607999/607994    0.130    0.000    0.150    0.000 {built-in method builtins.isinstance}
-        3    0.130    0.043    0.130    0.043 {built-in method _tkinter.create}
-    16384    0.124    0.000    1.161    0.000 fromnumeric.py:3231(mean)
-    32768    0.113    0.000    0.113    0.000 function.py:147(freeze)
-    32768    0.110    0.000    0.156    0.000 random.py:220(_randbelow)
-        1    0.103    0.103    0.105    0.105 ElevationGenerationMap.py:1000(save_elevation_data)
-   116403    0.098    0.000    0.277    0.000 _asarray.py:16(asarray)
-    32768    0.097    0.000    0.264    0.000 random.py:250(choice)
-    76412    0.097    0.000    0.097    0.000 {method 'copy' of 'numpy.ndarray' objects}
-    16384    0.094    0.000    0.100    0.000 _methods.py:50(_count_reduce_items)
-   117648    0.092    0.000    0.092    0.000 {built-in method builtins.hasattr}
-    16384    0.092    0.000    0.485    0.000 MapCoordinateMath.py:18(verify_unit_vector)
-        1    0.091    0.091    0.532    0.532 Lattice.py:27(get_graph)
-    36979    0.089    0.000    0.089    0.000 {built-in method builtins.max}
-    40962    0.088    0.000    0.091    0.000 graph.py:477(add_node)
-  1011429    0.084    0.000    0.084    0.000 ElevationGenerationMap.py:32(<lambda>)
-    40962    0.081    0.000    0.081    0.000 IcosahedralGeodesicLattice.py:322(<listcomp>)
-    32768    0.079    0.000    0.103    0.000 graph.py:666(nodes)
-    61637    0.077    0.000    0.854    0.000 <__array_function__ internals>:2(sum)
-   100945    0.076    0.000    0.076    0.000 fromnumeric.py:74(<dictcomp>)
-    40962    0.074    0.000    0.074    0.000 IcosahedralGeodesicLattice.py:351(<listcomp>)
-    32768    0.071    0.000    0.094    0.000 graph.py:349(adj)
-    37784    0.070    0.000    0.155    0.000 utils.py:12(_copytobuffer)
-102334/70944    0.068    0.000    0.142    0.000 artist.py:225(stale)
-      691    0.066    0.000    0.066    0.000 {built-in method marshal.loads}
-    32960    0.065    0.000    0.260    0.000 {method 'all' of 'numpy.generic' objects}
-    32768    0.065    0.000    0.180    0.000 graph.py:1827(nbunch_iter)
-        2    0.065    0.032   21.308   10.654 Lattice.py:87(plot_data)
-    32768    0.063    0.000    0.075    0.000 coreviews.py:311(__iter__)
-    47401    0.062    0.000    0.204    0.000 <__array_function__ internals>:2(dot)
-    18892    0.060    0.000    0.964    0.000 proj.py:157(__call__)
-  1018967    0.058    0.000    0.058    0.000 {built-in method builtins.callable}
-       31    0.058    0.002    0.306    0.010 __init__.py:1(<module>)
-     1043    0.058    0.000    0.058    0.000 {built-in method builtins.compile}
-       34    0.057    0.002    0.057    0.002 {method 'fix' of '_geoslib.BaseGeometry' objects}
-   133936    0.056    0.000    0.061    0.000 {built-in method builtins.getattr}
-    81764    0.056    0.000    0.056    0.000 __init__.py:870(__getitem__)
-    16384    0.055    0.000    1.263    0.000 <__array_function__ internals>:2(mean)
-    16384    0.052    0.000   18.688    0.001 ElevationGenerationMap.py:356(get_random_point)
-    17878    0.052    0.000    0.554    0.000 fromnumeric.py:2551(amax)
-   511467    0.050    0.000    0.050    0.000 {method 'endswith' of 'str' objects}
-    17236    0.049    0.000    0.049    0.000 {method 'ravel' of 'numpy.ndarray' objects}
-     3540    0.045    0.000    0.080    0.000 collections.py:855(set_sizes)
-    16384    0.044    0.000    0.509    0.000 <__array_function__ internals>:2(norm)
-     2124    0.043    0.000    2.741    0.001 collections.py:254(draw)
-11392/4883    0.043    0.000    0.134    0.000 transforms.py:2457(get_affine)
-    32768    0.041    0.000    0.041    0.000 MapCoordinateMath.py:9(rad_to_deg)
-    60733    0.041    0.000    0.041    0.000 transforms.py:83(__init__)
-   289752    0.039    0.000    0.039    0.000 {method 'items' of 'dict' objects}
-    32769    0.038    0.000    0.076    0.000 <__array_function__ internals>:2(shape)
-    16384    0.037    0.000    0.037    0.000 kdtree.py:398(<listcomp>)
-    16384    0.037    0.000    0.037    0.000 ElevationGenerationMap.py:136(<listcomp>)
-     4249    0.036    0.000    0.069    0.000 transforms.py:1965(rotate)
-    59371    0.036    0.000    0.036    0.000 {method 'getrandbits' of '_random.Random' objects}
-     3175    0.035    0.000    0.058    0.000 cycler.py:349(by_key)
-       48    0.035    0.001    0.040    0.001 crs.py:158(__init__)
-    31994    0.034    0.000    0.082    0.000 transforms.py:1870(__init__)
-    25434    0.034    0.000    0.452    0.000 _asarray.py:88(asanyarray)
-    16019    0.034    0.000    0.182    0.000 colors.py:150(to_rgba)
-       74    0.034    0.000    0.042    0.001 {built-in method _imp.create_dynamic}
-1558/1497    0.033    0.000    0.072    0.000 {built-in method builtins.__build_class__}
-     2133    0.033    0.000    0.065    0.000 path.py:193(_update_values)
-    21357    0.033    0.000    0.037    0.000 transforms.py:161(set_children)
-    12432    0.033    0.000    0.033    0.000 {built-in method numpy.frombuffer}
-      262    0.033    0.000    0.033    0.000 {method 'set_text' of 'matplotlib.ft2font.FT2Font' objects}
-26050/13877    0.032    0.000    0.040    0.000 transforms.py:134(_invalidate_internal)
-    17878    0.031    0.000    0.605    0.000 <__array_function__ internals>:2(amax)
-    39261    0.031    0.000    0.031    0.000 {method 'astype' of 'numpy.ndarray' objects}
-       77    0.030    0.000    0.034    0.000 {method 'draw_path' of 'matplotlib.backends._backend_agg.RendererAgg' objects}
-    32768    0.029    0.000    0.036    0.000 reportviews.py:174(__iter__)
-     9470    0.028    0.000    0.500    0.000 proj.py:259(__call__)
-        1    0.028    0.028    1.477    1.477 IcosahedralGeodesicLattice.py:17(__init__)
-    15570    0.028    0.000    0.146    0.000 transforms.py:1798(frozen)
-    43349    0.028    0.000    0.057    0.000 transforms.py:1725(__init__)
-    32768    0.027    0.000    0.027    0.000 coreviews.py:303(__init__)
-    19065    0.027    0.000    0.027    0.000 {built-in method builtins.sorted}
-    17888    0.027    0.000    0.377    0.000 fromnumeric.py:2676(amin)
-        2    0.026    0.013    0.044    0.022 Lattice.py:89(<listcomp>)
-   150284    0.025    0.000    0.025    0.000 {built-in method builtins.abs}
-    32768    0.025    0.000    0.025    0.000 reportviews.py:167(__init__)
-   172038    0.025    0.000    0.025    0.000 UnitSpherePoint.py:32(<genexpr>)
-        4    0.025    0.006    0.027    0.007 {method 'readlines' of '_io._IOBase' objects}
-    13810    0.025    0.000    0.100    0.000 transforms.py:2536(composite_transform_factory)
-     6372    0.024    0.000    0.024    0.000 {method 'compress' of 'numpy.ndarray' objects}
-     2717    0.024    0.000    0.278    0.000 patches.py:679(_update_patch_transform)
-        3    0.024    0.008    0.024    0.008 backend_agg.py:81(__init__)
-    41348    0.024    0.000    0.244    0.000 _methods.py:47(_all)
-     9470    0.023    0.000    0.524    0.000 __init__.py:1150(__call__)
-     8544    0.023    0.000    0.170    0.000 colors.py:241(to_rgba_array)
-6084/3042    0.022    0.000    0.218    0.000 transforms.py:2377(frozen)
-     4249    0.022    0.000    0.091    0.000 transforms.py:1981(rotate_deg)
-     5712    0.022    0.000    0.171    0.000 artist.py:885(update)
-67181/67027    0.021    0.000    0.022    0.000 {built-in method builtins.issubclass}
-     5443    0.021    0.000    0.055    0.000 transforms.py:757(__init__)
-    17888    0.020    0.000    0.412    0.000 <__array_function__ internals>:2(amin)
-     2464    0.020    0.000    0.118    0.000 transforms.py:1056(get_points)
-     6934    0.020    0.000    0.079    0.000 transforms.py:2013(translate)
-       72    0.019    0.000    0.020    0.000 linalg.py:482(inv)
-   1776/1    0.019    0.000  363.265  363.265 {built-in method builtins.exec}
-     3282    0.019    0.000    0.028    0.000 artist.py:82(__init__)
-     3240    0.018    0.000    0.365    0.000 artist.py:663(set_clip_path)
-       48    0.018    0.000    0.018    0.000 {method 'within' of '_geoslib.BaseGeometry' objects}
-     2133    0.018    0.000    0.095    0.000 path.py:96(__init__)
-        1    0.017    0.017    0.091    0.091 IcosahedralGeodesicLattice.py:347(convert_adjacencies_to_usp)
-      900    0.017    0.000    0.019    0.000 {built-in method matplotlib._path.point_in_path}
-   5248/5    0.017    0.000    3.336    0.667 artist.py:42(draw_wrapper)
-   177553    0.017    0.000    0.017    0.000 {method 'append' of 'list' objects}
-     8242    0.017    0.000    0.036    0.000 transforms.py:2354(__init__)
-    16920    0.017    0.000    0.084    0.000 artist.py:61(_stale_axes_callback)
-     1428    0.016    0.000    0.305    0.000 collections.py:94(__init__)
-   143808    0.016    0.000    0.016    0.000 {method 'strip' of 'str' objects}
-    32981    0.016    0.000    0.073    0.000 fromnumeric.py:55(_wrapfunc)
-     6084    0.016    0.000    0.035    0.000 transforms.py:2481(__init__)
-    12433    0.015    0.000    0.015    0.000 {method 'read' of '_io.BufferedReader' objects}
-     3848    0.015    0.000    0.044    0.000 colors.py:184(_to_rgba_no_colorcycle)
-    11430    0.015    0.000    0.029    0.000 __init__.py:1981(_setattr_cm)
-    19036    0.015    0.000    0.015    0.000 exceptions.py:23(clear)
-    61637    0.015    0.000    0.015    0.000 fromnumeric.py:2087(_sum_dispatcher)
-     6908    0.015    0.000    0.015    0.000 {built-in method builtins.min}
-    10633    0.014    0.000    0.014    0.000 {method 'format' of 'str' objects}
-   103966    0.014    0.000    0.014    0.000 artist.py:728(get_animated)
-25349/15059    0.014    0.000    0.017    0.000 transforms.py:2417(_get_is_affine)
-        2    0.014    0.007   21.322   10.661 ElevationGenerationMap.py:495(pre_plot)
-     5688    0.014    0.000    0.195    0.000 collections.py:658(_set_facecolor)
-       12    0.013    0.001    5.432    0.453 contour.py:795(__init__)
-     2501    0.013    0.000    0.026    0.000 transforms.py:422(bounds)
-     6084    0.013    0.000    0.042    0.000 transforms.py:2525(get_matrix)
-        4    0.013    0.003    0.013    0.003 {built-in method matplotlib.backends._tkagg.blit}
-      720    0.013    0.000    0.114    0.000 lines.py:277(__init__)
-    17718    0.013    0.000    0.015    0.000 artist.py:310(pchanged)
-    32769    0.013    0.000    0.013    0.000 fromnumeric.py:1903(shape)
-    90788    0.013    0.000    0.013    0.000 {method 'values' of 'dict' objects}
-    16528    0.013    0.000    0.016    0.000 linalg.py:121(isComplexType)
-       48    0.012    0.000    0.063    0.001 proj.py:87(__init__)
-     3170    0.012    0.000    0.012    0.000 {built-in method posix.stat}
-     1334    0.012    0.000    0.047    0.000 <frozen importlib._bootstrap_external>:1215(find_spec)
-     2597    0.012    0.000    0.037    0.000 backend_bases.py:733(__init__)
-     8031    0.012    0.000    0.012    0.000 {method 'reshape' of 'numpy.ndarray' objects}
-    47401    0.012    0.000    0.012    0.000 multiarray.py:707(dot)
-    10753    0.012    0.000    0.012    0.000 {method 'match' of '_sre.SRE_Pattern' objects}
-    13877    0.011    0.000    0.051    0.000 transforms.py:123(invalidate)
-    18110    0.011    0.000    0.011    0.000 {method 'nonzero' of 'numpy.ndarray' objects}
-        2    0.011    0.006    0.043    0.022 font_manager.py:1198(_findfont_cached)
-    34900    0.011    0.000    0.011    0.000 cycler.py:227(<genexpr>)
-    16510    0.011    0.000    0.041    0.000 colors.py:116(_is_nth_color)
-    11111    0.011    0.000    0.049    0.000 re.py:278(_compile)
-     5985    0.011    0.000    0.012    0.000 contextlib.py:37(__init__)
-10288/10264    0.011    0.000    0.046    0.000 transforms.py:2639(get_matrix)
-    10161    0.011    0.000    0.019    0.000 abc.py:178(__instancecheck__)
-     4301    0.010    0.000    0.423    0.000 patches.py:191(get_transform)
-    14551    0.010    0.000    0.022    0.000 __init__.py:1424(is_interactive)
-     1848    0.010    0.000    0.024    0.000 path.py:159(_fast_from_codes_and_verts)
-    60662    0.010    0.000    0.010    0.000 artist.py:197(axes)
-    32768    0.010    0.000    0.010    0.000 {method 'bit_length' of 'int' objects}
-    32851    0.010    0.000    0.010    0.000 transforms.py:1908(get_matrix)
-    74/65    0.010    0.000    0.019    0.000 {built-in method _imp.exec_dynamic}
-    12434    0.010    0.000    0.010    0.000 {method 'seek' of '_io.BufferedReader' objects}
-      432    0.009    0.000    0.127    0.000 text.py:694(draw)
-     2128    0.009    0.000    0.009    0.000 {method 'getint' of '_tkinter.tkapp' objects}
-        2    0.009    0.005    0.009    0.005 Lattice.py:91(<listcomp>)
-     2124    0.009    0.000    0.035    0.000 transforms.py:2842(_revalidate)
-        2    0.009    0.005    0.009    0.005 Lattice.py:90(<listcomp>)
-    18110    0.009    0.000    0.043    0.000 <__array_function__ internals>:2(nonzero)
-    10271    0.009    0.000    0.030    0.000 re.py:160(match)
-     2827    0.009    0.000    0.051    0.000 transforms.py:819(from_extents)
-     7655    0.009    0.000    0.009    0.000 {method 'argmax' of 'numpy.ndarray' objects}
-    14470    0.009    0.000    0.053    0.000 figure.py:55(_stale_figure_callback)
-     2634    0.009    0.000    0.119    0.000 transforms.py:1407(transform)
-      198    0.009    0.000    0.009    0.000 {method 'draw_glyphs_to_bitmap' of 'matplotlib.ft2font.FT2Font' objects}
-    32768    0.009    0.000    0.009    0.000 graph.py:1424(is_multigraph)
-     8388    0.009    0.000    0.058    0.000 {method 'all' of 'numpy.ndarray' objects}
-        2    0.009    0.004    0.009    0.004 Lattice.py:92(<listcomp>)
-     2124    0.009    0.000    0.026    0.000 collections.py:216(_prepare_points)
-       48    0.008    0.000    0.009    0.000 {method 'to_proj4' of 'pyproj._crs._CRS' objects}
-      691    0.008    0.000    0.015    0.000 <frozen importlib._bootstrap_external>:816(get_data)
-      983    0.008    0.000    0.019    0.000 inspect.py:2065(_signature_from_function)
-     1428    0.008    0.000    0.211    0.000 _base.py:1843(add_collection)
-     2537    0.008    0.000    0.008    0.000 {method 'flatten' of 'numpy.ndarray' objects}
-      420    0.008    0.000    0.043    0.000 lines.py:637(recache)
-    14507    0.008    0.000    0.030    0.000 pyplot.py:558(_auto_draw_if_interactive)
-       12    0.008    0.001    3.333    0.278 tricontour.py:55(_get_allsegs_and_allkinds)
-     3636    0.008    0.000    0.019    0.000 shape_base.py:25(atleast_1d)
-     2124    0.008    0.000    2.832    0.001 collections.py:880(draw)
-     1500    0.008    0.000    0.098    0.000 patches.py:1445(_recompute_transform)
-     6530    0.008    0.000    0.008    0.000 {built-in method numpy.zeros}
-     2856    0.008    0.000    0.020    0.000 collections.py:696(_set_edgecolor)
-     2717    0.008    0.000    0.140    0.000 transforms.py:2001(rotate_deg_around)
-  543/227    0.008    0.000    0.019    0.000 sre_parse.py:491(_parse)
-    15310    0.008    0.000    0.036    0.000 <__array_function__ internals>:2(copy)
-    13185    0.007    0.000    0.007    0.000 _weakrefset.py:70(__contains__)
-9479/8151    0.007    0.000    0.315    0.000 <frozen importlib._bootstrap>:996(_handle_fromlist)
-      180    0.007    0.000    0.066    0.000 lines.py:721(draw)
-    18110    0.007    0.000    0.027    0.000 fromnumeric.py:1804(nonzero)
-     2358    0.007    0.000    0.033    0.000 transforms.py:2027(scale)
-      163    0.007    0.000    0.025    0.000 __init__.py:1239(_substitute)
-      180    0.007    0.000    0.008    0.000 {method 'draw_markers' of 'matplotlib.backends._backend_agg.RendererAgg' objects}
-      715    0.007    0.000    0.053    0.000 decorator.py:156(make)
-      944    0.007    0.000    0.031    0.000 inspect.py:1052(getfullargspec)
-    16384    0.007    0.000    0.007    0.000 fromnumeric.py:3227(_mean_dispatcher)
-     2856    0.007    0.000    0.016    0.000 collections.py:589(_bcast_lwls)
-    32769    0.007    0.000    0.007    0.000 fromnumeric.py:1899(_shape_dispatcher)
-      691    0.007    0.000    0.007    0.000 {method 'read' of '_io.FileIO' objects}
-      691    0.007    0.000    0.008    0.000 <frozen importlib._bootstrap_external>:419(_validate_bytecode_header)
-      144    0.007    0.000    0.082    0.001 axis.py:1015(_update_ticks)
-     3624    0.007    0.000    0.092    0.000 artist.py:889(_update_property)
-      930    0.007    0.000    0.008    0.000 font_manager.py:1111(score_weight)
-     2717    0.007    0.000    0.018    0.000 patches.py:698(_convert_units)
-     5985    0.006    0.000    0.022    0.000 contextlib.py:63(__exit__)
-     7726    0.006    0.000    0.057    0.000 transforms.py:1267(__add__)
-    10042    0.006    0.000    0.026    0.000 artist.py:179(convert_xunits)
-    15310    0.006    0.000    0.022    0.000 function_base.py:730(copy)
-     7205    0.006    0.000    0.008    0.000 artist.py:338(get_transform)
-     2580    0.006    0.000    0.033    0.000 artist.py:1008(set)
-      930    0.006    0.000    0.007    0.000 font_manager.py:1093(score_stretch)
-    12958    0.006    0.000    0.037    0.000 {built-in method builtins.next}
-      900    0.006    0.000    0.273    0.000 patches.py:124(contains)
-     2744    0.006    0.000    0.015    0.000 transforms.py:2619(__init__)
-        1    0.006    0.006    0.006    0.006 IcosahedralGeodesicLattice.py:355(get_usp_to_index)
-     4761    0.006    0.000    0.022    0.000 __init__.py:1357(_to_unmasked_float_array)
-    16384    0.006    0.000    0.006    0.000 linalg.py:2312(_norm_dispatcher)
-      807    0.006    0.000    0.065    0.000 <frozen importlib._bootstrap>:879(_find_spec)
-     1428    0.006    0.000    0.033    0.000 collections.py:486(set_linewidth)
-        1    0.006    0.006    0.012    0.012 ElevationGenerationMap.py:54(fill_all)
-      558    0.006    0.000    0.079    0.000 text.py:280(_get_layout)
-      516    0.006    0.000    0.041    0.000 axis.py:342(_apply_params)
-     7146    0.006    0.000    0.008    0.000 <frozen importlib._bootstrap_external>:52(<listcomp>)
-     7655    0.005    0.000    0.019    0.000 fromnumeric.py:1112(argmax)
-     9264    0.005    0.000    0.007    0.000 __init__.py:1886(_str_lower_equal)
-      930    0.005    0.000    0.016    0.000 font_manager.py:1032(score_family)
-     7655    0.005    0.000    0.005    0.000 kdtree.py:267(__init__)
-17294/17290    0.005    0.000    0.007    0.000 {method 'join' of 'str' objects}
-    36218    0.005    0.000    0.005    0.000 {method 'lower' of 'str' objects}
-     7146    0.005    0.000    0.015    0.000 <frozen importlib._bootstrap_external>:50(_path_join)
-    37784    0.005    0.000    0.005    0.000 utils.py:71(_convertback)
-    10102    0.005    0.000    0.020    0.000 artist.py:188(convert_yunits)
-     1416    0.005    0.000    0.317    0.000 collections.py:890(__init__)
-     1328    0.005    0.000    0.008    0.000 font_manager.py:621(__hash__)
-     1452    0.005    0.000    0.013    0.000 cm.py:192(__init__)
-     8271    0.005    0.000    0.005    0.000 {built-in method __new__ of type object at 0xa3cde0}
-     5985    0.005    0.000    0.017    0.000 contextlib.py:131(helper)
-     6372    0.005    0.000    0.035    0.000 fromnumeric.py:1953(compress)
-       36    0.005    0.000    0.005    0.000 contour.py:1155(<listcomp>)
-      715    0.005    0.000    0.023    0.000 decorator.py:87(__init__)
-     1615    0.005    0.000    0.005    0.000 {method 'search' of '_sre.SRE_Pattern' objects}
-     6372    0.005    0.000    0.043    0.000 <__array_function__ internals>:2(compress)
-      840    0.005    0.000    0.017    0.000 font_manager.py:575(__init__)
-    21131    0.005    0.000    0.013    0.000 {built-in method builtins.setattr}
-     8270    0.005    0.000    0.008    0.000 __init__.py:329(iterable)
-      240    0.005    0.000    0.210    0.001 axis.py:72(__init__)
-     7655    0.005    0.000    0.027    0.000 <__array_function__ internals>:2(argmax)
-    39885    0.005    0.000    0.005    0.000 {method 'startswith' of 'str' objects}
-     2142    0.005    0.000    0.007    0.000 artist.py:172(have_units)
-     2848    0.004    0.000    0.011    0.000 transforms.py:1826(transform_affine)
-    17878    0.004    0.000    0.004    0.000 fromnumeric.py:2546(_amax_dispatcher)
-     2613    0.004    0.000    0.004    0.000 {built-in method _codecs.utf_8_decode}
-     2597    0.004    0.000    0.007    0.000 artist.py:782(_set_gc_clip)
-      691    0.004    0.000    0.106    0.000 <frozen importlib._bootstrap_external>:729(get_code)
-     2634    0.004    0.000    0.087    0.000 transforms.py:2433(transform_affine)
- 1026/215    0.004    0.000    0.011    0.000 sre_compile.py:64(_compile)
-     2884    0.004    0.000    0.004    0.000 {built-in method matplotlib._path.affine_transform}
-      900    0.004    0.000    0.115    0.000 path.py:470(contains_point)
-    38685    0.004    0.000    0.004    0.000 {built-in method builtins.id}
-      198    0.004    0.000    0.060    0.000 backend_agg.py:167(draw_text)
-      198    0.004    0.000    0.005    0.000 {method 'draw_text_image' of 'matplotlib.backends._backend_agg.RendererAgg' objects}
-       36    0.004    0.000    0.125    0.003 contour.py:1154(changed)
-     41/5    0.004    0.000    3.320    0.664 image.py:120(_draw_list_compositing_images)
-     1896    0.004    0.000    0.029    0.000 transforms.py:793(unit)
-      715    0.004    0.000    0.083    0.000 decorator.py:190(create)
-      360    0.004    0.000    0.008    0.000 transforms.py:697(translated)
-     1022    0.004    0.000    0.006    0.000 inspect.py:2664(__init__)
-     4266    0.004    0.000    0.007    0.000 collections.py:690(get_edgecolor)
-      182    0.004    0.000    0.004    0.000 {built-in method builtins.print}
-     2856    0.004    0.000    0.008    0.000 collections.py:624(<listcomp>)
-     1382    0.004    0.000    0.010    0.000 <frozen importlib._bootstrap_external>:246(cache_from_source)
-      785    0.004    0.000    0.016    0.000 <frozen importlib._bootstrap>:510(_init_module_attrs)
-      174    0.004    0.000    0.004    0.000 {built-in method now}
-    818/9    0.004    0.000    0.725    0.081 <frozen importlib._bootstrap>:966(_find_and_load)
-     1170    0.004    0.000    0.052    0.000 transforms.py:1500(transform_point)
-     7745    0.004    0.000    0.006    0.000 transforms.py:1729(__array__)
-      576    0.004    0.000    0.009    0.000 shape_base.py:612(column_stack)
-      130    0.004    0.000    0.287    0.002 backend_bases.py:1363(__init__)
-        1    0.004    0.004    0.004    0.004 ElevationGenerationMap.py:29(<dictcomp>)
-     6396    0.004    0.000    0.020    0.000 units.py:117(is_numlike)
-   786/10    0.004    0.000    0.723    0.072 <frozen importlib._bootstrap>:659(_load_unlocked)
-      931    0.004    0.000    0.012    0.000 __init__.py:204(process)
-     1793    0.004    0.000    0.011    0.000 __init__.py:1245(getint_event)
-       84    0.004    0.000    0.004    0.000 {built-in method io.open}
-     1416    0.004    0.000    0.081    0.000 contour.py:1149(<listcomp>)
-     3279    0.004    0.000    0.008    0.000 artist.py:627(set_figure)
-     3636    0.004    0.000    0.026    0.000 <__array_function__ internals>:2(atleast_1d)
-      768    0.004    0.000    0.020    0.000 ticker.py:1889(_staircase)
-      420    0.004    0.000    0.004    0.000 function_base.py:1141(diff)
-     4782    0.004    0.000    0.006    0.000 lines.py:58(_scale_dashes)
-     1863    0.004    0.000    0.007    0.000 transforms.py:1025(__init__)
-     1008    0.004    0.000    0.028    0.000 markers.py:294(set_marker)
-     1428    0.004    0.000    0.012    0.000 collections.py:508(set_linestyle)
-    32768    0.004    0.000    0.004    0.000 graph.py:1428(is_directed)
-      498    0.003    0.000    0.004    0.000 {method 'sub' of '_sre.SRE_Pattern' objects}
-      930    0.003    0.000    0.005    0.000 font_manager.py:1055(<listcomp>)
-      384    0.003    0.000    0.013    0.000 ticker.py:1870(_validate_steps)
-      127    0.003    0.000    0.003    0.000 {method 'globalsetvar' of '_tkinter.tkapp' objects}
-        1    0.003    0.003    0.003    0.003 ElevationGenerationMap.py:33(<dictcomp>)
-      648    0.003    0.000    0.025    0.000 text.py:131(__init__)
-    818/9    0.003    0.000    0.725    0.081 <frozen importlib._bootstrap>:939(_find_and_load_unlocked)
-      498    0.003    0.000    0.005    0.000 core.py:2912(_update_from)
-6174/3558    0.003    0.000    0.018    0.000 transforms.py:2385(_invalidate_internal)
-     5715    0.003    0.000    0.004    0.000 __init__.py:1986(<listcomp>)
-     2597    0.003    0.000    0.040    0.000 backend_bases.py:671(new_gc)
-     1619    0.003    0.000    0.005    0.000 <frozen importlib._bootstrap>:176(_get_module_lock)
-     4260    0.003    0.000    0.137    0.000 collections.py:671(set_facecolor)
-      360    0.003    0.000    0.071    0.000 text.py:892(get_window_extent)
-     1548    0.003    0.000    0.008    0.000 _base.py:920(_set_artist_props)
-      983    0.003    0.000    0.023    0.000 inspect.py:2146(_signature_from_callable)
-     3714    0.003    0.000    0.009    0.000 <__array_function__ internals>:2(can_cast)
-    16428    0.003    0.000    0.003    0.000 {method 'keys' of 'dict' objects}
-     1968    0.003    0.000    0.025    0.000 text.py:180(update)
-     4050    0.003    0.000    0.008    0.000 transforms.py:2437(transform_non_affine)
-     4383    0.003    0.000    0.003    0.000 {built-in method numpy.empty}
-      122    0.003    0.000    0.009    0.000 function_base.py:26(linspace)
-    17888    0.003    0.000    0.003    0.000 fromnumeric.py:2671(_amin_dispatcher)
-      787    0.003    0.000    0.054    0.000 <frozen importlib._bootstrap_external>:1101(_get_spec)
-     5712    0.003    0.000    0.095    0.000 artist.py:916(<listcomp>)
-     6396    0.003    0.000    0.023    0.000 axis.py:1519(convert_units)
-     1619    0.003    0.000    0.003    0.000 <frozen importlib._bootstrap>:94(acquire)
-     7656    0.003    0.000    0.004    0.000 kdtree.py:262(__init__)
-     3045    0.003    0.000    0.004    0.000 inspect.py:2399(__init__)
-      389    0.003    0.000    0.015    0.000 core.py:2782(__new__)
-     2613    0.003    0.000    0.007    0.000 codecs.py:318(decode)
-     1428    0.003    0.000    0.077    0.000 collections.py:742(set_alpha)
-      358    0.003    0.000    0.039    0.000 decorator.py:236(decorator)
-    10710    0.003    0.000    0.003    0.000 transforms.py:1705(_get_is_affine)
-       18    0.003    0.000    0.004    0.000 {method 'draw_quad_mesh' of 'matplotlib.backends._backend_agg.RendererAgg' objects}
-     1416    0.003    0.000    0.110    0.000 transforms.py:2827(__init__)
-     2892    0.003    0.000    0.004    0.000 cm.py:154(get_cmap)
-     2304    0.003    0.000    0.101    0.000 transforms.py:2801(get_transformed_path_and_affine)
-     3223    0.003    0.000    0.003    0.000 cycler.py:225(__iter__)
-     1428    0.003    0.000    0.015    0.000 collections.py:629(set_antialiased)
-     1619    0.003    0.000    0.003    0.000 <frozen importlib._bootstrap>:119(release)
-     5985    0.003    0.000    0.024    0.000 contextlib.py:57(__enter__)
-     3099    0.003    0.000    0.008    0.000 artist.py:325(set_transform)
-      715    0.003    0.000    0.004    0.000 decorator.py:139(update)
-     6350    0.003    0.000    0.003    0.000 cycler.py:371(<genexpr>)
-      768    0.003    0.000    0.037    0.000 ticker.py:1897(set_params)
-       36    0.003    0.000    0.036    0.001 __init__.py:2129(__init__)
-     2597    0.003    0.000    0.095    0.000 backend_bases.py:804(get_clip_path)
-     2220    0.003    0.000    0.116    0.000 transforms.py:272(__array__)
-     2054    0.003    0.000    0.020    0.000 fromnumeric.py:2236(any)
-     5041    0.003    0.000    0.004    0.000 __init__.py:1876(_str_equal)
-      166    0.003    0.000    0.004    0.000 __init__.py:1191(nametowidget)
-       27    0.003    0.000    0.013    0.000 __init__.py:978(_rc_params_in_file)
-     1821    0.002    0.000    0.002    0.000 __init__.py:142(__init__)
-      262    0.002    0.000    0.053    0.000 font_manager.py:1162(findfont)
-       41    0.002    0.000    0.002    0.000 {built-in method builtins.dir}
-     2319    0.002    0.000    0.003    0.000 lines.py:30(_get_dash_pattern)
-       12    0.002    0.000    0.017    0.001 artist.py:1179(_get_setters_and_targets)
- 1683/875    0.002    0.000    0.003    0.000 sre_parse.py:167(getwidth)
-      601    0.002    0.000    0.005    0.000 functools.py:43(update_wrapper)
-       77    0.002    0.000    0.053    0.001 patches.py:484(draw)
-  167/137    0.002    0.000    2.019    0.015 __init__.py:1548(__call__)
-    15681    0.002    0.000    0.002    0.000 {method 'rstrip' of 'str' objects}
-      558    0.002    0.000    0.010    0.000 text.py:863(get_prop_tup)
-      504    0.002    0.000    0.005    0.000 axis.py:963(iter_ticks)
-      612    0.002    0.000    0.003    0.000 font_manager.py:742(set_weight)
-     6169    0.002    0.000    0.002    0.000 sre_parse.py:226(__next)
-     2016    0.002    0.000    0.019    0.000 markers.py:247(_recache)
-      900    0.002    0.000    0.009    0.000 patches.py:112(_process_radius)
-      294    0.002    0.000    0.003    0.000 sre_compile.py:248(_optimize_charset)
-     3892    0.002    0.000    0.002    0.000 artist.py:724(get_visible)
-       52    0.002    0.000    0.014    0.000 colors.py:465(__call__)
-     8206    0.002    0.000    0.002    0.000 path.py:203(vertices)
-     1416    0.002    0.000    0.083    0.000 contour.py:1147(_make_paths)
-     1488    0.002    0.000    0.016    0.000 fromnumeric.py:2324(all)
-    14338    0.002    0.000    0.002    0.000 {method 'pop' of 'dict' objects}
-       82    0.002    0.000    0.002    0.000 {built-in method posix.listdir}
-     2717    0.002    0.000    0.280    0.000 patches.py:708(get_patch_transform)
-     6050    0.002    0.000    0.002    0.000 transforms.py:977(get_points)
-      124    0.002    0.000    0.298    0.002 backend_bases.py:1800(motion_notify_event)
-     6889    0.002    0.000    0.002    0.000 <frozen importlib._bootstrap_external>:366(_verbose_message)
-      432    0.002    0.000    0.002    0.000 stride_tricks.py:185(_broadcast_shape)
-     5259    0.002    0.000    0.002    0.000 artist.py:205(axes)
-      785    0.002    0.000    0.004    0.000 <frozen importlib._bootstrap>:321(__exit__)
-     2088    0.002    0.000    0.006    0.000 artist.py:947(set_zorder)
-     4710    0.002    0.000    0.004    0.000 transforms.py:2698(get_matrix)
-     4410    0.002    0.000    0.002    0.000 colors.py:236(<genexpr>)
-      124    0.002    0.000    0.302    0.002 _backend_tk.py:359(motion_notify_event)
- 1056/960    0.002    0.000    0.005    0.000 spines.py:436(get_spine_transform)
-      396    0.002    0.000    0.002    0.000 {method 'round' of 'numpy.generic' objects}
-     2054    0.002    0.000    0.024    0.000 <__array_function__ internals>:2(any)
-      612    0.002    0.000    0.002    0.000 _inspect.py:67(getargs)
-       72    0.002    0.000    0.020    0.000 colors.py:929(__call__)
-     3299    0.002    0.000    0.002    0.000 cycler.py:138(keys)
-    72/36    0.002    0.000    0.012    0.000 gridspec.py:91(get_grid_positions)
-     1488    0.002    0.000    0.020    0.000 <__array_function__ internals>:2(all)
-      171    0.002    0.000    0.021    0.000 patches.py:41(__init__)
-     1440    0.002    0.000    0.003    0.000 lines.py:1019(_split_drawstyle_linestyle)
-      918    0.002    0.000    0.005    0.000 text.py:849(get_unitless_position)
-       72    0.002    0.000    0.351    0.005 axis.py:1177(draw)
-      765    0.002    0.000    0.003    0.000 <frozen importlib._bootstrap_external>:513(spec_from_file_location)
-   691/10    0.002    0.000    0.723    0.072 <frozen importlib._bootstrap_external>:659(exec_module)
-      900    0.002    0.000    0.275    0.000 _base.py:2139(in_axes)
-    10712    0.002    0.000    0.003    0.000 mathtext.py:2739(<genexpr>)
-     2597    0.002    0.000    0.002    0.000 backend_bases.py:921(set_clip_path)
-    18110    0.002    0.000    0.002    0.000 fromnumeric.py:1800(_nonzero_dispatcher)
-        2    0.002    0.001    0.004    0.002 decoder.py:345(raw_decode)
-     2776    0.002    0.000    0.012    0.000 transforms.py:1746(transform)
-     1452    0.002    0.000    0.004    0.000 artist.py:927(set_label)
-     4260    0.002    0.000    0.016    0.000 collections.py:392(set_hatch)
-      384    0.002    0.000    0.052    0.000 scale.py:63(set_default_locators_and_formatters)
-     2142    0.002    0.000    0.002    0.000 collections.py:178(get_offset_transform)
-      432    0.002    0.000    0.007    0.000 stride_tricks.py:206(broadcast_arrays)
-       70    0.002    0.000    0.021    0.000 colors.py:713(from_list)
-      612    0.002    0.000    0.003    0.000 font_manager.py:778(set_size)
-    10496    0.002    0.000    0.002    0.000 artist.py:811(get_agg_filter)
-      147    0.002    0.000    0.002    0.000 {built-in method numpy.arange}
-      720    0.002    0.000    0.005    0.000 lines.py:1044(set_linestyle)
-    10496    0.002    0.000    0.002    0.000 artist.py:792(get_rasterized)
-      780    0.002    0.000    0.013    0.000 shape_base.py:286(hstack)
-    15795    0.002    0.000    0.002    0.000 transforms.py:1772(get_affine)
-     3868    0.002    0.000    0.002    0.000 sre_parse.py:157(__getitem__)
-     4428    0.002    0.000    0.002    0.000 axis.py:1516(have_units)
-      396    0.002    0.000    0.003    0.000 ticker.py:493(__init__)
-3690/2612    0.002    0.000    0.008    0.000 {built-in method builtins.hash}
-      486    0.002    0.000    0.009    0.000 core.py:2938(__array_finalize__)
-      691    0.002    0.000    0.070    0.000 <frozen importlib._bootstrap_external>:474(_compile_bytecode)
-      120    0.002    0.000    0.005    0.000 numeric.py:2244(within_tol)
-      357    0.002    0.000    0.050    0.000 decorator.py:218(decorate)
-     2201    0.002    0.000    0.003    0.000 artist.py:522(get_snap)
-      155    0.002    0.000    0.002    0.000 transforms.py:404(height)
-      480    0.002    0.000    0.003    0.000 artist.py:985(update_from)
-      228    0.002    0.000    0.132    0.001 axis.py:840(set_tick_params)
-     6292    0.002    0.000    0.002    0.000 {method 'rpartition' of 'str' objects}
-      536    0.002    0.000    0.004    0.000 _ufunc_config.py:39(seterr)
-     2597    0.002    0.000    0.002    0.000 backend_bases.py:1022(get_hatch_path)
-  785/781    0.002    0.000    0.062    0.000 <frozen importlib._bootstrap>:570(module_from_spec)
-       48    0.002    0.000    0.002    0.000 {pyproj._crs.is_proj}
-     1795    0.002    0.000    0.012    0.000 __init__.py:829(__setitem__)
-      528    0.002    0.000    0.007    0.000 axis.py:629(update_position)
-     2304    0.002    0.000    0.056    0.000 transforms.py:2817(get_affine)
-     1493    0.002    0.000    0.004    0.000 transforms.py:2447(transform_path_non_affine)
-  648/324    0.002    0.000    0.027    0.000 transforms.py:2465(inverted)
-     7589    0.002    0.000    0.002    0.000 path.py:255(should_simplify)
-     1395    0.002    0.000    0.006    0.000 <__array_function__ internals>:2(concatenate)
-     1440    0.002    0.000    0.002    0.000 colors.py:876(__init__)
-    15310    0.002    0.000    0.002    0.000 function_base.py:726(_copy_dispatcher)
-     3114    0.002    0.000    0.013    0.000 <frozen importlib._bootstrap_external>:68(_path_stat)
-      288    0.002    0.000    0.047    0.000 axis.py:797(cla)
-       17    0.002    0.000    0.004    0.000 enum.py:88(__new__)
-     4782    0.002    0.000    0.002    0.000 transforms.py:2313(get_matrix)
-     1572    0.002    0.000    0.003    0.000 font_manager.py:1191(<genexpr>)
-     2142    0.002    0.000    0.018    0.000 transforms.py:1664(frozen)
-       24    0.002    0.000    0.235    0.010 _base.py:963(cla)
-     5056    0.002    0.000    0.003    0.000 sre_parse.py:247(get)
-      801    0.002    0.000    0.005    0.000 <frozen importlib._bootstrap>:195(_lock_unlock_module)
-     1668    0.002    0.000    0.004    0.000 artist.py:836(set_alpha)
-      286    0.001    0.000    0.006    0.000 overrides.py:72(verify_matching_signatures)
-      216    0.001    0.000    0.014    0.000 colors.py:898(process_value)
-      127    0.001    0.000    0.277    0.002 backend_bases.py:1383(<listcomp>)
-     1518    0.001    0.000    0.003    0.000 core.py:593(filled)
-      818    0.001    0.000    0.007    0.000 <frozen importlib._bootstrap>:163(__enter__)
-      536    0.001    0.000    0.002    0.000 _ufunc_config.py:139(geterr)
-     1382    0.001    0.000    0.002    0.000 <frozen importlib._bootstrap_external>:56(_path_split)
-      180    0.001    0.000    0.153    0.001 axis.py:289(draw)
-      316    0.001    0.000    0.033    0.000 overrides.py:166(decorator)
-      144    0.001    0.000    0.002    0.000 transforms.py:2861(nonsingular)
-      765    0.001    0.000    0.007    0.000 <frozen importlib._bootstrap_external>:342(_get_cached)
-     1416    0.001    0.000    0.002    0.000 contour.py:1002(get_transform)
-      720    0.001    0.000    0.012    0.000 lines.py:1149(set_markerfacecolor)
-       24    0.001    0.000    0.321    0.013 _base.py:417(__init__)
-     6065    0.001    0.000    0.001    0.000 path.py:217(codes)
-       12    0.001    0.000    5.597    0.466 __init__.py:3581(contourf)
-     3989    0.001    0.000    0.002    0.000 inspect.py:2709(<genexpr>)
-    20/19    0.001    0.000    0.001    0.000 {built-in method _imp.create_builtin}
-      465    0.001    0.000    0.002    0.000 copy.py:269(_reconstruct)
-      384    0.001    0.000    0.001    0.000 axis.py:820(reset_ticks)
-      230    0.001    0.000    0.001    0.000 text.py:52(get_rotation)
-  336/192    0.001    0.000    0.004    0.000 units.py:140(get_converter)
-      432    0.001    0.000    0.003    0.000 axis.py:1603(set_major_locator)
-      765    0.001    0.000    0.005    0.000 <frozen importlib._bootstrap_external>:1210(_get_spec)
-       36    0.001    0.000    3.319    0.092 _base.py:2556(draw)
-      720    0.001    0.000    0.003    0.000 lines.py:1002(set_linewidth)
-      120    0.001    0.000    0.011    0.000 numeric.py:2167(isclose)
-      883    0.001    0.000    0.002    0.000 <frozen importlib._bootstrap>:74(__init__)
-       96    0.001    0.000    0.023    0.000 transforms.py:726(union)
-     1434    0.001    0.000    0.004    0.000 <frozen importlib._bootstrap_external>:1064(_path_importer_cache)
-  477/215    0.001    0.000    0.020    0.000 sre_parse.py:429(_parse_sub)
-      168    0.001    0.000    0.040    0.000 axis.py:614(_get_gridline)
-      168    0.001    0.000    0.032    0.000 axis.py:585(_get_tick1line)
-      288    0.001    0.000    0.010    0.000 lines.py:1229(update_from)
-      252    0.001    0.000    0.006    0.000 transforms.py:1536(transform_path_non_affine)
-      600    0.001    0.000    0.001    0.000 font_manager.py:760(set_stretch)
-      144    0.001    0.000    0.072    0.001 axis.py:1114(_get_tick_bboxes)
-      198    0.001    0.000    0.002    0.000 figure.py:80(as_list)
-      168    0.001    0.000    0.017    0.000 axis.py:555(_get_text1)
-      372    0.001    0.000    0.002    0.000 __init__.py:958(get_siblings)
-      384    0.001    0.000    0.038    0.000 ticker.py:1821(__init__)
-     3250    0.001    0.000    0.001    0.000 inspect.py:158(isfunction)
-      262    0.001    0.000    0.057    0.000 backend_agg.py:248(_get_agg_font)
-     7655    0.001    0.000    0.001    0.000 fromnumeric.py:1108(_argmax_dispatcher)
-        1    0.001    0.001    0.001    0.001 {built-in method _posixsubprocess.fork_exec}
-      125    0.001    0.000    0.001    0.000 weakref.py:65(__call__)
-        1    0.001    0.001    0.001    0.001 {built-in method posix.read}
-       36    0.001    0.000    0.009    0.000 _base.py:1443(apply_aspect)
-      516    0.001    0.000    0.003    0.000 transforms.py:2720(__init__)
-      340    0.001    0.000    0.013    0.000 core.py:6457(array)
-     1456    0.001    0.000    0.008    0.000 <frozen importlib._bootstrap>:406(cached)
-      312    0.001    0.000    0.004    0.000 transforms.py:357(ymax)
-      215    0.001    0.000    0.003    0.000 sre_compile.py:412(_compile_info)
-      566    0.001    0.000    0.002    0.000 __init__.py:1348(is_math_text)
-     2844    0.001    0.000    0.001    0.000 figure.py:457(_get_dpi)
-     1008    0.001    0.000    0.031    0.000 markers.py:223(__init__)
-      228    0.001    0.000    0.001    0.000 axis.py:871(_translate_tick_kw)
-     1008    0.001    0.000    0.002    0.000 markers.py:269(set_fillstyle)
-     4266    0.001    0.000    0.001    0.000 collections.py:687(get_facecolor)
-     6372    0.001    0.000    0.001    0.000 fromnumeric.py:1949(_compress_dispatcher)
-       12    0.001    0.000    0.133    0.011 __init__.py:1815(_cliplimb)
-     4248    0.001    0.000    0.001    0.000 collections.py:175(get_transforms)
-      720    0.001    0.000    0.008    0.000 lines.py:1163(set_markerfacecoloralt)
-        1    0.001    0.001    0.534    0.534 IcosahedralGeodesicLattice.py:38(get_adjacencies)
-      691    0.001    0.000    0.001    0.000 {built-in method _imp._fix_co_filename}
-     6468    0.001    0.000    0.001    0.000 artist.py:962(sticky_edges)
-       96    0.001    0.000    0.016    0.000 spines.py:36(__init__)
-      215    0.001    0.000    0.038    0.000 sre_compile.py:531(compile)
-      144    0.001    0.000    0.037    0.000 axis.py:1853(_get_pixel_distance_along_axis)
-     24/4    0.001    0.000    0.054    0.013 __init__.py:2145(destroy)
-      135    0.001    0.000    0.003    0.000 textwrap.py:415(dedent)
-      168    0.001    0.000    0.030    0.000 axis.py:600(_get_tick2line)
-        1    0.001    0.001    0.001    0.001 defchararray.py:1810(chararray)
-      905    0.001    0.000    0.002    0.000 patches.py:673(get_path)
-       36    0.001    0.000    0.012    0.000 _base.py:2510(_update_title_position)
-      648    0.001    0.000    0.002    0.000 font_manager.py:850(_json_decode)
-     5741    0.001    0.000    0.001    0.000 path.py:236(simplify_threshold)
-      410    0.001    0.000    0.014    0.000 artist.py:1142(get_valid_values)
-      288    0.001    0.000    0.002    0.000 core.py:3177(__getitem__)
-      720    0.001    0.000    0.003    0.000 lines.py:620(set_data)
-     1320    0.001    0.000    0.002    0.000 lines.py:1202(set_ydata)
-      152    0.001    0.000    0.002    0.000 _methods.py:63(_clip_dep_is_scalar_nan)
-      124    0.001    0.000    0.007    0.000 backend_bases.py:2673(mouse_move)
-       38    0.001    0.000    0.020    0.001 __init__.py:356(namedtuple)
-      720    0.001    0.000    0.002    0.000 lines.py:1299(set_dash_capstyle)
-      124    0.001    0.000    0.285    0.002 backend_bases.py:1466(__init__)
-     1089    0.001    0.000    0.006    0.000 <frozen importlib._bootstrap_external>:78(_path_is_mode_type)
-       24    0.001    0.000    0.005    0.000 colors.py:370(makeMappingArray)
-     3600    0.001    0.000    0.001    0.000 patches.py:1460(get_path)
-      331    0.001    0.000    0.001    0.000 {method 'getboolean' of '_tkinter.tkapp' objects}
-      144    0.001    0.000    0.017    0.000 axis.py:2232(_get_pixel_distance_along_axis)
-      808    0.001    0.000    0.001    0.000 <frozen importlib._bootstrap>:372(__init__)
-      500    0.001    0.000    0.003    0.000 patches.py:259(_set_edgecolor)
-      488    0.001    0.000    0.011    0.000 patches.py:285(_set_facecolor)
-       12    0.001    0.000    0.032    0.003 proj.py:36(__init__)
-       32    0.001    0.000    0.003    0.000 doccer.py:12(docformat)
-     2142    0.001    0.000    0.009    0.000 collections.py:767(update_scalarmappable)
-      281    0.001    0.000    0.004    0.000 function_base.py:460(add_newdoc)
-     1428    0.001    0.000    0.002    0.000 collections.py:380(set_urls)
-      609    0.001    0.000    0.001    0.000 {method 'view' of 'numpy.generic' objects}
-      180    0.001    0.000    0.008    0.000 transforms.py:2776(_revalidate)
-   428/69    0.001    0.000    0.340    0.005 {built-in method builtins.__import__}
-       48    0.001    0.000    0.013    0.000 _base.py:2436(handle_single_axis)
-      262    0.001    0.000    0.001    0.000 backend_agg.py:50(get_hinting_flag)
-      972    0.001    0.000    0.022    0.000 transforms.py:1853(inverted)
-      240    0.001    0.000    0.003    0.000 _base.py:3124(_validate_converted_limits)
-       60    0.001    0.000    0.008    0.000 _base.py:3142(set_xlim)
-      465    0.001    0.000    0.004    0.000 copy.py:67(copy)
- 1560/840    0.001    0.000    0.003    0.000 _base.py:737(get_yaxis_transform)
-        1    0.001    0.001    0.004    0.004 lxml.etree.pyx:1(PyMODINIT_FUNC PyInit_etree(void))
-      168    0.001    0.000    0.014    0.000 axis.py:570(_get_text2)
-     2397    0.001    0.000    0.001    0.000 <frozen importlib._bootstrap>:856(__exit__)
-       36    0.001    0.000    0.025    0.001 axis.py:1924(_update_label_position)
-       24    0.001    0.000    0.001    0.000 _base.py:2600(<listcomp>)
-     1428    0.001    0.000    0.002    0.000 collections.py:458(set_offset_position)
-      792    0.001    0.000    0.005    0.000 transforms.py:2236(get_affine)
-      168    0.001    0.000    0.004    0.000 _base.py:762(get_yaxis_text1_transform)
-... etc. (clipped)
+        5   22.249    4.450   22.249    4.450 {built-in method builtins.input}
+    32770    2.827    0.000    5.794    0.000 {method 'query_radius' of 'sklearn.neighbors._kd_tree.BinaryTree' objects}
+     1580    2.354    0.001    2.354    0.001 {method 'intersection' of '_geoslib.BaseGeometry' objects}
+     3090    2.018    0.001    2.018    0.001 {method 'intersects' of '_geoslib.BaseGeometry' objects}
+  7815999    1.866    0.000    1.866    0.000 ElevationGenerationMap.py:279(<genexpr>)
+    16385    1.651    0.000   27.851    0.002 ElevationGenerationMap.py:290(make_random_elevation_change)
+      720    1.435    0.002    1.435    0.002 {method 'create_filled_contour' of 'matplotlib._tri.TriContourGenerator' objects}
+  1181073    1.394    0.000    1.394    0.000 {built-in method numpy.array}
+      720    1.296    0.002    1.393    0.002 {method 'draw_path_collection' of 'matplotlib.backends._backend_agg.RendererAgg' objects}
+  4243171    1.292    0.000    1.292    0.000 ElevationGenerationMap.py:26(check_is_point_index)
+        1    1.217    1.217    1.217    1.217 {built-in method matplotlib._png.write_png}
+    65552    1.101    0.000    5.068    0.000 ElevationGenerationMap.py:279(<listcomp>)
+  1570186    0.910    0.000    1.416    0.000 ElevationGenerationMap.py:89(get_neighbors)
+   145792    0.888    0.000    0.888    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+   847302    0.824    0.000    1.517    0.000 ElevationGenerationMap.py:40(new_value_satisfies_condition)
+    32770    0.805    0.000    9.309    0.000 ElevationGenerationMap.py:155(get_circle_around_point)
+  1613752    0.741    0.000    2.545    0.000 {built-in method builtins.any}
+     3198    0.708    0.000    0.708    0.000 {method 'is_valid' of '_geoslib.BaseGeometry' objects}
+  1727374    0.695    0.000    0.695    0.000 graph.py:1872(bunch_iter)
+  1727374    0.625    0.000    0.625    0.000 coreviews.py:275(<genexpr>)
+        6    0.621    0.103    0.621    0.103 {built-in method qhull.delaunay}
+65552/16385    0.600    0.000    5.696    0.000 ElevationGenerationMap.py:240(get_distances_from_edge)
+    16385    0.589    0.000    1.891    0.000 {method 'query' of 'sklearn.neighbors._kd_tree.BinaryTree' objects}
+    49155    0.575    0.000    3.549    0.000 validation.py:350(check_array)
+   888264    0.524    0.000    0.769    0.000 ElevationGenerationMap.py:50(fill_position)
+    16428    0.511    0.000    0.511    0.000 {built-in method builtins.sum}
+    49155    0.502    0.000    1.723    0.000 validation.py:37(_assert_all_finite)
+        1    0.491    0.491   28.350   28.350 ElevationGenerationMap.py:471(fill_elevations)
+    16385    0.449    0.000    1.394    0.000 ElevationGenerationMap.py:321(<listcomp>)
+       12    0.448    0.037    6.400    0.533 __init__.py:1220(_readboundarydata)
+   847302    0.446    0.000    0.699    0.000 ElevationGenerationMap.py:66(get_value_at_position)
+244239/226120    0.382    0.000    2.536    0.000 {built-in method numpy.core._multiarray_umath.implement_array_function}
+  1133727    0.356    0.000    0.356    0.000 {method 'get' of 'dict' objects}
+    16385    0.354    0.000    0.354    0.000 ElevationGenerationMap.py:366(<listcomp>)
+    32770    0.320    0.000    1.015    0.000 filters.py:55(__init__)
+    16385    0.317    0.000    0.698    0.000 ElevationGenerationMap.py:417(<dictcomp>)
+    16385    0.277    0.000    2.225    0.000 Lattice.py:43(closest_point_to)
+   978381    0.258    0.000    0.258    0.000 UnitSpherePoint.py:42(get_coords)
+   245760    0.246    0.000    0.290    0.000 graph.py:830(add_edge)
+     7831    0.244    0.000    0.248    0.000 {method '_fwd' of 'pyproj._proj.Proj' objects}
+   486756    0.239    0.000    0.239    0.000 {built-in method builtins.hasattr}
+    16385    0.238    0.000    0.700    0.000 MapCoordinateMath.py:79(unit_vector_cartesian_to_lat_lon)
+        6    0.238    0.040    0.270    0.045 __init__.py:1503(_getmapboundary)
+    91989    0.231    0.000    0.977    0.000 fromnumeric.py:73(_wrapreduction)
+    57347    0.223    0.000    0.290    0.000 UnitSpherePoint.py:7(__init__)
+       36    0.212    0.006    0.212    0.006 {method 'union' of '_geoslib.BaseGeometry' objects}
+    32770    0.208    0.000    0.442    0.000 graphviews.py:80(subgraph_view)
+    49155    0.208    0.000    0.449    0.000 validation.py:136(_num_samples)
+        1    0.201    0.201    0.547    0.547 IcosahedralGeodesicLattice.py:310(get_adjacencies_from_memoization_file)
+   847302    0.193    0.000    0.193    0.000 ElevationChangeFunctions.py:9(elevation_change_linear)
+   847302    0.188    0.000    0.381    0.000 ElevationGenerationMap.py:416(<lambda>)
+    16385    0.178    0.000    0.178    0.000 ElevationGenerationMap.py:320(<listcomp>)
+    16385    0.169    0.000    0.169    0.000 {method 'normal' of 'numpy.random.mtrand.RandomState' objects}
+461886/461881    0.152    0.000    0.268    0.000 {built-in method builtins.isinstance}
+13915/5580    0.144    0.000    0.148    0.000 transforms.py:134(_invalidate_internal)
+    16385    0.138    0.000    0.267    0.000 linalg.py:2316(norm)
+    32770    0.136    0.000    1.736    0.000 graph.py:1628(subgraph)
+    16385    0.133    0.000    5.087    0.000 ElevationGenerationMap.py:141(get_random_contiguous_region)
+    56913    0.122    0.000    0.672    0.000 fromnumeric.py:2092(sum)
+    49155    0.120    0.000    1.022    0.000 extmath.py:681(_safe_accumulator_op)
+    32771    0.118    0.000    0.129    0.000 graph.py:300(__init__)
+    16385    0.117    0.000    0.447    0.000 _methods.py:134(_mean)
+    49169    0.106    0.000    0.195    0.000 warnings.py:78(_add_filter)
+      937    0.105    0.000    0.105    0.000 {built-in method marshal.loads}
+   109080    0.104    0.000    0.297    0.000 _asarray.py:16(asarray)
+   432464    0.101    0.000    0.101    0.000 {method 'split' of 'str' objects}
+    16385    0.100    0.000    0.100    0.000 MapCoordinateMath.py:47(mag_3d)
+        1    0.096    0.096    0.096    0.096 {built-in method _tkinter.create}
+    34616    0.091    0.000    0.191    0.000 shape_base.py:25(atleast_1d)
+     1615    0.091    0.000    0.092    0.000 {method '_inv' of 'pyproj._proj.Proj' objects}
+   102712    0.089    0.000    0.230    0.000 _asarray.py:88(asanyarray)
+    49155    0.088    0.000    0.373    0.000 numeric.py:283(full)
+    49188    0.086    0.000    0.092    0.000 warnings.py:371(__enter__)
+629774/629244    0.082    0.000    0.082    0.000 {built-in method builtins.len}
+    16385    0.080    0.000    0.527    0.000 fromnumeric.py:3231(mean)
+    40962    0.079    0.000    0.082    0.000 graph.py:477(add_node)
+214259/214106    0.075    0.000    0.076    0.000 {built-in method builtins.issubclass}
+        1    0.073    0.073    0.445    0.445 Lattice.py:28(get_graph)
+    91989    0.071    0.000    0.071    0.000 fromnumeric.py:74(<dictcomp>)
+   847302    0.070    0.000    0.070    0.000 ElevationGenerationMap.py:36(<lambda>)
+    16385    0.069    0.000    0.341    0.000 MapCoordinateMath.py:18(verify_unit_vector)
+    98526    0.069    0.000    0.124    0.000 numerictypes.py:293(issubclass_)
+    49263    0.068    0.000    0.198    0.000 numerictypes.py:365(issubdtype)
+    49165    0.068    0.000    0.269    0.000 warnings.py:62(simplefilter)
+    56913    0.066    0.000    0.794    0.000 <__array_function__ internals>:2(sum)
+       77    0.065    0.001    0.065    0.001 {method 'call' of '_tkinter.tkapp' objects}
+    53901    0.065    0.000    0.116    0.000 abc.py:178(__instancecheck__)
+    32770    0.064    0.000    0.064    0.000 graph.py:416(__contains__)
+     1045    0.064    0.000    0.064    0.000 {built-in method builtins.compile}
+    32770    0.063    0.000    0.063    0.000 function.py:147(freeze)
+    40962    0.063    0.000    0.063    0.000 IcosahedralGeodesicLattice.py:324(<listcomp>)
+    36174    0.062    0.000    0.062    0.000 {method 'reshape' of 'numpy.ndarray' objects}
+       42    0.061    0.001    0.322    0.008 __init__.py:1(<module>)
+    35073    0.060    0.000    0.060    0.000 {built-in method builtins.max}
+    32770    0.058    0.000    0.066    0.000 coreviews.py:269(__iter__)
+    16385    0.057    0.000    0.060    0.000 _methods.py:50(_count_reduce_items)
+    49188    0.055    0.000    0.058    0.000 warnings.py:388(__exit__)
+    32770    0.055    0.000    0.119    0.000 graph.py:1827(nbunch_iter)
+    32778    0.054    0.000    0.074    0.000 random.py:220(_randbelow)
+    49188    0.053    0.000    0.053    0.000 warnings.py:350(__init__)
+    32866    0.052    0.000    0.183    0.000 {method 'all' of 'numpy.generic' objects}
+    49160    0.052    0.000    0.240    0.000 <__array_function__ internals>:2(copyto)
+   130617    0.051    0.000    0.053    0.000 {built-in method builtins.getattr}
+    55102    0.050    0.000    0.050    0.000 _weakrefset.py:70(__contains__)
+   852639    0.049    0.000    0.049    0.000 {built-in method builtins.callable}
+    49265    0.047    0.000    0.047    0.000 {method 'remove' of 'list' objects}
+   2237/1    0.047    0.000   65.665   65.665 {built-in method builtins.exec}
+    51387    0.047    0.000    0.047    0.000 {built-in method numpy.empty}
+    49155    0.047    0.000    0.064    0.000 validation.py:343(_ensure_no_complex_data)
+        1    0.045    0.045    1.118    1.118 IcosahedralGeodesicLattice.py:18(__init__)
+    34616    0.042    0.000    0.268    0.000 <__array_function__ internals>:2(atleast_1d)
+        1    0.041    0.041    0.042    0.042 ElevationGenerationMap.py:1064(save_elevation_data)
+2212/2151    0.041    0.000    0.086    0.000 {built-in method builtins.__build_class__}
+    32770    0.039    0.000    0.054    0.000 graph.py:666(nodes)
+   249170    0.038    0.000    0.038    0.000 {method 'items' of 'dict' objects}
+    49219    0.038    0.000    0.038    0.000 {method 'insert' of 'list' objects}
+      126    0.036    0.000    0.044    0.000 {built-in method _imp.create_dynamic}
+    33164    0.036    0.000    0.036    0.000 {method 'copy' of 'numpy.ndarray' objects}
+    16655    0.035    0.000    0.290    0.000 fromnumeric.py:2551(amax)
+   323729    0.035    0.000    0.035    0.000 {method 'update' of 'dict' objects}
+    40962    0.035    0.000    0.035    0.000 IcosahedralGeodesicLattice.py:353(<listcomp>)
+    32770    0.034    0.000    0.034    0.000 MapCoordinateMath.py:9(rad_to_deg)
+    49155    0.032    0.000    0.060    0.000 _config.py:13(get_config)
+48610/33976    0.031    0.000    0.063    0.000 artist.py:225(stale)
+    18892    0.030    0.000    0.065    0.000 utils.py:12(_copytobuffer)
+        1    0.030    0.030    9.915    9.915 Lattice.py:94(plot_data)
+

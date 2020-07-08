@@ -23,17 +23,22 @@ def add_datetime_to_fp(fp):
     return new_fp
 
 
+def check_is_point_index(p):
+    assert type(p) in [int, np.int64], "p = {} of type {}".format(p, type(p))
+
+
 class ElevationGenerationMap:
     def __init__(self, lattice, data_dict=None, default_elevation=0):
         self.lattice = lattice
-        self.data_dict = {p: default_elevation for p in self.lattice.points}
+        self.data_dict = {p_i: default_elevation for p_i in range(len(self.lattice.points))}
         if data_dict is not None:
             self.data_dict.update(data_dict)
         default_condition = lambda x: True
-        self.condition_dict = {p: default_condition for p in self.lattice.points}
+        self.condition_dict = {p_i: default_condition for p_i in range(len(self.lattice.points))}
         self.frozen_points = set()
 
     def new_value_satisfies_condition(self, p, value):
+        check_is_point_index(p)
         condition = self.condition_dict.get(p)
         if callable(condition):
             res = condition(value)
@@ -43,30 +48,31 @@ class ElevationGenerationMap:
             raise ValueError("invalid condition type {}".format(type(condition)))
 
     def fill_position(self, p, value):
-        assert type(p) is int
+        check_is_point_index(p)
         assert p not in self.frozen_points, "can't change frozen point {}".format(p)
         self.data_dict[p] = value
 
     def fill_point_set(self, point_set, value):
         for p in point_set:
-            assert type(p) is int
+            check_is_point_index(p)
             if p not in self.frozen_points:
                 self.fill_position(p, value)
 
     def fill_all(self, value):
         for p in range(len(self.lattice.points)):
+            check_is_point_index(p)
             self.fill_position(p, value)
 
     def get_value_at_position(self, p):
-        assert type(p) is int
+        check_is_point_index(p)
         return self.data_dict[p]
 
     def freeze_point(self, p):
-        assert type(p) is int
+        check_is_point_index(p)
         self.frozen_points.add(p)
 
     def unfreeze_point(self, p):
-        assert type(p) is int
+        check_is_point_index(p)
         self.frozen_points.remove(p)
 
     def unfreeze_all(self):
@@ -77,9 +83,11 @@ class ElevationGenerationMap:
 
     def add_condition_at_position(self, p, func):
         assert callable(func)
+        check_is_point_index(p)
         self.condition_dict[p] = func
 
     def get_neighbors(self, p):
+        check_is_point_index(p)
         return self.lattice.adjacencies_by_point_index[p]
 
     def get_random_path(self, a, b, points_to_avoid):
@@ -130,28 +138,22 @@ class ElevationGenerationMap:
     #     chosen_one = neighbors[chosen_one_index]
     #     return chosen_one
 
-    def get_random_contiguous_region(self, p=None, expected_size=None, points_to_avoid=None, prioritize_internal_unfilled=False):
-        assert expected_size > 1, "invalid expected size {}".format(expected_size)
-        assert type(p) is int, "expected center point to be point index (int), but got {}: {}".format(type(p), p)
+    def get_random_contiguous_region(self, p=None, radius=None, n_points=None, points_to_avoid=None, prioritize_internal_unfilled=False):
+        check_is_point_index(p)
+        assert int(radius is None) + int(n_points is None) == 1, "need either radius or n_points but not both, got {} and {}".format(radius, n_points)
         if points_to_avoid is None:
             points_to_avoid = set()
         points_to_avoid |= self.frozen_points
-        center = p
-        while center is None or center in points_to_avoid:
-            center = self.get_random_point()
-        neighbors = [p_i for p_i in self.get_neighbors(center) if p_i not in points_to_avoid]
-        size = -1
-        while size < 1:
-            size = int(np.random.normal(expected_size, expected_size/2))
-        # print("making region of size {}".format(size))
-
-        # radius = int(round(np.sqrt(size/np.pi)))
-        # circle = self.get_circle_around_point(center, radius=radius, barrier_points=points_to_avoid)
-        circle = self.get_circle_around_point(center, n_points=size, barrier_points=points_to_avoid)
+        assert all(type(x) is int for x in points_to_avoid), "points to avoid needs all indices (int) but contains other things too: {}".format(points_to_avoid)
+        center_index = p
+        while center_index is None or center_index in points_to_avoid:
+            center_index = self.lattice.get_random_point_index()
+        neighbors = [p_i for p_i in self.get_neighbors(center_index) if p_i not in points_to_avoid]
+        circle = self.get_circle_around_point(center_index, radius=radius, n_points=n_points, barrier_points=points_to_avoid)
         return circle
 
     def get_circle_around_point(self, p, radius=None, n_points=None, barrier_points=None):
-        assert type(p) is int, "expected p to be point index (int) but got {}: {}".format(type(p), p)
+        check_is_point_index(p)
         if barrier_points is None:
             barrier_points = set()
         else:
@@ -167,20 +169,29 @@ class ElevationGenerationMap:
         # so take those == 0 mod 2
 
         g = self.lattice.graph
+        xyz_as_one_sample = np.array([self.lattice.points[p].get_coords("xyz"),])
         if n_points is not None:
-            xyz = self.lattice.points[p].get_coords("xyz")
-            distances, subgraph_node_indices = self.lattice.kdtree.query(xyz, n_points)
-            print("resulting subgraph node indices (len {}):".format(len(subgraph_node_indices)))
-            print(subgraph_node_indices)
-            # subgraph_point_numbers = [self.lattice.xyz_to_point_number[tuple(xyz)] for xyz in subgraph_nodes_xyz]
-            subgraph = g.subgraph(subgraph_node_indices)
-            print("subgraph from n_points={} has {} nodes".format(n_points, subgraph.number_of_nodes()))
-            print("some nodes from g: {}".format(list(g.nodes())[:5]))
+            subgraph_node_indices = self.lattice.kdtree.query(xyz_as_one_sample, k=n_points, return_distance=False, count_only=False)
+            # print("queried n_points {}, got {}".format(n_points, subgraph_node_indices))
         elif radius is not None:
-            subgraph = nx.ego_graph(g, p, radius=radius)
-            print("subgraph from radius={} has {} nodes".format(radius, subgraph.number_of_nodes()))
+            # subgraph = nx.ego_graph(g, p, radius=radius)
+            # print("subgraph from radius={} has {} nodes".format(radius, subgraph.number_of_nodes()))
+            subgraph_node_indices = self.lattice.kdtree.query_radius(xyz_as_one_sample, radius)
+            # print("queried radius {}, got {}".format(radius, subgraph_node_indices))
         else:
             raise
+
+        assert type(subgraph_node_indices) in [list, np.ndarray], "return type was {}".format(type(subgraph_node_indices))
+        assert len(subgraph_node_indices) == 1  # scikit-learn gives an array of indices for each queried point, here we only queried one
+        index_array = subgraph_node_indices[0]
+        assert index_array.ndim == 1  # 1D array of point indices
+        subgraph_node_indices = list(index_array)
+        # print("resulting subgraph node indices (len {}):".format(len(subgraph_node_indices)))
+        # print(subgraph_node_indices)
+
+        subgraph = g.subgraph(subgraph_node_indices)
+        # print("subgraph from radius={}, n_points={} has {} nodes".format(radius, n_points, subgraph.number_of_nodes()))
+        # print("some nodes from g: {}".format(list(g.nodes())[:5]))  # debugging what kinds of objects are in the graph
 
         if len(barrier_points) == 0:
             # don't do any graph computation, just return whole subgraph
@@ -276,13 +287,36 @@ class ElevationGenerationMap:
                     res[p] = d + 1
             return res
 
-    def make_random_elevation_change(self, expected_size, positive_feedback=False):
-        center = self.get_random_point()
-        # center = self.get_random_untouched_point()
+    def make_random_elevation_change(self, expected_size_sphere_proportion, positive_feedback=False):
+        center_index = self.lattice.get_random_point_index()
         # print("making change at {}".format(center))
-        changing_reg = self.get_random_contiguous_region(center, expected_size=expected_size, points_to_avoid=self.frozen_points)
-        changing_reg_size = len(changing_reg)
-        print("expected size {}, got {}".format(expected_size, changing_reg_size))
+
+        if isinstance(self.lattice, IcosahedralGeodesicLattice):
+            assert 0 < expected_size_sphere_proportion < 1, "expected size must be proportion of sphere surface area between 0 and 1, but got {}".format(expected_size_sphere_proportion)
+            # expected size is in terms of proportion of sphere surface area; note that this does not scale linearly with radius in general
+            # because will be using Euclidean distance in R^3, need to do some trig to convert the surface area proportion to 3d radius
+            # center point is on the unit sphere, if r=1, what is the area within that distance? (the distance is a chord through the sphere's interior), the total sphere surface area = 4*pi*r^2 = 4*pi
+            # f(r) = integral(0 to r, dA/dr dr); f(2) = the whole sphere = 4*pi; f(sqrt(2)) = half sphere = 2*pi
+            # dA = 2*pi*r' dr, where r' is the radius of the flat circle that r points to, from the central axis which runs through the starting point and the sphere's center
+            # drew pictures and got that r'^2 = r^2 - r^4/4; checked r'(r=sqrt(2))=1, r'(r=0)=0, r'(r=2)=0, r'(r=1)=sqrt(3)/2, all work
+            # so dA = 2*pi*sqrt(r^2 - r^4/4) dr
+            # but dA should be scaled up by some trig factor (e.g. it will be sqrt(2) times greater when it is slanted at 45 deg, and 0 times greater when it is vertical)
+            # dA/dr' = 2*pi*dl, imagine lowering the circle by dh, so that r' rises by dr', then the slanted line on the sphere's surface is dl
+            # if theta is angle with vertical axis, cos theta = dr'/dl, so dl = dr'/cos(theta), and from the center, see that sin(theta) r'/1
+            # so cos(theta) = sqrt(1-r'^2), so dA = 2*pi* r' * dr'/sqrt(1-r'^2)
+            # can integrate over r' instead of r now
+            # f(r) = 2*pi* integral(0 to sqrt(r^2 - r^4/4), r'/sqrt(1-r'^2) dr')
+            # proportion(r) = 1/(4*pi) * f(r)
+            # integral(s/sqrt(1-s^2) ds) = -1*sqrt(1-s^2) => (lots of whiteboard scribbles) => proportion(r) = r^2/4 (for r in [0, 2])
+            # => r(proportion) = 2*sqrt(proportion)
+            radius_from_center_in_3d = 2 * np.sqrt(expected_size_sphere_proportion)
+            
+        else:
+            raise Exception("making elevation change on non-geodesic lattice is deprecated, this lattice is a {}".format(type(self.lattice)))
+
+        changing_reg = self.get_random_contiguous_region(center_index, radius=radius_from_center_in_3d, points_to_avoid=self.frozen_points)
+        changing_reg_n_points = len(changing_reg)
+        # print("proportion {} got {} changing points from lattice with {} points (got proportion {})".format(expected_size_sphere_proportion, changing_reg_n_points, len(self.lattice.points), changing_reg_n_points/len(self.lattice.points)))
         changing_reg_usps = [self.lattice.points[p_i] for p_i in changing_reg]
         ps_xyz = [np.array(p.get_coords("xyz")) for p in changing_reg_usps]
         mean_ps_xyz = sum(ps_xyz) / len(ps_xyz)  # don't use np.mean here or it will give you a single scalar, mean of all values
@@ -293,10 +327,11 @@ class ElevationGenerationMap:
         coords_dict = {"xyz": tuple(mean_ps_xyz), "latlondeg": tuple(mean_ps_latlon)}
         changing_reg_center_of_mass_raw = UnitSpherePoint(coords_dict)
         changing_reg_center_of_mass = self.lattice.closest_point_to(changing_reg_center_of_mass_raw)
-        e_center_of_mass = self.data_dict[changing_reg_center_of_mass]
+        com_index = self.lattice.usp_to_index[changing_reg_center_of_mass]
+        e_center_of_mass = self.data_dict[com_index]
         reference_p = changing_reg_center_of_mass
         # radius_giving_equivalent_area = np.sqrt(changing_reg_size/np.pi)
-        radius_giving_expected_area = np.sqrt(expected_size/np.pi)
+        # radius_giving_expected_area = np.sqrt(expected_size/np.pi)
         desired_area_ratio_at_sea_level = 5
         desired_area_ratio_at_big_abs = 0.1
         big_abs = 1000
@@ -309,14 +344,15 @@ class ElevationGenerationMap:
         else:
             slope = (desired_area_ratio_at_big_abs - desired_area_ratio_at_sea_level) / (big_abs - 0)
             desired_area_ratio = desired_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
+
         # radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
-        radius = int(round(radius_giving_expected_area * np.sqrt(desired_area_ratio)))
+        # reference_region_radius = int(round(radius_giving_expected_area * np.sqrt(desired_area_ratio)))
         # reference_reg = self.get_circle_around_point(reference_p, radius=radius)
-        area_to_get = int(expected_size * desired_area_ratio)
-        print("area to get = {}".format(area_to_get))
-        n_points_in_reference_reg = area_to_get  # this is probably wrong, but I can't be bothered to go sleuth out whether past me meant size in number of points or square units or square km or what
+        # area_to_get = int(expected_size * desired_area_ratio)
+        # print("area to get = {}".format(area_to_get))
+        # n_points_in_reference_reg = area_to_get  # this is probably wrong, but I can't be bothered to go sleuth out whether past me meant size in number of points or square units or square km or what
         reference_p_i = self.lattice.usp_to_index[reference_p] 
-        reference_reg = self.get_circle_around_point(reference_p_i, n_points=n_points_in_reference_reg)
+        reference_reg = self.get_circle_around_point(reference_p_i, radius=radius_from_center_in_3d)
         # reference_reg = changing_reg
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
@@ -327,7 +363,7 @@ class ElevationGenerationMap:
 
         if positive_feedback:
             # land begets land, sea begets sea
-            elevations_in_refreg = [self.data_dict[self.lattice.points[p_i]] for p_i in reference_reg]
+            elevations_in_refreg = [self.data_dict[p_i] for p_i in reference_reg]
             e_avg = np.mean(elevations_in_refreg)
             e_max = np.max(elevations_in_refreg)  # for detecting mountain nearby, chain should propagate
             e_min = np.min(elevations_in_refreg)
@@ -385,9 +421,6 @@ class ElevationGenerationMap:
             if self.new_value_satisfies_condition(p, new_el):
                 self.fill_position(p, new_el)
 
-    def get_random_point(self, *args, **kwargs):
-        return self.lattice.get_random_point(*args, **kwargs)
-
     # def get_random_zero_loop(self):
     #     x0_0, y0_0 = self.get_random_point(border_width=2)
     #     dx = 0
@@ -435,7 +468,7 @@ class ElevationGenerationMap:
     #                 # then will have new list of neighbors
     #         self.draw()
 
-    def fill_elevations(self, n_steps, expected_change_size, plot_every_n_steps=None):
+    def fill_elevations(self, n_steps, expected_change_sphere_proportion, plot_every_n_steps=None):
         if plot_every_n_steps is not None:
             plt.ion()
         i = 0
@@ -458,7 +491,7 @@ class ElevationGenerationMap:
                     print("step {}, {} elapsed, {} ETA".format(i, dt, eta_str))
                 except ZeroDivisionError:
                     pass # print("div/0!")
-            self.make_random_elevation_change(expected_change_size, positive_feedback=True)
+            self.make_random_elevation_change(expected_change_sphere_proportion, positive_feedback=True)
             # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
                 try:
@@ -973,10 +1006,9 @@ class ElevationGenerationMap:
         vals = [float(x) for x in vals]
         n_iterations = IcosahedralGeodesicLattice.get_iterations_from_number_of_points(len(vals))
         lattice = IcosahedralGeodesicLattice(iterations=n_iterations)
-        data_dict = {}  # usp to value
-        for i, val in enumerate(vals):
-            usp = lattice.points[i]
-            data_dict[usp] = val
+        data_dict = {}  # point index to value
+        for p_i, val in enumerate(vals):
+            data_dict[p_i] = val
         return ElevationGenerationMap(lattice=lattice, data_dict=data_dict)
             
 
@@ -987,7 +1019,7 @@ class ElevationGenerationMap:
 
     def freeze_coastlines(self):
         coastal_points = set()
-        for p in self.lattice.points:
+        for p in range(len(self.lattice.points)):
             if p in self.data_dict and self.data_dict[p] < 0:
                 neighbors = self.get_neighbors(p)
                 for n in neighbors:
@@ -1040,8 +1072,8 @@ class ElevationGenerationMap:
         print("saving elevation data to {}".format(output_fp))
         with open(output_fp, "w") as f:
             s = ""
-            for p_i, usp in enumerate(self.lattice.points):
-                val = self.data_dict[usp]
+            for p_i in range(len(self.lattice.points)):
+                val = self.data_dict[p_i]
                 s += str(val) + "\n"
             f.write(s)
         # for x in range(self.x_size):

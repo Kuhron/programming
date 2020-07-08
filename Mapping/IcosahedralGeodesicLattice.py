@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import random
-from scipy.spatial import KDTree
+# from scipy.spatial import KDTree
+from sklearn.neighbors import KDTree
 
 from Lattice import Lattice
 from UnitSpherePoint import UnitSpherePoint
@@ -32,6 +33,7 @@ class IcosahedralGeodesicLattice(Lattice):
             xyz = tuple(p.get_coords("xyz"))
             self.xyz_coords.append(xyz)
             self.xyz_to_point_number[xyz] = point_number
+        self.xyz_coords = np.array(self.xyz_coords)
         self.kdtree = KDTree(self.xyz_coords)
         self.graph = self.get_graph()
 

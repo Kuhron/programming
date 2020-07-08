@@ -26,7 +26,10 @@ def confirm_overwrite_file(output_fp):
 
 
 def get_expected_change_size_from_user():
-    return int(input("expected change size (suggestions: 25-1000): "))
+    inp = input("expected change size as proportion of sphere surface area: ")
+    fl = float(inp)
+    assert 0 < fl < 1, "proportion must be in interval (0, 1)"
+    return fl
 
 
 def get_expected_touches_per_point_from_user():
@@ -149,36 +152,34 @@ if __name__ == "__main__":
         
     print("map size {} pixels".format(m.size()))
 
-    if generate_initial_elevation_changes:
-        print("generating initial elevation changes")
-        expected_change_size = get_expected_change_size_from_user()
+    if generate_initial_elevation_changes or generate_further_elevation_changes:
+        if generate_initial_elevation_changes:
+            print("generating initial elevation changes")
+        else:
+            print("generating further elevation changes")
+            m.unfreeze_all()  # allow coastlines to change
+
+        expected_change_sphere_proportion = get_expected_change_size_from_user()
         expected_touches_per_point = get_expected_touches_per_point_from_user()
-        n_steps = int(expected_touches_per_point / expected_change_size * m.size())
-        # n_steps = np.inf
-        # n_steps = 10000
+        n_steps = int(round(expected_touches_per_point / expected_change_sphere_proportion))
         plot_every_n_steps = None
-        print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
-        m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        # m.plot()
+
+        if generate_initial_elevation_changes:
+            print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
+        else:
+            print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
+
+        m.fill_elevations(n_steps, expected_change_sphere_proportion, plot_every_n_steps)
         if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
             m.save_elevation_data(elevation_data_output_fp)
         if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
             m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
-        print("- done generating initial elevation changes")
-    elif generate_further_elevation_changes:
-        print("generating further elevation changes")
-        m.unfreeze_all()  # allow coastlines to change
-        expected_change_size = get_expected_change_size_from_user()
-        expected_touches_per_point = get_expected_touches_per_point_from_user()
-        n_steps = int(expected_touches_per_point / expected_change_size * m.size())
-        plot_every_n_steps = None
-        print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
-        m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
-            m.save_elevation_data(elevation_data_output_fp)
-        if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
-            m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
-        print("- done generating further elevation changes")
+
+        if generate_initial_elevation_changes:
+            print("- done generating initial elevation changes")
+        else:
+            print("- done generating further elevation changes")
+
     else:
         # m.plot()
         # m.plot_map_and_gradient_magnitude()
