@@ -26,9 +26,9 @@ class Lattice:
 
     def get_graph(self):
         g = nx.Graph()
-        for p in self.adjacencies:  # add nodes first
+        for p in self.adjacencies_by_point_index:  # add nodes first
             g.add_node(p)
-        for p, neighs in self.adjacencies.items():  # now put edges between them
+        for p, neighs in self.adjacencies_by_point_index.items():  # now put edges between them
             for p1 in neighs:
                 g.add_edge(p, p1)
         return g
@@ -37,7 +37,7 @@ class Lattice:
         return len(self.adjacencies)
 
     def get_random_point(self):
-        return random.choice(list(self.adjacencies.keys()))
+        return random.choice(list(self.adjacencies_by_point_index.keys()))
 
     def closest_point_to(self, p):
         assert type(p) is UnitSpherePoint
@@ -102,6 +102,21 @@ class Lattice:
         fig = plt.figure(figsize=size_inches)
         cmap = pu.get_land_and_sea_colormap()
         contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
+
+        # debugging: print contour levels and colors
+        # for level_i in range(len(contour_levels)):
+        #     if level_i > 0:
+        #         # show the first halfway value as well, just skip it for min (level_i=0)
+        #         previous_level_value = contour_levels[level_i - 1]
+        #         current_level_value = contour_levels[level_i]
+        #         halfway_value_linear = (previous_level_value + current_level_value) / 2
+        #         halfway_level_01 = (halfway_value_linear - contour_levels[0]) / (contour_levels[-1] - contour_levels[0])
+        #         print("cmap at contour FILL level {} = value {} = RGBA {}".format(level_i - 0.5, halfway_value_linear, cmap(halfway_level_01)))
+        # 
+        #     level_value = contour_levels[level_i]
+        #     level_01 = (level_value - contour_levels[0]) / (contour_levels[-1] - contour_levels[0])
+        #     print("cmap at contour LINE level {} = value {} = RGBA {}".format(level_i, level_value, cmap(level_01)))
+
         for i, row in enumerate(lon_0s):
             for j, lon_0 in enumerate(row):
                 nth_plot = i*len(row) + j + 1

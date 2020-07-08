@@ -43,25 +43,30 @@ class ElevationGenerationMap:
             raise ValueError("invalid condition type {}".format(type(condition)))
 
     def fill_position(self, p, value):
+        assert type(p) is int
         assert p not in self.frozen_points, "can't change frozen point {}".format(p)
         self.data_dict[p] = value
 
     def fill_point_set(self, point_set, value):
         for p in point_set:
+            assert type(p) is int
             if p not in self.frozen_points:
                 self.fill_position(p, value)
 
     def fill_all(self, value):
-        for p in self.lattice.points:
+        for p in range(len(self.lattice.points)):
             self.fill_position(p, value)
 
     def get_value_at_position(self, p):
+        assert type(p) is int
         return self.data_dict[p]
 
     def freeze_point(self, p):
+        assert type(p) is int
         self.frozen_points.add(p)
 
     def unfreeze_point(self, p):
+        assert type(p) is int
         self.frozen_points.remove(p)
 
     def unfreeze_all(self):
@@ -75,7 +80,7 @@ class ElevationGenerationMap:
         self.condition_dict[p] = func
 
     def get_neighbors(self, p):
-        return self.lattice.adjacencies[p]
+        return self.lattice.adjacencies_by_point_index[p]
 
     def get_random_path(self, a, b, points_to_avoid):
         # start and end should inch toward each other
@@ -127,26 +132,33 @@ class ElevationGenerationMap:
 
     def get_random_contiguous_region(self, p=None, expected_size=None, points_to_avoid=None, prioritize_internal_unfilled=False):
         assert expected_size > 1, "invalid expected size {}".format(expected_size)
+        assert type(p) is int, "expected center point to be point index (int), but got {}: {}".format(type(p), p)
         if points_to_avoid is None:
             points_to_avoid = set()
         points_to_avoid |= self.frozen_points
         center = p
         while center is None or center in points_to_avoid:
             center = self.get_random_point()
-        neighbors = [p for p in self.get_neighbors(center) if p not in points_to_avoid]
+        neighbors = [p_i for p_i in self.get_neighbors(center) if p_i not in points_to_avoid]
         size = -1
         while size < 1:
             size = int(np.random.normal(expected_size, expected_size/2))
         # print("making region of size {}".format(size))
 
-        radius = int(round(np.sqrt(size/np.pi)))
-        circle = self.get_circle_around_point(center, radius, barrier_points=points_to_avoid)
+        # radius = int(round(np.sqrt(size/np.pi)))
+        # circle = self.get_circle_around_point(center, radius=radius, barrier_points=points_to_avoid)
+        circle = self.get_circle_around_point(center, n_points=size, barrier_points=points_to_avoid)
         return circle
 
-    def get_circle_around_point(self, p, radius, barrier_points=None):
+    def get_circle_around_point(self, p, radius=None, n_points=None, barrier_points=None):
+        assert type(p) is int, "expected p to be point index (int) but got {}: {}".format(type(p), p)
         if barrier_points is None:
             barrier_points = set()
+        else:
+            assert all(type(x) is int for x in barrier_points), "barrier points should be all point indices (int) but contains other types: {}".format(barrier_points)
         assert p not in barrier_points, "can't make circle with center in barrier"
+
+        assert int(radius is None) + int(n_points is None) == 1, "need either radius or n_points but not both, got {} and {}".format(radius, n_points)
 
         # can tell which points are on inside vs outside of barrier wall by doing this:
         # assign weight of 0.5 to each transition into and out of the barrier (edges in the lattice's graph)
@@ -155,7 +167,21 @@ class ElevationGenerationMap:
         # so take those == 0 mod 2
 
         g = self.lattice.graph
-        subgraph = nx.ego_graph(g, p, radius=radius)
+        if n_points is not None:
+            xyz = self.lattice.points[p].get_coords("xyz")
+            distances, subgraph_node_indices = self.lattice.kdtree.query(xyz, n_points)
+            print("resulting subgraph node indices (len {}):".format(len(subgraph_node_indices)))
+            print(subgraph_node_indices)
+            # subgraph_point_numbers = [self.lattice.xyz_to_point_number[tuple(xyz)] for xyz in subgraph_nodes_xyz]
+            subgraph = g.subgraph(subgraph_node_indices)
+            print("subgraph from n_points={} has {} nodes".format(n_points, subgraph.number_of_nodes()))
+            print("some nodes from g: {}".format(list(g.nodes())[:5]))
+        elif radius is not None:
+            subgraph = nx.ego_graph(g, p, radius=radius)
+            print("subgraph from radius={} has {} nodes".format(radius, subgraph.number_of_nodes()))
+        else:
+            raise
+
         if len(barrier_points) == 0:
             # don't do any graph computation, just return whole subgraph
             return set(subgraph.nodes)
@@ -256,8 +282,9 @@ class ElevationGenerationMap:
         # print("making change at {}".format(center))
         changing_reg = self.get_random_contiguous_region(center, expected_size=expected_size, points_to_avoid=self.frozen_points)
         changing_reg_size = len(changing_reg)
-        # print("expected size {}, got {}".format(expected_size, changing_reg_size))
-        ps_xyz = [np.array(p.get_coords("xyz")) for p in changing_reg]
+        print("expected size {}, got {}".format(expected_size, changing_reg_size))
+        changing_reg_usps = [self.lattice.points[p_i] for p_i in changing_reg]
+        ps_xyz = [np.array(p.get_coords("xyz")) for p in changing_reg_usps]
         mean_ps_xyz = sum(ps_xyz) / len(ps_xyz)  # don't use np.mean here or it will give you a single scalar, mean of all values
         assert len(mean_ps_xyz) == 3, "ya done goofed. look -> {}".format(mean_ps_xyz)
         mean_ps_xyz = np.array(mean_ps_xyz)
@@ -284,7 +311,12 @@ class ElevationGenerationMap:
             desired_area_ratio = desired_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
         # radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
         radius = int(round(radius_giving_expected_area * np.sqrt(desired_area_ratio)))
-        reference_reg = self.get_circle_around_point(reference_p, radius=radius)
+        # reference_reg = self.get_circle_around_point(reference_p, radius=radius)
+        area_to_get = int(expected_size * desired_area_ratio)
+        print("area to get = {}".format(area_to_get))
+        n_points_in_reference_reg = area_to_get  # this is probably wrong, but I can't be bothered to go sleuth out whether past me meant size in number of points or square units or square km or what
+        reference_p_i = self.lattice.usp_to_index[reference_p] 
+        reference_reg = self.get_circle_around_point(reference_p_i, n_points=n_points_in_reference_reg)
         # reference_reg = changing_reg
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
@@ -295,7 +327,7 @@ class ElevationGenerationMap:
 
         if positive_feedback:
             # land begets land, sea begets sea
-            elevations_in_refreg = [self.data_dict[p] for p in reference_reg]
+            elevations_in_refreg = [self.data_dict[self.lattice.points[p_i]] for p_i in reference_reg]
             e_avg = np.mean(elevations_in_refreg)
             e_max = np.max(elevations_in_refreg)  # for detecting mountain nearby, chain should propagate
             e_min = np.min(elevations_in_refreg)
@@ -472,7 +504,7 @@ class ElevationGenerationMap:
     #     return lats_grid, lons_grid
 
     def plot(self):
-        plt.gcf()
+        # plt.gcf()
         self.pre_plot()
         plt.show()
 

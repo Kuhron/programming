@@ -1,5 +1,6 @@
 import random
 import time
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -22,6 +23,15 @@ def confirm_overwrite_file(output_fp):
             print("aborting")
             return False
     return True
+
+
+def get_expected_change_size_from_user():
+    return int(input("expected change size (suggestions: 25-1000): "))
+
+
+def get_expected_touches_per_point_from_user():
+    return int(input("expected touches per point (suggestions: 10-100): "))
+
 
 
 if __name__ == "__main__":
@@ -103,8 +113,10 @@ if __name__ == "__main__":
         # data_fp = image_dir + data_fp_no_dir
 
         project_name = input("project name to load: ")
-        project_version = int(input("project version number to load: "))
-        data_fp = "/home/wesley/programming/Mapping/EGD_{}_v{}.txt".format(project_name, project_version)
+        project_version = input("project version number to load: ")
+        project_version_array = [int(x) for x in project_version.split("-")]
+        project_dir = "/home/wesley/programming/Mapping/Projects/{}/".format(project_name)
+        data_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, project_version)
 
         print("from data {}".format(data_fp))
         # latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
@@ -113,31 +125,41 @@ if __name__ == "__main__":
 
         generate_initial_elevation_changes = False
         if generate_further_elevation_changes:
-            new_version_number = project_version + 1
-            elevation_data_output_fp = "/home/wesley/programming/Mapping/EGD_{}_v{}.txt".format(project_name, project_version)
-            plot_image_output_fp = "/home/wesley/programming/Mapping/EGP_{}_v{}.png".format(project_name, project_version)
+            new_version = project_version_array[:-1] + [project_version_array[-1] + 1]
+            new_version_number = "-".join(str(x) for x in new_version)
+            print("loaded version {}, outputting version {}".format(project_version, new_version_number))
+            elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
+            plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
+        else:
+            # in case want to overwrite existing plot, e.g. after fixing plotting bugs
+            plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, project_version)
     else:
         lattice = IcosahedralGeodesicLattice(iterations=6)
         m = ElevationGenerationMap(lattice)
         m.fill_all(0)
         project_name = input("name for new project: ")
-        elevation_data_output_fp = "/home/wesley/programming/Mapping/EGD_{}_v0.txt".format(project_name)
-        plot_image_output_fp = "/home/wesley/programming/Mapping/EGP_{}_v0.png".format(project_name)
+        project_dir = "/home/wesley/programming/Mapping/Projects/{}/".format(project_name)
+        os.mkdir(project_dir)
+        os.mkdir(project_dir + "Data/")
+        os.mkdir(project_dir + "Plots/")
+        new_version_number = 0
+        elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
+        plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
         generate_initial_elevation_changes = True
         
     print("map size {} pixels".format(m.size()))
 
     if generate_initial_elevation_changes:
         print("generating initial elevation changes")
-        expected_change_size = 1000
-        expected_touches_per_point = 50
+        expected_change_size = get_expected_change_size_from_user()
+        expected_touches_per_point = get_expected_touches_per_point_from_user()
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         # n_steps = np.inf
         # n_steps = 10000
         plot_every_n_steps = None
         print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         m.fill_elevations(n_steps, expected_change_size, plot_every_n_steps)
-        m.plot()
+        # m.plot()
         if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
             m.save_elevation_data(elevation_data_output_fp)
         if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
@@ -146,8 +168,8 @@ if __name__ == "__main__":
     elif generate_further_elevation_changes:
         print("generating further elevation changes")
         m.unfreeze_all()  # allow coastlines to change
-        expected_change_size = 20
-        expected_touches_per_point = 100
+        expected_change_size = get_expected_change_size_from_user()
+        expected_touches_per_point = get_expected_touches_per_point_from_user()
         n_steps = int(expected_touches_per_point / expected_change_size * m.size())
         plot_every_n_steps = None
         print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
@@ -158,11 +180,13 @@ if __name__ == "__main__":
             m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
         print("- done generating further elevation changes")
     else:
-        m.plot()
+        # m.plot()
         # m.plot_map_and_gradient_magnitude()
         # m.create_flow_arrays()
         # m.plot_flow_amounts()
         # m.plot_rivers()
         # m.plot_flow_steps(10000)
         # m.plot_average_water_location()
+        if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
+            m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
         print("- done plotting")

@@ -31,18 +31,33 @@ def get_land_and_sea_colormap():
 
 
 def get_contour_levels(min_elevation, max_elevation):
+    # print("getting contour levels from elevation limits min = {}, max = {}".format(min_elevation, max_elevation))
     n_sea_contours = 20
     n_land_contours = 100
+
+    # the elevations on both sides of zero have to be equidistant or the map's land/sea cutoff will be in the wrong place (at elevation != 0), so need to make average of min and max value = 0.
+    # don't care much about very deep sea, so just take max land value as max abs, and make min value its negative
+    if max_elevation <= 0:
+        print("Warning: max elevation non-positive: {}; moving it to zero".format(max_elevation))
+        max_elevation = 0
+    min_elevation = -max_elevation
+    # print("new contour elevation limits min = {}, max = {}".format(min_elevation, max_elevation))
+
+    epsilon_elevation = 0.1
+
     if min_elevation < 0:
-        sea_contour_levels = np.linspace(min_elevation, 0, n_sea_contours)
+        sea_contour_levels = np.linspace(min_elevation, -1*epsilon_elevation, n_sea_contours)
     else:
-        sea_contour_levels = [0]
+        sea_contour_levels = [-1*epsilon_elevation]
     if max_elevation > 0:
-        land_contour_levels = np.linspace(0, max_elevation, n_land_contours)
+        land_contour_levels = np.linspace(epsilon_elevation, max_elevation, n_land_contours)
     else:
-        land_contour_levels = [0]
-    assert sea_contour_levels[-1] == land_contour_levels[0] == 0
-    contour_levels = list(sea_contour_levels[:-1]) + list(land_contour_levels)
+        land_contour_levels = [epsilon_elevation]
+    contour_levels = list(sea_contour_levels) + [0] + list(land_contour_levels)
+    # print("sea contour levels: {}".format(sea_contour_levels))
+    # print("land contour levels: {}".format(land_contour_levels))
+    # for i, level in enumerate(contour_levels):
+    #     print("contour level {} = {}".format(i, level))
     return contour_levels
 
 

@@ -14,7 +14,9 @@ primes.txt
 
 # mapping memoization files
 Mapping/MemoIcosa*.txt
+Mapping/MemoIcosa/
 
 # giant map files
 *ElevationGenerationOutputData*.txt
 *EGD*.txt
+Mapping/Projects/

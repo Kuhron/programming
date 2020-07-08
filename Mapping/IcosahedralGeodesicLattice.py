@@ -284,8 +284,8 @@ class IcosahedralGeodesicLattice(Lattice):
             for p_i in range(len(ordered_points)):
                 assert all(x is not None for x in adjacencies_by_point_index[p_i]), "Nones left in adjacencies for {}: {}".format(p_i, adjacencies_by_point_index[p_i])
 
-            position_memo_fp = "/home/wesley/programming/Mapping/MemoIcosaPosition_Iteration{}.txt".format(iteration_i)
-            adjacency_memo_fp = "/home/wesley/programming/Mapping/MemoIcosaAdjacency_Iteration{}.txt".format(iteration_i)
+            position_memo_fp = "/home/wesley/programming/Mapping/MemoIcosa/MemoIcosaPosition_Iteration{}.txt".format(iteration_i)
+            adjacency_memo_fp = "/home/wesley/programming/Mapping/MemoIcosa/MemoIcosaAdjacency_Iteration{}.txt".format(iteration_i)
             print("writing memoization files")
             with open(position_memo_fp, "w") as f:
                 for p_i in range(len(ordered_points)):
@@ -308,8 +308,8 @@ class IcosahedralGeodesicLattice(Lattice):
     @staticmethod
     def get_adjacencies_from_memoization_file(iteration):
         # still not using this, can do so if creation of icosa is slow but for now it's fine
-        adjacencies_fp = "MemoIcosaAdjacency_Iteration{}.txt".format(iteration)
-        positions_fp = "MemoIcosaPosition_Iteration{}.txt".format(iteration)
+        adjacencies_fp = "MemoIcosa/MemoIcosaAdjacency_Iteration{}.txt".format(iteration)
+        positions_fp = "MemoIcosa/MemoIcosaPosition_Iteration{}.txt".format(iteration)
         adjacencies_by_point_index = {}
         ordered_points = []
 
