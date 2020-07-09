@@ -171,7 +171,7 @@ class ElevationGenerationMap:
         g = self.lattice.graph
         xyz_as_one_sample = np.array([self.lattice.points[p].get_coords("xyz"),])
         if n_points is not None:
-            subgraph_node_indices = self.lattice.kdtree.query(xyz_as_one_sample, k=n_points, return_distance=False, count_only=False)
+            subgraph_node_indices = self.lattice.kdtree.query(xyz_as_one_sample, k=n_points, return_distance=False)
             # print("queried n_points {}, got {}".format(n_points, subgraph_node_indices))
         elif radius is not None:
             # subgraph = nx.ego_graph(g, p, radius=radius)
@@ -287,7 +287,45 @@ class ElevationGenerationMap:
                     res[p] = d + 1
             return res
 
-    def make_random_elevation_change(self, expected_size_sphere_proportion, positive_feedback=False):
+    @staticmethod
+    def get_numerical_parameter_input(var_name, default_value):
+        inp = input("set param {} (or just press enter for default value of {}): ".format(var_name, default_value))
+        try:
+            return float(inp)
+        except ValueError:
+            return None
+
+    @staticmethod
+    def get_elevation_change_parameters_from_user():
+        d = {
+            "reference_area_ratio_at_sea_level": 5,
+            "reference_area_ratio_at_big_abs": 0.1,
+            "big_abs": 1000,
+            "critical_abs": 100,  # above this abs, go farther in that direction until reach big_abs_elevation
+            "mu_when_small": 0,
+            "mu_when_critical": 10,  # mu for elevation change in critical zone (critical_abs <= el <= big_abs)
+            "mu_when_big": 0,
+            "sigma_when_big": 10,
+        }
+        for var_name, default_value in d.items():
+            user_value = ElevationGenerationMap.get_numerical_parameter_input(var_name, default_value)
+            if user_value is not None:
+                # print("user specified {}={}".format(var_name, user_value))
+                d[var_name] = user_value
+        return d
+
+    def make_random_elevation_change(self, expected_size_sphere_proportion, positive_feedback=True,
+            # numerical params
+            reference_area_ratio_at_sea_level=None,
+            reference_area_ratio_at_big_abs=None,
+            big_abs=None,
+            critical_abs=None,
+            mu_when_small=None,
+            mu_when_critical=None,
+            mu_when_big=None,
+            sigma_when_big=None,
+        ):
+
         center_index = self.lattice.get_random_point_index()
         # print("making change at {}".format(center))
 
@@ -330,30 +368,19 @@ class ElevationGenerationMap:
         com_index = self.lattice.usp_to_index[changing_reg_center_of_mass]
         e_center_of_mass = self.data_dict[com_index]
         reference_p = changing_reg_center_of_mass
-        # radius_giving_equivalent_area = np.sqrt(changing_reg_size/np.pi)
-        # radius_giving_expected_area = np.sqrt(expected_size/np.pi)
-        desired_area_ratio_at_sea_level = 5
-        desired_area_ratio_at_big_abs = 0.1
-        big_abs = 1000
 
         # try to get mountain chains to propagate:
         # if center point is low abs, look at bigger region, might catch mountain
         # if center point is high abs, look at smaller region, don't let lowland water it down
         if abs(e_center_of_mass) >= big_abs:
-            desired_area_ratio = desired_area_ratio_at_big_abs
+            reference_area_ratio = reference_area_ratio_at_big_abs
         else:
-            slope = (desired_area_ratio_at_big_abs - desired_area_ratio_at_sea_level) / (big_abs - 0)
-            desired_area_ratio = desired_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
+            slope = (reference_area_ratio_at_big_abs - reference_area_ratio_at_sea_level) / (big_abs - 0)
+            reference_area_ratio = reference_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
 
-        # radius = int(round(radius_giving_equivalent_area * np.sqrt(desired_area_ratio)))
-        # reference_region_radius = int(round(radius_giving_expected_area * np.sqrt(desired_area_ratio)))
-        # reference_reg = self.get_circle_around_point(reference_p, radius=radius)
-        # area_to_get = int(expected_size * desired_area_ratio)
-        # print("area to get = {}".format(area_to_get))
-        # n_points_in_reference_reg = area_to_get  # this is probably wrong, but I can't be bothered to go sleuth out whether past me meant size in number of points or square units or square km or what
         reference_p_i = self.lattice.usp_to_index[reference_p] 
-        reference_reg = self.get_circle_around_point(reference_p_i, radius=radius_from_center_in_3d)
-        # reference_reg = changing_reg
+        reference_n_points = int(round(reference_area_ratio * changing_reg_n_points))
+        reference_reg = self.get_circle_around_point(reference_p_i, n_points=reference_n_points)
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
         if max_d == 0:
@@ -369,17 +396,16 @@ class ElevationGenerationMap:
             e_min = np.min(elevations_in_refreg)
             elevation_sign = (1 if e_avg > 0 else -1)
             big_signed = elevation_sign * big_abs
-            critical_abs = 100  # above this abs, go farther in that direction until reach big_abs_elevation
             critical_signed = elevation_sign * critical_abs
             critical_excess = e_avg - critical_signed
             big_remainder = big_signed - e_avg
             mountain_or_trench_nearby = abs(e_max) >= big_abs or abs(e_min) >= big_abs
   
             mu = \
-                0 if abs(e_avg) > big_abs else \
-                10 if e_avg > critical_abs else \
-                -10 if e_avg < -1*critical_abs else \
-                0
+                mu_when_big if abs(e_avg) > big_abs else \
+                mu_when_critical if e_avg > critical_abs else \
+                -1*mu_when_critical if e_avg < -1*critical_abs else \
+                mu_when_small
 
             # if False: #mountain_or_trench_nearby:
             #     pass
@@ -410,7 +436,10 @@ class ElevationGenerationMap:
         else:
             mu = 0
 
-        sigma = max(10, abs(e_avg)) if abs(e_avg) < big_abs else 10
+        if abs(e_avg) < big_abs:
+            sigma = max(sigma_when_big, abs(e_avg))
+        else:
+            sigma = sigma_when_big
         max_change = np.random.normal(mu, sigma)
 
         func = lambda d: raw_func(d, max_d, max_change)
@@ -468,7 +497,9 @@ class ElevationGenerationMap:
     #                 # then will have new list of neighbors
     #         self.draw()
 
-    def fill_elevations(self, n_steps, expected_change_sphere_proportion, plot_every_n_steps=None):
+    def fill_elevations(self, n_steps, expected_change_sphere_proportion, plot_every_n_steps=None, elevation_change_parameters=None):
+        if elevation_change_parameters is None:
+            elevation_change_parameters = {}
         if plot_every_n_steps is not None:
             plt.ion()
         i = 0
@@ -491,7 +522,7 @@ class ElevationGenerationMap:
                     print("step {}, {} elapsed, {} ETA".format(i, dt, eta_str))
                 except ZeroDivisionError:
                     pass # print("div/0!")
-            self.make_random_elevation_change(expected_change_sphere_proportion, positive_feedback=True)
+            self.make_random_elevation_change(expected_change_sphere_proportion, positive_feedback=True, **elevation_change_parameters)
             # print("now have {} untouched points".format(len(self.untouched_points)))
             if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
                 try:

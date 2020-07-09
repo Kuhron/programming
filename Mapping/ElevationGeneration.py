@@ -47,6 +47,7 @@ def get_expected_touches_per_point_from_user():
 
 
 
+
 if __name__ == "__main__":
     from_image = input("from image? (y/n) ").strip().lower() == "y"
     if from_image:
@@ -180,7 +181,8 @@ if __name__ == "__main__":
         else:
             print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
 
-        m.fill_elevations(n_steps, expected_change_sphere_proportion, plot_every_n_steps)
+        elevation_change_parameters = ElevationGenerationMap.get_elevation_change_parameters_from_user()
+        m.fill_elevations(n_steps, expected_change_sphere_proportion, plot_every_n_steps, elevation_change_parameters=elevation_change_parameters)
         if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
             m.save_elevation_data(elevation_data_output_fp)
         if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
