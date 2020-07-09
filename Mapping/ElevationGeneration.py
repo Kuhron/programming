@@ -25,11 +25,21 @@ def confirm_overwrite_file(output_fp):
     return True
 
 
-def get_expected_change_size_from_user():
+def get_expected_change_size_from_user(n_points_total):
     inp = input("expected change size as proportion of sphere surface area: ")
     fl = float(inp)
-    assert 0 < fl < 1, "proportion must be in interval (0, 1)"
-    return fl
+    if 0 < fl < 1:
+        # proportion; return it directly
+        print("user supplied proportion {}".format(fl))
+        proportion = fl
+    elif 1 <= fl:
+        i = int(round(fl))
+        print("user supplied number of points {}".format(i))
+        assert i <= n_points_total, "cannot change more than the total number of points, which is {}".format(n_points_total)
+        proportion = i/n_points_total
+    else:
+        raise ValueError("invalid value for expected size: {}".format(fl))
+    return proportion
 
 
 def get_expected_touches_per_point_from_user():
@@ -159,7 +169,8 @@ if __name__ == "__main__":
             print("generating further elevation changes")
             m.unfreeze_all()  # allow coastlines to change
 
-        expected_change_sphere_proportion = get_expected_change_size_from_user()
+        n_points_total = m.size()
+        expected_change_sphere_proportion = get_expected_change_size_from_user(n_points_total)
         expected_touches_per_point = get_expected_touches_per_point_from_user()
         n_steps = int(round(expected_touches_per_point / expected_change_sphere_proportion))
         plot_every_n_steps = None
