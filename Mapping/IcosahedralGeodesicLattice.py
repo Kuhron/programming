@@ -60,7 +60,7 @@ class IcosahedralGeodesicLattice(Lattice):
         try:
             return IcosahedralGeodesicLattice.get_adjacencies_from_memoization_file(iterations_needed)
         except FileNotFoundError:
-            print("retrieving memoized files for {} iterations failed; constructing from scratch".format(iterations_needed))
+            print("retrieving memoized icosahedron files for {} iterations failed; constructing from scratch".format(iterations_needed))
         
 
         icosahedron_original_points_latlon = {
@@ -288,7 +288,7 @@ class IcosahedralGeodesicLattice(Lattice):
 
             position_memo_fp = "/home/wesley/programming/Mapping/MemoIcosa/MemoIcosaPosition_Iteration{}.txt".format(iteration_i)
             adjacency_memo_fp = "/home/wesley/programming/Mapping/MemoIcosa/MemoIcosaAdjacency_Iteration{}.txt".format(iteration_i)
-            print("writing memoization files")
+            print("writing icosahedron memoization files")
             with open(position_memo_fp, "w") as f:
                 for p_i in range(len(ordered_points)):
                     usp = ordered_points[p_i]
@@ -343,7 +343,7 @@ class IcosahedralGeodesicLattice(Lattice):
             usp = UnitSpherePoint(coords_dict)
             ordered_points.append(usp)
 
-        print("successfully retrieved memoization for {} iterations".format(iteration))
+        print("successfully retrieved icosahedron memoization for {} iterations".format(iteration))
         return ordered_points, adjacencies_by_point_index
 
     def convert_adjacencies_to_usp(self):

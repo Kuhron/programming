@@ -480,16 +480,55 @@ class ElevationGenerationMap:
 
     def add_fault_lines(self, n_tripoints):
         # draw a fault line between each pair of tripoints
-        tripoints = [self.lattice.get_random_point_index() for _ in range(n_tripoints)]
-        # start off by just picking one pair to test
-        pair = random.sample(tripoints, 2)
-        a, b = pair
-        points_to_avoid = set()
-        path = self.lattice.get_random_path(a, b, points_to_avoid)
-        self.fill_point_set(path, "volcanism", 1)
+        tripoints = set(self.lattice.get_random_point_index() for _ in range(n_tripoints))
+        # edge_assignments = {}
+        # unhappy_points = set(tripoints)  # put points here if they have 0 or 1 fault line touching them; they must have 2 or 3
+        # saturated_points = set()  # put points here once they have 3 fault lines; don't accept more
+        existing_fault_points = set()  # put points here so the faults won't cross
+        # fault_lines_by_point = {p: 0 for p in tripoints}
+        # while len(unhappy_points) > 0:
+        # for a in edge_assignments:
+        #     for b in edge_assignments[a]:
+        #         ?
+            # useable_points = tripoints - saturated_points
+            # a = random.choice(list(useable_points))
+            # b_candidates = list(useable_points - {a})
+        for a in tripoints:
+            b_candidates = list(tripoints - {a})
+            xyz_a = np.array(self.lattice.points[a].get_coords("xyz"))
+            b_xyzs = [np.array(self.lattice.points[bc].get_coords("xyz")) for bc in b_candidates]
+            ds = [np.linalg.norm(xyz - xyz_a) for xyz in b_xyzs]
+            three_neighbors = []
+            for i in range(3):
+                min_i = ds.index(min(ds))
+                three_neighbors.append(b_candidates[min_i])
+                ds.remove(ds[min_i])
+            # b = b_candidates[min_index]
+            # if len(useable_points) > 1:
+            #     pair = random.sample(useable_points, 2)
+            # except ValueError:
+            #     # sample larger than population, allow a saturated point to be used
+            #     assert len(useable_points) == 1, "useable points has len {}".format(len(useable_points))
+            #     u_p = list(useable_points)[0]
+            #     s_p = random.choice(list(tripoints))
+            #     pair = (u_p, s_p)
+            # a, b = pair
+            for b in three_neighbors:
+                other_tripoints = tripoints - {a, b}
+                points_to_avoid = existing_fault_points | other_tripoints
+                path = self.lattice.get_random_path(a, b, points_to_avoid)
+                existing_fault_points |= path
+                # fault_lines_by_point[a] += 1
+                # fault_lines_by_point[b] += 1
+            # for p in {a, b}:
+            #     if fault_lines_by_point[p] > 1:
+            #         unhappy_points -= {p}
+            #     if fault_lines_by_point[p] > 2:
+            #         saturated_points.add(p)
+                self.fill_point_set(path, "volcanism", 1)
         self.lattice.plot_data(self.data_dict, "volcanism")
         plt.show()
-        raise NotImplementedError
+        raise Exception
 
     def plot(self):
         # plt.gcf()

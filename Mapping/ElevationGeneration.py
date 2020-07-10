@@ -170,7 +170,7 @@ if __name__ == "__main__":
             print("generating further elevation changes")
             m.unfreeze_all()  # allow coastlines to change
 
-        m.add_fault_lines(4) # test
+        m.add_fault_lines(12) # test
         raise
 
         n_points_total = m.size()
