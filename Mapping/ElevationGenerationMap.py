@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import networkx as nx
 from PIL import Image
+from sklearn.neighbors import KDTree
 from ArrayUtil import make_blank_condition_array, make_nan_array
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
@@ -63,6 +64,11 @@ class ElevationGenerationMap:
         for p in range(len(self.lattice.points)):
             check_is_point_index(p)
             self.fill_position(p, key_str, value)
+
+    def add_value_at_position(self, p, key_str, change):
+        if key_str not in self.data_dict[p]:
+            self.data_dict[p][key_str] = 0
+        self.data_dict[p][key_str] += change
 
     def get_value_at_position(self, p, key_str):
         check_is_point_index(p)
@@ -479,6 +485,7 @@ class ElevationGenerationMap:
             i += 1
 
     def add_fault_lines(self, n_tripoints):
+        print("adding fault lines")
         # draw a fault line between each pair of tripoints
         tripoints = set(self.lattice.get_random_point_index() for _ in range(n_tripoints))
         # edge_assignments = {}
@@ -525,10 +532,53 @@ class ElevationGenerationMap:
             #         unhappy_points -= {p}
             #     if fault_lines_by_point[p] > 2:
             #         saturated_points.add(p)
-                self.fill_point_set(path, "volcanism", 1)
-        self.lattice.plot_data(self.data_dict, "volcanism")
-        plt.show()
-        raise Exception
+                # self.fill_point_set(path, "volcanism", 1)
+                # for p in path:
+                #     self.fill_position(p, "volcanism", abs(random.normalvariate(1, 0.5)))
+
+        # after all the lines are created
+        self.fill_fault_points_with_volcanism_values(existing_fault_points)
+        print("- done adding fault lines")
+
+    def fill_fault_points_with_volcanism_values(self, ps):
+        # positive volcanism means convergent boundary / flow of rock outward onto the surface (volcano)
+        # negative volcanism means divergent boundary / sinking of rock into the interior (trench, rift)
+        # make the values vary like random waves around the whole subgraph
+
+        # TODO might be nice to implement a more general "create data" function that uses the elevation logic
+        # - and apply that to any subgraph/lattice, so here can just pass it only the fault points instead of the whole globe
+        ps = list(ps)  # order them
+        sg = self.lattice.graph.subgraph(ps)
+        # print("cycles:", nx.cycle_basis(sg))
+        xyz_coords = np.array([self.lattice.points[p].get_coords("xyz") for p in ps])
+        sg_kdtree = KDTree(xyz_coords)
+        n_steps = 1
+        for step_i in range(n_steps):
+            i = random.randrange(len(ps))
+            p = ps[i]
+            xyz_p = xyz_coords[i]
+            # apply some sin wave to every point on the map based on distance from p
+            query = np.array([xyz_p])
+            distances, neighbors = sg_kdtree.query(query, k=len(ps))
+            assert distances.shape[0] == 1  # one sub-array corresponding to the single query point
+            assert neighbors.shape[0] == 1  # one sub-array corresponding to the single query point
+            distances = distances[0]
+            neighbors = neighbors[0]
+            # maximum distance can be 2 (2 radii away along diameter of unit sphere)
+            assert max(distances) <= 2
+            # ideally function is smooth
+            # set p to some value, set antipodes to zero
+            sigmoid_01 = lambda x, b=-2: 1/(1+(x/(1-x))**-b)  # https://stats.stackexchange.com/questions/214877/
+            max_change = random.normalvariate(0, 10)
+            f = lambda d, y=max_change: sigmoid_01(d/2) * y
+            changes = f(distances)
+            for neighbor, change in zip(neighbors, changes):
+                self.add_value_at_position(neighbor, "volcanism", change)
+
+    def add_hotspots(self, n_points):
+        for i in range(n_points):
+            p = self.lattice.get_random_point_index()
+            self.add_value_at_position(p, "volcanism", abs(random.normalvariate(2, 1)))
 
     def plot(self):
         # plt.gcf()

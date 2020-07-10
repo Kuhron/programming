@@ -170,8 +170,10 @@ if __name__ == "__main__":
             print("generating further elevation changes")
             m.unfreeze_all()  # allow coastlines to change
 
-        m.add_fault_lines(12) # test
-        raise
+        m.add_fault_lines(24)
+        m.add_hotspots(200)
+        m.lattice.plot_data(m.data_dict, "volcanism")
+        plt.show()
 
         n_points_total = m.size()
         expected_change_sphere_proportion = get_expected_change_size_from_user(n_points_total)

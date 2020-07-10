@@ -10,6 +10,5 @@
 	"reference_area_ratio_at_sea_level": 5,
 	"reference_area_ratio_at_big_abs": 40,
     "land_proportion": 0.2,
-    "spikiness": 0.9,
-    "faulting": 0
+    "spikiness": 0.9
 }
