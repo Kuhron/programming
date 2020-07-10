@@ -64,6 +64,11 @@ def angle_between_vectors(v1, v2):
     return theta
 
 
+def vector_rejection_3d(v1, v2):
+    # https://en.wikipedia.org/wiki/Vector_projection#Vector_rejection_2
+    return v1 - (dot_3d(v1, v2) / dot_3d(v2, v2)) * v2
+
+
 def unit_vector_lat_lon_to_cartesian(lat, lon, deg=True):
     if deg:
         # got deg from user

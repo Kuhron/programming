@@ -40,6 +40,9 @@ class Lattice:
     def get_random_point_index(self):
         return random.randrange(len(self.points))
 
+    def get_neighbors(self, p_i):
+        return self.adjacencies_by_point_index[p_i]
+
     def closest_point_to(self, usp):
         assert type(usp) is UnitSpherePoint
         xyz_as_one_sample = np.array([usp.get_coords("xyz"),])
@@ -54,6 +57,34 @@ class Lattice:
         point_number = self.xyz_to_point_number[point_xyz]
         usp = self.points[point_number]
         return usp
+
+    def get_random_path(self, a, b, points_to_avoid):
+        # start and end should inch toward each other
+        i = 0
+        points_in_path = {a, b}
+        current_a = a
+        current_b = b
+        while True:
+            which_one = i % 2
+            current_point = [current_a, current_b][which_one]
+            objective = [current_b, current_a][which_one]
+            points_to_avoid_this_step = points_to_avoid | points_in_path
+            
+            next_step = self.get_next_step_in_path(current_point, objective, points_to_avoid_this_step)
+            if which_one == 0:
+                current_a = next_step
+            elif which_one == 1:
+                current_b = next_step
+            else:
+                raise
+
+            points_in_path.add(next_step)
+
+            if current_a in self.get_neighbors(current_b):
+                break
+
+            i += 1
+        return points_in_path
 
     def plot_points(self):
         fig = plt.figure()
@@ -91,25 +122,27 @@ class Lattice:
 
         return data
 
-    def plot_data(self, data, size_inches=None):
-        data_point_indices = list(data.keys())
+    def plot_data(self, data_dict, key_str, size_inches=None, cmap=None):
+        data_point_indices = list(data_dict.keys())
         data_points = [self.points[p_i] for p_i in data_point_indices]
         latlons_deg = [p.get_coords("latlondeg") for p in data_points]
         lats_deg = np.array([ll[0] for ll in latlons_deg])
         lons_deg = np.array([ll[1] for ll in latlons_deg])
-        vals = np.array([data[p_i] for p_i in data_point_indices])
+        vals = np.array([data_dict[p_i].get(key_str, 0) for p_i in data_point_indices])
         # print("lat range {} to {}\nlon range {} to {}".format(min(lats_deg), max(lats_deg), min(lons_deg), max(lons_deg)))
         # plt.scatter(lats_deg, lons_deg)
         # plt.show()
-        min_elevation = min(vals)
-        max_elevation = max(vals)
+        min_val = min(vals)
+        max_val = max(vals)
         
-        lon_0s = [[-120, -60, 0], [60, 120, 180]]
+        lat_0s = [[   0,    0,    0,   90], [   0,    0,    0,  -90]]
+        lon_0s = [[-120,  -60,    0,    0], [  60,  120,  180,    0]]
         n_rows = len(lon_0s)
         n_cols = len(lon_0s[0])
         fig = plt.figure(figsize=size_inches)
-        cmap = pu.get_land_and_sea_colormap()
-        contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
+        if cmap is None:
+            cmap = pu.get_land_and_sea_colormap()
+        contour_levels = pu.get_contour_levels(min_val, max_val)
 
         # debugging: print contour levels and colors
         # for level_i in range(len(contour_levels)):
@@ -127,10 +160,13 @@ class Lattice:
 
         for i, row in enumerate(lon_0s):
             for j, lon_0 in enumerate(row):
+                lat_0 = lat_0s[i][j]
                 nth_plot = i*len(row) + j + 1
                 ax = fig.add_subplot(n_rows, n_cols, nth_plot)
                 # m = Basemap(projection="cyl")
-                m = Basemap(projection="ortho", lat_0=0., lon_0=lon_0, resolution='l')
+                m = Basemap(projection="ortho", lat_0=lat_0, lon_0=lon_0, resolution='l')
+                m.drawmeridians(np.arange(0,360,30))
+                m.drawparallels(np.arange(-90,90,30))
                 MC = m.contourf(lons_deg, lats_deg, vals, levels=contour_levels, cmap=cmap, ax=ax, tri=True, latlon=True)  # latlon=True interprets first two args as LON and LAT RESPECTIVELY
                 # m.contour(lons_deg, lats_deg, vals, levels=[min(vals), 0, max(vals)], colors="k", ax=ax, tri=True, latlon=True)
     
@@ -139,6 +175,8 @@ class Lattice:
                 # m.drawparallels(np.arange(-90,91,30), labels=parallel_labels_bools)
                 # m.drawmeridians(np.arange(-180,181,30), labels=meridian_labels_bools)
     
-                plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
-                plt.title("lon {}".format(lon_0))
+                clb = plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
+                clb.ax.set_title(key_str)
+                plt.title("latlon {},{}".format(lat_0, lon_0))
+
 

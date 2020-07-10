@@ -26,15 +26,15 @@ def confirm_overwrite_file(output_fp):
 
 
 def get_expected_change_size_from_user(n_points_total):
-    inp = input("expected change size as proportion of sphere surface area: ")
+    inp = input("expected change size as proportion of sphere surface area (if float in (0, 1)) or number of points (if int >= 1): ")
     fl = float(inp)
     if 0 < fl < 1:
         # proportion; return it directly
-        print("user supplied proportion {}".format(fl))
+        print("user supplied proportion: {}".format(fl))
         proportion = fl
     elif 1 <= fl:
         i = int(round(fl))
-        print("user supplied number of points {}".format(i))
+        print("user supplied number of points: {}".format(i))
         assert i <= n_points_total, "cannot change more than the total number of points, which is {}".format(n_points_total)
         proportion = i/n_points_total
     else:
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     else:
         lattice = IcosahedralGeodesicLattice(iterations=6)
         m = ElevationGenerationMap(lattice)
-        m.fill_all(0)
+        m.fill_all("elevation", 0)
         project_name = input("name for new project: ")
         project_dir = "/home/wesley/programming/Mapping/Projects/{}/".format(project_name)
         os.mkdir(project_dir)
@@ -170,6 +170,9 @@ if __name__ == "__main__":
             print("generating further elevation changes")
             m.unfreeze_all()  # allow coastlines to change
 
+        m.add_fault_lines(4) # test
+        raise
+
         n_points_total = m.size()
         expected_change_sphere_proportion = get_expected_change_size_from_user(n_points_total)
         expected_touches_per_point = get_expected_touches_per_point_from_user()
@@ -181,7 +184,7 @@ if __name__ == "__main__":
         else:
             print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
 
-        elevation_change_parameters = ElevationGenerationMap.get_elevation_change_parameters_from_user()
+        elevation_change_parameters = ElevationGenerationMap.get_elevation_change_parameters_from_config_file()
         m.fill_elevations(n_steps, expected_change_sphere_proportion, plot_every_n_steps, elevation_change_parameters=elevation_change_parameters)
         if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
             m.save_elevation_data(elevation_data_output_fp)

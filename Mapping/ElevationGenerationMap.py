@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 import random
 import os
 from datetime import datetime
@@ -30,7 +31,7 @@ def check_is_point_index(p):
 class ElevationGenerationMap:
     def __init__(self, lattice, data_dict=None, default_elevation=0):
         self.lattice = lattice
-        self.data_dict = {p_i: default_elevation for p_i in range(len(self.lattice.points))}
+        self.data_dict = {p_i: {"elevation": default_elevation} for p_i in range(len(self.lattice.points))}
         if data_dict is not None:
             self.data_dict.update(data_dict)
         default_condition = lambda x: True
@@ -47,25 +48,25 @@ class ElevationGenerationMap:
         else:
             raise ValueError("invalid condition type {}".format(type(condition)))
 
-    def fill_position(self, p, value):
+    def fill_position(self, p, key_str, value):
         check_is_point_index(p)
         assert p not in self.frozen_points, "can't change frozen point {}".format(p)
-        self.data_dict[p] = value
+        self.data_dict[p][key_str] = value
 
-    def fill_point_set(self, point_set, value):
+    def fill_point_set(self, point_set, key_str, value):
         for p in point_set:
             check_is_point_index(p)
             if p not in self.frozen_points:
-                self.fill_position(p, value)
+                self.fill_position(p, key_str, value)
 
-    def fill_all(self, value):
+    def fill_all(self, key_str, value):
         for p in range(len(self.lattice.points)):
             check_is_point_index(p)
-            self.fill_position(p, value)
+            self.fill_position(p, key_str, value)
 
-    def get_value_at_position(self, p):
+    def get_value_at_position(self, p, key_str):
         check_is_point_index(p)
-        return self.data_dict[p]
+        return self.data_dict[p].get(key_str, 0)
 
     def freeze_point(self, p):
         check_is_point_index(p)
@@ -89,54 +90,6 @@ class ElevationGenerationMap:
     def get_neighbors(self, p):
         check_is_point_index(p)
         return self.lattice.adjacencies_by_point_index[p]
-
-    def get_random_path(self, a, b, points_to_avoid):
-        # start and end should inch toward each other
-        i = 0
-        points_in_path = {a, b}
-        current_a = a
-        current_b = b
-        while True:
-            which_one = i % 2
-            current_point = [current_a, current_b][which_one]
-            objective = [current_b, current_a][which_one]
-            points_to_avoid_this_step = points_to_avoid | points_in_path
-            
-            next_step = self.get_next_step_in_path(current_point, objective, points_to_avoid_this_step)
-            if which_one == 0:
-                current_a = next_step
-            elif which_one == 1:
-                current_b = next_step
-            else:
-                raise
-
-            points_in_path.add(next_step)
-
-            if current_a in self.get_neighbors(current_b):
-                break
-
-            i += 1
-        return points_in_path
-
-    # def get_next_step_in_path(self, current_point, objective, points_to_avoid):
-    #     # TODO this function can be adapted to the Lattice class, not relying on x and y
-    #     dx = objective[0] - current_point[0]
-    #     dy = objective[1] - current_point[1]
-    #     z = dx + dy*1j
-    #     objective_angle = np.angle(z, deg=True)
-    #     neighbors = self.get_neighbors(*current_point)
-    #     neighbors = [n for n in neighbors if n not in points_to_avoid]
-    #     neighbor_angles = [np.angle((n[0]-current_point[0]) + (n[1]-current_point[1])*1j, deg=True) for n in neighbors]
-    #     # set objective angle to zero for purposes of determining weight
-    #     neighbor_effective_angles = [abs(a - objective_angle) % 360 for a in neighbor_angles]
-    #     neighbor_effective_angles = [a-360 if a>180 else a for a in neighbor_effective_angles]
-    #     neighbor_weights = [180-abs(a) for a in neighbor_effective_angles]
-    #     assert all(0 <= w <= 180 for w in neighbor_weights), "{}\n{}\n{}".format(neighbors, neighbor_effective_angles, neighbor_weights)
-    #     total_weight = sum(neighbor_weights)
-    #     norm_weights = [w / total_weight for w in neighbor_weights]
-    #     chosen_one_index = np.random.choice([x for x in range(len(neighbors))], p=norm_weights)
-    #     chosen_one = neighbors[chosen_one_index]
-    #     return chosen_one
 
     def get_random_contiguous_region(self, p=None, radius=None, n_points=None, points_to_avoid=None, prioritize_internal_unfilled=False):
         check_is_point_index(p)
@@ -296,17 +249,15 @@ class ElevationGenerationMap:
             return None
 
     @staticmethod
+    def get_elevation_change_parameters_from_config_file():
+        fp = "ParamConfigElevationChange.json"
+        with open(fp) as f:
+            d = json.load(f)
+        return d
+
+    @staticmethod
     def get_elevation_change_parameters_from_user():
-        d = {
-            "reference_area_ratio_at_sea_level": 5,
-            "reference_area_ratio_at_big_abs": 0.1,
-            "big_abs": 1000,
-            "critical_abs": 100,  # above this abs, go farther in that direction until reach big_abs_elevation
-            "mu_when_small": 0,
-            "mu_when_critical": 10,  # mu for elevation change in critical zone (critical_abs <= el <= big_abs)
-            "mu_when_big": 0,
-            "sigma_when_big": 10,
-        }
+        d = ElevationGenerationMap.get_elevation_change_parameters_from_config_file()
         for var_name, default_value in d.items():
             user_value = ElevationGenerationMap.get_numerical_parameter_input(var_name, default_value)
             if user_value is not None:
@@ -319,11 +270,15 @@ class ElevationGenerationMap:
             reference_area_ratio_at_sea_level=None,
             reference_area_ratio_at_big_abs=None,
             big_abs=None,
-            critical_abs=None,
+            critical_abs=None,  # above this abs, go farther in that direction until reach big_abs_elevation
             mu_when_small=None,
-            mu_when_critical=None,
+            mu_when_critical=None,  # mu for elevation change in critical zone (critical_abs <= abs(elevation) <= big_abs)
             mu_when_big=None,
+            sigma_when_small=None,
+            sigma_when_critical=None,
             sigma_when_big=None,
+            land_proportion=None,
+            spikiness=None,
         ):
 
         center_index = self.lattice.get_random_point_index()
@@ -366,7 +321,7 @@ class ElevationGenerationMap:
         changing_reg_center_of_mass_raw = UnitSpherePoint(coords_dict)
         changing_reg_center_of_mass = self.lattice.closest_point_to(changing_reg_center_of_mass_raw)
         com_index = self.lattice.usp_to_index[changing_reg_center_of_mass]
-        e_center_of_mass = self.data_dict[com_index]
+        e_center_of_mass = self.get_value_at_position(com_index, "elevation")
         reference_p = changing_reg_center_of_mass
 
         # try to get mountain chains to propagate:
@@ -386,15 +341,25 @@ class ElevationGenerationMap:
         if max_d == 0:
             raw_func = elfs.elevation_change_constant
         else:
-            raw_func = random.choice(elfs.ELEVATION_CHANGE_FUNCTIONS)
+            raw_func = elfs.get_elevation_change_function(spikiness=spikiness)
 
         if positive_feedback:
             # land begets land, sea begets sea
-            elevations_in_refreg = [self.data_dict[p_i] for p_i in reference_reg]
+            elevations_in_refreg = [self.get_value_at_position(p_i, "elevation") for p_i in reference_reg]
             e_avg = np.mean(elevations_in_refreg)
             e_max = np.max(elevations_in_refreg)  # for detecting mountain nearby, chain should propagate
             e_min = np.min(elevations_in_refreg)
             elevation_sign = (1 if e_avg > 0 else -1)
+
+            # try to enforce land ratio approximately. change it to the other one with probability(other_sign)
+            if elevation_sign == 1:
+                # switch land to sea with probability(sea)
+                if random.random() < (1 - land_proportion):
+                    elevation_sign = -1
+            elif elevation_sign == -1:
+                if random.random() < (land_proportion):
+                    elevation_sign = 1
+
             big_signed = elevation_sign * big_abs
             critical_signed = elevation_sign * critical_abs
             critical_excess = e_avg - critical_signed
@@ -406,6 +371,13 @@ class ElevationGenerationMap:
                 mu_when_critical if e_avg > critical_abs else \
                 -1*mu_when_critical if e_avg < -1*critical_abs else \
                 mu_when_small
+
+            sigma = \
+                sigma_when_big if abs(e_avg) > big_abs else \
+                sigma_when_critical if e_avg > critical_abs else \
+                -1*sigma_when_critical if e_avg < -1*critical_abs else \
+                sigma_when_small
+
 
             # if False: #mountain_or_trench_nearby:
             #     pass
@@ -435,20 +407,17 @@ class ElevationGenerationMap:
 
         else:
             mu = 0
+            sigma = sigma_when_small
 
-        if abs(e_avg) < big_abs:
-            sigma = max(sigma_when_big, abs(e_avg))
-        else:
-            sigma = sigma_when_big
         max_change = np.random.normal(mu, sigma)
 
         func = lambda d: raw_func(d, max_d, max_change)
         changes = {p: func(d) for p, d in distances.items() if p not in self.frozen_points}
         for p, d_el in changes.items():
-            current_el = self.get_value_at_position(p)
+            current_el = self.get_value_at_position(p, "elevation")
             new_el = current_el + d_el
             if self.new_value_satisfies_condition(p, new_el):
-                self.fill_position(p, new_el)
+                self.fill_position(p, "elevation", new_el)
 
     # def get_random_zero_loop(self):
     #     x0_0, y0_0 = self.get_random_point(border_width=2)
@@ -474,28 +443,6 @@ class ElevationGenerationMap:
     #     points = self.get_random_zero_loop()
     #     for p in points:
     #         self.fill_position(p[0], p[1], 0)
-
-    # def fill_elevations_outward_propagation(self):
-    #     # old
-    #     raise Exception("do not use")
-    #     # try filling the neighbors in "shells", get all the neighbors at one step and do all of them first before moving on
-    #     # but that leads to a square propagating outward, so should sometimes randomly restart the list
-    #     while len(self.unfilled_neighbors) + len(self.unfilled_inaccessible) > 0:
-    #         to_fill_this_round = [x for x in self.unfilled_neighbors]
-    #         random.shuffle(to_fill_this_round)
-    #         for p in to_fill_this_round:
-    #             # p = random.choice(list(self.unfilled_neighbors))
-    #             # neighbor = random.choice([x for x in self.get_neighbors(*p) if x in self.filled_positions])
-    #             # neighbor_el = self.get_value_at_position(*neighbor)
-    #             filled_neighbors = [x for x in self.get_neighbors(*p) if x in self.filled_positions]
-    #             average_neighbor_el = np.mean([self.get_value_at_position(*n) for n in filled_neighbors])
-    #             d_el = np.random.normal(0, 100)
-    #             el = average_neighbor_el + d_el
-    #             self.fill_position(p[0], p[1], el)
-    #             if random.random() < 0.02:
-    #                 break  # for
-    #                 # then will have new list of neighbors
-    #         self.draw()
 
     def fill_elevations(self, n_steps, expected_change_sphere_proportion, plot_every_n_steps=None, elevation_change_parameters=None):
         if elevation_change_parameters is None:
@@ -529,43 +476,20 @@ class ElevationGenerationMap:
                     self.draw()
                 except ValueError:
                     print("skipping ValueError")
-                # input("debug")
             i += 1
 
-    # def get_xy_meshgrid(self):
-    #     return np.meshgrid(range(self.x_size), range(self.y_size))
-
-    # def get_latlon_meshgrid(self):
-    #     lats_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
-    #     lons_grid = np.array([[None for y in range(self.y_size)] for x in range(self.x_size)])
-    #     n_ps = self.x_size * self.y_size
-    #     i = 0
-    #     for x in range(self.x_size):
-    #         for y in range(self.y_size):
-    #             if i % 1000 == 0:
-    #                 print("i = {}/{}".format(i, n_ps))
-    #             p_lat, p_lon = mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
-    #                 self.lat00, self.lon00,
-    #                 self.lat01, self.lon01,
-    #                 self.lat10, self.lon10,
-    #                 self.lat11, self.lon11,
-    #                 deg=True
-    #             )
-    #             lats_grid[x, y] = p_lat
-    #             lons_grid[x, y] = p_lon
-    #             i += 1
-
-    #     # x_grid, y_grid = self.get_xy_meshgrid()
-    #     # f = lambda x, y: mcm.get_lat_lon_of_point_on_map(x, y, self.x_size, self.y_size,
-    #     #             self.lat00, self.lon00,
-    #     #             self.lat01, self.lon01,
-    #     #             self.lat10, self.lon10,
-    #     #             self.lat11, self.lon11,
-    #     #             deg=True
-    #     #         )
-    #     # f = np.vectorize(f)
-    #     # lats_grid, lons_grid = f(x_grid, y_grid)
-    #     return lats_grid, lons_grid
+    def add_fault_lines(self, n_tripoints):
+        # draw a fault line between each pair of tripoints
+        tripoints = [self.lattice.get_random_point_index() for _ in range(n_tripoints)]
+        # start off by just picking one pair to test
+        pair = random.sample(tripoints, 2)
+        a, b = pair
+        points_to_avoid = set()
+        path = self.lattice.get_random_path(a, b, points_to_avoid)
+        self.fill_point_set(path, "volcanism", 1)
+        self.lattice.plot_data(self.data_dict, "volcanism")
+        plt.show()
+        raise NotImplementedError
 
     def plot(self):
         # plt.gcf()
@@ -589,7 +513,7 @@ class ElevationGenerationMap:
         print("- done saving plot image")
 
     def pre_plot(self, size_inches=None):
-        self.lattice.plot_data(self.data_dict, size_inches)
+        self.lattice.plot_data(self.data_dict, "elevation", size_inches)
         # if projection is None:
         #     projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
         # average_lat, average_lon = self.average_latlon()
@@ -1018,7 +942,7 @@ class ElevationGenerationMap:
                 # p = map_lattice.closest_point_to(image_point)  # closest point on lattice to this x, y point on the image
             fill_value = usp_to_fill_value[image_p]
             condition = usp_to_condition[image_p]
-            m.fill_position(lattice_p, fill_value)
+            m.fill_position(lattice_p, "elevation", fill_value)
             m.add_condition_at_position(lattice_p, condition)
             if is_frozen:
                 m.freeze_point(lattice_p)
@@ -1039,7 +963,7 @@ class ElevationGenerationMap:
         lattice = IcosahedralGeodesicLattice(iterations=n_iterations)
         data_dict = {}  # point index to value
         for p_i, val in enumerate(vals):
-            data_dict[p_i] = val
+            data_dict[p_i] = {"elevation": val}
         return ElevationGenerationMap(lattice=lattice, data_dict=data_dict)
             
 
@@ -1051,13 +975,13 @@ class ElevationGenerationMap:
     def freeze_coastlines(self):
         coastal_points = set()
         for p in range(len(self.lattice.points)):
-            if p in self.data_dict and self.data_dict[p] < 0:
+            if self.get_value_at_position(p, "elevation") < 0:
                 neighbors = self.get_neighbors(p)
                 for n in neighbors:
-                    if n in self.data_dict and self.data_dict[n] >= 0:
+                    if self.get_value_at_position(n, "elevation") >= 0:
                         coastal_points.add(n)
         for p in coastal_points:
-            self.fill_position(p, 0)
+            self.fill_position(p, "elevation", 0)
             self.freeze_point(p)
 
     # def get_min_gradient_array(self):
@@ -1104,7 +1028,7 @@ class ElevationGenerationMap:
         with open(output_fp, "w") as f:
             s = ""
             for p_i in range(len(self.lattice.points)):
-                val = self.data_dict[p_i]
+                val = self.get_value_at_position(p_i, "elevation")
                 s += str(val) + "\n"
             f.write(s)
         # for x in range(self.x_size):

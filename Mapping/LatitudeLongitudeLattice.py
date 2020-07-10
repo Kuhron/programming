@@ -172,8 +172,31 @@ class LatitudeLongitudeLattice(Lattice):
                 res.add(p)
         return res
 
-    def get_random_point(self, border_width=0):
-        x = random.randrange(border_width, self.x_size - border_width)
-        y = random.randrange(border_width, self.y_size - border_width)
-        return (x, y)
+    # def get_random_point(self, border_width=0):
+    #     x = random.randrange(border_width, self.x_size - border_width)
+    #     y = random.randrange(border_width, self.y_size - border_width)
+    #     return (x, y)
+
+    def get_next_step_in_path(self, current_point, objective, points_to_avoid):
+        raise NotImplementedError
+        # old: x and y grid only
+        # # TODO this function can be adapted to the Lattice class, not relying on x and y
+        # dx = objective[0] - current_point[0]
+        # dy = objective[1] - current_point[1]
+        # z = dx + dy*1j
+        # objective_angle = np.angle(z, deg=True)
+        # neighbors = self.get_neighbors(*current_point)
+        # neighbors = [n for n in neighbors if n not in points_to_avoid]
+        # neighbor_angles = [np.angle((n[0]-current_point[0]) + (n[1]-current_point[1])*1j, deg=True) for n in neighbors]
+        # # set objective angle to zero for purposes of determining weight
+        # neighbor_effective_angles = [abs(a - objective_angle) % 360 for a in neighbor_angles]
+        # neighbor_effective_angles = [a-360 if a>180 else a for a in neighbor_effective_angles]
+        # neighbor_weights = [180-abs(a) for a in neighbor_effective_angles]
+        # assert all(0 <= w <= 180 for w in neighbor_weights), "{}\n{}\n{}".format(neighbors, neighbor_effective_angles, neighbor_weights)
+        # total_weight = sum(neighbor_weights)
+        # norm_weights = [w / total_weight for w in neighbor_weights]
+        # chosen_one_index = np.random.choice([x for x in range(len(neighbors))], p=norm_weights)
+        # chosen_one = neighbors[chosen_one_index]
+        # return chosen_one
+
 

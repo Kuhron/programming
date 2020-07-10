@@ -374,6 +374,28 @@ class IcosahedralGeodesicLattice(Lattice):
             assert iterations % 1 == 0, "invalid 2i: {}".format(two_i)
             return iterations
 
+    def get_next_step_in_path(self, current_point, objective, points_to_avoid):
+        # get vector to objective, project it onto plane tangent to sphere at current_point
+        # vector rejection of a from b is the component of a that is leftover when you subtract the projection of a onto b
+        # this is what I want (b from core to current_point or vice versa, a from current_point to objective, rejection tells what direction to go in from a)
+        a_i, b_i = current_point, objective
+        xyz_a = np.array(self.points[a_i].get_coords("xyz"))
+        xyz_b = np.array(self.points[b_i].get_coords("xyz"))
+        vector_to_objective = xyz_b - xyz_a
+        vector_from_core_to_current = xyz_a  # minus (0, 0, 0)
+        rejection_vector = mcm.vector_rejection_3d(vector_to_objective, vector_from_core_to_current)
+        # now get neighbor in that direction, but allow some randomness somehow
+        neighbor_indices = self.adjacencies_by_point_index[current_point]
+        neighbor_xyzs = [np.array(self.points[p_i].get_coords("xyz")) for p_i in neighbor_indices]
+        displacements = [xyz - xyz_a for xyz in neighbor_xyzs]
+        angles = [mcm.angle_between_vectors(dis, rejection_vector) for dis in displacements]
+        # bigger weight for smaller angle (closer to target direction), biggest angle will be pi
+        weights = [np.pi - angle for angle in angles]
+        weights = np.array(weights) / sum(weights)
+        chosen_neighbor_point_index = np.random.choice(neighbor_indices, p=weights)
+        return chosen_neighbor_point_index
+
+
 
 if __name__ == "__main__":
     edge_length_km = 250

@@ -1,0 +1,10 @@
+{
+	"critical_abs": 100,
+	"big_abs": 1000,
+	"mu_when_small": 0,
+	"mu_when_critical": 10,
+	"mu_when_big": 0,
+	"sigma_when_big": 10,
+	"reference_area_ratio_at_sea_level": 5,
+	"reference_area_ratio_at_big_abs": 0.1
+}
