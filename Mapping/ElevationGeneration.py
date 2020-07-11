@@ -142,11 +142,13 @@ if __name__ == "__main__":
             new_version = project_version_array[:-1] + [project_version_array[-1] + 1]
             new_version_number = "-".join(str(x) for x in new_version)
             print("loaded version {}, outputting version {}".format(project_version, new_version_number))
-            elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
-            plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
+            # elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
+            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
+            version_number = new_version_number
         else:
             # in case want to overwrite existing plot, e.g. after fixing plotting bugs
-            plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, project_version)
+            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, project_version)
+            version_number = project_version
     else:
         lattice = IcosahedralGeodesicLattice(iterations=6)
         m = ElevationGenerationMap(lattice)
@@ -156,9 +158,9 @@ if __name__ == "__main__":
         os.mkdir(project_dir)
         os.mkdir(project_dir + "Data/")
         os.mkdir(project_dir + "Plots/")
-        new_version_number = 0
-        elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
-        plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
+        version_number = 0
+        # elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
+        # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
         generate_initial_elevation_changes = True
         
     print("map size {} pixels".format(m.size()))
@@ -171,7 +173,7 @@ if __name__ == "__main__":
             m.unfreeze_all()  # allow coastlines to change
 
         m.add_fault_lines(24)
-        m.add_hotspots(200)
+        # m.add_hotspots(200)
         m.lattice.plot_data(m.data_dict, "volcanism")
         plt.show()
 
@@ -189,9 +191,10 @@ if __name__ == "__main__":
         elevation_change_parameters = ElevationGenerationMap.get_elevation_change_parameters_from_config_file()
         m.fill_elevations(n_steps, expected_change_sphere_proportion, plot_every_n_steps, elevation_change_parameters=elevation_change_parameters)
         if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
-            m.save_elevation_data(elevation_data_output_fp)
+            m.save_data("elevation", project_name, version_number)
         if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
-            m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
+            m.save_plot_image("elevation", project_name, version_number, size_inches=(36, 24))
+            m.save_plot_image("volcanism", project_name, version_number, size_inches=(72, 48))
 
         if generate_initial_elevation_changes:
             print("- done generating initial elevation changes")
@@ -207,5 +210,6 @@ if __name__ == "__main__":
         # m.plot_flow_steps(10000)
         # m.plot_average_water_location()
         if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
-            m.save_plot_image(plot_image_output_fp, size_inches=(36, 24))
+            m.save_plot_image("elevation", project_name, version_number, size_inches=(36, 24))
+            m.save_plot_image("volcanism", project_name, version_number, size_inches=(72, 48))
         print("- done plotting")

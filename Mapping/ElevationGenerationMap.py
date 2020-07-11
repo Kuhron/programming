@@ -569,8 +569,9 @@ class ElevationGenerationMap:
             # ideally function is smooth
             # set p to some value, set antipodes to zero
             sigmoid_01 = lambda x, b=-2: 1/(1+(x/(1-x))**-b)  # https://stats.stackexchange.com/questions/214877/
-            max_change = random.normalvariate(0, 10)
-            f = lambda d, y=max_change: sigmoid_01(d/2) * y
+            max_change = random.normalvariate(100, 5) * random.choice([-1, 1])
+            # f = lambda d, y=max_change: sigmoid_01(d/2) * y
+            f = lambda d: 10 + random.random() * 5 + 0*d
             changes = f(distances)
             for neighbor, change in zip(neighbors, changes):
                 self.add_value_at_position(neighbor, "volcanism", change)
@@ -591,18 +592,19 @@ class ElevationGenerationMap:
         plt.draw()
         plt.pause(0.001)
 
-    def save_plot_image(self, output_fp, size_inches=None):
+    def save_plot_image(self, key_str, project_name, version_number, size_inches=None):
         # output_fp = add_datetime_to_fp(output_fp)
+        output_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Plots/EGP_{project_name}_{key_str}_v{version_number}.png".format(**locals())
         while os.path.exists(output_fp):
             print("file {} exists, renaming output fp".format(output_fp))
             output_fp = output_fp.replace(".png", "-1.png")
         print("saving plot image to {}".format(output_fp))
-        self.pre_plot(size_inches)
+        self.pre_plot(key_str, size_inches)
         plt.savefig(output_fp)
         print("- done saving plot image")
 
-    def pre_plot(self, size_inches=None):
-        self.lattice.plot_data(self.data_dict, "elevation", size_inches)
+    def pre_plot(self, key_str, size_inches=None):
+        self.lattice.plot_data(self.data_dict, key_str, size_inches)
         # if projection is None:
         #     projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
         # average_lat, average_lon = self.average_latlon()
@@ -1105,11 +1107,12 @@ class ElevationGenerationMap:
                     max_grad_pair = (p, q)
         return max_grad, max_grad_pair
 
-    def save_elevation_data(self, output_fp):
+    def save_data(self, key_str, project_name, version_number):
         # format is just grid of comma-separated numbers
         # if not confirm_overwrite_file:
         #     return
         # output_fp = add_datetime_to_fp(output_fp)
+        output_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Data/EGD_{project_name}_{key_str}_v{version_number}.txt".format(**locals())
         while os.path.exists(output_fp):
             print("file {} exists, renaming output fp".format(output_fp))
             output_fp = output_fp.replace(".txt", "-1.txt")
