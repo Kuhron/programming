@@ -391,7 +391,10 @@ class IcosahedralGeodesicLattice(Lattice):
         angles = [mcm.angle_between_vectors(dis, rejection_vector) for dis in displacements]
         # bigger weight for smaller angle (closer to target direction), biggest angle will be pi
         weights = [np.pi - angle for angle in angles]
-        weights = np.array(weights) / sum(weights)
+        total_weight = sum(weights)
+        if total_weight in [0, np.nan]:
+            raise ValueError("invalid total weight {} from angles {}".format(total_weight, angles))
+        weights = np.array(weights) / total_weight
         chosen_neighbor_point_index = np.random.choice(neighbor_indices, p=weights)
         return chosen_neighbor_point_index
 

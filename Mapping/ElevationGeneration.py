@@ -211,5 +211,5 @@ if __name__ == "__main__":
         # m.plot_average_water_location()
         if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
             m.save_plot_image("elevation", project_name, version_number, size_inches=(36, 24))
-            m.save_plot_image("volcanism", project_name, version_number, size_inches=(72, 48))
+            m.save_plot_image("volcanism", project_name, version_number, size_inches=(36, 24))
         print("- done plotting")

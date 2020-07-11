@@ -532,12 +532,13 @@ class ElevationGenerationMap:
             #         unhappy_points -= {p}
             #     if fault_lines_by_point[p] > 2:
             #         saturated_points.add(p)
-                # self.fill_point_set(path, "volcanism", 1)
                 # for p in path:
                 #     self.fill_position(p, "volcanism", abs(random.normalvariate(1, 0.5)))
 
         # after all the lines are created
+        # self.fill_point_set(existing_fault_points, "volcanism", 1)  # simplest case, use for debugging path placement
         self.fill_fault_points_with_volcanism_values(existing_fault_points)
+        print("there are {} fault points out of {} total".format(len(existing_fault_points), len(self.lattice.points)))
         print("- done adding fault lines")
 
     def fill_fault_points_with_volcanism_values(self, ps):
@@ -552,26 +553,32 @@ class ElevationGenerationMap:
         # print("cycles:", nx.cycle_basis(sg))
         xyz_coords = np.array([self.lattice.points[p].get_coords("xyz") for p in ps])
         sg_kdtree = KDTree(xyz_coords)
-        n_steps = 1
+        n_steps = 30
         for step_i in range(n_steps):
             i = random.randrange(len(ps))
             p = ps[i]
             xyz_p = xyz_coords[i]
+            print("chose point i={} p={} with coords {}".format(i, p, xyz_p))
             # apply some sin wave to every point on the map based on distance from p
             query = np.array([xyz_p])
             distances, neighbors = sg_kdtree.query(query, k=len(ps))
             assert distances.shape[0] == 1  # one sub-array corresponding to the single query point
             assert neighbors.shape[0] == 1  # one sub-array corresponding to the single query point
             distances = distances[0]
-            neighbors = neighbors[0]
+            neighbors_raw = neighbors[0]
+            # note that neighbors here is the indices of the points IN THE KDTREE, NOT THEIR POINT INDEX IN THE LATTICE
+            # - this was the source of the Sierpinski error (it reflected how I numbered the points in icosahedron construction)
+            neighbors = [ps[n_i] for n_i in neighbors_raw]
             # maximum distance can be 2 (2 radii away along diameter of unit sphere)
             assert max(distances) <= 2
+            assert all(n in ps for n in neighbors), "got neighbors outside of point set"
             # ideally function is smooth
             # set p to some value, set antipodes to zero
-            sigmoid_01 = lambda x, b=-2: 1/(1+(x/(1-x))**-b)  # https://stats.stackexchange.com/questions/214877/
+            # sigmoid_01 = lambda x, b=-2: 1/(1+(x/(1-x))**-b)  # https://stats.stackexchange.com/questions/214877/
+            sin_wave = lambda x, k: (1+np.sin(((-1)**k)*(2*k+1)*np.pi*(x+0.5)))/2  # for k >= 0, this gives sin wave from [0,1] to [0,1] with f(0)=1, f(1)=0, and k+1 crests
             max_change = random.normalvariate(100, 5) * random.choice([-1, 1])
-            # f = lambda d, y=max_change: sigmoid_01(d/2) * y
-            f = lambda d: 10 + random.random() * 5 + 0*d
+            f = lambda d, y=max_change: sin_wave(d/2, k=random.randint(1, 20)) * y
+            # f = lambda d: 10 + random.random() * 5 + 0*d  # debug
             changes = f(distances)
             for neighbor, change in zip(neighbors, changes):
                 self.add_value_at_position(neighbor, "volcanism", change)
