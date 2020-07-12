@@ -377,25 +377,32 @@ class IcosahedralGeodesicLattice(Lattice):
     def get_next_step_in_path(self, current_point, objective, points_to_avoid):
         # get vector to objective, project it onto plane tangent to sphere at current_point
         # vector rejection of a from b is the component of a that is leftover when you subtract the projection of a onto b
-        # this is what I want (b from core to current_point or vice versa, a from current_point to objective, rejection tells what direction to go in from a)
+        # this is what I want (b from core to current_point or vice versa, a from current_point to objective, rejection tells what direction to go in from a, rejection will be tangent to the sphere at a)
         a_i, b_i = current_point, objective
+        assert a_i != b_i, "cannot get path step from point {} to itself".format(a_i)
         xyz_a = np.array(self.points[a_i].get_coords("xyz"))
         xyz_b = np.array(self.points[b_i].get_coords("xyz"))
         vector_to_objective = xyz_b - xyz_a
         vector_from_core_to_current = xyz_a  # minus (0, 0, 0)
         rejection_vector = mcm.vector_rejection_3d(vector_to_objective, vector_from_core_to_current)
+           
         # now get neighbor in that direction, but allow some randomness somehow
         neighbor_indices = self.adjacencies_by_point_index[current_point]
         neighbor_xyzs = [np.array(self.points[p_i].get_coords("xyz")) for p_i in neighbor_indices]
         displacements = [xyz - xyz_a for xyz in neighbor_xyzs]
-        angles = [mcm.angle_between_vectors(dis, rejection_vector) for dis in displacements]
-        # bigger weight for smaller angle (closer to target direction), biggest angle will be pi
-        weights = [np.pi - angle for angle in angles]
-        total_weight = sum(weights)
-        if total_weight in [0, np.nan]:
-            raise ValueError("invalid total weight {} from angles {}".format(total_weight, angles))
-        weights = np.array(weights) / total_weight
-        chosen_neighbor_point_index = np.random.choice(neighbor_indices, p=weights)
+
+        if mcm.mag_3d(rejection_vector) == 0:
+            # either going to same point or going to point directly opposite the sphere; either way, will cause problems calculating angle
+            chosen_neighbor_point_index = np.random.choice(neighbor_indices)  # can't get angles with zero rejection, choose at complete random
+        else:
+            angles = [mcm.angle_between_vectors(dis, rejection_vector) for dis in displacements]
+            # bigger weight for smaller angle (closer to target direction), biggest angle will be pi
+            weights = [np.pi - angle for angle in angles]
+            total_weight = sum(weights)
+            if total_weight in [0, np.nan]:
+                raise ValueError("invalid total weight {} from angles {}".format(total_weight, angles))
+            weights = np.array(weights) / total_weight
+            chosen_neighbor_point_index = np.random.choice(neighbor_indices, p=weights)
         return chosen_neighbor_point_index
 
 

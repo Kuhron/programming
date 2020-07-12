@@ -32,7 +32,7 @@ def check_is_point_index(p):
 class ElevationGenerationMap:
     def __init__(self, lattice, data_dict=None, default_elevation=0):
         self.lattice = lattice
-        self.data_dict = {p_i: {"elevation": default_elevation} for p_i in range(len(self.lattice.points))}
+        self.data_dict = {p_i: {} for p_i in range(len(self.lattice.points))}
         if data_dict is not None:
             self.data_dict.update(data_dict)
         default_condition = lambda x: True
@@ -73,6 +73,12 @@ class ElevationGenerationMap:
     def get_value_at_position(self, p, key_str):
         check_is_point_index(p)
         return self.data_dict[p].get(key_str, 0)
+
+    def get_value_array(self, key_str, points=None):
+        # return all values of this str in order of point index
+        if points is None:
+            points = list(range(len(self.lattice.points)))
+        return np.array([self.get_value_at_position(p, key_str) for p in points])
 
     def freeze_point(self, p):
         check_is_point_index(p)
@@ -380,9 +386,9 @@ class ElevationGenerationMap:
 
             sigma = \
                 sigma_when_big if abs(e_avg) > big_abs else \
-                sigma_when_critical if e_avg > critical_abs else \
-                -1*sigma_when_critical if e_avg < -1*critical_abs else \
+                sigma_when_critical if abs(e_avg) > critical_abs else \
                 sigma_when_small
+                # can't have negative sigma!
 
 
             # if False: #mountain_or_trench_nearby:
@@ -414,6 +420,15 @@ class ElevationGenerationMap:
         else:
             mu = 0
             sigma = sigma_when_small
+
+        # add effects of volcanism, crude approximation for now
+        # volcanism_array_of_refreg = self.get_value_array("volcanism", reference_reg)  # slow?
+        volcanism_array_of_refreg = np.array([self.get_value_at_position(p_i, "volcanism") for p_i in reference_reg])
+        average_volcanism_in_refreg = volcanism_array_of_refreg.mean()
+        assert np.isfinite(average_volcanism_in_refreg)
+        volcanism_contribution = average_volcanism_in_refreg
+        mu += volcanism_contribution  # positive = make mountains; negative = make rifts
+        # mu = volcanism_contribution  # debug, try to get correlation to show up
 
         max_change = np.random.normal(mu, sigma)
 
@@ -553,7 +568,7 @@ class ElevationGenerationMap:
         # print("cycles:", nx.cycle_basis(sg))
         xyz_coords = np.array([self.lattice.points[p].get_coords("xyz") for p in ps])
         sg_kdtree = KDTree(xyz_coords)
-        n_steps = 30
+        n_steps = 30  # more steps adds more noise, makes the individual waves less obvious, so it looks more natural
         for step_i in range(n_steps):
             i = random.randrange(len(ps))
             p = ps[i]
@@ -576,7 +591,8 @@ class ElevationGenerationMap:
             # set p to some value, set antipodes to zero
             # sigmoid_01 = lambda x, b=-2: 1/(1+(x/(1-x))**-b)  # https://stats.stackexchange.com/questions/214877/
             sin_wave = lambda x, k: (1+np.sin(((-1)**k)*(2*k+1)*np.pi*(x+0.5)))/2  # for k >= 0, this gives sin wave from [0,1] to [0,1] with f(0)=1, f(1)=0, and k+1 crests
-            max_change = random.normalvariate(100, 5) * random.choice([-1, 1])
+            volcanism_sign = [-1, 1][step_i % 2]  # alternate so you don't get too much bias in either direction
+            max_change = random.uniform(0, 100) * volcanism_sign
             f = lambda d, y=max_change: sin_wave(d/2, k=random.randint(1, 20)) * y
             # f = lambda d: 10 + random.random() * 5 + 0*d  # debug
             changes = f(distances)
@@ -584,9 +600,10 @@ class ElevationGenerationMap:
                 self.add_value_at_position(neighbor, "volcanism", change)
 
     def add_hotspots(self, n_points):
+        max_abs_volcanism = max(abs(self.get_value_array("volcanism")))
         for i in range(n_points):
             p = self.lattice.get_random_point_index()
-            self.add_value_at_position(p, "volcanism", abs(random.normalvariate(2, 1)))
+            self.add_value_at_position(p, "volcanism", random.uniform(0, max_abs_volcanism))
 
     def plot(self):
         # plt.gcf()
@@ -599,62 +616,19 @@ class ElevationGenerationMap:
         plt.draw()
         plt.pause(0.001)
 
-    def save_plot_image(self, key_str, project_name, version_number, size_inches=None):
+    def save_plot_image(self, key_str, project_name, version_number, size_inches=None, cmap=None):
         # output_fp = add_datetime_to_fp(output_fp)
         output_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Plots/EGP_{project_name}_{key_str}_v{version_number}.png".format(**locals())
         while os.path.exists(output_fp):
             print("file {} exists, renaming output fp".format(output_fp))
             output_fp = output_fp.replace(".png", "-1.png")
         print("saving plot image to {}".format(output_fp))
-        self.pre_plot(key_str, size_inches)
+        self.pre_plot(key_str, size_inches=size_inches, cmap=cmap)
         plt.savefig(output_fp)
         print("- done saving plot image")
 
-    def pre_plot(self, key_str, size_inches=None):
-        self.lattice.plot_data(self.data_dict, key_str, size_inches)
-        # if projection is None:
-        #     projection = "cyl"  # Basemap's default is "cyl", which is equirectangular
-        # average_lat, average_lon = self.average_latlon()
-        # m = Basemap(projection=projection, lon_0=average_lon, lat_0=average_lat, resolution='l')
-        # # m.drawcoastlines()  # Earth
-        # # m.fillcontinents(color='coral',lake_color='aqua')  # Earth
-        # # draw parallels and meridians.
-        # m.drawparallels(np.arange(-90.,91.,30.))
-        # m.drawmeridians(np.arange(-180.,181.,60.))
-        # # m.drawmapboundary(fill_color='aqua')
-        # # plt.title("Full Disk Orthographic Projection")
-        # # plt.show()
-        # # ax = plt.subplot(projection=projection)
-
-        # min_elevation = self.array.min()
-        # max_elevation = self.array.max()
-        # contour_levels = pu.get_contour_levels(min_elevation, max_elevation)
-        # colormap = pu.get_land_and_sea_colormap()
-        # # care more about seeing detail in land contour; displaying deep sea doesn't matter much
-        # max_color_value = max_elevation
-        # min_color_value = -1 * max_elevation
-        # X, Y = self.get_latlon_meshgrid()
-        # print("X =", X)
-        # print("Y =", Y)
-        # X, Y = m(X, Y)  # https://stackoverflow.com/questions/48191593/
-
-        # # draw colored filled contours
-        # m.contourf(X, Y, self.array, cmap=colormap, levels=contour_levels, vmin=min_color_value, vmax=max_color_value)
-        # try:
-        #     plt.colorbar()
-        # except IndexError:
-        #     # np being stupid when there are too few contours
-        #     pass
-
-        # # draw contour lines, maybe just one at sea level
-        # m.contour(X, Y, self.array, levels=[min_elevation, 0, max_elevation], colors="k")
-
-        # plt.gca().invert_yaxis()
-        # plt.axis("scaled")  # maintain aspect ratio
-        # plt.title("elevation")
-        # # max_grad, pair = self.get_max_gradient()
-        # # p, q = pair
-        # # print("max gradient is {} from {} to {}".format(max_grad, p, q))
+    def pre_plot(self, key_str, size_inches=None, cmap=None):
+        self.lattice.plot_data(self.data_dict, key_str, size_inches=size_inches, cmap=cmap)
 
     def plot_gradient(self):
         ax1 = plt.subplot(1, 2, 1)
@@ -692,6 +666,11 @@ class ElevationGenerationMap:
         mag_colormap = plt.cm.gist_rainbow  # most gradients are near zero, want even slightly higher ones to stand out
         plt.imshow(grad_mag, cmap=mag_colormap)
         plt.colorbar()
+
+    def plot_volcanism_data(self):
+        cmap = pu.get_volcanism_colormap()
+        self.lattice.plot_data(self.data_dict, "volcanism", cmap=cmap)
+        plt.show()
 
     def create_rainfall_array(self):
         if hasattr(self, "rainfall_array") and self.rainfall_array is not None:
@@ -1050,20 +1029,31 @@ class ElevationGenerationMap:
         return m
 
     @staticmethod
-    def load_elevation_data(data_fp, latlon00, latlon01, latlon10, latlon11):
+    def from_data(key_strs, project_name, project_version):
+        assert type(key_strs) is list, "invalid key_strs: {}".format(key_strs)
+        print("loading data {} for project {} v{}".format(key_strs, project_name, project_version))
+        data_dict = {}
+        for key_str in key_strs:
+            data_dict.update(ElevationGenerationMap.load_single_data_file(key_str, project_name, project_version))
+        n_iterations = IcosahedralGeodesicLattice.get_iterations_from_number_of_points(len(data_dict))
+        lattice = IcosahedralGeodesicLattice(iterations=n_iterations)
+
+        return ElevationGenerationMap(lattice=lattice, data_dict=data_dict)
+
+    @staticmethod
+    def load_single_data_file(key_str, project_name, project_version):
+        assert type(key_str) is str, "invalid key_str: {}".format(key_str)
+        data_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Data/EGD_{project_name}_{key_str}_v{project_version}.txt".format(**locals())
         with open(data_fp) as f:
             contents = f.read()
         vals = contents.split("\n")
         if vals[-1] == "":
             vals = vals[:-1]
         vals = [float(x) for x in vals]
-        n_iterations = IcosahedralGeodesicLattice.get_iterations_from_number_of_points(len(vals))
-        lattice = IcosahedralGeodesicLattice(iterations=n_iterations)
         data_dict = {}  # point index to value
         for p_i, val in enumerate(vals):
-            data_dict[p_i] = {"elevation": val}
-        return ElevationGenerationMap(lattice=lattice, data_dict=data_dict)
-            
+            data_dict[p_i] = {key_str: val}
+        return data_dict
 
         # older, for LatitudeLongitudeLattice
         # array = np.array(lines)
@@ -1123,19 +1113,11 @@ class ElevationGenerationMap:
         while os.path.exists(output_fp):
             print("file {} exists, renaming output fp".format(output_fp))
             output_fp = output_fp.replace(".txt", "-1.txt")
-        print("saving elevation data to {}".format(output_fp))
+        print("saving {} data to {}".format(key_str, output_fp))
         with open(output_fp, "w") as f:
             s = ""
             for p_i in range(len(self.lattice.points)):
-                val = self.get_value_at_position(p_i, "elevation")
+                val = self.get_value_at_position(p_i, key_str)
                 s += str(val) + "\n"
             f.write(s)
-        # for x in range(self.x_size):
-        #     this_row = ""
-        #     for y in range(self.y_size):
-        #         el = self.array[x, y]
-        #         this_row += "{:.1f},".format(el)
-        #     assert this_row[-1] == ","
-        #     this_row = this_row[:-1] + "\n"
-        #     open(output_fp, "a").write(this_row)
-        print("finished saving elevation data to {}".format(output_fp))
+        print("finished saving {} data".format(key_str))

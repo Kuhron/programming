@@ -141,8 +141,11 @@ class Lattice:
         n_cols = len(lon_0s[0])
         fig = plt.figure(figsize=size_inches)
         if cmap is None:
+            # default to showing elevation
             cmap = pu.get_land_and_sea_colormap()
-        contour_levels = pu.get_contour_levels(min_val, max_val)
+            contour_levels = pu.get_contour_levels(min_val, max_val, prefer_positive=True)
+        else:
+            contour_levels = pu.get_contour_levels(min_val, max_val, prefer_positive=False)
 
         # debugging: print contour levels and colors
         # for level_i in range(len(contour_levels)):

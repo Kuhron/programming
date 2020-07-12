@@ -19,7 +19,7 @@ def verify_unit_vector(x, y, z):
     v = np.array([x, y, z])
     assert v.shape[0] == 3
     mag = mag_3d(v)
-    assert (abs(1 - mag) < 1e-6).all(), "need unit vector"
+    assert (abs(1 - mag) < 1e-6).all(), "need unit vector, but got magnitude {}\nfrom input {}".format(mag, v)
 
 
 def dot_3d(v1, v2):
@@ -57,6 +57,8 @@ def angle_between_vectors(v1, v2):
     # dot = mag(v1) * mag(v2) * cos(theta)
     len1 = mag_3d(v1)
     len2 = mag_3d(v2)
+    assert len1 > 0, "v1 has zero mag: {}".format(v1)
+    assert len2 > 0, "v2 has zero mag: {}".format(v2)
     cos_theta = dot / (len1 * len2)
     theta = np.arccos(cos_theta)
     # print("got theta: {}".format(theta))

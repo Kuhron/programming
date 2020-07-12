@@ -11,6 +11,7 @@ from scipy import ndimage
 from datetime import datetime, timedelta
 
 import MapCoordinateMath as mcm
+import PlottingUtil as pu
 from ElevationGenerationMap import ElevationGenerationMap
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
@@ -130,12 +131,10 @@ if __name__ == "__main__":
         project_version = input("project version number to load: ")
         project_version_array = [int(x) for x in project_version.split("-")]
         project_dir = "/home/wesley/programming/Mapping/Projects/{}/".format(project_name)
-        data_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, project_version)
 
-        print("from data {}".format(data_fp))
         # latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
-        latlon00, latlon01, latlon10, latlon11 = None, None, None, None
-        m = ElevationGenerationMap.load_elevation_data(data_fp, latlon00, latlon01, latlon10, latlon11)
+        key_strs = ["elevation", "volcanism"]
+        m = ElevationGenerationMap.from_data(key_strs, project_name, project_version)
 
         generate_initial_elevation_changes = False
         if generate_further_elevation_changes:
@@ -172,10 +171,9 @@ if __name__ == "__main__":
             print("generating further elevation changes")
             m.unfreeze_all()  # allow coastlines to change
 
-        m.add_fault_lines(24)
-        # m.add_hotspots(200)
-        m.lattice.plot_data(m.data_dict, "volcanism")
-        plt.show()
+        if generate_initial_elevation_changes:
+            m.add_fault_lines(50)
+            m.add_hotspots(200)
 
         n_points_total = m.size()
         expected_change_sphere_proportion = get_expected_change_size_from_user(n_points_total)
@@ -192,9 +190,10 @@ if __name__ == "__main__":
         m.fill_elevations(n_steps, expected_change_sphere_proportion, plot_every_n_steps, elevation_change_parameters=elevation_change_parameters)
         if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
             m.save_data("elevation", project_name, version_number)
+            m.save_data("volcanism", project_name, version_number)
         if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
             m.save_plot_image("elevation", project_name, version_number, size_inches=(36, 24))
-            m.save_plot_image("volcanism", project_name, version_number, size_inches=(72, 48))
+            m.save_plot_image("volcanism", project_name, version_number, size_inches=(72, 48), cmap=pu.get_volcanism_colormap())
 
         if generate_initial_elevation_changes:
             print("- done generating initial elevation changes")
