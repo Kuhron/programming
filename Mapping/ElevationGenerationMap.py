@@ -252,33 +252,9 @@ class ElevationGenerationMap:
                     res[p] = d + 1
             return res
 
-    @staticmethod
-    def get_numerical_parameter_input(var_name, default_value):
-        inp = input("set param {} (or just press enter for default value of {}): ".format(var_name, default_value))
-        try:
-            return float(inp)
-        except ValueError:
-            return None
-
-    @staticmethod
-    def get_elevation_change_parameters_from_config_file():
-        fp = "ParamConfigElevationChange.json"
-        with open(fp) as f:
-            d = json.load(f)
-        return d
-
-    @staticmethod
-    def get_elevation_change_parameters_from_user():
-        d = ElevationGenerationMap.get_elevation_change_parameters_from_config_file()
-        for var_name, default_value in d.items():
-            user_value = ElevationGenerationMap.get_numerical_parameter_input(var_name, default_value)
-            if user_value is not None:
-                # print("user specified {}={}".format(var_name, user_value))
-                d[var_name] = user_value
-        return d
-
-    def make_random_elevation_change(self, expected_size_sphere_proportion, positive_feedback=True,
-            # numerical params
+    def make_random_elevation_change(self, 
+            expected_change_sphere_proportion=None,
+            positive_feedback_in_elevation=None,
             reference_area_ratio_at_sea_level=None,
             reference_area_ratio_at_big_abs=None,
             big_abs=None,
@@ -297,7 +273,7 @@ class ElevationGenerationMap:
         # print("making change at {}".format(center))
 
         if isinstance(self.lattice, IcosahedralGeodesicLattice):
-            assert 0 < expected_size_sphere_proportion < 1, "expected size must be proportion of sphere surface area between 0 and 1, but got {}".format(expected_size_sphere_proportion)
+            assert 0 < expected_change_sphere_proportion < 1, "expected size must be proportion of sphere surface area between 0 and 1, but got {}".format(expected_change_sphere_proportion)
             # expected size is in terms of proportion of sphere surface area; note that this does not scale linearly with radius in general
             # because will be using Euclidean distance in R^3, need to do some trig to convert the surface area proportion to 3d radius
             # center point is on the unit sphere, if r=1, what is the area within that distance? (the distance is a chord through the sphere's interior), the total sphere surface area = 4*pi*r^2 = 4*pi
@@ -314,14 +290,14 @@ class ElevationGenerationMap:
             # proportion(r) = 1/(4*pi) * f(r)
             # integral(s/sqrt(1-s^2) ds) = -1*sqrt(1-s^2) => (lots of whiteboard scribbles) => proportion(r) = r^2/4 (for r in [0, 2])
             # => r(proportion) = 2*sqrt(proportion)
-            radius_from_center_in_3d = 2 * np.sqrt(expected_size_sphere_proportion)
+            radius_from_center_in_3d = 2 * np.sqrt(expected_change_sphere_proportion)
             
         else:
             raise Exception("making elevation change on non-geodesic lattice is deprecated, this lattice is a {}".format(type(self.lattice)))
 
         changing_reg = self.get_random_contiguous_region(center_index, radius=radius_from_center_in_3d, points_to_avoid=self.frozen_points)
         changing_reg_n_points = len(changing_reg)
-        # print("proportion {} got {} changing points from lattice with {} points (got proportion {})".format(expected_size_sphere_proportion, changing_reg_n_points, len(self.lattice.points), changing_reg_n_points/len(self.lattice.points)))
+        # print("proportion {} got {} changing points from lattice with {} points (got proportion {})".format(expected_change_sphere_proportion, changing_reg_n_points, len(self.lattice.points), changing_reg_n_points/len(self.lattice.points)))
         changing_reg_usps = [self.lattice.points[p_i] for p_i in changing_reg]
         ps_xyz = [np.array(p.get_coords("xyz")) for p in changing_reg_usps]
         mean_ps_xyz = sum(ps_xyz) / len(ps_xyz)  # don't use np.mean here or it will give you a single scalar, mean of all values
@@ -346,16 +322,16 @@ class ElevationGenerationMap:
             reference_area_ratio = reference_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
 
         reference_p_i = self.lattice.usp_to_index[reference_p] 
-        reference_n_points = int(round(reference_area_ratio * changing_reg_n_points))
+        reference_n_points = max(1, int(round(reference_area_ratio * changing_reg_n_points)))
         reference_reg = self.get_circle_around_point(reference_p_i, n_points=reference_n_points)
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
         if max_d == 0:
-            raw_func = elfs.elevation_change_constant
+            raw_func = elfs.constant
         else:
             raw_func = elfs.get_elevation_change_function(spikiness=spikiness)
 
-        if positive_feedback:
+        if positive_feedback_in_elevation:
             # land begets land, sea begets sea
             elevations_in_refreg = [self.get_value_at_position(p_i, "elevation") for p_i in reference_reg]
             e_avg = np.mean(elevations_in_refreg)
@@ -422,13 +398,18 @@ class ElevationGenerationMap:
             sigma = sigma_when_small
 
         # add effects of volcanism, crude approximation for now
-        # volcanism_array_of_refreg = self.get_value_array("volcanism", reference_reg)  # slow?
-        volcanism_array_of_refreg = np.array([self.get_value_at_position(p_i, "volcanism") for p_i in reference_reg])
-        average_volcanism_in_refreg = volcanism_array_of_refreg.mean()
-        assert np.isfinite(average_volcanism_in_refreg)
-        volcanism_contribution = average_volcanism_in_refreg
-        mu += volcanism_contribution  # positive = make mountains; negative = make rifts
-        # mu = volcanism_contribution  # debug, try to get correlation to show up
+        if abs(e_avg) < big_abs:
+            # volcanism_array_of_refreg = self.get_value_array("volcanism", reference_reg)  # slow?
+            volcanism_array_of_refreg = np.array([self.get_value_at_position(p_i, "volcanism") for p_i in reference_reg])
+            average_volcanism_in_refreg = volcanism_array_of_refreg.mean()
+            assert np.isfinite(average_volcanism_in_refreg)
+            volcanism_contribution = average_volcanism_in_refreg
+            # print("original mu = {}, += {} from volcanism".format(mu, volcanism_contribution))
+            mu += volcanism_contribution  # positive = make mountains; negative = make rifts
+            # mu = volcanism_contribution  # debug, try to get correlation to show up
+        else:
+            # already big, don't grow too much
+            pass
 
         max_change = np.random.normal(mu, sigma)
 
@@ -465,10 +446,26 @@ class ElevationGenerationMap:
     #     for p in points:
     #         self.fill_position(p[0], p[1], 0)
 
-    def fill_elevations(self, n_steps, expected_change_sphere_proportion, plot_every_n_steps=None, elevation_change_parameters=None):
-        if elevation_change_parameters is None:
-            elevation_change_parameters = {}
-        if plot_every_n_steps is not None:
+    def fill_elevations(self, 
+        n_steps=None, 
+        plot_every_n_steps=None,
+        expected_change_sphere_proportion=None,
+        positive_feedback_in_elevation=None,
+        reference_area_ratio_at_sea_level=None,
+        reference_area_ratio_at_big_abs=None,
+        big_abs=None,
+        critical_abs=None,
+        mu_when_small=None,
+        mu_when_critical=None,
+        mu_when_big=None,
+        sigma_when_small=None,
+        sigma_when_critical=None,
+        sigma_when_big=None,
+        land_proportion=None,
+        spikiness=None,
+    ):
+        plot_progress = type(plot_every_n_steps) is int and plot_every_n_steps > 0
+        if plot_progress:
             plt.ion()
         i = 0
         t0 = datetime.now()
@@ -489,20 +486,37 @@ class ElevationGenerationMap:
                     eta_str = str(eta)
                     print("step {}, {} elapsed, {} ETA".format(i, dt, eta_str))
                 except ZeroDivisionError:
-                    pass # print("div/0!")
-            self.make_random_elevation_change(expected_change_sphere_proportion, positive_feedback=True, **elevation_change_parameters)
-            # print("now have {} untouched points".format(len(self.untouched_points)))
-            if plot_every_n_steps is not None and i % plot_every_n_steps == 0:
+                    pass
+            self.make_random_elevation_change(
+                expected_change_sphere_proportion=expected_change_sphere_proportion,
+                positive_feedback_in_elevation=positive_feedback_in_elevation,
+                reference_area_ratio_at_sea_level=reference_area_ratio_at_sea_level,
+                reference_area_ratio_at_big_abs=reference_area_ratio_at_big_abs,
+                big_abs=big_abs,
+                critical_abs=critical_abs,
+                mu_when_small=mu_when_small,
+                mu_when_critical=mu_when_critical,
+                mu_when_big=mu_when_big,
+                sigma_when_small=sigma_when_small,
+                sigma_when_critical=sigma_when_critical,
+                sigma_when_big=sigma_when_big,
+                land_proportion=land_proportion,
+                spikiness=spikiness,
+            )
+            if plot_progress and i % plot_every_n_steps == 0:
                 try:
                     self.draw()
                 except ValueError:
-                    print("skipping ValueError")
+                    print("skipping ValueError in ElevationGenerationMap.draw()")
             i += 1
 
     def add_fault_lines(self, n_tripoints):
         print("adding fault lines")
         # draw a fault line between each pair of tripoints
-        tripoints = set(self.lattice.get_random_point_index() for _ in range(n_tripoints))
+        tripoints = set()
+        while len(tripoints) < n_tripoints:
+            new_tripoint = self.lattice.get_random_point_index()
+            tripoints.add(new_tripoint)
         # edge_assignments = {}
         # unhappy_points = set(tripoints)  # put points here if they have 0 or 1 fault line touching them; they must have 2 or 3
         # saturated_points = set()  # put points here once they have 3 fault lines; don't accept more
@@ -593,17 +607,34 @@ class ElevationGenerationMap:
             sin_wave = lambda x, k: (1+np.sin(((-1)**k)*(2*k+1)*np.pi*(x+0.5)))/2  # for k >= 0, this gives sin wave from [0,1] to [0,1] with f(0)=1, f(1)=0, and k+1 crests
             volcanism_sign = [-1, 1][step_i % 2]  # alternate so you don't get too much bias in either direction
             max_change = random.uniform(0, 100) * volcanism_sign
-            f = lambda d, y=max_change: sin_wave(d/2, k=random.randint(1, 20)) * y
+            # get_k = lambda: random.randint(1, 20)
+            get_k = lambda: 1
+            f = lambda d, y=max_change: sin_wave(d/2, k=get_k()) * y
             # f = lambda d: 10 + random.random() * 5 + 0*d  # debug
             changes = f(distances)
             for neighbor, change in zip(neighbors, changes):
                 self.add_value_at_position(neighbor, "volcanism", change)
 
-    def add_hotspots(self, n_points):
+        # now even it out to total volcanism of zero
+        volcanism_array = self.get_value_array("volcanism")
+        total_volcanism = sum(volcanism_array)
+        # only apply the adjustment to fault-line points
+        n_fault_points = len(ps)
+        print("total volcanism is {} over {} points".format(total_volcanism, n_fault_points))
+        adjustment_per_point = -1 * total_volcanism / n_fault_points
+        for p in ps:
+            self.add_value_at_position(p, "volcanism", adjustment_per_point)
+        post_adjustment_total_volcanism = sum(self.get_value_array("volcanism"))
+        if abs(post_adjustment_total_volcanism) > 1e-6:
+            raise Exception("non-zero total volcanism persists: {}".format(post_adjustment_total_volcanism))
+        
+    def add_hotspots(self, n_hotspots, hotspot_min_magnitude_factor, hotspot_max_magnitude_factor):
         max_abs_volcanism = max(abs(self.get_value_array("volcanism")))
-        for i in range(n_points):
+        hotspot_min_val = hotspot_min_magnitude_factor * max_abs_volcanism  # note this is still multiplied by MAX of other volcanism magnitude
+        hotspot_max_val = hotspot_max_magnitude_factor * max_abs_volcanism
+        for i in range(n_hotspots):
             p = self.lattice.get_random_point_index()
-            self.add_value_at_position(p, "volcanism", random.uniform(0, max_abs_volcanism))
+            self.add_value_at_position(p, "volcanism", random.uniform(hotspot_min_val, hotspot_max_val))
 
     def plot(self):
         # plt.gcf()
@@ -616,9 +647,9 @@ class ElevationGenerationMap:
         plt.draw()
         plt.pause(0.001)
 
-    def save_plot_image(self, key_str, project_name, version_number, size_inches=None, cmap=None):
+    def save_plot_image(self, key_str, project_name, project_version, size_inches=None, cmap=None):
         # output_fp = add_datetime_to_fp(output_fp)
-        output_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Plots/EGP_{project_name}_{key_str}_v{version_number}.png".format(**locals())
+        output_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Plots/EGP_{project_name}_{key_str}_v{project_version}.png".format(**locals())
         while os.path.exists(output_fp):
             print("file {} exists, renaming output fp".format(output_fp))
             output_fp = output_fp.replace(".png", "-1.png")
@@ -1034,7 +1065,11 @@ class ElevationGenerationMap:
         print("loading data {} for project {} v{}".format(key_strs, project_name, project_version))
         data_dict = {}
         for key_str in key_strs:
-            data_dict.update(ElevationGenerationMap.load_single_data_file(key_str, project_name, project_version))
+            data_dict_this_key = ElevationGenerationMap.load_single_data_file(key_str, project_name, project_version)
+            for p_i in data_dict_this_key:
+                if p_i not in data_dict:
+                    data_dict[p_i] = {}
+                data_dict[p_i][key_str] = data_dict_this_key[p_i][key_str]
         n_iterations = IcosahedralGeodesicLattice.get_iterations_from_number_of_points(len(data_dict))
         lattice = IcosahedralGeodesicLattice(iterations=n_iterations)
 
@@ -1053,6 +1088,8 @@ class ElevationGenerationMap:
         data_dict = {}  # point index to value
         for p_i, val in enumerate(vals):
             data_dict[p_i] = {key_str: val}
+        # print("got data_dict from data_fp {}: {}".format(data_fp, data_dict))
+        # input("check for correctness")
         return data_dict
 
         # older, for LatitudeLongitudeLattice
@@ -1104,12 +1141,12 @@ class ElevationGenerationMap:
                     max_grad_pair = (p, q)
         return max_grad, max_grad_pair
 
-    def save_data(self, key_str, project_name, version_number):
+    def save_data(self, key_str, project_name, project_version):
         # format is just grid of comma-separated numbers
         # if not confirm_overwrite_file:
         #     return
         # output_fp = add_datetime_to_fp(output_fp)
-        output_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Data/EGD_{project_name}_{key_str}_v{version_number}.txt".format(**locals())
+        output_fp = "/home/wesley/programming/Mapping/Projects/{project_name}/Data/EGD_{project_name}_{key_str}_v{project_version}.txt".format(**locals())
         while os.path.exists(output_fp):
             print("file {} exists, renaming output fp".format(output_fp))
             output_fp = output_fp.replace(".txt", "-1.txt")

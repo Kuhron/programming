@@ -1,6 +1,9 @@
 import random
 import time
 import os
+import json
+import re
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -17,6 +20,21 @@ from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 
 
+def get_parameter_input(var_name, default_value):
+    inp = input("set param {} (or just press enter for default value of {}): ".format(var_name, default_value))
+    try:
+        return float(inp)
+    except ValueError:
+        return None
+
+
+def get_parameters_from_config_file():
+    fp = "ParamConfig.json"
+    with open(fp) as f:
+        d = json.load(f)
+    return d
+
+
 def confirm_overwrite_file(output_fp):
     if os.path.exists(output_fp):
         yn = input("Warning! Overwriting file {}\ncontinue? (y/n, default n)".format(output_fp))
@@ -26,8 +44,8 @@ def confirm_overwrite_file(output_fp):
     return True
 
 
-def get_expected_change_size_from_user(n_points_total):
-    inp = input("expected change size as proportion of sphere surface area (if float in (0, 1)) or number of points (if int >= 1): ")
+def convert_expected_change_size_to_proportion(expected_change_size, n_points_total):
+    inp = expected_change_size
     fl = float(inp)
     if 0 < fl < 1:
         # proportion; return it directly
@@ -43,47 +61,19 @@ def get_expected_change_size_from_user(n_points_total):
     return proportion
 
 
-def get_expected_touches_per_point_from_user():
-    return int(input("expected touches per point (suggestions: 10-100): "))
+def get_key_strs_in_data_dir(data_dir, project_name, project_version):
+    regex = "EGD_{}_(.*)_v{}.txt".format(project_name, project_version)
+    key_strs = [re.match(regex, f).group(1) for f in os.listdir(data_dir) if re.match(regex, f)]
+    return key_strs
 
 
-
-
-if __name__ == "__main__":
-    from_image = input("from image? (y/n) ").strip().lower() == "y"
+def get_map_and_version(from_image, from_data, project_name, project_version):
+    # cada_image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
-        from_data = False
-        generate_initial_elevation_changes = True
-        generate_further_elevation_changes = False
-    else:
-        from_data = input("from data? (y/n) ").strip().lower() == "y"
-        if from_data:
-            generate_initial_elevation_changes = False
-            generate_further_elevation_changes = input("generate further changes? (y/n) ").strip().lower() == "y"
-        else:
-            print("generating new data at random")
-            generate_initial_elevation_changes = True
-            generate_further_elevation_changes = False
-    
-    image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
-    if from_image:
+        raise NotImplementedError("need to make this work with ParamConfig.json so file can be specified there with dir")
 
         # DANGER OF MEMORY LEAKS if use big maps! Watch top!
-        # image_fp_no_dir = "LegronCombinedDigitization_ThinnedBorders_Final.png"
-        # image_fp_no_dir = "MientaDigitization_ThinnedBorders_Final.png"
-        # image_fp_no_dir = "OligraZitomoDigitization_ThinnedBorders_Final.png"
-
-        # image_fp_no_dir = "TestMap3_ThinnedBorders.png"
-        # image_fp_no_dir = "TestMap_NorthernMystIslands.png"
-        # image_fp_no_dir = "TestMap_Jhorju.png"
-        # image_fp_no_dir = "TestMap_Amphoto.png"
         # image_fp_no_dir = "TestMap_Mako.png"
-        # image_fp_no_dir = "TestMap_Myst.png"
-        # image_fp_no_dir = "TestMap_Ilausa.png"
-        # image_fp_no_dir = "TestMap_VerticalStripes.png"
-        # image_fp_no_dir = "TestMap_AllLand.png"
-        # image_fp_no_dir = "TestMap_CircleIsland.png"
-        # image_fp_no_dir = "TestMap_CircleIsland50x50.png"
         image_fp = image_dir + image_fp_no_dir
 
         print("from image {}".format(image_fp))
@@ -109,45 +99,25 @@ if __name__ == "__main__":
         print("- done creating ElevationGenerationMap")
         m.freeze_coastlines()
     elif from_data:
-        # data_fp_no_dir = "EGD_TestMap_CircleIsland.txt"
-        # data_fp_no_dir = "EGD_TestMap_CircleIsland50x50.txt"
-        # data_fp_no_dir = "EGD_LegronCombinedDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "EGD_MientaDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "EGD_MientaDigitization_ThinnedBorders_Final_FurtherChanges.txt"
-        # data_fp_no_dir = "EGD_OligraZitomoDigitization_ThinnedBorders_Final.txt"
-        # data_fp_no_dir = "EGD_OligraZitomoDigitization_ThinnedBorders_Final_FurtherChanges.txt"
-        # data_fp_no_dir = "EGD_TestMap_Mako.txt"
-        # data_fp_no_dir = "EGD_TestMap_Amphoto.txt"
-        # data_fp_no_dir = "EGD_TestMap_Jhorju.txt"
-        # data_fp_no_dir = "EGD_TestMap_Ilausa.txt"
-        # data_fp_no_dir = "EGD_TestMap_Ilausa_FurtherChanges.txt"
-        # data_fp_no_dir = "EGD_TestMap_Ilausa_FurtherChanges_Bay.txt"
-        # data_fp_no_dir = "EGD_TestMap_NorthernMystIslands.txt"
-        # data_fp_no_dir = "TestElevationData10x10.txt"
-        # if using Cada WorldMapScanPNGs:
-        # data_fp = image_dir + data_fp_no_dir
-
-        project_name = input("project name to load: ")
-        project_version = input("project version number to load: ")
-        project_version_array = [int(x) for x in project_version.split("-")]
+        project_version_array = [int(x) for x in str(load_project_version).split("-")]
         project_dir = "/home/wesley/programming/Mapping/Projects/{}/".format(project_name)
+        data_dir = project_dir + "Data/"
 
         # latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
-        key_strs = ["elevation", "volcanism"]
-        m = ElevationGenerationMap.from_data(key_strs, project_name, project_version)
+        key_strs = get_key_strs_in_data_dir(data_dir, project_name, load_project_version)
+        print("found data files for keys {}".format(key_strs))
+        m = ElevationGenerationMap.from_data(key_strs, project_name, load_project_version)
 
-        generate_initial_elevation_changes = False
         if generate_further_elevation_changes:
-            new_version = project_version_array[:-1] + [project_version_array[-1] + 1]
-            new_version_number = "-".join(str(x) for x in new_version)
-            print("loaded version {}, outputting version {}".format(project_version, new_version_number))
-            # elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
-            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
-            version_number = new_version_number
+            new_version_array = project_version_array[:-1] + [project_version_array[-1] + 1]
+            new_project_version = "-".join(str(x) for x in new_version_array)
+            print("loaded version {}, outputting version {}".format(load_project_version, new_project_version))
+            # elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_project_version)
+            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_project_version)
         else:
             # in case want to overwrite existing plot, e.g. after fixing plotting bugs
-            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, project_version)
-            version_number = project_version
+            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_project_version)
+            new_project_version = load_project_version
     else:
         lattice = IcosahedralGeodesicLattice(iterations=6)
         m = ElevationGenerationMap(lattice)
@@ -157,12 +127,62 @@ if __name__ == "__main__":
         os.mkdir(project_dir)
         os.mkdir(project_dir + "Data/")
         os.mkdir(project_dir + "Plots/")
-        version_number = 0
-        # elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_version_number)
-        # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_version_number)
-        generate_initial_elevation_changes = True
-        
-    print("map size {} pixels".format(m.size()))
+        new_project_version = 0
+
+    return m, new_project_version
+ 
+
+if __name__ == "__main__":
+    params = get_parameters_from_config_file()
+
+    big_abs = params["big_abs"]
+    critical_abs = params["critical_abs"]
+    expected_change_size_proportion_or_n_points = params["expected_change_size_proportion_or_n_points"]
+    expected_touches_per_point = params["expected_touches_per_point"]
+    from_data = params["from_data"]
+    from_image = params["from_image"]
+    generate_elevation_changes = params["generate_elevation_changes"]
+    hotspot_max_magnitude_factor = params["hotspot_max_magnitude_factor"]
+    hotspot_min_magnitude_factor = params["hotspot_min_magnitude_factor"]
+    land_proportion = params["land_proportion"]
+    load_project_version = params["load_project_version"]
+    mu_when_big = params["mu_when_big"]
+    mu_when_critical = params["mu_when_critical"]
+    mu_when_small = params["mu_when_small"]
+    n_fault_lines = params["n_fault_lines"]
+    n_hotspots = params["n_hotspots"]
+    plot_every_n_steps = params["plot_every_n_steps"]
+    positive_feedback_in_elevation = params["positive_feedback_in_elevation"]
+    project_name = params["project_name"]
+    reference_area_ratio_at_big_abs = params["reference_area_ratio_at_big_abs"]
+    reference_area_ratio_at_sea_level = params["reference_area_ratio_at_sea_level"]
+    sigma_when_big = params["sigma_when_big"]
+    sigma_when_critical = params["sigma_when_critical"]
+    sigma_when_small = params["sigma_when_small"]
+    spikiness = params["spikiness"]
+    # xxx = params["xxx"]
+
+    if from_image:
+        assert not from_data, "cannot import from both image and data"
+        print("importing from image")
+        generate_initial_elevation_changes = generate_elevation_changes
+        generate_further_elevation_changes = False
+    elif from_data:
+        print("importing from data")
+        generate_initial_elevation_changes = False
+        generate_further_elevation_changes = generate_elevation_changes
+    else:
+        if not(generate_elevation_changes):
+            print("you selected neither importation nor generation; nothing will happen")
+            sys.exit()
+        print("generating new data at random")
+        generate_initial_elevation_changes = generate_elevation_changes
+        generate_further_elevation_changes = False
+    
+    m, new_project_version = get_map_and_version(from_image, from_data, project_name, load_project_version)
+    n_points_total = m.size()
+    print("map size {} pixels".format(n_points_total))
+    expected_change_sphere_proportion = convert_expected_change_size_to_proportion(expected_change_size_proportion_or_n_points, n_points_total)
 
     if generate_initial_elevation_changes or generate_further_elevation_changes:
         if generate_initial_elevation_changes:
@@ -172,28 +192,46 @@ if __name__ == "__main__":
             m.unfreeze_all()  # allow coastlines to change
 
         if generate_initial_elevation_changes:
-            m.add_fault_lines(50)
-            m.add_hotspots(200)
+            m.add_fault_lines(n_fault_lines)
+            m.add_hotspots(n_hotspots, hotspot_min_magnitude_factor)
 
         n_points_total = m.size()
-        expected_change_sphere_proportion = get_expected_change_size_from_user(n_points_total)
-        expected_touches_per_point = get_expected_touches_per_point_from_user()
         n_steps = int(round(expected_touches_per_point / expected_change_sphere_proportion))
-        plot_every_n_steps = None
 
         if generate_initial_elevation_changes:
             print("filling elevation for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
         else:
             print("making further elevation changes for {} steps, plotting every {}".format(n_steps, plot_every_n_steps))
 
-        elevation_change_parameters = ElevationGenerationMap.get_elevation_change_parameters_from_config_file()
-        m.fill_elevations(n_steps, expected_change_sphere_proportion, plot_every_n_steps, elevation_change_parameters=elevation_change_parameters)
-        if True: #input("save data? (y/n, default n)\n").strip().lower() == "y":
-            m.save_data("elevation", project_name, version_number)
-            m.save_data("volcanism", project_name, version_number)
-        if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
-            m.save_plot_image("elevation", project_name, version_number, size_inches=(36, 24))
-            m.save_plot_image("volcanism", project_name, version_number, size_inches=(72, 48), cmap=pu.get_volcanism_colormap())
+        if generate_further_elevation_changes:
+            el_array = m.get_value_array("elevation")
+            if max(el_array) - min(el_array) < 1:
+                raise Exception("elevation array might be all zero; double check it was loaded properly")
+        m.fill_elevations(
+            n_steps=n_steps,
+            plot_every_n_steps=plot_every_n_steps,
+            expected_change_sphere_proportion=expected_change_sphere_proportion,
+            positive_feedback_in_elevation=positive_feedback_in_elevation,
+            reference_area_ratio_at_sea_level=reference_area_ratio_at_sea_level,
+            reference_area_ratio_at_big_abs=reference_area_ratio_at_big_abs,
+            big_abs=big_abs,
+            critical_abs=critical_abs,
+            mu_when_small=mu_when_small,
+            mu_when_critical=mu_when_critical,
+            mu_when_big=mu_when_big,
+            sigma_when_small=sigma_when_small,
+            sigma_when_critical=sigma_when_critical,
+            sigma_when_big=sigma_when_big,
+            land_proportion=land_proportion,
+            spikiness=spikiness,
+        )
+        m.save_data("elevation", project_name, new_project_version)
+        m.save_data("volcanism", project_name, new_project_version)
+        m.save_plot_image("elevation", project_name, new_project_version, size_inches=(36, 24))
+        if generate_initial_elevation_changes:
+            m.save_plot_image("volcanism", project_name, new_project_version, size_inches=(72, 48), cmap=pu.get_volcanism_colormap())
+        else:
+            print("not saving volcanism plot because assumed it didn't change from version 0")  # so future self can notice why it's not saving if I decide to change this
 
         if generate_initial_elevation_changes:
             print("- done generating initial elevation changes")
@@ -208,7 +246,6 @@ if __name__ == "__main__":
         # m.plot_rivers()
         # m.plot_flow_steps(10000)
         # m.plot_average_water_location()
-        if True: #input("save image? (y/n, default n)\n").strip().lower() == "y":
-            m.save_plot_image("elevation", project_name, version_number, size_inches=(36, 24))
-            m.save_plot_image("volcanism", project_name, version_number, size_inches=(36, 24))
+        m.save_plot_image("elevation", project_name, new_project_version, size_inches=(36, 24))
+        m.save_plot_image("volcanism", project_name, new_project_version, size_inches=(36, 24))
         print("- done plotting")
