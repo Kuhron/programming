@@ -183,6 +183,8 @@ if __name__ == "__main__":
     sigma_when_critical = params["sigma_when_critical"]
     sigma_when_small = params["sigma_when_small"]
     spikiness = params["spikiness"]
+    volcanism_coefficient_for_elevation = params["volcanism_coefficient_for_elevation"]
+    volcanism_exponent_for_elevation = params["volcanism_exponent_for_elevation"]
 
     # xxx = params["xxx"]
     # can also make these lines by running MakeParamCode.py
@@ -260,6 +262,8 @@ if __name__ == "__main__":
             sigma_when_big=sigma_when_big,
             land_proportion=land_proportion,
             spikiness=spikiness,
+            volcanism_coefficient_for_elevation=volcanism_coefficient_for_elevation,
+            volcanism_exponent_for_elevation=volcanism_exponent_for_elevation,
         )
         m.save_data("elevation", project_name, new_project_version)
         m.save_data("volcanism", project_name, new_project_version)

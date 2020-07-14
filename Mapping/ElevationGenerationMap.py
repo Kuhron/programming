@@ -267,6 +267,8 @@ class ElevationGenerationMap:
             sigma_when_big=None,
             land_proportion=None,
             spikiness=None,
+            volcanism_coefficient_for_elevation=None,
+            volcanism_exponent_for_elevation=None,
         ):
 
         center_index = self.lattice.get_random_point_index()
@@ -321,6 +323,8 @@ class ElevationGenerationMap:
             slope = (reference_area_ratio_at_big_abs - reference_area_ratio_at_sea_level) / (big_abs - 0)
             reference_area_ratio = reference_area_ratio_at_sea_level + slope * abs(e_center_of_mass)
 
+        assert np.isfinite(reference_area_ratio), "reference area ratio = {}, from e_center_of_mass={}, big_abs={}".format(reference_area_ratio, e_center_of_mass, big_abs)
+
         reference_p_i = self.lattice.usp_to_index[reference_p] 
         reference_n_points = max(1, int(round(reference_area_ratio * changing_reg_n_points)))
         reference_reg = self.get_circle_around_point(reference_p_i, n_points=reference_n_points)
@@ -341,13 +345,14 @@ class ElevationGenerationMap:
             # land begets land, sea begets sea
             # use e_max for detecting mountain nearby, chain should propagate
             # try to enforce land ratio approximately. change it to the other one with probability(other_sign)
-            if elevation_sign == 1:
-                # switch land to sea with probability(sea)
-                if random.random() < (1 - land_proportion):
-                    elevation_sign = -1
-            elif elevation_sign == -1:
-                if random.random() < (land_proportion):
-                    elevation_sign = 1
+            # TODO probably need a better way of creating land proportion; this has unintended side effects like treating high mountains as though they're deep-sea trenches and then raising them a lot
+            # if elevation_sign == 1:
+            #     # switch land to sea with probability(sea)
+            #     if random.random() < (1 - land_proportion):
+            #         elevation_sign = -1
+            # elif elevation_sign == -1:
+            #     if random.random() < (land_proportion):
+            #         elevation_sign = 1
 
             big_signed = elevation_sign * big_abs
             critical_signed = elevation_sign * critical_abs
@@ -398,18 +403,23 @@ class ElevationGenerationMap:
             sigma = sigma_when_small
 
         # add effects of volcanism, crude approximation for now
-        if abs(e_avg) < big_abs:
-            # volcanism_array_of_refreg = self.get_value_array("volcanism", reference_reg)  # slow?
-            volcanism_array_of_refreg = np.array([self.get_value_at_position(p_i, "volcanism") for p_i in reference_reg])
-            average_volcanism_in_refreg = volcanism_array_of_refreg.mean()
-            assert np.isfinite(average_volcanism_in_refreg)
-            volcanism_contribution = average_volcanism_in_refreg
-            # print("original mu = {}, += {} from volcanism".format(mu, volcanism_contribution))
-            mu += volcanism_contribution  # positive = make mountains; negative = make rifts
-            # mu = volcanism_contribution  # debug, try to get correlation to show up
+        # volcanism_array_of_refreg = self.get_value_array("volcanism", reference_reg)  # slow?
+        volcanism_array_of_refreg = np.array([self.get_value_at_position(p_i, "volcanism") for p_i in reference_reg])
+        average_volcanism_in_refreg = volcanism_array_of_refreg.mean()
+        assert np.isfinite(average_volcanism_in_refreg)
+        if abs(e_avg) > big_abs:
+            volcanism_contribution = 0
+        elif average_volcanism_in_refreg == 0:
+            volcanism_contribution = 0
         else:
-            # already big, don't grow too much
-            pass
+            vol = average_volcanism_in_refreg
+            v_sign = 1 if vol > 0 else -1
+            exponentiated = abs(vol) ** volcanism_exponent_for_elevation
+            scaled = volcanism_coefficient_for_elevation * exponentiated
+            volcanism_contribution = v_sign * scaled
+        # print("original mu = {}, += {} from volcanism".format(mu, volcanism_contribution))
+        mu += volcanism_contribution  # positive = make mountains; negative = make rifts
+        # mu = volcanism_contribution  # debug, try to get correlation to show up
 
         max_change = np.random.normal(mu, sigma)
 
@@ -463,6 +473,8 @@ class ElevationGenerationMap:
         sigma_when_big=None,
         land_proportion=None,
         spikiness=None,
+        volcanism_coefficient_for_elevation=None,
+        volcanism_exponent_for_elevation=None,
     ):
         plot_progress = type(plot_every_n_steps) is int and plot_every_n_steps > 0
         if plot_progress:
@@ -502,6 +514,8 @@ class ElevationGenerationMap:
                 sigma_when_big=sigma_when_big,
                 land_proportion=land_proportion,
                 spikiness=spikiness,
+                volcanism_coefficient_for_elevation=volcanism_coefficient_for_elevation,
+                volcanism_exponent_for_elevation=volcanism_exponent_for_elevation,
             )
             if plot_progress and i % plot_every_n_steps == 0:
                 try:
