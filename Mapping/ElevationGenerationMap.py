@@ -324,6 +324,12 @@ class ElevationGenerationMap:
         reference_p_i = self.lattice.usp_to_index[reference_p] 
         reference_n_points = max(1, int(round(reference_area_ratio * changing_reg_n_points)))
         reference_reg = self.get_circle_around_point(reference_p_i, n_points=reference_n_points)
+        elevations_in_refreg = [self.get_value_at_position(p_i, "elevation") for p_i in reference_reg]
+        e_avg = np.mean(elevations_in_refreg)
+        e_max = np.max(elevations_in_refreg)
+        e_min = np.min(elevations_in_refreg)
+        elevation_sign = (1 if e_avg > 0 else -1)
+
         distances = self.get_distances_from_edge(changing_reg)
         max_d = max(distances.values())
         if max_d == 0:
@@ -333,12 +339,7 @@ class ElevationGenerationMap:
 
         if positive_feedback_in_elevation:
             # land begets land, sea begets sea
-            elevations_in_refreg = [self.get_value_at_position(p_i, "elevation") for p_i in reference_reg]
-            e_avg = np.mean(elevations_in_refreg)
-            e_max = np.max(elevations_in_refreg)  # for detecting mountain nearby, chain should propagate
-            e_min = np.min(elevations_in_refreg)
-            elevation_sign = (1 if e_avg > 0 else -1)
-
+            # use e_max for detecting mountain nearby, chain should propagate
             # try to enforce land ratio approximately. change it to the other one with probability(other_sign)
             if elevation_sign == 1:
                 # switch land to sea with probability(sea)
@@ -355,10 +356,9 @@ class ElevationGenerationMap:
             mountain_or_trench_nearby = abs(e_max) >= big_abs or abs(e_min) >= big_abs
   
             mu = \
-                mu_when_big if abs(e_avg) > big_abs else \
-                mu_when_critical if e_avg > critical_abs else \
-                -1*mu_when_critical if e_avg < -1*critical_abs else \
-                mu_when_small
+                elevation_sign * mu_when_big if abs(e_avg) > big_abs else \
+                elevation_sign * mu_when_critical if abs(e_avg) > critical_abs else \
+                elevation_sign * mu_when_small
 
             sigma = \
                 sigma_when_big if abs(e_avg) > big_abs else \
@@ -510,11 +510,17 @@ class ElevationGenerationMap:
                     print("skipping ValueError in ElevationGenerationMap.draw()")
             i += 1
 
-    def add_fault_lines(self, n_tripoints):
+    def add_fault_lines(self, 
+            n_fault_tripoints=None, 
+            n_volcanism_steps=None, 
+            max_volcanism_change_magnitude=None, 
+            min_volcanism_wavenumber=None, 
+            max_volcanism_wavenumber=None,
+    ):
         print("adding fault lines")
         # draw a fault line between each pair of tripoints
         tripoints = set()
-        while len(tripoints) < n_tripoints:
+        while len(tripoints) < n_fault_tripoints:
             new_tripoint = self.lattice.get_random_point_index()
             tripoints.add(new_tripoint)
         # edge_assignments = {}
@@ -566,23 +572,35 @@ class ElevationGenerationMap:
 
         # after all the lines are created
         # self.fill_point_set(existing_fault_points, "volcanism", 1)  # simplest case, use for debugging path placement
-        self.fill_fault_points_with_volcanism_values(existing_fault_points)
+        self.fill_fault_points_with_volcanism_values(
+            fault_points=existing_fault_points,
+            n_volcanism_steps=n_volcanism_steps,
+            max_volcanism_change_magnitude=max_volcanism_change_magnitude,
+            min_volcanism_wavenumber=min_volcanism_wavenumber,
+            max_volcanism_wavenumber=max_volcanism_wavenumber,
+        )
         print("there are {} fault points out of {} total".format(len(existing_fault_points), len(self.lattice.points)))
         print("- done adding fault lines")
 
-    def fill_fault_points_with_volcanism_values(self, ps):
+    def fill_fault_points_with_volcanism_values(self, 
+            fault_points=None, 
+            n_volcanism_steps=None, 
+            max_volcanism_change_magnitude=None,
+            min_volcanism_wavenumber=None,  # number of crests of volcanism change sin wave over the planet; wavenumber 1 is a sigmoid
+            max_volcanism_wavenumber=None,
+        ):
         # positive volcanism means convergent boundary / flow of rock outward onto the surface (volcano)
         # negative volcanism means divergent boundary / sinking of rock into the interior (trench, rift)
         # make the values vary like random waves around the whole subgraph
 
         # TODO might be nice to implement a more general "create data" function that uses the elevation logic
         # - and apply that to any subgraph/lattice, so here can just pass it only the fault points instead of the whole globe
-        ps = list(ps)  # order them
+        ps = list(fault_points)  # order them in case they're not
         sg = self.lattice.graph.subgraph(ps)
         # print("cycles:", nx.cycle_basis(sg))
         xyz_coords = np.array([self.lattice.points[p].get_coords("xyz") for p in ps])
         sg_kdtree = KDTree(xyz_coords)
-        n_steps = 30  # more steps adds more noise, makes the individual waves less obvious, so it looks more natural
+        n_steps = n_volcanism_steps  # more steps adds more noise, makes the individual waves less obvious, so it looks more natural
         for step_i in range(n_steps):
             i = random.randrange(len(ps))
             p = ps[i]
@@ -606,9 +624,8 @@ class ElevationGenerationMap:
             # sigmoid_01 = lambda x, b=-2: 1/(1+(x/(1-x))**-b)  # https://stats.stackexchange.com/questions/214877/
             sin_wave = lambda x, k: (1+np.sin(((-1)**k)*(2*k+1)*np.pi*(x+0.5)))/2  # for k >= 0, this gives sin wave from [0,1] to [0,1] with f(0)=1, f(1)=0, and k+1 crests
             volcanism_sign = [-1, 1][step_i % 2]  # alternate so you don't get too much bias in either direction
-            max_change = random.uniform(0, 100) * volcanism_sign
-            # get_k = lambda: random.randint(1, 20)
-            get_k = lambda: 1
+            max_change = random.uniform(0, max_volcanism_change_magnitude) * volcanism_sign
+            get_k = lambda: random.randint(min_volcanism_wavenumber, max_volcanism_wavenumber)
             f = lambda d, y=max_change: sin_wave(d/2, k=get_k()) * y
             # f = lambda d: 10 + random.random() * 5 + 0*d  # debug
             changes = f(distances)

@@ -20,6 +20,9 @@ from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 
 
+MAPPING_PROJECT_DIR = "/home/wesley/programming/Mapping/Projects/"
+
+
 def get_parameter_input(var_name, default_value):
     inp = input("set param {} (or just press enter for default value of {}): ".format(var_name, default_value))
     try:
@@ -33,6 +36,12 @@ def get_parameters_from_config_file():
     with open(fp) as f:
         d = json.load(f)
     return d
+
+
+def save_config_for_version(param_dict, project_name, project_version):
+    fp = MAPPING_PROJECT_DIR + "{project_name}/Data/ParamConfig_{project_name}_v{project_version}.json".format(**locals())
+    with open(fp, "w") as f:
+        json.dump(param_dict, f)
 
 
 def confirm_overwrite_file(output_fp):
@@ -61,13 +70,19 @@ def convert_expected_change_size_to_proportion(expected_change_size, n_points_to
     return proportion
 
 
+def get_project_versions_in_data_dir(data_dir, project_name):
+    regex = "EGD_{}_.*_v(.*).txt".format(project_name)
+    versions = [re.match(regex, f).group(1) for f in os.listdir(data_dir) if re.match(regex, f)]
+    return versions
+
+
 def get_key_strs_in_data_dir(data_dir, project_name, project_version):
     regex = "EGD_{}_(.*)_v{}.txt".format(project_name, project_version)
     key_strs = [re.match(regex, f).group(1) for f in os.listdir(data_dir) if re.match(regex, f)]
     return key_strs
 
 
-def get_map_and_version(from_image, from_data, project_name, project_version):
+def get_map_and_version(from_image, from_data, project_name, load_project_version):
     # cada_image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
     if from_image:
         raise NotImplementedError("need to make this work with ParamConfig.json so file can be specified there with dir")
@@ -99,9 +114,14 @@ def get_map_and_version(from_image, from_data, project_name, project_version):
         print("- done creating ElevationGenerationMap")
         m.freeze_coastlines()
     elif from_data:
-        project_version_array = [int(x) for x in str(load_project_version).split("-")]
-        project_dir = "/home/wesley/programming/Mapping/Projects/{}/".format(project_name)
+        project_dir = MAPPING_PROJECT_DIR + "{}/".format(project_name)
         data_dir = project_dir + "Data/"
+        if load_project_version == -1:
+            # use most recent version
+            existing_versions = get_project_versions_in_data_dir(data_dir, project_name)
+            existing_versions_int = [int(x) for x in existing_versions]  # only handle int versions for now
+            load_project_version = sorted(existing_versions_int)[-1]
+        project_version_array = [int(x) for x in str(load_project_version).split("-")]
 
         # latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
         key_strs = get_key_strs_in_data_dir(data_dir, project_name, load_project_version)
@@ -122,8 +142,7 @@ def get_map_and_version(from_image, from_data, project_name, project_version):
         lattice = IcosahedralGeodesicLattice(iterations=6)
         m = ElevationGenerationMap(lattice)
         m.fill_all("elevation", 0)
-        project_name = input("name for new project: ")
-        project_dir = "/home/wesley/programming/Mapping/Projects/{}/".format(project_name)
+        project_dir = MAPPING_PROJECT_DIR + "{}/".format(project_name)
         os.mkdir(project_dir)
         os.mkdir(project_dir + "Data/")
         os.mkdir(project_dir + "Plots/")
@@ -146,11 +165,15 @@ if __name__ == "__main__":
     hotspot_min_magnitude_factor = params["hotspot_min_magnitude_factor"]
     land_proportion = params["land_proportion"]
     load_project_version = params["load_project_version"]
+    max_volcanism_change_magnitude = params["max_volcanism_change_magnitude"]
+    max_volcanism_wavenumber = params["max_volcanism_wavenumber"]
+    min_volcanism_wavenumber = params["min_volcanism_wavenumber"]
     mu_when_big = params["mu_when_big"]
     mu_when_critical = params["mu_when_critical"]
     mu_when_small = params["mu_when_small"]
-    n_fault_lines = params["n_fault_lines"]
+    n_fault_tripoints = params["n_fault_tripoints"]
     n_hotspots = params["n_hotspots"]
+    n_volcanism_steps = params["n_volcanism_steps"]
     plot_every_n_steps = params["plot_every_n_steps"]
     positive_feedback_in_elevation = params["positive_feedback_in_elevation"]
     project_name = params["project_name"]
@@ -160,7 +183,9 @@ if __name__ == "__main__":
     sigma_when_critical = params["sigma_when_critical"]
     sigma_when_small = params["sigma_when_small"]
     spikiness = params["spikiness"]
+
     # xxx = params["xxx"]
+    # can also make these lines by running MakeParamCode.py
 
     if from_image:
         assert not from_data, "cannot import from both image and data"
@@ -180,6 +205,7 @@ if __name__ == "__main__":
         generate_further_elevation_changes = False
     
     m, new_project_version = get_map_and_version(from_image, from_data, project_name, load_project_version)
+    save_config_for_version(params, project_name, new_project_version)
     n_points_total = m.size()
     print("map size {} pixels".format(n_points_total))
     expected_change_sphere_proportion = convert_expected_change_size_to_proportion(expected_change_size_proportion_or_n_points, n_points_total)
@@ -192,8 +218,18 @@ if __name__ == "__main__":
             m.unfreeze_all()  # allow coastlines to change
 
         if generate_initial_elevation_changes:
-            m.add_fault_lines(n_fault_lines)
-            m.add_hotspots(n_hotspots, hotspot_min_magnitude_factor)
+            m.add_fault_lines(
+                n_fault_tripoints=n_fault_tripoints,
+                n_volcanism_steps=n_volcanism_steps,
+                max_volcanism_change_magnitude=max_volcanism_change_magnitude,
+                min_volcanism_wavenumber=min_volcanism_wavenumber,
+                max_volcanism_wavenumber=max_volcanism_wavenumber,
+            )
+            m.add_hotspots(
+                n_hotspots=n_hotspots,
+                hotspot_min_magnitude_factor=hotspot_min_magnitude_factor,
+                hotspot_max_magnitude_factor=hotspot_max_magnitude_factor,
+            )
 
         n_points_total = m.size()
         n_steps = int(round(expected_touches_per_point / expected_change_sphere_proportion))
