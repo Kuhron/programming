@@ -353,6 +353,8 @@ class ElevationGenerationMap:
             # elif elevation_sign == -1:
             #     if random.random() < (land_proportion):
             #         elevation_sign = 1
+            if land_proportion != 0.5:
+                raise Exception("land_proportion is deprecated for now, until I find a better way to implement it. please set to 0.5")
 
             big_signed = elevation_sign * big_abs
             critical_signed = elevation_sign * critical_abs
@@ -651,7 +653,7 @@ class ElevationGenerationMap:
         total_volcanism = sum(volcanism_array)
         # only apply the adjustment to fault-line points
         n_fault_points = len(ps)
-        print("total volcanism is {} over {} points".format(total_volcanism, n_fault_points))
+        # print("total pre-adjustment volcanism is {} over {} points".format(total_volcanism, n_fault_points))
         adjustment_per_point = -1 * total_volcanism / n_fault_points
         for p in ps:
             self.add_value_at_position(p, "volcanism", adjustment_per_point)
@@ -1096,7 +1098,11 @@ class ElevationGenerationMap:
         print("loading data {} for project {} v{}".format(key_strs, project_name, project_version))
         data_dict = {}
         for key_str in key_strs:
-            data_dict_this_key = ElevationGenerationMap.load_single_data_file(key_str, project_name, project_version)
+            if False: #key_str == "volcanism":  # TODO make certain things version-invariant
+                file_version_to_load = 0
+            else:
+                file_version_to_load = project_version
+            data_dict_this_key = ElevationGenerationMap.load_single_data_file(key_str, project_name, file_version_to_load)
             for p_i in data_dict_this_key:
                 if p_i not in data_dict:
                     data_dict[p_i] = {}
