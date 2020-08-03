@@ -60,15 +60,12 @@ def report_for_base(base):
     print("base {} has {} sequences".format(base, len(seqs)))
     print("lengths in order of sequence number: {}".format(seq_lens))
     print("lengths in sorted order:             {}".format(sorted(seq_lens)))
-    print()
     tuple_to_seq_number = {}
     for i, seq in enumerate(seqs):
-        print("seq #{}, len {} with factorization {}".format(i, seq_lens[i], sympy.factorint(seq_lens[i])))  
-        print(seq)
+        print("seq #{}, len {} with factorization {}: {}".format(i, seq_lens[i], sympy.factorint(seq_lens[i]), seq))  
         pairs = get_conditions_in_sequence(seq)
         for pair in pairs:
             tuple_to_seq_number[tuple(pair)] = i
-        print()
 
     print("\n"+ ("-"*40) +"\n")
 

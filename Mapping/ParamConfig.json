@@ -1,9 +1,49 @@
 {
-    "from_image": false,
-    "from_data": true,
-    "generate_elevation_changes": true,
+    "from_image": true,
+    "from_data": false,
+    "generate_elevation_changes": false,
     "plot_every_n_steps": 0,
-    "project_name": "Vuzan",
+    "projects_dir": "/home/wesley/programming/Mapping/Projects/",
+    "project_name": "CadaTest",
+    "image_names": ["Circle", "Ilausa", "Mako"],
+    "image_latlons": [
+        {"00": [10, -10], "01": [10, 10], "10": [-10, -10], "11": [-10, 10]},
+        {"00": [70, -100], "01": [80, -90], "10": [5, -110], "11": [-5, -85]},
+        {"00": [-20, 40], "01": [-20, 70], "10": [-40, 40], "11": [-45, 75]}
+    ],
+    "color_conditions": {
+        "elevation": {
+            "sea": [0, 255, 255, 255],
+            "shallow": [255, 127, 237, 255],
+            "land": [255, 255, 255, 255]
+        },
+        "volcanism": {
+            "positive": [255, 216, 0, 255],
+            "negative": [178, 0, 255, 255]
+        }
+    },
+    "condition_ranges": {
+        "elevation": {
+            "sea": {
+                "upper_bound": 0
+            },
+            "shallow_sea": {
+                "upper_bound": 0,
+                "lower_bound": -10
+            },
+            "land": {
+                "lower_bound": 0
+            }
+        },
+        "volcanism": {
+            "positive": {
+                "lower_bound": 0
+            },
+            "negative": {
+                "upper_bound": 0
+            }
+        }
+    },
     "load_project_version": -1,
     "expected_change_size_proportion_or_n_points": 10,
     "expected_touches_per_point": 100,
@@ -16,8 +56,8 @@
     "sigma_when_small": 10,
     "sigma_when_critical": 30,
     "sigma_when_big": 100,
-    "reference_area_ratio_at_sea_level": 20,
-    "reference_area_ratio_at_big_abs": 50,
+    "reference_area_ratio_at_sea_level": 2,
+    "reference_area_ratio_at_big_abs": 2,
     "land_proportion": 0.5,
     "spikiness": 0.9,
     "volcanism_coefficient_for_elevation": 1,

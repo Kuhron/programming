@@ -96,14 +96,14 @@ def get_map_and_version(from_image, from_data, project_name, load_project_versio
         elevation_data_output_fp = image_dir + "EGD_" + image_fp_no_dir.replace(".png", ".txt")
         plot_image_output_fp = image_dir + "EGP_" + image_fp_no_dir
     
-        color_condition_dict = {
-            # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
-            (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
-            (255, 255, 255, 255): (1, lambda x: x > 0, False),  # white = land
-            (  0,   0,   0, 255): (0, lambda x: True, False),  # black = unspecified, anything goes
-            # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
-            # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
-        }
+        # color_condition_dict = {
+        #     # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
+        #     (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
+        #     (255, 255, 255, 255): (1, lambda x: x > 0, False),  # white = land
+        #     (  0,   0,   0, 255): (0, lambda x: True, False),  # black = unspecified, anything goes
+        #     # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
+        #     # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
+        # }
         default_color = (0, 0, 0, 255)
         latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
         print("creating map lattice")
