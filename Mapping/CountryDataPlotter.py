@@ -35,8 +35,8 @@ def plot_test_polygon():
     df.plot()
     plt.show()
 
-def plot_outlines(world):
-    world.plot(figsize=(8,8))#, edgecolor=u'gray')
+def plot_outlines(world, **kwargs):
+    world.plot(**kwargs)
 
 def plot_border_distances(world, distance_matrix, reference_country_name):
     plot_outlines(world)
@@ -118,13 +118,99 @@ def create_distance_matrix(world):
     #     input("a")
     return dict(gen)
 
+def plot_all_border_distances(world):
+    distance_matrix = create_distance_matrix(world)
+    reference_country_name = random.choice(world.name)
+    plot_border_distances(world, distance_matrix, reference_country_name)
+
+def make_dict_from_user_input():
+    with open("CountryDataInput.txt") as f:
+        lines = f.readlines()
+    country_names = []
+    country_values = []
+    for line in lines:
+        try:
+            name, value = line.strip().split(" = ")
+        except ValueError:
+            print("rejecting line {}".format(line))
+            continue
+        country_names.append(name)
+        country_values.append(value)
+    # country_names = input("paste world.name column from MapMaking spreadsheet\n").split("\n")
+    # country_values = input("paste data column from MapMaking spreadsheet\n").split("\n")
+    assert len(country_names) == len(country_values), "mismatched number of rows"
+    data_dict = {}
+    for name, value in zip(country_names, country_values):
+        name = name.strip()
+        if name == "":
+            continue
+        try:
+            value = float(value)
+            data_dict[name] = value
+        except ValueError:
+            continue
+    print("------\ncreated data dict:\n------")
+    for k in sorted(data_dict.keys()):
+        print("{} : {}".format(k, data_dict[k]))
+
+    return data_dict
+
+def plot_generic_data(world, data_dict):
+    size_inches = (36, 27)
+    dpi = 100
+    plot_outlines(world, figsize=size_inches)
+    cmap = matplotlib.cm.get_cmap("RdYlGn")
+    data_min = min(data_dict.values())
+    data_max = max(data_dict.values())
+    max_abs = max(abs(data_min), abs(data_max))
+    scale_min = -1 * max_abs if data_min < 0 else 0
+    scale_max = 1 * max_abs if data_max > 0 else 0
+    value_to_01 = lambda value: (value - scale_min) / (scale_max - scale_min)
+    for index, row in world.iterrows():
+        country_name = row["name"]
+        if country_name in data_dict:
+            value = data_dict[country_name]
+            color = cmap(value_to_01(value))
+        else:
+            color = "#777777"
+
+        # https://stackoverflow.com/questions/53142563/coloring-specific-countries-with-geopandas
+        df_row = world[world.name == row["name"]]
+        row_gm = df_row.__geo_interface__['features']  # geopandas's geo_interface
+        row_g0 = {
+            'type': row_gm[0]['geometry']['type'],
+            'coordinates': row_gm[0]['geometry']['coordinates']
+        }
+        plt.gca().add_patch(PolygonPatch(row_g0,
+            fc=color,
+            # ec="black",  # edge color
+            alpha=1,
+            # zorder=2
+        ))
+
+    # https://stackoverflow.com/questions/43805821/matplotlib-add-colorbar-to-non-mappable-object
+    # make a dummy object that's not actually on the map, for the sake of being able to add colorbar
+    norm = matplotlib.colors.Normalize(vmin=scale_min,vmax=scale_max)
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    n_ticks = 100
+    # plt.colorbar(sm, ticks=np.linspace(data_min, data_max, n_ticks),
+    #     boundaries=np.arange(-0.05,2.1,.1))
+
+    plt.gcf().colorbar(sm, orientation="horizontal", pad=0.05)
+    plt.savefig("CountryDataPlot.png", dpi=dpi)
+    plt.show()
+
+
+
 
 if __name__ == "__main__":
     world_fp = gpd.datasets.get_path("naturalearth_lowres")
     world = gpd.read_file(world_fp)
-    print(sorted(world.name))
+    for x in sorted(world.name):
+        print(x)
     # print(world.columns)
     # plot_random_countries(world)
-    distance_matrix = create_distance_matrix(world)
-    reference_country_name = random.choice(world.name)
-    plot_border_distances(world, distance_matrix, reference_country_name)
+    # plot_all_border_distances(world)
+    data_dict = make_dict_from_user_input()
+    plot_generic_data(world, data_dict)
