@@ -60,16 +60,19 @@ public class JavaIntegerCache {
                 toPrintIntegerPlusEqualsOne += 1;
             }
 
-            int fourInt = 4;
-            Integer fourInteger = 4;
-            myWriter.write("four as int = " + fourInt + "\n");
-            myWriter.write("four as Integer = " + fourInteger + "\n");
-            myWriter.write("adding the fours = " + (fourInt + fourInteger) + "\n");
+            int twoInt = 2;
+            Integer twoInteger = 2;
+            myWriter.write("two as int = " + twoInt + "\n");
+            myWriter.write("two as Integer = " + twoInteger + "\n");
+            myWriter.write("adding the twos = " + (twoInt + twoInteger) + "\n");
 
-            fourInt++;
-            fourInteger++;
-            myWriter.write("fourInt++ -> " + fourInt + "\n");
-            myWriter.write("fourInteger++ -> " + fourInt + "\n");
+            myWriter.write("twoInteger + 1 = " + (twoInteger + 1) + "\n");
+            myWriter.write("twoInteger + (Integer)(1) = " + (twoInteger + (Integer)(1)) + "\n");
+
+            twoInt++;
+            twoInteger++;
+            myWriter.write("twoInt++ -> " + twoInt + "\n");
+            myWriter.write("twoInteger++ -> " + twoInteger + "\n");
 
             for (int i = 0; i < array.length; i++) {
                 myWriter.write("array[" + i + "] = " + array[i] + "\n");
