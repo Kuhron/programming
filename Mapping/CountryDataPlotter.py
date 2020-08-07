@@ -155,11 +155,11 @@ def make_dict_from_user_input():
 
     return data_dict
 
-def plot_generic_data(world, data_dict):
+def plot_generic_data(world, data_dict, cmap_name):
     size_inches = (36, 27)
     dpi = 100
     plot_outlines(world, figsize=size_inches)
-    cmap = matplotlib.cm.get_cmap("RdYlGn")
+    cmap = matplotlib.cm.get_cmap(cmap_name)
     data_min = min(data_dict.values())
     data_max = max(data_dict.values())
     max_abs = max(abs(data_min), abs(data_max))
@@ -207,10 +207,13 @@ def plot_generic_data(world, data_dict):
 if __name__ == "__main__":
     world_fp = gpd.datasets.get_path("naturalearth_lowres")
     world = gpd.read_file(world_fp)
-    for x in sorted(world.name):
-        print(x)
+    # for x in sorted(world.name):
+    #     print(x)
     # print(world.columns)
     # plot_random_countries(world)
     # plot_all_border_distances(world)
     data_dict = make_dict_from_user_input()
-    plot_generic_data(world, data_dict)
+    # cmap_name = "RdYlGn"
+    cmap_name = "nipy_spectral"
+    print("using cmap {}".format(cmap_name))
+    plot_generic_data(world, data_dict, cmap_name)
