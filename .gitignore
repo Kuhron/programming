@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.swp
 *.~lock.*
+*.class
 
 # blackjack shoe text files
 *.shoe
