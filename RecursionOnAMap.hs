@@ -1,10 +1,52 @@
 import Data.List
 
-expand (x, y) = (2*x, 2*y)
+expandCoords :: (Int, Int) -> (Int, Int)
+expandCoords (x, y) = (2*x, 2*y)
 
---expandTriangle nIterations initialTriangle = let
---    ?
---    in ?
+expandTriangle :: [((Int, Int), Int)] -> Int -> [((Int, Int), Int)]
+expandTriangle initialTriangle nIterations = let
+    iterationNumbers = range1 nIterations
+    -- newTriangle = (iterate expandTriangleOnce initialTriangle) !! nIterations
+    newTriangle = foldl expandTriangleOnce initialTriangle iterationNumbers
+    in newTriangle
+
+expandTriangleOnce :: [((Int, Int), Int)] -> Int -> [((Int, Int), Int)]
+expandTriangleOnce triangle iterationNumber = let
+    -- expand the triangle by a factor of 2, add in new nodes
+    -- need iteration number to know the cyclic polarity of the child values
+    currentCoords = getCoordPairsFromTriangle triangle
+    newCoords = map expandCoords currentCoords
+    newChildrenCoords = map getChildrenCoords newCoords  -- coords should already be expanded before inserting children
+    currentValues = getValuesFromTriangle triangle
+    newChildrenValues = zipWith getChildValues currentValues (replicate (length currentValues) iterationNumber)
+    leftChildrenCoords = map fst newChildrenCoords
+    leftChildrenValues = map fst newChildrenValues
+    rightChildrenCoords = map snd newChildrenCoords
+    rightChildrenValues = map snd newChildrenValues
+    expandedOriginalTriangle = [(newCoords !! i , currentValues !! i) | i <- range1 (length currentValues)]
+    leftAdditions = [(leftChildrenCoords !! i , leftChildrenValues !! i) | i <- range1 (length leftChildrenValues)]
+    rightAdditions = [(rightChildrenCoords !! i , rightChildrenValues !! i) | i <- range1 (length rightChildrenValues)]
+    newAdditionsToTriangle = leftAdditions ++ rightAdditions
+    result = expandedOriginalTriangle ++ newAdditionsToTriangle
+    in result
+
+getChildrenCoords :: (Int, Int) -> ((Int, Int), (Int, Int))
+getChildrenCoords (row, col) = ((row+1, col-1), (row+1, col+1))
+
+getChildValues :: Int -> Int -> (Int, Int)
+getChildValues parentValue iterationNumber = let
+    flip = iterationNumber `mod` 2
+    result = case parentValue of
+        1 -> case flip of
+            0 -> (2, 3)
+            1 -> (3, 2)
+        2 -> case flip of 
+            0 -> (3, 1)
+            1 -> (1, 3)
+        3 -> case flip of
+            0 -> (1, 2)
+            1 -> (2, 1)
+    in result
 
 convertTriangleDataStructureToListOfLists :: [((Int, Int), Int)] -> [[Int]]
 convertTriangleDataStructureToListOfLists triangle = let
@@ -22,7 +64,6 @@ convertTriangleDataStructureToListOfLists triangle = let
     startingValues = [[0 | col <- allColNums] | row <- allRowNums]
     result = replaceMultipleValues2D startingValues rowIndices colIndices values
     in result
-
 
 getCoordPairsFromTriangle :: [((a,a), a)] -> [(a,a)]
 getCoordPairsFromTriangle triangle = map fst triangle
@@ -89,9 +130,7 @@ convertIntToMapLetters n = case n of
     3 -> "P"
     _ -> " "
 
-
 convert2DListToMapLetters = (map . map) convertIntToMapLetters
-
 
 printFromNumberTriangle :: [((Int,Int), Int)] -> IO ()
 printFromNumberTriangle triangle = let
@@ -103,10 +142,10 @@ printFromNumberTriangle triangle = let
 
 
 main = do
-    let initialTriangle = [((0, 1), 1), ((1, 0), 2), ((1, 2), 3)]
-    print $ convertTriangleDataStructureToListOfLists initialTriangle
-
-    --let result = expandTriangle 1 initialTriangle
-    --printFromNumberTriangle result
-
-
+    let initialTriangle = [((0, 1), 1)]
+    let newTriangle = expandTriangle initialTriangle 5
+    -- print newTriangle
+    -- print "---"
+    -- print $ convertTriangleDataStructureToListOfLists newTriangle
+    -- print "---"
+    printFromNumberTriangle newTriangle
