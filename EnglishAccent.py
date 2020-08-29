@@ -56,7 +56,12 @@ def convert_user_input(pronunciation_dict):
         result = ""
         for word in inp.split():
             options = [v for k, v in pronunciation_dict.items() if "".join(k.split("-")[:-1]) == word]
-            result += "/".join(options) + " " if options != [] else ("!" + word + " ")
+            if len(options) == 0:
+                result += "[NotFound:{}] ".format(word)
+            elif len(options) == 1:
+                result += options[0] + " "
+            else:
+                result += "[" + "/".join(options) + "] "
         print(result + "\n")
 
     

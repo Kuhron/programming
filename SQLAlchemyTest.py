@@ -61,4 +61,6 @@ if __name__ == "__main__":
         session.commit()
 
     retrieved_object = session.query(MyObjectRecord).filter_by(name="oof").first()
+    print("retrieved {}".format(retrieved_object))
+
 
