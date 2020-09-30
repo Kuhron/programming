@@ -125,7 +125,7 @@ function gbrc() {
   grep -i "$1" ~/.bashrc 
 }
 # alias python2="/usr/bin/python"
-alias python="python3.5"
+alias python="python3.8"
 # alias pip2="pip"
 alias pip="pip3"
 alias battery="upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep \"state\|percentage\""
@@ -150,6 +150,7 @@ alias antlr4='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSP
 alias grun='echo "do not use; use ParsingDebugging.py which I wrote instead"' #'java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
 alias antlrworks='java -jar ~/antlrworks-1.5.2-complete.jar'
 alias grepdocx="/home/wesley/grepdocx.sh"
+alias rpdf="python /home/wesley/programming/ReadRandomPdf.py"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
