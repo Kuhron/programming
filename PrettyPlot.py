@@ -5,6 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
+from datetime import datetime
 
 
 # plot curves by having black line where lhs==rhs and continuous coloring elsewhere
@@ -100,9 +101,12 @@ def signed_log(x):
     return np.log(1+abs(x)) * np.sign(x)
 
 def plot_deviation(f, *args):
+    fig = plt.figure()
+    fig.set_size_inches(8, 8)
     xlim = (-3, 3)
     ylim = (-3, 3)
     extent = list(xlim) + list(ylim)
+
     n_points = 1000
     xs = np.arange(xlim[0], xlim[1], (xlim[1] - xlim[0])/n_points)
     ys = np.arange(ylim[0], ylim[1], (ylim[1] - ylim[0])/n_points)
@@ -146,36 +150,60 @@ def plot_deviation(f, *args):
         cs = plt.contour(Z, extent=extent, colors="black", levels=zs, linewidths=widths, origin="lower")
     
     # plt.clabel(cs, inline=False, fmt='%1.1f', fontsize=np.nan, levels=[0])
-    plt.colorbar(im)
-    plt.show()
+    # plt.colorbar(im)
+    # plt.tick_params(axis='both', which='both', bottom='off', top='off', labelbottom='off', right='off', left='off', labelleft='off')
+    plt.gca().set_xticks([],[])
+    plt.gca().set_yticks([],[])
+    # plt.show()
+
+    filename = datetime.utcnow().strftime("%Y-%m-%d-%H:%M:%S")
+    fp = "PrettyPlotOutputs/{}.png".format(filename)
+
+    # trying to get rid of axes and white border, just want the image square
+    plt.gca().set_axis_off()
+    plt.subplots_adjust(top = 1, bottom = 0, right = 1, left = 0, 
+        hspace = 0, wspace = 0)
+    plt.margins(0,0)
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    
+    plt.savefig(fp, bbox_inches="tight", pad_inches=0)
+    plt.gcf().clear()
 
 
 if __name__ == "__main__":
     # plot_deviation(f2, random.uniform(-1, 1), random.uniform(-1, 1))
     # plot_deviation(f3, random.uniform(-1, 1), random.uniform(-1, 1))
-    n_f4_waves = np.random.randint(4, 8)  # right-exclusive; for f4, too many doesn't do a lot except increase magnitude of oscillations
-    n_f5_waves = np.random.randint(4, 8)  # for f5, too many makes way too much of the map close to zero, with random huge peaks and troughs
-    n_f6_waves = np.random.randint(7, 16)  # for f6, too many makes the f5 have almost no effect except for random huge peaks and troughs
-    plot_deviation(f4,
-        np.random.uniform(-1, 1, n_f4_waves),
-        np.random.uniform(-4, 4, 100),
-        np.random.uniform(-1, 1, 100),
-        np.random.uniform(-4, 4, 100),
-        np.random.uniform(-1, 1, 100)
-    )
-    plot_deviation(f5,
-        np.random.uniform(-2, 2, n_f5_waves),
-        np.random.normal(0, 2, 100),
-        np.random.uniform(-2, 2, 100),
-        np.random.normal(0, 2, 100),
-        np.random.uniform(-1, 1, 100)
-    )
-    plot_deviation(f6,
-        np.random.uniform(-2, 2, n_f6_waves),
-        np.random.normal(0, 2, 100),
-        np.random.uniform(-2, 2, 100),
-        np.random.normal(0, 2, 100),
-        np.random.uniform(-1, 1, 100)
-    )
+    n = int(input("How many plots would you like to generate? "))
+    for i in range(n):
+        f_num = random.choice(["f4", "f5", "f6"])
+        if f_num == "f4":
+            n_f4_waves = np.random.randint(4, 8)  # right-exclusive; for f4, too many doesn't do a lot except increase magnitude of oscillations
+            plot_deviation(f4,
+                np.random.uniform(-1, 1, n_f4_waves),
+                np.random.uniform(-4, 4, 100),
+                np.random.uniform(-1, 1, 100),
+                np.random.uniform(-4, 4, 100),
+                np.random.uniform(-1, 1, 100)
+            )
 
+        elif f_num == "f5":
+            n_f5_waves = np.random.randint(4, 8)  # for f5, too many makes way too much of the map close to zero, with random huge peaks and troughs
+            plot_deviation(f5,
+                np.random.uniform(-2, 2, n_f5_waves),
+                np.random.normal(0, 2, 100),
+                np.random.uniform(-2, 2, 100),
+                np.random.normal(0, 2, 100),
+                np.random.uniform(-1, 1, 100)
+            )
+
+        elif f_num == "f6":
+            n_f6_waves = np.random.randint(7, 16)  # for f6, too many makes the f5 have almost no effect except for random huge peaks and troughs
+            plot_deviation(f6,
+                np.random.uniform(-2, 2, n_f6_waves),
+                np.random.normal(0, 2, 100),
+                np.random.uniform(-2, 2, 100),
+                np.random.normal(0, 2, 100),
+                np.random.uniform(-1, 1, 100)
+            )
 

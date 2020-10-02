@@ -21,3 +21,5 @@ Mapping/MemoIcosa/
 *ElevationGenerationOutputData*.txt
 *EGD*.txt
 Mapping/Projects/
+
+PrettyPlotOutputs/*.png
