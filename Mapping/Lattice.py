@@ -128,7 +128,7 @@ class Lattice:
             starting_xyz = np.array(self.points[starting_p_i].xyz())
             starting_xyz_array = np.tile(starting_xyz, (self.n_points(), 1))  # == np.array(starting_xyz for i in range(self.n_points()))
             xyzs = np.stack(df["xyz"].values)
-            dxyzs = xyzs - starting_xyz_array
+            dxyzs = (xyzs - starting_xyz_array)**2
             distances = np.sqrt(dxyzs.sum(axis=1))
             in_region_mask = pd.Series(distances <= radius_3d)
             d_el = random.uniform(-100, 100)
