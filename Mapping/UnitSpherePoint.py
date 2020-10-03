@@ -41,6 +41,12 @@ class UnitSpherePoint:
     
     def get_coords(self, coords_system):
         return self.tuples[coords_system]
+
+    def xyz(self):
+        return self.tuples["xyz"]
+
+    def latlondeg(self):
+        return self.tuples["latlondeg"]
     
     def distance(self, other):
         assert type(other) is UnitSpherePoint

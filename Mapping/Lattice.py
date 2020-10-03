@@ -10,11 +10,13 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as tri  # interpolation of irregularly spaced data
 import numpy as np
 import networkx as nx
+import pandas as pd
 # from scipy.spatial import KDTree
 from sklearn.neighbors import KDTree
 
 from UnitSpherePoint import UnitSpherePoint
 import PlottingUtil as pu
+import MapCoordinateMath as mcm
 
 
 class Lattice:
@@ -100,50 +102,74 @@ class Lattice:
 
     def place_random_data(self):
         key_str = "x"
-        data = {p_i: {key_str: 0} for p_i in range(len(self.points))}
+        # data = {p_i: {key_str: 0} for p_i in range(len(self.points))}  # old, presumably slower than pandas
+        point_indices = list(range(len(self.points)))
+        df = pd.DataFrame(index=point_indices)
+        df["usp"] = self.points
+        df["xyz"] = [np.array(p.xyz()) for p in self.points]
+        df["latlondeg"] = [np.array(p.latlondeg()) for p in self.points]
+        df[key_str] = [0 for p_i in point_indices]
 
-        n_steps = 10
+        n_steps = 2
         for i in range(n_steps):
             print("step {}/{}".format(i, n_steps))
-            n_patches = random.randint(100, 2000)  # usual: 1000
-            area_proportion_per_patch = 1/random.randint(5, 100)  # usual: 1/100
-            data = self.add_random_data_patches(data, key_str, n_patches=n_patches, area_proportion_per_patch=area_proportion_per_patch)
-        return data
+            n_patches = random.randint(100, 200)  # usual: 1000
+            area_proportion_per_patch = 1/random.randint(50, 100)  # usual: 1/100
+            df = self.add_random_data_circles(df, key_str, n_patches=n_patches, area_proportion_per_patch=area_proportion_per_patch)
+        return df
 
-    def add_random_data_patches(self, data, key_str, n_patches, area_proportion_per_patch):
+    def add_random_data_circles(self, df, key_str, n_patches, area_proportion_per_patch):
+        radius_3d = mcm.get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_sphere(area_proportion_per_patch)
+        print("n_patches: {}; area proportion: 1/{}".format(n_patches, 1/area_proportion_per_patch))
+        for i in range(n_patches):
+            if i % 100 == 0:
+                print("i = {}/{}".format(i, n_patches))
+            starting_p_i = random.choice(range(len(self.points)))
+            starting_xyz = np.array(self.points[starting_p_i].xyz())
+            starting_xyz_array = np.tile(starting_xyz, (self.n_points(), 1))  # == np.array(starting_xyz for i in range(self.n_points()))
+            xyzs = np.stack(df["xyz"].values)
+            dxyzs = xyzs - starting_xyz_array
+            distances = np.sqrt(dxyzs.sum(axis=1))
+            in_region_mask = pd.Series(distances <= radius_3d)
+            d_el = random.uniform(-100, 100)
+            df.loc[in_region_mask, key_str] += d_el
+        return df
+
+    def add_random_data_jagged_patches(self, df, key_str, n_patches, area_proportion_per_patch):
         size_per_patch = int(area_proportion_per_patch * self.n_points())
         print("n_patches: {}; area proportion: 1/{}".format(n_patches, 1/area_proportion_per_patch))
         for i in range(n_patches):
             if i % 100 == 0:
                 print("i = {}/{}".format(i, n_patches))
-            starting_point = random.choice(self.points)
+            starting_p_i = random.choice(range(len(self.points)))
+            starting_point = self.points[starting_p_i]
             # print("starting point: {}".format(starting_point))
-            patch = {starting_point}
+            patch_indices = {starting_p_i}
+            patch_points = {starting_point}
             # the outward-moving edge is the next points that are not yet in the patch
             edge = set(self.adjacencies[starting_point])
             for p_i in range(size_per_patch):
-                chosen = random.choice(list(edge))
+                chosen_point = random.choice(list(edge))
                 # print("chosen: {}".format(chosen))
-                patch.add(chosen)
-                edge |= set(self.adjacencies[chosen])
-                edge -= patch
+                chosen_p_i = self.usp_to_index[chosen_point]
+                patch_points.add(chosen_point)
+                patch_indices.add(chosen_p_i)
+                edge |= set(self.adjacencies[chosen_point])
+                edge -= patch_points
                 if len(edge) == 0:  # can happen if whole lattice is in patch
                     break
             # change elevation on the patch
             d_el = random.uniform(-100, 100)
-            # might want to put the data in a Pandas DataFrame later, for ease of doing stuff like this
-            for p in patch:
-                p_i = self.usp_to_index[p]
-                data[p_i][key_str] += d_el
-        return data
+            df.loc[patch_indices, key_str] += d_el
+        return df
 
-    def plot_data(self, data_dict, key_str, size_inches=None, cmap=None, equirectangular=False):
-        data_point_indices = list(data_dict.keys())
-        data_points = [self.points[p_i] for p_i in data_point_indices]
-        latlons_deg = [p.get_coords("latlondeg") for p in data_points]
+    def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=False):
+        data_point_indices = df.index
+        # data_points = [self.points[p_i] for p_i in data_point_indices]
+        latlons_deg = df["latlondeg"]
         lats_deg = np.array([ll[0] for ll in latlons_deg])
         lons_deg = np.array([ll[1] for ll in latlons_deg])
-        vals = np.array([data_dict[p_i].get(key_str, 0) for p_i in data_point_indices])
+        vals = df[key_str]
         # print("lat range {} to {}\nlon range {} to {}".format(min(lats_deg), max(lats_deg), min(lons_deg), max(lons_deg)))
         # plt.scatter(lats_deg, lons_deg)
         # plt.show()

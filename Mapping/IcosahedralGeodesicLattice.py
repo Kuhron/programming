@@ -414,5 +414,6 @@ if __name__ == "__main__":
     # test_lattice.plot_points()
     data = test_lattice.place_random_data()
     test_lattice.plot_data(data, "x", equirectangular=True)
+    # test_lattice.plot_data(data, "x", equirectangular=False)
     plt.show()
 

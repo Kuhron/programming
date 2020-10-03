@@ -164,6 +164,29 @@ def get_lat_lon_of_point_on_map(r, c, map_r_size, map_c_size,
     return prc_lat_lon
 
 
+def get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_sphere(area_sphere_proportion):
+    assert 0 < area_sphere_proportion < 1, "expected size must be proportion of sphere surface area between 0 and 1, but got {}".format(area_sphere_proportion)
+    # expected size is in terms of proportion of sphere surface area; note that this does not scale linearly with radius in general
+    # because will be using Euclidean distance in R^3, need to do some trig to convert the surface area proportion to 3d radius
+    # center point is on the unit sphere, if r=1, what is the area within that distance? (the distance is a chord through the sphere's interior), the total sphere surface area = 4*pi*r^2 = 4*pi
+    # f(r) = integral(0 to r, dA/dr dr); f(2) = the whole sphere = 4*pi; f(sqrt(2)) = half sphere = 2*pi
+    # dA = 2*pi*r' dr, where r' is the radius of the flat circle that r points to, from the central axis which runs through the starting point and the sphere's center
+    # drew pictures and got that r'^2 = r^2 - r^4/4; checked r'(r=sqrt(2))=1, r'(r=0)=0, r'(r=2)=0, r'(r=1)=sqrt(3)/2, all work
+    # so dA = 2*pi*sqrt(r^2 - r^4/4) dr
+    # but dA should be scaled up by some trig factor (e.g. it will be sqrt(2) times greater when it is slanted at 45 deg, and 0 times greater when it is vertical)
+    # dA/dr' = 2*pi*dl, imagine lowering the circle by dh, so that r' rises by dr', then the slanted line on the sphere's surface is dl
+    # if theta is angle with vertical axis, cos theta = dr'/dl, so dl = dr'/cos(theta), and from the center, see that sin(theta) r'/1
+    # so cos(theta) = sqrt(1-r'^2), so dA = 2*pi* r' * dr'/sqrt(1-r'^2)
+    # can integrate over r' instead of r now
+    # f(r) = 2*pi* integral(0 to sqrt(r^2 - r^4/4), r'/sqrt(1-r'^2) dr')
+    # proportion(r) = 1/(4*pi) * f(r)
+    # integral(s/sqrt(1-s^2) ds) = -1*sqrt(1-s^2) => (lots of whiteboard scribbles) => proportion(r) = r^2/4 (for r in [0, 2])
+    # => r(proportion) = 2*sqrt(proportion)
+    radius_from_center_in_3d = 2 * np.sqrt(area_sphere_proportion)
+    return radius_from_center_in_3d
+
+
+
 
 if __name__ == "__main__":
     print("testing MapCoordinateMath.py")
