@@ -99,16 +99,31 @@ class Lattice:
         plt.show()
 
     def place_random_data(self):
-        data = {p_i: 0 for p_i in range(len(self.points))}
-        n_patches = 1000
-        size_per_patch = int(1/100 * self.n_points())
+        key_str = "x"
+        data = {p_i: {key_str: 0} for p_i in range(len(self.points))}
+
+        n_steps = 10
+        for i in range(n_steps):
+            print("step {}/{}".format(i, n_steps))
+            n_patches = random.randint(100, 2000)  # usual: 1000
+            area_proportion_per_patch = 1/random.randint(5, 100)  # usual: 1/100
+            data = self.add_random_data_patches(data, key_str, n_patches=n_patches, area_proportion_per_patch=area_proportion_per_patch)
+        return data
+
+    def add_random_data_patches(self, data, key_str, n_patches, area_proportion_per_patch):
+        size_per_patch = int(area_proportion_per_patch * self.n_points())
+        print("n_patches: {}; area proportion: 1/{}".format(n_patches, 1/area_proportion_per_patch))
         for i in range(n_patches):
+            if i % 100 == 0:
+                print("i = {}/{}".format(i, n_patches))
             starting_point = random.choice(self.points)
+            # print("starting point: {}".format(starting_point))
             patch = {starting_point}
             # the outward-moving edge is the next points that are not yet in the patch
             edge = set(self.adjacencies[starting_point])
             for p_i in range(size_per_patch):
                 chosen = random.choice(list(edge))
+                # print("chosen: {}".format(chosen))
                 patch.add(chosen)
                 edge |= set(self.adjacencies[chosen])
                 edge -= patch
@@ -118,11 +133,11 @@ class Lattice:
             d_el = random.uniform(-100, 100)
             # might want to put the data in a Pandas DataFrame later, for ease of doing stuff like this
             for p in patch:
-                data[p] += d_el
-
+                p_i = self.usp_to_index[p]
+                data[p_i][key_str] += d_el
         return data
 
-    def plot_data(self, data_dict, key_str, size_inches=None, cmap=None):
+    def plot_data(self, data_dict, key_str, size_inches=None, cmap=None, equirectangular=False):
         data_point_indices = list(data_dict.keys())
         data_points = [self.points[p_i] for p_i in data_point_indices]
         latlons_deg = [p.get_coords("latlondeg") for p in data_points]
@@ -161,25 +176,40 @@ class Lattice:
         #     level_01 = (level_value - contour_levels[0]) / (contour_levels[-1] - contour_levels[0])
         #     print("cmap at contour LINE level {} = value {} = RGBA {}".format(level_i, level_value, cmap(level_01)))
 
-        for i, row in enumerate(lon_0s):
-            for j, lon_0 in enumerate(row):
-                lat_0 = lat_0s[i][j]
-                nth_plot = i*len(row) + j + 1
-                ax = fig.add_subplot(n_rows, n_cols, nth_plot)
-                # m = Basemap(projection="cyl")
-                m = Basemap(projection="ortho", lat_0=lat_0, lon_0=lon_0, resolution='l')
-                m.drawmeridians(np.arange(0,360,30))
-                m.drawparallels(np.arange(-90,90,30))
-                MC = m.contourf(lons_deg, lats_deg, vals, levels=contour_levels, cmap=cmap, ax=ax, tri=True, latlon=True)  # latlon=True interprets first two args as LON and LAT RESPECTIVELY
-                # m.contour(lons_deg, lats_deg, vals, levels=[min(vals), 0, max(vals)], colors="k", ax=ax, tri=True, latlon=True)
-    
-                # parallel_labels_bools = [1, 1, 0, 0]  # are labels placed at [left right top bottom]
-                # meridian_labels_bools = [0, 0, 1, 1]  # are labels placed at [left right top bottom]
-                # m.drawparallels(np.arange(-90,91,30), labels=parallel_labels_bools)
-                # m.drawmeridians(np.arange(-180,181,30), labels=meridian_labels_bools)
-    
-                clb = plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
-                clb.ax.set_title(key_str)
-                plt.title("latlon {},{}".format(lat_0, lon_0))
+        if equirectangular:
+            x, y = lons_deg, lats_deg  # actual data
+            z = vals
+            # how many x/y to put on rectangle projection
+            n_grid_x = 1000
+            n_grid_y = 500
+            xi = np.linspace(-180, 180, n_grid_x)
+            yi = np.linspace(-90, 90, n_grid_y)
+            triang = tri.Triangulation(x, y)
+            interpolator = tri.LinearTriInterpolator(triang, z)
+            Xi, Yi = np.meshgrid(xi, yi)
+            zi = interpolator(Xi, Yi)
+            # plt.contour(xi, yi, zi, levels=contour_levels, linewidths=0.5, colors='k')
+            plt.contourf(xi, yi, zi, levels=contour_levels, cmap=cmap)
+        else:
+            for i, row in enumerate(lon_0s):
+                for j, lon_0 in enumerate(row):
+                    lat_0 = lat_0s[i][j]
+                    nth_plot = i*len(row) + j + 1
+                    ax = fig.add_subplot(n_rows, n_cols, nth_plot)
+                    # m = Basemap(projection="cyl")
+                    m = Basemap(projection="ortho", lat_0=lat_0, lon_0=lon_0, resolution='l')
+                    m.drawmeridians(np.arange(0,360,30))
+                    m.drawparallels(np.arange(-90,90,30))
+                    MC = m.contourf(lons_deg, lats_deg, vals, levels=contour_levels, cmap=cmap, ax=ax, tri=True, latlon=True)  # latlon=True interprets first two args as LON and LAT RESPECTIVELY
+                    # m.contour(lons_deg, lats_deg, vals, levels=[min(vals), 0, max(vals)], colors="k", ax=ax, tri=True, latlon=True)
+        
+                    # parallel_labels_bools = [1, 1, 0, 0]  # are labels placed at [left right top bottom]
+                    # meridian_labels_bools = [0, 0, 1, 1]  # are labels placed at [left right top bottom]
+                    # m.drawparallels(np.arange(-90,91,30), labels=parallel_labels_bools)
+                    # m.drawmeridians(np.arange(-180,181,30), labels=meridian_labels_bools)
+        
+                    clb = plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
+                    clb.ax.set_title(key_str)
+                    plt.title("latlon {},{}".format(lat_0, lon_0))
 
 

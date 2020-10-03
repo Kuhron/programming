@@ -408,9 +408,11 @@ class IcosahedralGeodesicLattice(Lattice):
 
 
 if __name__ == "__main__":
-    edge_length_km = 250
-    test_lattice = IcosahedralGeodesicLattice(edge_length_km)
+    edge_length_km = None
+    iterations = 6
+    test_lattice = IcosahedralGeodesicLattice(edge_length_km=edge_length_km, iterations=iterations)
     # test_lattice.plot_points()
     data = test_lattice.place_random_data()
-    test_lattice.plot_data(data)
-    
+    test_lattice.plot_data(data, "x", equirectangular=True)
+    plt.show()
+
