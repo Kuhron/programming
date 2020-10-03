@@ -110,11 +110,11 @@ class Lattice:
         df["latlondeg"] = [np.array(p.latlondeg()) for p in self.points]
         df[key_str] = [0 for p_i in point_indices]
 
-        n_steps = 2
+        n_steps = 10
         for i in range(n_steps):
             print("step {}/{}".format(i, n_steps))
-            n_patches = random.randint(100, 200)  # usual: 1000
-            area_proportion_per_patch = 1/random.randint(50, 100)  # usual: 1/100
+            n_patches = random.randint(100, 2000)  # usual: 1000
+            area_proportion_per_patch = 1/random.randint(50, 500)  # usual: 1/100
             df = self.add_random_data_circles(df, key_str, n_patches=n_patches, area_proportion_per_patch=area_proportion_per_patch)
         return df
 
@@ -128,7 +128,7 @@ class Lattice:
             starting_xyz = np.array(self.points[starting_p_i].xyz())
             starting_xyz_array = np.tile(starting_xyz, (self.n_points(), 1))  # == np.array(starting_xyz for i in range(self.n_points()))
             xyzs = np.stack(df["xyz"].values)
-            dxyzs = (xyzs - starting_xyz_array)**2
+            dxyzs = (xyzs - starting_xyz_array) ** 2
             distances = np.sqrt(dxyzs.sum(axis=1))
             in_region_mask = pd.Series(distances <= radius_3d)
             d_el = random.uniform(-100, 100)
