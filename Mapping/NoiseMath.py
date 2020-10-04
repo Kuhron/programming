@@ -64,6 +64,11 @@ def get_random_sin_phase(shape):
     return np.random.uniform(0, 2*np.pi, shape)
 
 
+def get_area_proportions_power_law(n_samples):
+    a = 0.25  # power law shape parameter (< 1 means lower numbers are more common)
+    return np.random.power(a, size=(n_samples,))
+
+
 def add_random_data_spikes(df, key_str, n_spikes, sigma):
     for i in range(n_spikes):
         p_i = random.choice(df.index)
@@ -73,6 +78,7 @@ def add_random_data_spikes(df, key_str, n_spikes, sigma):
 
 
 def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude, freq_sigma):
+    print("adding {} radial waves of variable {}".format(n_waves, key_str))
     for i in range(n_waves):
         f = get_random_wave_function_1d(freq_sigma=freq_sigma)
         # just do radius in 3d for now, don't care to convert it to sphere path right now
@@ -91,12 +97,16 @@ def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude, freq_
     return df
 
 
-def add_random_data_circles(df, key_str, n_patches, area_proportion_per_patch, mu_colname=None, sigma_colname=None):
-    radius_3d = mcm.get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_sphere(area_proportion_per_patch)
-    print("n_patches: {}; area proportion: 1/{}".format(n_patches, 1/area_proportion_per_patch))
+def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None):
+    print("adding {} circles of variable {}".format(n_patches, key_str))
+    if area_proportions is None:
+        area_proportions = get_area_proportions_power_law(n_patches)
+    assert len(area_proportions) == n_patches
     if key_str not in df.columns:
         df[key_str] = np.zeros((len(df.index),))
     for i in range(n_patches):
+        area_proportion = area_proportions[i]
+        radius_3d = mcm.get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_sphere(area_proportion)
         if i % 100 == 0:
             print("i = {}/{}".format(i, n_patches))
         starting_p_i = random.choice(df.index)
@@ -114,8 +124,8 @@ def add_random_data_circles(df, key_str, n_patches, area_proportion_per_patch, m
 
 
 def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index, n_patches, area_proportion_per_patch):
+    print("adding {} jagged patches of variable {}".format(n_patches, key_str))
     size_per_patch = int(area_proportion_per_patch * len(df.index))
-    print("n_patches: {}; area proportion: 1/{}".format(n_patches, 1/area_proportion_per_patch))
     for i in range(n_patches):
         if i % 100 == 0:
             print("i = {}/{}".format(i, n_patches))

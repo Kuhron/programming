@@ -413,11 +413,13 @@ if __name__ == "__main__":
     iterations = 6
     test_lattice = IcosahedralGeodesicLattice(edge_length_km=edge_length_km, iterations=iterations)
     # test_lattice.plot_points()
+
     df = test_lattice.create_dataframe()
-    df = nm.add_random_data_circles(df, "d_el_mu", n_patches=1000, area_proportion_per_patch=1/100)
-    df = nm.add_random_data_circles(df, "d_el_sigma", n_patches=1000, area_proportion_per_patch=1/100)
+    df = nm.add_random_data_circles(df, "d_el_mu", n_patches=1000)
+    df = nm.add_random_data_circles(df, "d_el_sigma", n_patches=1000)
     df["d_el_sigma"] = abs(df["d_el_sigma"])
-    df = nm.add_random_data_circles(df, "elevation", n_patches=10000, area_proportion_per_patch=1/500, mu_colname="d_el_mu", sigma_colname="d_el_sigma")
+    df = nm.add_random_data_circles(df, "elevation", n_patches=1000, area_proportions=None, mu_colname="d_el_mu", sigma_colname="d_el_sigma")
+
     test_lattice.plot_data(df, "elevation", equirectangular=True, save=True)
     test_lattice.plot_data(df, "d_el_mu", equirectangular=True, save=True)
     test_lattice.plot_data(df, "d_el_sigma", equirectangular=True, save=True)
