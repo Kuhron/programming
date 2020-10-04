@@ -13,10 +13,12 @@ import networkx as nx
 import pandas as pd
 # from scipy.spatial import KDTree
 from sklearn.neighbors import KDTree
+from datetime import datetime
 
 from UnitSpherePoint import UnitSpherePoint
 import PlottingUtil as pu
 import MapCoordinateMath as mcm
+import NoiseMath as nm
 
 
 class Lattice:
@@ -100,70 +102,23 @@ class Lattice:
         ax.scatter(xs, ys, zs)
         plt.show()
 
-    def place_random_data(self):
-        key_str = "x"
-        # data = {p_i: {key_str: 0} for p_i in range(len(self.points))}  # old, presumably slower than pandas
+    def create_dataframe(self):
         point_indices = list(range(len(self.points)))
         df = pd.DataFrame(index=point_indices)
         df["usp"] = self.points
         df["xyz"] = [np.array(p.xyz()) for p in self.points]
         df["latlondeg"] = [np.array(p.latlondeg()) for p in self.points]
-        df[key_str] = [0 for p_i in point_indices]
-
-        n_steps = 10
-        for i in range(n_steps):
-            print("step {}/{}".format(i, n_steps))
-            n_patches = random.randint(100, 2000)  # usual: 1000
-            area_proportion_per_patch = 1/random.randint(50, 500)  # usual: 1/100
-            df = self.add_random_data_circles(df, key_str, n_patches=n_patches, area_proportion_per_patch=area_proportion_per_patch)
         return df
 
-    def add_random_data_circles(self, df, key_str, n_patches, area_proportion_per_patch):
-        radius_3d = mcm.get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_sphere(area_proportion_per_patch)
-        print("n_patches: {}; area proportion: 1/{}".format(n_patches, 1/area_proportion_per_patch))
-        for i in range(n_patches):
-            if i % 100 == 0:
-                print("i = {}/{}".format(i, n_patches))
-            starting_p_i = random.choice(range(len(self.points)))
-            starting_xyz = np.array(self.points[starting_p_i].xyz())
-            starting_xyz_array = np.tile(starting_xyz, (self.n_points(), 1))  # == np.array(starting_xyz for i in range(self.n_points()))
-            xyzs = np.stack(df["xyz"].values)
-            dxyzs = (xyzs - starting_xyz_array) ** 2
-            distances = np.sqrt(dxyzs.sum(axis=1))
-            in_region_mask = pd.Series(distances <= radius_3d)
-            d_el = random.uniform(-100, 100)
-            df.loc[in_region_mask, key_str] += d_el
+    def place_random_data(self, key_str, df=None):
+        if df is None:
+            df = self.create_dataframe()
+        if key_str not in df.columns:
+            df[key_str] = [0 for p_i in point_indices]
+        df = nm.change_globe(df, key_str)
         return df
 
-    def add_random_data_jagged_patches(self, df, key_str, n_patches, area_proportion_per_patch):
-        size_per_patch = int(area_proportion_per_patch * self.n_points())
-        print("n_patches: {}; area proportion: 1/{}".format(n_patches, 1/area_proportion_per_patch))
-        for i in range(n_patches):
-            if i % 100 == 0:
-                print("i = {}/{}".format(i, n_patches))
-            starting_p_i = random.choice(range(len(self.points)))
-            starting_point = self.points[starting_p_i]
-            # print("starting point: {}".format(starting_point))
-            patch_indices = {starting_p_i}
-            patch_points = {starting_point}
-            # the outward-moving edge is the next points that are not yet in the patch
-            edge = set(self.adjacencies[starting_point])
-            for p_i in range(size_per_patch):
-                chosen_point = random.choice(list(edge))
-                # print("chosen: {}".format(chosen))
-                chosen_p_i = self.usp_to_index[chosen_point]
-                patch_points.add(chosen_point)
-                patch_indices.add(chosen_p_i)
-                edge |= set(self.adjacencies[chosen_point])
-                edge -= patch_points
-                if len(edge) == 0:  # can happen if whole lattice is in patch
-                    break
-            # change elevation on the patch
-            d_el = random.uniform(-100, 100)
-            df.loc[patch_indices, key_str] += d_el
-        return df
-
-    def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=False):
+    def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=False, save=False):
         data_point_indices = df.index
         # data_points = [self.points[p_i] for p_i in data_point_indices]
         latlons_deg = df["latlondeg"]
@@ -215,7 +170,9 @@ class Lattice:
             Xi, Yi = np.meshgrid(xi, yi)
             zi = interpolator(Xi, Yi)
             # plt.contour(xi, yi, zi, levels=contour_levels, linewidths=0.5, colors='k')
-            plt.contourf(xi, yi, zi, levels=contour_levels, cmap=cmap)
+            MC = plt.contourf(xi, yi, zi, levels=contour_levels, cmap=cmap)
+            clb = plt.colorbar(MC, ax=plt.gca())  # without these args, it will say it can't find a mappable object for colorbar
+            clb.ax.set_title(key_str)
         else:
             for i, row in enumerate(lon_0s):
                 for j, lon_0 in enumerate(row):
@@ -237,5 +194,8 @@ class Lattice:
                     clb = plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
                     clb.ax.set_title(key_str)
                     plt.title("latlon {},{}".format(lat_0, lon_0))
+        if save:
+            fp = "Projects/{}_{}.png".format(key_str, datetime.utcnow().strftime("%Y-%m-%d-%H%M%S"))
+            plt.savefig(fp)
 
 
