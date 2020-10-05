@@ -27,6 +27,11 @@ def get_land_and_sea_colormap():
     colors_sea = blue_to_black(linspace_cmap_backward)
     colors = np.vstack((colors_sea, colors_land))
     colormap = mcolors.LinearSegmentedColormap.from_list("my_colormap", colors)
+
+    # https://stackoverflow.com/questions/11386054/python-matplotlib-change-default-color-for-values-exceeding-colorbar-range
+    colormap.set_over("white")
+    colormap.set_under("black")
+    # but note that set_over and set_under won't work for contourf (which simply draws *nothing* in regions where the values are out of range), workaround is ax.set_facecolor(<out-of-range color>)
     return colormap
 
 

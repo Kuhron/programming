@@ -31,36 +31,38 @@ def change_globe_circles(df, key_str):
 def change_globe_waves(df, key_str):
     n_waves = random.randint(10, 50)
     expected_amplitude = random.uniform(50, 150)
-    freq_sigma = random.uniform(10, 100) # freq of wave drawn from abs of norm(0, sigma), recall that radius of sphere is 1 so freq of 1 will have 1 period over the whole sphere
-    df = add_random_data_radial_waves(df, key_str, n_waves=n_waves, expected_amplitude=expected_amplitude, freq_sigma=freq_sigma)
+    # freq_sigma = random.uniform(10, 100) # freq of wave drawn from abs of norm(0, sigma), recall that radius of sphere is 1 so freq of 1 will have 1 period over the whole sphere
+    df = add_random_data_radial_waves(df, key_str, n_waves=n_waves, expected_amplitude=expected_amplitude)
     return df
 
 
-def get_random_wave_function_1d(freq_sigma):
-    n_sins = 10
-    shape = (n_sins,)
-    amp    = get_random_sin_amp(shape)
-    offset = get_random_sin_offset(shape)
-    freq   = get_random_sin_freq(shape, freq_sigma)
-    phase  = get_random_sin_phase(shape)
-    def f(x, amp=amp, offset=offset, freq=freq, phase=phase):
-        return (amp * np.sin(freq*x + phase) + offset).sum()
-    return np.vectorize(f)
+def get_random_wave_function_1d():
+    # n_sins = 10  # just do 1 per call
+    # shape = (n_sins,)
+    amp    = get_random_sin_amp()
+    offset = get_random_sin_offset()
+    freq   = get_random_sin_freq()
+    phase  = get_random_sin_phase()
+    # def f(x, amp=amp, offset=offset, freq=freq, phase=phase):
+    #     return (amp * np.sin(freq*x + phase) + offset).sum()
+    return lambda x: amp * np.sin(freq*x + phase) + offset
 
 
-def get_random_sin_amp(shape):
+def get_random_sin_amp(shape=None):
     return np.random.normal(0, 1, shape)
 
 
-def get_random_sin_offset(shape):
+def get_random_sin_offset(shape=None):
     return np.random.normal(0, 1, shape)
 
 
-def get_random_sin_freq(shape, freq_sigma):
-    return abs(np.random.normal(0, freq_sigma, shape))
+def get_random_sin_freq(shape=None, max_freq=100):
+    a = 0.5  # power law parameter, > 1 means higher numbers will occur more ofter
+    res_in_01 = np.random.power(a, shape)
+    return max_freq * res_in_01
 
 
-def get_random_sin_phase(shape):
+def get_random_sin_phase(shape=None):
     return np.random.uniform(0, 2*np.pi, shape)
 
 
@@ -77,10 +79,14 @@ def add_random_data_spikes(df, key_str, n_spikes, sigma):
     return df
 
 
-def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude, freq_sigma):
+def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude):
     print("adding {} radial waves of variable {}".format(n_waves, key_str))
+    if key_str not in df.columns:
+        df[key_str] = np.zeros((len(df.index),))
     for i in range(n_waves):
-        f = get_random_wave_function_1d(freq_sigma=freq_sigma)
+        if i % 100 == 0:
+            print("i = {}/{}".format(i, n_waves))
+        f = get_random_wave_function_1d()
         # just do radius in 3d for now, don't care to convert it to sphere path right now
         # determine amplitude roughly
         sample_rs = np.linspace(0, 1, 100)
@@ -123,9 +129,13 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
     return df
 
 
-def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index, n_patches, area_proportion_per_patch):
+def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index, n_patches, area_proportions=None):
     print("adding {} jagged patches of variable {}".format(n_patches, key_str))
-    size_per_patch = int(area_proportion_per_patch * len(df.index))
+    if area_proportions is None:
+        area_proportions = get_area_proportions_power_law(n_patches)
+    assert len(area_proportions) == n_patches
+    if key_str not in df.columns:
+        df[key_str] = np.zeros((len(df.index),))
     for i in range(n_patches):
         if i % 100 == 0:
             print("i = {}/{}".format(i, n_patches))
@@ -136,7 +146,9 @@ def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index, n_pat
         patch_points = {starting_point}
         # the outward-moving edge is the next points that are not yet in the patch
         edge = set(adjacencies[starting_point])
-        for p_i in range(size_per_patch):
+        area_proportion = area_proportions[i]
+        patch_size = int(area_proportion * len(df.index))
+        for p_i in range(patch_size):
             chosen_point = random.choice(list(edge))
             # print("chosen: {}".format(chosen))
             chosen_p_i = usp_to_index[chosen_point]

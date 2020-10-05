@@ -415,13 +415,9 @@ if __name__ == "__main__":
     # test_lattice.plot_points()
 
     df = test_lattice.create_dataframe()
-    df = nm.add_random_data_circles(df, "d_el_mu", n_patches=1000)
-    df = nm.add_random_data_circles(df, "d_el_sigma", n_patches=1000)
-    df["d_el_sigma"] = abs(df["d_el_sigma"])
-    df = nm.add_random_data_circles(df, "elevation", n_patches=1000, area_proportions=None, mu_colname="d_el_mu", sigma_colname="d_el_sigma")
-
-    test_lattice.plot_data(df, "elevation", equirectangular=True, save=True)
-    test_lattice.plot_data(df, "d_el_mu", equirectangular=True, save=True)
-    test_lattice.plot_data(df, "d_el_sigma", equirectangular=True, save=True)
-    plt.show()
-
+    # df = nm.add_random_data_circles(df, "elevation", n_patches=1000)
+    # df = nm.add_random_data_radial_waves(df, "elevation", n_waves=1000, expected_amplitude=100)
+    df = nm.add_random_data_jagged_patches(df, "elevation", test_lattice.adjacencies, test_lattice.usp_to_index, n_patches=1000)
+    test_lattice.plot_data(df, "elevation", equirectangular=True, save=True, size_inches=(48, 24))
+    # plt.show()
+    print("done")

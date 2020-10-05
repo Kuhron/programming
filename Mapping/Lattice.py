@@ -173,6 +173,7 @@ class Lattice:
             MC = plt.contourf(xi, yi, zi, levels=contour_levels, cmap=cmap)
             clb = plt.colorbar(MC, ax=plt.gca())  # without these args, it will say it can't find a mappable object for colorbar
             clb.ax.set_title(key_str)
+            plt.gca().set_facecolor('k')  # contourf won't draw over this for out-of-range values
         else:
             for i, row in enumerate(lon_0s):
                 for j, lon_0 in enumerate(row):
@@ -193,9 +194,13 @@ class Lattice:
         
                     clb = plt.colorbar(MC, ax=ax)  # without these args, it will say it can't find a mappable object for colorbar
                     clb.ax.set_title(key_str)
+                    plt.gca().set_facecolor('k')  # contourf won't draw over this for out-of-range values
                     plt.title("latlon {},{}".format(lat_0, lon_0))
         if save:
-            fp = "Projects/{}_{}.png".format(key_str, datetime.utcnow().strftime("%Y-%m-%d-%H%M%S"))
-            plt.savefig(fp)
-
+            name = "Projects/{}_{}".format(key_str, datetime.utcnow().strftime("%Y-%m-%d-%H%M%S"))
+            fig_fp = name + ".png"
+            plt.savefig(fig_fp)
+            data_fp = name + ".txt"
+            with open(data_fp, "w") as f:
+                f.write("\n".join(str(x) for x in df[key_str]))
 
