@@ -71,7 +71,19 @@ def get_area_proportions_power_law(n_samples):
     return np.random.power(a, size=(n_samples,))
 
 
+def add_random_data_independent_all_points(df, key_str, n_iterations, sigma):
+    n_points = len(df.index)
+    if key_str not in df.columns:
+        df[key_str] = np.zeros((n_points,))
+    for i in range(n_iterations):
+        d_val_series = np.random.normal(0, sigma, n_points)
+        df[key_str] += d_val_series
+    return df
+
+
 def add_random_data_spikes(df, key_str, n_spikes, sigma):
+    if key_str not in df.columns:
+        df[key_str] = np.zeros((len(df.index),))
     for i in range(n_spikes):
         p_i = random.choice(df.index)
         d_val = np.random.normal(0, sigma)

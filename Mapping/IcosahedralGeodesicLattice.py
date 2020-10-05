@@ -10,6 +10,9 @@ from UnitSpherePoint import UnitSpherePoint
 import MapCoordinateMath as mcm
 import NoiseMath as nm
 
+# memory profiling
+import objgraph
+
 
 class IcosahedralGeodesicLattice(Lattice):
     EARTH_RADIUS_KM = 6371
@@ -414,10 +417,23 @@ if __name__ == "__main__":
     test_lattice = IcosahedralGeodesicLattice(edge_length_km=edge_length_km, iterations=iterations)
     # test_lattice.plot_points()
 
+    # memory profiling
+    # objgraph.show_most_common_types(limit=20)
+    # while True:
+    #     typename = input("input object type to profile, or press enter to continue with program: ").strip()
+    #     if typename == "":
+    #         break
+    #     obj = objgraph.by_type(typename)
+    #     objgraph.show_backrefs([obj], max_depth=10)
+
+    # making example images and data for each type of noise generation function
     df = test_lattice.create_dataframe()
     # df = nm.add_random_data_circles(df, "elevation", n_patches=1000)
     # df = nm.add_random_data_radial_waves(df, "elevation", n_waves=1000, expected_amplitude=100)
-    df = nm.add_random_data_jagged_patches(df, "elevation", test_lattice.adjacencies, test_lattice.usp_to_index, n_patches=1000)
+    # df = nm.add_random_data_jagged_patches(df, "elevation", test_lattice.adjacencies, test_lattice.usp_to_index, n_patches=1000)
+    # df = nm.add_random_data_spikes(df, "elevation", n_spikes=len(df.index), sigma=100)
+    df = nm.add_random_data_independent_all_points(df, "elevation", n_iterations=1000, sigma=100)
     test_lattice.plot_data(df, "elevation", equirectangular=True, save=True, size_inches=(48, 24))
+
     # plt.show()
     print("done")
