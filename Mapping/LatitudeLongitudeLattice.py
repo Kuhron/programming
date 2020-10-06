@@ -15,6 +15,7 @@ class LatitudeLongitudeLattice(Lattice):
     # e.g. p00 = Seattle, p01 = NYC, p10 = San Diego, p11 = Miami
 
     def __init__(self, x_size, y_size, latlon00, latlon01, latlon10, latlon11):
+        super().__init__()  # make project name
         self.x_size = x_size
         self.y_size = y_size
         self.x_range = np.arange(self.x_size)

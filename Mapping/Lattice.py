@@ -4,6 +4,7 @@
 # e.g. finding nearest neighbors, finding all neighbors, converting to xyz, etc.
 
 import random
+import string
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.mplot3d import Axes3D
@@ -23,7 +24,8 @@ import NoiseMath as nm
 
 class Lattice:
     def __init__(self):
-        raise NotImplementedError("do not initialize Lattice itself; use a subclass such as LatitudeLongitudeLattice")
+        random_name = "".join(random.choice(string.ascii_lowercase) for _ in range(12))
+        self.project_name = datetime.utcnow().strftime("%Y-%m-%d-%H%M%S") + "-" + random_name
 
     def get_adjacencies(self):
         # specific to the subclasses, depending on type of lattice
@@ -197,7 +199,7 @@ class Lattice:
                     plt.gca().set_facecolor('k')  # contourf won't draw over this for out-of-range values
                     plt.title("latlon {},{}".format(lat_0, lon_0))
         if save:
-            name = "Projects/{}_{}".format(key_str, datetime.utcnow().strftime("%Y-%m-%d-%H%M%S"))
+            name = "Projects/{}_{}".format(self.project_name, key_str)
             fig_fp = name + ".png"
             plt.savefig(fig_fp)
             data_fp = name + ".txt"

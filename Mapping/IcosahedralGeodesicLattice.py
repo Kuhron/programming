@@ -20,6 +20,7 @@ class IcosahedralGeodesicLattice(Lattice):
     CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
     def __init__(self, edge_length_km=None, iterations=None):
+        super().__init__()  # make project name
         assert int(edge_length_km is None) + int(iterations is None) == 1, "need either edge_length_km or iterations, not both, got {} and {}".format(edge_length_km, iterations)
         self.edge_length_km = edge_length_km
         if iterations is not None:
@@ -428,11 +429,19 @@ if __name__ == "__main__":
 
     # making example images and data for each type of noise generation function
     df = test_lattice.create_dataframe()
-    # df = nm.add_random_data_circles(df, "elevation", n_patches=1000)
+
+    nm.test_plot_transform_01_hyperbolic()
+    nm.test_plot_get_sigmoid_decay_function()
+    input("press enter")
+
+    df = nm.add_random_data_circles(df, "elevation_expectation", n_patches=100)
+    df["elevation_expectation_omega"] = np.repeat(0.3, len(df.index))
+    df = nm.add_random_data_circles(df, "elevation", n_patches=5000, expectation_colname="elevation_expectation", expectation_omega_colname="elevation_expectation_omega")
     # df = nm.add_random_data_radial_waves(df, "elevation", n_waves=1000, expected_amplitude=100)
     # df = nm.add_random_data_jagged_patches(df, "elevation", test_lattice.adjacencies, test_lattice.usp_to_index, n_patches=1000)
     # df = nm.add_random_data_spikes(df, "elevation", n_spikes=len(df.index), sigma=100)
-    df = nm.add_random_data_independent_all_points(df, "elevation", n_iterations=1000, sigma=100)
+    # df = nm.add_random_data_independent_all_points(df, "elevation", n_iterations=1000, sigma=100)
+    test_lattice.plot_data(df, "elevation_expectation", equirectangular=True, save=True, size_inches=(48, 24))
     test_lattice.plot_data(df, "elevation", equirectangular=True, save=True, size_inches=(48, 24))
 
     # plt.show()
