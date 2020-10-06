@@ -202,6 +202,8 @@ def add_random_data_sigmoid_decay_hills(df, key_str, n_hills, h_stretch_paramete
     if key_str not in df.columns:
         df[key_str] = np.zeros((len(df.index),))
     for i in range(n_hills):
+        if i % 100 == 0:
+            print("i = {}/{}".format(i, n_hills))
         # should make function for this, TODO
         starting_p_i = random.choice(df.index)
         starting_xyz = df.loc[starting_p_i, "xyz"]
