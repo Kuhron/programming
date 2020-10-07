@@ -1,36 +1,30 @@
 from xml.etree import ElementTree as ET
 import random
 
+# FlexPy-specific classes
+from RtDict import RtDict
 from Text import Text
 
 
-def get_rt_dict(root):
-    # all <rt> elements in the XML
-    # the dictionary is keyed by "class" attribute (e.g. "LexEntry") and then by FLEX's identifier for each object
-    rts = root.findall("rt")
-    d = {}
-    for rt in rts:
-        c = rt.attrib["class"]
-        if c not in d:
-            d[c] = {}
-        guid = rt.attrib["guid"]
-        d[c][guid] = rt
-    return d
- 
+def get_elements_by_owner_guid(rt_dict, owner_guid):
+    return rt_dict.get_by_owner_guid(owner_guid)
+
 
 def run_flashcards(project_name, rt_dict):
     # asks user random lexicon entries as a vocabulary quiz
-    lex_entries = d["LexEntry"]
+    lex_entries = rt_dict["LexEntry"]
     for lex in lex_entries.values():
         lexeme_form_tag = lex.find("LexemeForm")
         lexeme_form_guid = lexeme_form_tag.find("objsur").attrib["guid"]
         senses_tag = lex.find("Senses")
+        if senses_tag is None:
+            continue
         senses_guid = senses_tag.find("objsur").attrib["guid"]
         form_classes = ["MoStemAllomorph", "MoAffixAllomorph", "WfiWordform"]
         form_found = False
         for fcl in form_classes:
             try:
-                lexeme_form_rt = d["MoStemAllomorph"][lexeme_form_guid]
+                lexeme_form_rt = rt_dict["MoStemAllomorph"][lexeme_form_guid]
                 lexeme_form = lexeme_form_rt.find("Form").find("AUni").text
                 form_found = True
             except KeyError:
@@ -41,7 +35,7 @@ def run_flashcards(project_name, rt_dict):
             input("press enter to move on to next rt tag")
             continue
     
-        sense_rt = d["LexSense"][senses_guid]
+        sense_rt = rt_dict["LexSense"][senses_guid]
         sense = sense_rt.find("Gloss").find("AUni").text
     
         print("\n--- new item ---")
@@ -84,9 +78,11 @@ if __name__ == "__main__":
  
     tree = ET.parse(fp)
     root = tree.getroot()
-    rt_dict = get_rt_dict(root)
+    rt_dict = RtDict.from_root(root)
 
     texts = get_texts(rt_dict)
     text = random.choice(texts)
     print(text)
+
+    run_flashcards(project_name, rt_dict)
     
