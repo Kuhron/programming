@@ -23,3 +23,6 @@ Mapping/MemoIcosa/
 Mapping/Projects/
 
 PrettyPlotOutputs/*.png
+
+# giant (rather, numerous) Bible files
+FlexPy/Bible/texts/
