@@ -15,7 +15,7 @@ from Scraping import (
 # print the bible verses, pipe it to file when it's working as you want
 
 def walk_verse_strings(lang_iso_code, print_interleaved, print_parseable, return_full_list, books_to_restrict_to=None):
-    parseable_fp = "{0}/{0}-VersesParseable.txt".format(lang_iso_code)
+    parseable_fp = "texts/{0}/{0}-VersesParseable.txt".format(lang_iso_code)
     if os.path.exists(parseable_fp):
         print("using parseable verse file")
         # read this instead of the html
@@ -356,7 +356,7 @@ def get_full_list(lang_iso_code, **kwargs):
 
 
 def get_kalam_dictionary_items():
-    input_fp = "kmh/KalamDictionary.txt"
+    input_fp = "texts/kmh/KalamDictionary.txt"
     with open(input_fp) as f:
         lines = f.readlines()
     res = []  # just make list of tuples
