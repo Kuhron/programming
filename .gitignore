@@ -26,3 +26,7 @@ PrettyPlotOutputs/*.png
 
 # giant (rather, numerous) Bible files
 FlexPy/Bible/texts/
+
+# copied file from Kris for debugging purposes, don't want to plagiarize by committing it in my own repo
+FlexPy/KrisCorpusToolsDebugging.py
+

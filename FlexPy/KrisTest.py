@@ -1,5 +1,6 @@
 # testing Kris's library
 from corpus_toolkit import corpus_tools as ct
+import KrisCorpusToolsDebugging as ct_debug
 # documentation at https://github.com/kristopherkyle/corpus_toolkit
 
 text1 = "cat cat dog cat elephant"
@@ -39,11 +40,12 @@ ct.head(freq, hits=10)
 print("----")
 words_to_collocate = ["the"]
 for word in words_to_collocate:
+    tokenized = ct.tokenize(texts)  # WARNING! have to do this again because it returns a generator, so I was getting no collocations because it had already reached StopIteration from calling frequency() on it before
     collocates = ct.collocator(tokenized, word, stat="MI")
-    print("collocations for word {}:".format(word))
-    print("collocates =", collocates)
+    # collocates = ct_debug.collocator(tokenized, word, stat="MI")
+    # print("collocations for word {}:".format(word))
+    # print("collocates =", collocates)
     ct.head(collocates, hits=10)
-    print("TODO get collocation to work")
 
 
 # Keyness
