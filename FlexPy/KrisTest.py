@@ -1,5 +1,6 @@
 # testing Kris's library
 from corpus_toolkit import corpus_tools as ct
+# documentation at https://github.com/kristopherkyle/corpus_toolkit
 
 text1 = "cat cat dog cat elephant"
 text2 = "the of and a to in is that it was"
@@ -33,6 +34,8 @@ tokenized = ct.tokenize(texts)
 freq = ct.frequency(tokenized)
 ct.head(freq, hits=10)
 
+
+# Collocations
 print("----")
 words_to_collocate = ["the"]
 for word in words_to_collocate:
@@ -40,3 +43,38 @@ for word in words_to_collocate:
     print("collocations for word {}:".format(word))
     print("collocates =", collocates)
     ct.head(collocates, hits=10)
+    print("TODO get collocation to work")
+
+
+# Keyness
+# see http://www.thegrammarlab.com/?p=193
+# and https://en.wikipedia.org/wiki/Keyword_(linguistics)
+print("----")
+corp1 = texts[:1]
+corp2 = texts[1:]
+corp1_freq = ct.frequency(ct.tokenize(corp1))
+corp2_freq = ct.frequency(ct.tokenize(corp2))
+corp_key = ct.keyness(corp1_freq, corp2_freq, effect="log-ratio")
+ct.head(corp_key, hits=10)
+
+
+# N-grams
+print("----")
+corpus = texts
+tokenized_trigram = ct.tokenize(corpus, lemma=False, ngram=3)
+# don't lemmatize (assign inflected forms to their lexeme's citation form) because we want inflections to persist in ngram analysis
+trigram_freq = ct.frequency(tokenized_trigram)
+ct.head(trigram_freq, hits=10)
+
+
+# Dependency bigrams
+# note that dependency analysis uses call to nlp() function from Spacy, won't be applicable to minority language corpora
+# bg_dict = ct.dep_bigram(corpus, "dobj")
+# ct.head(bg_dict["bi_freq"], hits=10)
+# ^^^ WARNING: MEMORY LEAK ^^^
+
+
+# Strength of association
+# uses bg_dict, omitting for now because of memory usage
+# simil, omitting concordance
+
