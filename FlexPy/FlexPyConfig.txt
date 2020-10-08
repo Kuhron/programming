@@ -4,11 +4,19 @@
 # project_name = Acoma
 # project_name = dnw-flex
 
-project_dir = /home/wesley/Desktop/Learning/Language & Linguistics/Languages/Papuan/TNG/Madang/Rai Coast/
+# project_dir = /home/wesley/Desktop/Learning/Language & Linguistics/Languages/Papuan/TNG/Madang/Rai Coast/
 # project_name = Bara
 # project_name = Yangulam
 # project_name = Sa
 # project_name = Bere
-project_name = Soq
+# project_name = Soq
 
+project_dir = /home/wesley/Desktop/Learning/Language & Linguistics/Languages/Papuan/TNG/Madang/Sogeram/
+# project_name=Aisi Mabɨŋ
+# project_name=Aisi Magɨ
+# project_name=Gants
+# project_name=Kursav
+# project_name=Manat
+# project_name=Mand
+project_name=Sirva
 
