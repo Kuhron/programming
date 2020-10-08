@@ -1,0 +1,7 @@
+# project_dir = /home/wesley/.local/share/fieldworks/Projects/
+# project_name = Bongu
+
+project_dir = /home/wesley/Desktop/Learning/Language & Linguistics/Languages/Papuan/TNG/Madang/Rai Coast/
+project_name = Bara
+
+

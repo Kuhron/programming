@@ -40,15 +40,13 @@ class Text:
                 for objsur in objsurs:
                     st_text_para_guid = objsur.attrib["guid"]
                     st_text_paragraph = self.rt_dict[st_text_para_guid]
-                    contents = st_text_paragraph.findall("Contents")
-                    if len(contents) == 0:
+                    contents = get_single_child(st_text_paragraph, "Contents")
+                    if contents is None:
                         continue
-                    assert len(contents) == 1, "StTextPara guid {} has more than one contents: {}".format(st_text_para_guid, contents)
-                    str_elements = contents[0].findall("Str")
-                    assert len(str_elements) == 1, "StTextPara guid {} has more than one Contents>Str: {}".format(st_text_para_guid, str_elements)
-                    run_elements = str_elements[0].findall("Run")
-                    assert len(run_elements) == 1, "StTextPara guid {} has more than one Contents>Str>Run: {}".format(run_elements)
-                    run_text = run_elements[0].text
+                    str_element = get_single_child(contents, "Str")
+                    # there may be multiple run elements (because of Flex's writing system thing), just concat them
+                    run_elements = str_element.findall("Run")
+                    run_text = "".join(x.text for x in run_elements)
                     run_texts.append(run_text)
                     # contents_str += run_text
         return run_texts

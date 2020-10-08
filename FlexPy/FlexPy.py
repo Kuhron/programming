@@ -49,10 +49,46 @@ def report_frequencies_naive(strs):
         print("Word {0} occurs {1} times".format(*tup))
 
 
+def get_top_n_dict_items(dct, n):
+    return sorted(dct.items(), key=lambda kv: kv[1], reverse=True)[:n]
+
+
+def perform_kris_analysis(texts):
+    # pass a list of strs, one for each text
+    get_new_tokenized = lambda: ct.tokenize(texts, lemma=False)  # necessary because tokenize returns a generator, and then calling frequency or collocator or whatever will run it to StopIteration, so you have to get a new one each time
+    freq = ct.frequency(get_new_tokenized())
+    ct.head(freq, hits=10)
+
+    collocation_words_tups = get_top_n_dict_items(freq, 5)
+    for word, _ in collocation_words_tups:
+        collocates = ct.collocator(get_new_tokenized(), word, stat="MI")
+        print("----\nCollocations for {}:".format(word))
+        ct.head(collocates, hits=10)
+
+    # could do some keyness between different pairs of texts
+
+    for ngram_n in [2, 3, 4]:
+        tokenized_ngram = ct.tokenize(texts, lemma=False, ngram=ngram_n)
+        ngram_freq = ct.frequency(tokenized_ngram)
+        print("----\n{}-grams:".format(ngram_n))
+        ct.head(ngram_freq, hits=10)
+
+
 
 if __name__ == "__main__":
-    project_name = "Bongu"
-    flex_dir = "/home/wesley/.local/share/fieldworks/Projects/{}/".format(project_name)
+    config = {}
+    with open("FlexPyConfig.txt") as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            if len(line) == 0 or line[0] == "#":
+                continue
+            k, v = line.split("=")
+            config[k.strip()] = v.strip()
+
+    project_name = config["project_name"]
+    project_dir = config["project_dir"]
+    flex_dir = project_dir + "{}/".format(project_name)
     fp = flex_dir + "{}.fwdata".format(project_name)
     print("processing project {} at {}".format(project_name, fp))
 
@@ -69,13 +105,12 @@ if __name__ == "__main__":
     texts = get_texts(rt_dict)
     contents_lst = []
     for text in texts:
-        print("----")
-        print(text)
+        # print("----")
+        # print(text)
         contents = text.get_contents()
-        print(contents)
+        # print(contents)
         contents_lst += contents
-        print("----\n")
+        # print("----\n")
 
-    report_frequencies_naive(contents_lst)
-
-
+    # report_frequencies_naive(contents_lst)
+    perform_kris_analysis(contents_lst)
