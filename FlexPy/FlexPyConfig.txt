@@ -11,12 +11,14 @@
 # project_name = Bere
 # project_name = Soq
 
-project_dir = /home/wesley/Desktop/Learning/Language & Linguistics/Languages/Papuan/TNG/Madang/Sogeram/
-# project_name=Aisi Mabɨŋ
-# project_name=Aisi Magɨ
-# project_name=Gants
-# project_name=Kursav
-# project_name=Manat
-# project_name=Mand
-project_name=Sirva
+# project_dir = /home/wesley/Desktop/Learning/Language & Linguistics/Languages/Papuan/TNG/Madang/Sogeram/
+# project_name = Aisi Mabɨŋ
+# project_name = Aisi Magɨ
+# project_name = Gants
+# project_name = Kursav
+# project_name = Manat
+# project_name = Mand
+# project_name = Sirva
 
+project_dir = /home/wesley/Desktop/Learning/Language & Linguistics/Languages/Kra-Dai/
+project_name = Isan
