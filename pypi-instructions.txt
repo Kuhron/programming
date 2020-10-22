@@ -1,0 +1,4 @@
+https://medium.com/@thucnc/how-to-publish-your-own-python-package-to-pypi-4318868210f9
+https://packaging.python.org/guides/using-testpypi/
+https://stackoverflow.com/a/41043381/7376935
+https://packaging.python.org/tutorials/packaging-projects/
