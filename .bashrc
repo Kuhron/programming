@@ -151,6 +151,7 @@ alias grun='echo "do not use; use ParsingDebugging.py which I wrote instead"' #'
 alias antlrworks='java -jar ~/antlrworks-1.5.2-complete.jar'
 alias grepdocx="/home/wesley/grepdocx.sh"
 alias rpdf="python /home/wesley/programming/ReadRandomPdf.py"
+alias amongus="sudo wine .steam/steam/steamapps/common/Among\ Us/Among\ Us.exe"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
