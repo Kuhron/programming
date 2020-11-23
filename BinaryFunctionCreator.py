@@ -75,6 +75,7 @@ class FunctionNode:
         self.is_outside_arg_getter = is_outside_arg_getter
 
     def evaluate(self, leaf_args, outside_args):
+        # in future, if want to optimize, can memoize results for funcs with smaller numbers of args
         if self.is_outside_arg_getter:
             return self.func(*outside_args)
         else:
@@ -177,11 +178,12 @@ if __name__ == "__main__":
         FunctionNode("+", lambda x, y: x + y),
         FunctionNode("-", lambda x, y: x - y),
         FunctionNode("*", lambda x, y: x * y),
-        # FunctionNode("//", lambda x, y: x // y),
+        FunctionNode("//", lambda x, y: x // y),  # often makes things too small
         FunctionNode("&", lambda x, y: x & y),
         FunctionNode("|", lambda x, y: x | y),
         FunctionNode("^", lambda x, y: x ^ y),
         FunctionNode("%", lambda x, y: x % y),
+        # FunctionNode("**i", lambda x, y: int(x ** y)),  # creates various type errors
     ]
     
     component_functions = nullary_operations + unary_operations + binary_operations
