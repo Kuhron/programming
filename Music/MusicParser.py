@@ -1,6 +1,7 @@
 import Music.MidiUtil as mu
 import Music.MusicalStructureUtil as structure
 import Music.WavUtil as wav
+import Music.TimbreMaker as timbre
 
 
 TEMPO = 150
@@ -229,7 +230,8 @@ if __name__ == "__main__":
     # res = parse_file("MusicParserTestInputAdvanced.txt", TEMPO)
     # res = parse_file("MusicTextGenerator_Output.txt", TEMPO)
     # print(res)
-    signal = wav.get_signal_from_notes(res)
+    spectrum = timbre.get_spectrum_exponential(n_harmonics=12, random_modification=True)
+    signal = wav.get_signal_from_notes(res, spectrum)
     # wav.send_signal_to_audio_out(signal)
     wav.write_signal_to_wav(signal, "MusicParser_Output.wav")
     midi_input, midi_output = mu.get_input_and_output_devices()

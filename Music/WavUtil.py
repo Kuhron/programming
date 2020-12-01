@@ -8,7 +8,7 @@ RATE = 44100
 MAX_AMPLITUDE = 32767
 
 
-def get_signal_from_freq(freq, seconds, initial_click=False, truncate=True):
+def get_signal_from_freq(freq, seconds, initial_click=False, truncate=True, spectrum=None):
     n_frames = RATE * seconds
 
     if truncate:
@@ -25,10 +25,10 @@ def get_signal_from_freq(freq, seconds, initial_click=False, truncate=True):
     return ys
 
 
-def get_signal_from_notes(notes):
+def get_signal_from_notes(notes, spectrum=None):
     res = []
     for note in notes:
-        res.extend(list(note.get_wav_signal()))
+        res.extend(list(note.get_wav_signal(spectrum=spectrum)))
     return np.array(res)
 
 

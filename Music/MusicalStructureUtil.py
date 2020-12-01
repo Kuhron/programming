@@ -25,8 +25,8 @@ class Note:
         self.duration = duration
         self.midi_loudness = int(MIDI_MAX_LOUDNESS / 3)
 
-    def get_wav_signal(self, truncate=True):
-        return wav.get_signal_from_freq(self.frequency, self.duration.duration_seconds, initial_click=False, truncate=truncate)
+    def get_wav_signal(self, truncate=True, spectrum=None):
+        return wav.get_signal_from_freq(self.frequency, self.duration.duration_seconds, initial_click=False, truncate=truncate, spectrum=spectrum)
 
     def output_to_midi(self, midi_output, stop=True):
         midi_output.note_on(self.midi_pitch_number, self.midi_loudness)
