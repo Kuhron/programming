@@ -32,6 +32,23 @@ class FunctionTree:
         return "{}({})".format(root_symbol, args_str)
 
     @staticmethod
+    def from_str(s, component_functions):
+        print("from_str {}".format(s))
+        if "(" in s:
+            outer_func_symbol, *rest_lst = s.split("(")
+            rest = "(".join(rest_lst)
+            func_node = FunctionNode.from_symbol(outer_func_symbol, component_functions)
+            assert rest[-1] == ")", rest
+            arg_strs = rest[:-1].split(",")
+            sub_trees = [FunctionTree.from_str(arg_s, component_functions) for arg_s in arg_strs]
+            return FunctionTree(func_node, sub_trees)
+        else:
+            func_symbol = s
+            func_node = FunctionNode.from_symbol(s, component_functions)
+            sub_trees = []
+            return FunctionTree(func_node, sub_trees)
+
+    @staticmethod
     def random(component_functions, arity):
         outside_argument_getter_components = FunctionNode.create_outside_argument_getters(arity)
         all_component_functions = component_functions + outside_argument_getter_components
@@ -57,6 +74,12 @@ class FunctionTree:
             Z = np.array(Z).T  # since X values were row numbers, need to transpose so X is instead column number, i.e. X axis is horizontal
             plt.imshow(Z, origin="lower")
             plt.colorbar()
+            plt.title(self.get_str())
+            plt.show()
+        elif arity == 1:
+            xs = list(range(256))
+            ys = [self.evaluate((x,)) for x in xs]
+            plt.plot(xs, ys)
             plt.title(self.get_str())
             plt.show()
         else:
@@ -100,55 +123,15 @@ class FunctionNode:
             res.append(f)
         return res
 
-
-def plot_func(f):
-    xs = list(range(100))
-    X, Y = np.meshgrid(xs, xs)
-    Z = f(X, Y)
-    plt.imshow(Z)
-    plt.colorbar()
-    plt.show()
-
-
-# def get_expression(components):
-#     option = random.choice(["x", "y", "nullary", "unary", "binary"])
-#     if option == "x":
-#         f_str = "x"
-#         f = lambda x, y: x
-#         return f_str, val
-#     elif option == "y":
-#         f_str = "y"
-#         f = lambda x, y: y
-#         return f_str, f
-#     elif option == "nullary":
-#         candidates = list(components[0].items())
-#         f_str_key, f_nullary = random.choice(candidates)
-#         f_str = "{}()".format(f_str_key)
-#         f = lambda x, y: f_nullary()
-#         return f_str, f
-#     elif option == "unary":
-#         candidates = list(components[1].items())
-#         f_str_key, f_unary = random.choice(candidates)
-#         arg_str_1, arg_f_1 = get_expression(x, y, components)
-#         f_str = "{}({})".format(f_str_key, arg_str_1)
-#         f = lambda x, y: f_unary(arg_1)
-#         return f_str, lambda x, y: f(arg_1)
-
-
-
-# def create_function(components):
-#     n_args = random.choice(list(components.keys()))
-#     f_symbol = random.choice(list(components[n_args].keys()))
-#     f = components[n_args][f_symbol]
-# 
-#     if n_args == 0:
-#         return lambda x, y: f()
-#     elif n_args == 1:
-#         return lambda x, y: f(x+y)
-#     elif n_args == 2:
-#         return f
-#     else:
-#         raise
+    @staticmethod
+    def from_symbol(s, component_functions):
+        candidates = [fn for fn in component_functions if fn.symbol == s]
+        if len(candidates) == 0:
+            raise Exception("no function found for {}".format(repr(s)))
+        elif len(candidates) == 1:
+            return candidates[0]
+        else:
+            raise Exception("more than one function found for {}".format(repr(s)))
 
 
 def evaluate_tuple(tup):
@@ -172,6 +155,7 @@ if __name__ == "__main__":
     unary_operations = [
         FunctionNode("~", lambda x: ~x),
         FunctionNode("-", lambda x: -x),
+        FunctionNode("_/", lambda x: 0 if x <= 0 else x),
     ]
     
     binary_operations = [
@@ -183,7 +167,8 @@ if __name__ == "__main__":
         FunctionNode("|", lambda x, y: x | y),
         FunctionNode("^", lambda x, y: x ^ y),
         FunctionNode("%", lambda x, y: x % y),
-        # FunctionNode("**i", lambda x, y: int(x ** y)),  # creates various type errors
+        # FunctionNode("**", lambda x, y: int(int(x) ** int(y))),  # try to avoid typeerrors and making floats
+        # FunctionNode("<<", lambda x, y: x << y if y >= 0 else x >> (-y)),  # creates errors
     ]
     
     component_functions = nullary_operations + unary_operations + binary_operations
@@ -214,13 +199,14 @@ if __name__ == "__main__":
     # print(x24)
 
     arity = 2  # will make function of x and y
+    # arity = 1  # will make function of x
     function_tree = FunctionTree.random(component_functions, arity)
     print("f(x0, x1) = {}".format(function_tree.get_str()))
-    # for x in range(10):
-    #     s = ""
-    #     for y in range(10):
-    #         args = (x, y)
-    #         val = function_tree.evaluate(args)
-    #         s += "{} ".format(val)
-    #     print(s)
+    # print("f(x0) = {}".format(function_tree.get_str()))
     function_tree.plot(arity=arity)
+
+    # s = "^(7,+(2,&(x0,-(x0,3))))"
+    # function_tree = FunctionTree.from_str(s, component_functions)
+    # function_tree.plot(arity=1)
+
+
