@@ -161,6 +161,7 @@ def play(n_players, deck, user_plays=True, silent=False):
                 if card_count == len(deck.CARDS):
                     # just so the board and scores will be printed at the end of each hand
                     break
+                input("press enter to continue")
 
             if index == user:
                 if not silent: print("Your cards:"," ".join(deck.sort_by_suit(hands[user])),"\n")
