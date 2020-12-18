@@ -31,8 +31,7 @@ class UniverseState:
         self.particles = particles
 
     @staticmethod
-    def get_random_initial_state():
-        n_particles = random.choice(range(2, 12))
+    def get_random_initial_state(n_particles):
         particles = []
         for i in range(n_particles):
             p = Particle.get_random_particle()
@@ -93,19 +92,27 @@ class UniverseState:
         radial_vectors = self.get_radial_vectors_between_particles()
         r_squareds = distances ** 2
         mass_products = self.get_mass_product_matrix()
-        G = 1
+        G = 1e-6
         force_magnitudes = np.where(distances == 0, 0, G * mass_products / r_squareds)
         forces = force_magnitudes[:, :, None] * -1 * radial_vectors  # for each cell in (n,n) grid, multiply 2d vector by 1d magnitude, so need to broadcast (n,n) magnitude array to (n,n,1)
         forces_per_particle = forces.sum(axis=0)  # arr.sum(**kwargs) is same as np.sum(arr, **kwargs)
         masses = self.get_masses()
         accelerations = forces_per_particle / masses[:, None]
-        print("\n\n-- accelerations")
-        print("force magnitudes:", force_magnitudes)
-        print("forces:", forces)
-        print("masses:", masses)
-        print("accelerations:", accelerations)
-        # input("a")
-        # acceleration_magnitudes = np.linalg.norm(accelerations, axis=1)
+        acceleration_magnitudes = np.linalg.norm(accelerations, axis=1)
+
+        debug = False
+        if debug:
+            print("\n\n-- getting accelerations")
+            print("positions:\n{}".format(self.get_positions()))
+            print("distances:\n{}".format(distances))
+            print("radial vectors:\n{}".format(radial_vectors))
+            print("force magnitudes:\n{}".format(force_magnitudes))
+            print("forces:\n{}".format(forces))
+            print("masses:\n{}".format(masses))
+            print("accelerations:\n{}".format(accelerations))
+            print("acceleration magnitudes:\n{}".format(acceleration_magnitudes))
+            # input("a")
+
         return accelerations
 
     def evolve(self):
@@ -114,9 +121,12 @@ class UniverseState:
         self.accelerate_particles(accelerations)
         self.move_particles()
 
-    def plot(self):
+    def plot(self, restrict_to_original_box=False):
         positions = self.get_positions()
         plt.scatter(*positions.T)
+        if restrict_to_original_box:
+            plt.xlim(-1, 1)
+            plt.ylim(-1, 1)
 
 
 
@@ -124,14 +134,15 @@ if __name__ == "__main__":
     plt.ion()
     fignum = plt.gcf().number  # use to determine if user has closed plot
 
-    state = UniverseState.get_random_initial_state()
+    n_particles = 100
+    state = UniverseState.get_random_initial_state(n_particles)
     while True:
         if not plt.fignum_exists(fignum):
             print("user closed plot; exiting")
             break
         state.evolve()
         plt.gcf().clear()
-        state.plot()
+        state.plot(restrict_to_original_box=False)
         plt.draw()
         plt.pause(0.001)
 
