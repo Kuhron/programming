@@ -92,13 +92,18 @@ def draw_cards_no_set_stochastic(n_dimensions):
 
 def get_max_no_set_stats(n_dimensions):
     counts = {}
+    max_count = 0
+    max_example = None
     for i in range(1000):
         cards_no_set = draw_cards_no_set_stochastic(n_dimensions)
         count = len(cards_no_set)
+        if count > max_count:
+            max_count = count
+            max_example = sorted(cards_no_set)
         if count not in counts:
             counts[count] = 0
         counts[count] += 1
-    return counts
+    return counts, max_example
 
 
 if __name__ == "__main__":
@@ -125,9 +130,11 @@ if __name__ == "__main__":
     assert len(cards_17_no_set) == 17
     assert not has_set(cards_17_no_set)  # yep, indeed it lacks a set, so more than 2^d is possible
 
-    for n_dimensions in [1, 2, 3, 4]:
+    for n_dimensions in [1, 2, 3, 4, 5]:
         print("\n-- {} dimensions".format(n_dimensions))
-        max_no_set_stats = get_max_no_set_stats(n_dimensions)
+        max_no_set_stats, max_example_cards = get_max_no_set_stats(n_dimensions)
         for k, v in sorted(max_no_set_stats.items(), reverse=True):
             print("{} cards ({} occurrences)".format(k, v))
-
+        print("example of max cards:")
+        for c in max_example_cards:
+            print(c)

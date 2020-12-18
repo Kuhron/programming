@@ -88,10 +88,18 @@ while k < 1000: # while d != []:
         print("i bid",t)
         b = input("bid ")
         if b != "":
-            b = int(b)
-            while b <= t:
-                b = input("bid ")
+            try:
                 b = int(b)
+            except ValueError:
+                print("invalid int")
+                continue
+            while b <= t:
+                b_inp = input("bid ")
+                try:
+                    b = int(b_inp)
+                except ValueError:
+                    print("invalid int")
+                    continue
             if b >= f-1: # f-1 because the new t would just equal b
                 print("It's yours.")
                 o = True
