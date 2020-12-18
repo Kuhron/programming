@@ -205,7 +205,7 @@ if __name__ == "__main__":
 
     n_particles = 2
     allow_negative_mass = False
-    gravity_power = 1/4  # 2 is normal (1/r^p)
+    gravity_power = 1/3  # 2 is normal (1/r^p)
     big_g = 1e-6
     plot_every_n_steps = 100
     state = UniverseState.get_random_initial_state(n_particles, allow_negative_mass=allow_negative_mass)
