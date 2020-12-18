@@ -13,8 +13,11 @@ class Particle:
         self.color = self.get_color()
     
     @staticmethod
-    def get_random_particle(max_xy=1):
-        mass_sign = 1 #random.choice([-1, 1])
+    def get_random_particle(max_xy=1, allow_negative_mass=True):
+        if allow_negative_mass:
+            mass_sign = random.choice([-1, 1])
+        else:
+            mass_sign = 1
         mass = 10 * np.random.pareto(a=1) * mass_sign
         position = np.random.uniform(-max_xy, max_xy, (2,))
         # velocity = np.random.uniform(-1, 1, (2,))
@@ -48,10 +51,10 @@ class UniverseState:
         self.max_y = 0
 
     @staticmethod
-    def get_random_initial_state(n_particles):
+    def get_random_initial_state(n_particles, allow_negative_mass=True):
         particles = []
         for i in range(n_particles):
-            p = Particle.get_random_particle()
+            p = Particle.get_random_particle(allow_negative_mass=allow_negative_mass)
             particles.append(p)
         return UniverseState(particles)
 
@@ -70,6 +73,8 @@ class UniverseState:
         return positions
 
     def get_distance_matrix(self):
+        if len(self.particles) == 0:
+            raise Exception("can't get distance matrix from zero particles")
         x = self.get_positions()
         n_particles, n_dim = x.shape
         assert n_particles == len(self.particles)
@@ -112,12 +117,10 @@ class UniverseState:
         for p, a in zip(self.particles, accelerations):
             p.accelerate(a)
 
-    def get_accelerations(self):
+    def get_accelerations(self, gravity_power=2, big_g=1e-3):
         distances = self.get_distance_matrix()
         radial_vectors = self.get_radial_vectors_between_particles()
-        # power = 2  # normal value: 2
-        power = 1/4
-        force_factors = 1 / (distances ** power)
+        force_factors = 1 / (distances ** gravity_power)
 
         # make a possibly interesting modification: force goes up dramatically again once objects are too far away, keeping the system bound
         # distant_distance = 10
@@ -126,9 +129,8 @@ class UniverseState:
 
 
         mass_products = self.get_mass_product_matrix()
-        G = 1e-3
         gravity_direction = -1  # -1 for attractive, 1 for repulsive
-        force_magnitudes = np.where(distances == 0, 0, G * mass_products * force_factors)
+        force_magnitudes = np.where(distances == 0, 0, big_g * mass_products * force_factors)
         forces = force_magnitudes[:, :, None] * gravity_direction * radial_vectors  # for each cell in (n,n) grid, multiply 2d vector by 1d magnitude, so need to broadcast (n,n) magnitude array to (n,n,1)
         forces_per_particle = forces.sum(axis=0)  # arr.sum(**kwargs) is same as np.sum(arr, **kwargs)
         masses = self.get_masses()
@@ -150,13 +152,14 @@ class UniverseState:
 
         return accelerations
 
-    def evolve(self):
+    def evolve(self, gravity_power=2, big_g=1e-3):
         # I choose to change the velocities first, then step-move the particles with their new velocities
-        accelerations = self.get_accelerations()
+        accelerations = self.get_accelerations(gravity_power=gravity_power, big_g=big_g)
         self.accelerate_particles(accelerations)
         self.move_particles()
 
         n = len(self.particles)
+        assert n > 0
         # get rid of ones that are going too far away
         self.prune(min_x=-10, max_x=10, min_y=-10, max_y=10)
         self.add_new_particles(n)
@@ -173,10 +176,11 @@ class UniverseState:
     def add_new_particles(self, n_total_to_achieve):
         n = len(self.particles)
         n_to_make = n_total_to_achieve - n
-        if n <= 0:
+        if n_to_make <= 0:
             return
         new_particles = [Particle.get_random_particle(max_xy=10) for i in range(n_to_make)]
         self.particles += new_particles
+        assert len(self.particles) == n_total_to_achieve
 
     def plot(self, restrict_to_original_box=False, restrict_to_record_box=False):
         positions = self.get_positions()
@@ -200,7 +204,11 @@ if __name__ == "__main__":
     fignum = plt.gcf().number  # use to determine if user has closed plot
 
     n_particles = 2
-    state = UniverseState.get_random_initial_state(n_particles)
+    allow_negative_mass = False
+    gravity_power = 1/4  # 2 is normal (1/r^p)
+    big_g = 1e-6
+    plot_every_n_steps = 100
+    state = UniverseState.get_random_initial_state(n_particles, allow_negative_mass=allow_negative_mass)
 
     step_i = 0
     if n_particles == 2:
@@ -209,16 +217,18 @@ if __name__ == "__main__":
         if not plt.fignum_exists(fignum):
             print("user closed plot; exiting")
             break
-
-        state.evolve()
+        state.evolve(gravity_power=gravity_power, big_g=big_g)
         if n_particles == 2:
+            assert len(state.particles) == 2
             distance = state.get_distance_matrix()[0, 1]
             distances.append(distance)
-        if step_i % 100 == 0:
+        if step_i % plot_every_n_steps == 0:
+            print("step {}".format(step_i))
             plt.gcf().clear()
             state.plot(restrict_to_original_box=False, restrict_to_record_box=True)
             plt.draw()
             plt.pause(0.001)
+        step_i += 1
     plt.ioff()  # how to close the ion()
 
     if n_particles == 2:
