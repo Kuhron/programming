@@ -14,7 +14,7 @@ class Particle:
     
     @staticmethod
     def get_random_particle(max_xy=1):
-        mass_sign = random.choice([-1, 1])
+        mass_sign = 1 #random.choice([-1, 1])
         mass = 10 * np.random.pareto(a=1) * mass_sign
         position = np.random.uniform(-max_xy, max_xy, (2,))
         # velocity = np.random.uniform(-1, 1, (2,))
@@ -115,8 +115,9 @@ class UniverseState:
     def get_accelerations(self):
         distances = self.get_distance_matrix()
         radial_vectors = self.get_radial_vectors_between_particles()
-        r_squareds = distances ** 2
-        force_factors = 1 / r_squareds
+        # power = 2  # normal value: 2
+        power = 1/4
+        force_factors = 1 / (distances ** power)
 
         # make a possibly interesting modification: force goes up dramatically again once objects are too far away, keeping the system bound
         # distant_distance = 10
@@ -125,7 +126,7 @@ class UniverseState:
 
 
         mass_products = self.get_mass_product_matrix()
-        G = 1e-5
+        G = 1e-3
         gravity_direction = -1  # -1 for attractive, 1 for repulsive
         force_magnitudes = np.where(distances == 0, 0, G * mass_products * force_factors)
         forces = force_magnitudes[:, :, None] * gravity_direction * radial_vectors  # for each cell in (n,n) grid, multiply 2d vector by 1d magnitude, so need to broadcast (n,n) magnitude array to (n,n,1)
@@ -198,19 +199,28 @@ if __name__ == "__main__":
     plt.ion()
     fignum = plt.gcf().number  # use to determine if user has closed plot
 
-    n_particles = 100
+    n_particles = 2
     state = UniverseState.get_random_initial_state(n_particles)
 
     step_i = 0
+    if n_particles == 2:
+        distances = []
     while True:
         if not plt.fignum_exists(fignum):
             print("user closed plot; exiting")
             break
 
         state.evolve()
+        if n_particles == 2:
+            distance = state.get_distance_matrix()[0, 1]
+            distances.append(distance)
         if step_i % 100 == 0:
             plt.gcf().clear()
             state.plot(restrict_to_original_box=False, restrict_to_record_box=True)
             plt.draw()
             plt.pause(0.001)
+    plt.ioff()  # how to close the ion()
 
+    if n_particles == 2:
+        plt.plot(distances)
+        plt.show()
