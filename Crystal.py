@@ -29,6 +29,7 @@ class Grid:
         self.points_by_state[States.EMPTY] = {(i, j) for j in range(side_length) for i in range(side_length)}
         self.state_ordering = [States.EMPTY, States.NEW, States.EXISTING]
         self.iteration = 0
+        self.printable = self.side_length <= 37
 
     def get_state_at(self, point):
         return self.grid[point[0]][point[1]]
@@ -103,15 +104,16 @@ class Grid:
     def get_state_array(self, point_array):
         return [[self.get_state_at(p) for p in row] for row in point_array]
 
-    def print(self):
-        if self.side_length > 37:
-            # too big to fit on screen
+    def print(self, sleep_time):
+        if not self.printable:
+            # too big to fit on screen, don't sleep
             print("can't fit grid on screen")
             return
         print("/" + "-" * (2 * self.side_length - 1) + "\\")
         for row in self.grid:
             print("|" + " ".join(States.get_char(state) for state in row) + "|")
         print("\\" + "-" * (2 * self.side_length - 1) + "/")
+        time.sleep(sleep_time)
 
     def plot_age(self):
         plt.imshow(np.array(self.birth_grid))
@@ -302,17 +304,16 @@ if __name__ == "__main__":
             rule = GrowthRule(*rule)
         growth_rules.add(rule)
 
-    grid.print()
+    grid.print(sleep_time=0)
     # for i in range(10):
     while True:
         try:
             # input("\npress enter to continue\n")
             grid.grow(growth_rules)
             if not args.expedite:
-                grid.print()
-                time.sleep(0.1)
+                grid.print(sleep_time=0.1)
         except StopGrowthIteration:
-            grid.print()
+            grid.print(sleep_time=0.1)
             print("No more points to grow!")
             break
 
