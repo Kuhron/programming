@@ -1,15 +1,17 @@
 import random
 import string
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Person:
     def __init__(self):
         self.name = get_random_name()
         self.location = get_random_location()
-        self.propensity_to_copy = random.random()
-        self.propensity_to_innovate = random.random()
-        self.propensity_to_remain_same = random.random()
-        self.k_neighbors = random.randint(1, 5)
+        self.propensity_to_copy = 10  # random.random()
+        self.propensity_to_innovate = 1  # random.random()
+        self.propensity_to_remain_same = 3  # random.random()
+        self.k_neighbors = random.randint(3, 10)
 
     def change_name(self, people):
         pc = self.propensity_to_copy
@@ -19,13 +21,10 @@ class Person:
         pc1 = pc/p_total
         pi1 = pi/p_total
         pr1 = pr/p_total
-        r = random.random()
-        if r < pc1:
-            self.copy_name(people)
-        elif r < pi1:
-            self.innovate_name()
-        else:
-            pass
+
+        fs = [lambda: self.copy_name(people), lambda: self.innovate_name(), lambda: None]
+        choice = np.random.choice(fs, p=[pc1, pi1, pr1])
+        choice()
 
     def copy_name(self, people):
         neighbors = get_k_nearest_neighbors(self, self.k_neighbors, people)
@@ -34,6 +33,7 @@ class Person:
 
     def innovate_name(self):
         self.name = get_random_name()
+        # print("innovated {}".format(self.name))
 
 
 
@@ -59,14 +59,22 @@ def get_k_nearest_neighbors(person, k, people):
     return [t[1] for t in tups[1:k+1]]  # don't include self
 
 
-def summarize_names(people):
-    print("\n-- name summary")
+def get_count_dict(lst):
     d = {}
-    for p in people:
-        if p.name not in d:
-            d[p.name] = 0
-        d[p.name] += 1
+    for x in lst:
+        if x not in d:
+            d[x] = 0
+        d[x] += 1
+    return d
+
+
+def summarize_names(people, top_n=None):
+    print("\n-- name summary")
+    names = [p.name for p in people]
+    d = get_count_dict(names)
     tups = sorted(d.items(), key=lambda kv: kv[1], reverse=True)
+    if top_n is not None:
+        tups = tups[:top_n]
     for t in tups:
         print(t)
     print("-- done summarizing names")
@@ -77,8 +85,24 @@ def change_names(people):
         p.change_name(people)
 
 
+def plot_counts(count_dicts):
+    all_names = set()
+    for d in count_dicts:
+        all_names |= set(d.keys())
+    for name in all_names:
+        counts = [d.get(name, 0) for d in count_dicts]
+        plt.plot(counts)
+    plt.show()
+
+
 if __name__ == "__main__":
     people = [Person() for i in range(200)]
-    for i in range(100):
-        summarize_names(people)
+    count_dicts = []
+    for i in range(200):
+        count_dict = get_count_dict([p.name for p in people])
+        count_dicts.append(count_dict)
+        summarize_names(people, top_n=10)
         change_names(people)
+        # input("press enter to continue")
+
+    plot_counts(count_dicts)
