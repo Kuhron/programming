@@ -8,10 +8,10 @@ class Person:
     def __init__(self):
         self.name = get_random_name()
         self.location = get_random_location()
-        self.propensity_to_copy = 10  # random.random()
-        self.propensity_to_innovate = 1  # random.random()
-        self.propensity_to_remain_same = 3  # random.random()
-        self.k_neighbors = random.randint(3, 10)
+        self.propensity_to_copy = 100  # random.random()
+        self.propensity_to_innovate = 0  # random.random()
+        self.propensity_to_remain_same = 0  # random.random()
+        self.k_neighbors = 5  # random.randint(3, 10)
 
     def change_name(self, people):
         pc = self.propensity_to_copy
@@ -28,8 +28,14 @@ class Person:
 
     def copy_name(self, people):
         neighbors = get_k_nearest_neighbors(self, self.k_neighbors, people)
-        chosen = random.choice(neighbors)
-        self.name = chosen.name
+        # chosen = random.choice(neighbors)
+        # self.name = chosen.name
+        neighbor_names = [p.name for p in neighbors]
+        neighbor_name_counts = get_count_dict(neighbor_names)
+        neighbor_names_unique = list(set(neighbor_names))
+        probability_vector = [neighbor_name_counts[name]/len(neighbor_names) for name in neighbor_names_unique]
+        chosen_name = np.random.choice(neighbor_names_unique, p=probability_vector)
+        self.name = chosen_name
 
     def innovate_name(self):
         self.name = get_random_name()
@@ -38,8 +44,29 @@ class Person:
 
 
 def get_random_name():
+    # return get_name_az_random()
+    return get_name_cv_syllables()
+
+
+def get_name_az_random():
     length = random.randint(2, 10)
     return "".join(random.choice(string.ascii_lowercase) for i in range(length))
+
+
+def get_name_cv_syllables():
+    vowels = "aeiou"
+    consonants = [x for x in string.ascii_lowercase if x not in vowels]
+    c = lambda: random.choice(consonants)
+    v = lambda: random.choice(vowels)
+    get_initial_syll = lambda: (c() if random.random() < 0.7 else "") + v()
+    get_medial_syll = lambda: c() + v()
+    get_final_syll = lambda: c() + v() + (c() if random.random() < 0.5 else "")
+    get_only_syll = lambda: (c() if random.random() < 0.7 else "") + v() + (c() if random.random() < 0.5 else "")
+    n_sylls = random.randint(1, 5)
+    if n_sylls == 1:
+        return get_only_syll()
+    else:
+        return get_initial_syll() + "".join(get_medial_syll() for i in range(n_sylls-2)) + get_final_syll()
 
 
 def get_random_location():
