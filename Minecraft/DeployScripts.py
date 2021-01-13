@@ -4,7 +4,7 @@
 import os
 from shutil import copyfile
 
-source_dir = "/home/wesley/programming/Minecraft/"
+source_dir = "/home/wesley/programming/Minecraft/RaspberryJamScripts/"
 target_dir = "/home/wesley/.minecraft/mcpipy/"
 
 pys_in_source_dir = [x for x in os.listdir(source_dir) if x.endswith(".py")]
@@ -19,9 +19,9 @@ for f in pys_in_source_dir:
         print("file exists: {}".format(target_fp))
         inp = input("overwrite? [y/n]")
         if inp == "y":
-            print("overwriting")
+            print("overwriting {}".format(f))
         else:
-            print("skipping")
+            print("skipping {}".format(f))
             continue  # important!
     copyfile(source_fp, target_fp)
     print("copied {} -> {}".format(source_fp, target_fp))
