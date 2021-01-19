@@ -2,6 +2,7 @@
 
 
 import os
+import sys
 from shutil import copyfile
 
 source_dir = "/home/wesley/programming/Minecraft/RaspberryJamScripts/"
@@ -17,8 +18,13 @@ for f in pys_in_source_dir:
         continue  # important!
     if os.path.exists(target_fp):
         print("file exists: {}".format(target_fp))
-        inp = input("overwrite? [y/n]")
-        if inp == "y":
+        force_overwrite = len(sys.argv) > 1 and sys.argv[1] == "-f"
+        if not force_overwrite:
+            inp = input("overwrite? [y/n]")
+        else:
+            inp = None
+
+        if force_overwrite or inp == "y":
             print("overwriting {}".format(f))
         else:
             print("skipping {}".format(f))
