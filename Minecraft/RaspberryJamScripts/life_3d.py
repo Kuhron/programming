@@ -70,7 +70,8 @@ def life(mc,x0,y0,z0,width,height,empty=block.AIR,full=block.GOLD_BLOCK,delay=0.
             for col in range(width):
                 if blocks[col*width+row] != block.AIR.id:
                    board[row][col] = True
-        draw(mc,x0,y0,z0,width,height,None,board,full,empty)
+        starter_block = block.GOLD_BLOCK
+        draw(mc,x0,y0,z0,width,height,None,board,full=starter_block,empty=empty)
 
     while True:
         if generation % 10 == 0:

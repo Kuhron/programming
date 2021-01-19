@@ -144,7 +144,7 @@ alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar &"
 alias sublime="/opt/sublime_text/sublime_text &"
 alias ipa="vim /usr/share/kmfl/IPA14.kmn"
 alias zotero="/usr/bin/zotero/zotero &"
-alias nwc="sudo killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"  # if you killall & timidity then it will kill the one you just started
+alias nwc="killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"  # if you killall & timidity then it will kill the one you just started
 alias flex="/usr/bin/fieldworks-flex"
 alias antlr4='java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
 alias grun='echo "do not use; use ParsingDebugging.py which I wrote instead"' #'java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
@@ -152,6 +152,7 @@ alias antlrworks='java -jar ~/antlrworks-1.5.2-complete.jar'
 alias grepdocx="/home/wesley/grepdocx.sh"
 alias rpdf="python /home/wesley/programming/ReadRandomPdf.py"
 alias amongus="sudo wine .steam/steam/steamapps/common/Among\ Us/Among\ Us.exe"
+alias synctime="sudo tlsdate -s -H mail.google.com"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}

@@ -7,6 +7,10 @@ import matplotlib.pyplot as plt
 
 from FunctionalFormGui import get_function, get_distribution_function
 import Music.WavUtil as wav
+from Music.MidiUtil import (
+    note_number_to_hertz, hertz_to_note_number,
+    note_number_to_name, test_note_number_math,
+)
 
 
 def elementwise_mean(array):
@@ -52,66 +56,6 @@ def test_can_open_file():
             spf.setnframes(0)
     except:
         raise RuntimeError("close the file!")
-
-
-def note_number_to_hertz(n):
-    # a440 is 69, c0 ~=16 Hz is 0
-    deviation_from_a440 = (n - 69)/12
-    a440_freq = 440
-    factor_deviation = 2 ** deviation_from_a440
-    return a440_freq * factor_deviation
-
-
-def hertz_to_note_number(hz):
-    # a440 is 69, c0 ~=16 Hz is 0
-    log2_hz = math.log(hz, 2)
-    log2_a440 = math.log(440, 2)
-    deviation_in_logs = log2_hz - log2_a440
-    deviation_in_semitones = deviation_in_logs*12
-    return 69 + deviation_in_semitones
-
-
-def note_number_to_name(n):
-    pitch_class = n % 12
-    octave = (n // 12) - 1  # C-1 ~= 8 Hz is number 0; C0 ~= 16 Hz is number 12
-    if pitch_class % 1 == 0:
-        pitch_class = int(pitch_class)
-        letter = "CKDHEFXGJARB"[pitch_class]
-    else:
-        letter = "?"
-    assert octave % 1 == 0
-    octave = int(octave)
-    return letter + str(octave)
-
-
-def test_note_number_math():
-    assert hertz_to_note_number(440) == 69, "440 Hz is #{}, not #69".format(hertz_to_note_number(440))
-
-    n = 0
-    h = note_number_to_hertz(n)
-    nn = hertz_to_note_number(h)
-    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
-
-    n = 69 + 12
-    h = note_number_to_hertz(n)
-    assert abs(h - 880) < 1e-6, "n={}, h={}, should be 880".format(n, h)
-    nn = hertz_to_note_number(880)
-    assert abs(nn - n) < 1e-6, "nn from 880 = {}, should be {}".format(nn, n)
-
-    n = -25
-    h = note_number_to_hertz(n)
-    nn = hertz_to_note_number(h)
-    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
-
-    n = 106.1315126
-    h = note_number_to_hertz(n)
-    nn = hertz_to_note_number(h)
-    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
-
-    n = np.pi * np.exp(np.pi)
-    h = note_number_to_hertz(n)
-    nn = hertz_to_note_number(h)
-    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
 
 
 def get_freqs(n_freqs, min_note_number, max_note_number, restrict_to_notes=True):
@@ -184,12 +128,16 @@ def get_varying_spectrum(freqs, freq_names, full_length_seconds, length_dilation
             print("getting signal #{}/{}".format(signal_i, len(freqs)))
         func = get_signal_function(freq, peak)
         signal_functions.append(func)
+        signal_i += 1
+    print("done getting signals")
 
     new_signal_function = function_mean(signal_functions)
     xs = np.array([i for i in range(n_frames)])
     new_signal = new_signal_function(xs)
 
+    print("writing signal to wav")
     wav.write_signal_to_wav(new_signal, "InverseFourierOutput.wav")
+    print("done writing signal to wav")
 
     # trying to create spectrogram; matplotlib's specgram doesn't work well at all for this
     bin_width = 1 / 12

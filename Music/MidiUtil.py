@@ -1,6 +1,8 @@
 from datetime import datetime
 import os
 import pickle
+import math
+import numpy as np
 import random
 import time
 
@@ -216,4 +218,65 @@ def invert_data(data, pivot):
     lst = MidiEvent.from_data_list(data)
     lst = [x.invert_pitch(pivot) for x in lst]
     return [x.to_raw_data() for x in lst]
+
+
+def note_number_to_hertz(n):
+    # a440 is 69, c0 ~=16 Hz is 0
+    deviation_from_a440 = (n - 69)/12
+    a440_freq = 440
+    factor_deviation = 2 ** deviation_from_a440
+    return a440_freq * factor_deviation
+
+
+def hertz_to_note_number(hz):
+    # a440 is 69, c0 ~=16 Hz is 0
+    log2_hz = math.log(hz, 2)
+    log2_a440 = math.log(440, 2)
+    deviation_in_logs = log2_hz - log2_a440
+    deviation_in_semitones = deviation_in_logs*12
+    return 69 + deviation_in_semitones
+
+
+def note_number_to_name(n):
+    pitch_class = n % 12
+    octave = (n // 12) - 1  # C-1 ~= 8 Hz is number 0; C0 ~= 16 Hz is number 12
+    if pitch_class % 1 == 0:
+        pitch_class = int(pitch_class)
+        letter = "CKDHEFXGJARB"[pitch_class]
+    else:
+        letter = "?"
+    assert octave % 1 == 0
+    octave = int(octave)
+    return letter + str(octave)
+
+
+def test_note_number_math():
+    assert hertz_to_note_number(440) == 69, "440 Hz is #{}, not #69".format(hertz_to_note_number(440))
+
+    n = 0
+    h = note_number_to_hertz(n)
+    nn = hertz_to_note_number(h)
+    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
+
+    n = 69 + 12
+    h = note_number_to_hertz(n)
+    assert abs(h - 880) < 1e-6, "n={}, h={}, should be 880".format(n, h)
+    nn = hertz_to_note_number(880)
+    assert abs(nn - n) < 1e-6, "nn from 880 = {}, should be {}".format(nn, n)
+
+    n = -25
+    h = note_number_to_hertz(n)
+    nn = hertz_to_note_number(h)
+    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
+
+    n = 106.1315126
+    h = note_number_to_hertz(n)
+    nn = hertz_to_note_number(h)
+    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
+
+    n = np.pi * np.exp(np.pi)
+    h = note_number_to_hertz(n)
+    nn = hertz_to_note_number(h)
+    assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
+
 
