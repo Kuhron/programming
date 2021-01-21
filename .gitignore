@@ -30,3 +30,5 @@ FlexPy/Bible/texts/
 # copied file from Kris for debugging purposes, don't want to plagiarize by committing it in my own repo
 FlexPy/KrisCorpusToolsDebugging.py
 
+# virus genomes
+Genetics/ncbi_dataset/

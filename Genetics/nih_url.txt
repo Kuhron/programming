@@ -1,0 +1,5 @@
+# for all virus genomes they have:
+https://www.ncbi.nlm.nih.gov/genomes/GenomesGroup.cgi
+
+# for coronaviruses:
+https://www.ncbi.nlm.nih.gov/datasets/coronavirus/genomes/
