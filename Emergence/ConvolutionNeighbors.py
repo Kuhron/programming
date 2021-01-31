@@ -12,7 +12,12 @@ if __name__ == "__main__":
     arr -= np.mean(arr)  # set mean to 0
 
     plt.ion()
+    fignum = plt.gcf().number  # use to determine if user has closed plot
     while True:
+        if not plt.fignum_exists(fignum):
+            print("user closed plot; exiting")
+            break
+
         plt.gcf().clear()
         plt.imshow(arr)
         plt.colorbar()
