@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.signal import convolve
 import time
 import EmergenceMathUtil as emu
+from Discoveries import create_single_field_maze
 
 
 
