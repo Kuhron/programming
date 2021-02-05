@@ -60,3 +60,12 @@ def get_power_of_r_sums(arr, power):
     r_to_power = get_r_to_power_array(dx, dy, power=power)
     return convolve(arr, r_to_power, mode="same")  # mode=same means output is same shape as input, with convolution not spilling over the edges but just centered on each point
 
+
+def signed_log(x):
+    return np.sign(x) * np.log(abs(x)+1)
+
+
+def sigmoid(x):
+    # range -1 to 1; expression can be made to look nice as (1-exp(-x))/(1+exp(-x)) but that will be more computationally expensive because there are two exp calls
+    return -1 + 2/(1+np.exp(-x))
+

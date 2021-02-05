@@ -6,23 +6,21 @@ import EmergenceMathUtil as emu
 
 
 def create(plot_ion=False):
-    dr = 10
-    r_power = -2
-    r_to_power = emu.get_r_to_power_array(dr, dr, r_power)
-
     def evolve(field):
+        dr = 5
+        r_power = -1
+        r_to_power = emu.get_r_to_power_array(dr, dr, r_power)
         convolution = convolve(field, r_to_power, mode="same")
         c = convolution
 
         addition = 0  # initialize so rest of lines can all be +=
-        addition += -0.1 * c / np.mean(c)
-        addition += np.random.normal(0, 1, field.shape)
-        # addition += (5**2)*c - c**3  # x-x^3 will reinforce small deviations from 0 but punish large ones; increase coefficient on x to get bigger reinforcing range
+        # addition += -0.1 * c / np.mean(c)
+        # addition += np.random.normal(0, 1, field.shape)
+        addition += (5**2)*c - c**3  # x-x^3 will reinforce small deviations from 0 but punish large ones; increase coefficient on x to get bigger reinforcing range
 
         # limit addition to prevent exploding values
         # addition = emu.signed_log(addition)
-        # addition = np.sign(addition)
-        # addition = np.where(abs(addition) > 2, 0, np.sign(addition))  # might get interesting holes of 0 in the function this way (around critical points)
+        addition = np.sign(addition)
 
         field += addition
         return field
@@ -40,7 +38,7 @@ def create(plot_ion=False):
         plt.ion()
         fignum = plt.gcf().number  # use to determine if user has closed plot
         plot_field(field)
-    for i in range(1000):
+    for i in range(200):
         if plot_ion:
             if not plt.fignum_exists(fignum):
                 print("user closed plot; exiting")
@@ -50,15 +48,12 @@ def create(plot_ion=False):
         if plot_ion:
             plot_field(field)
             plt.pause(0.05)
-
-    # a last step, post-processing to reveal structure, if desired
-    field = emu.sigmoid(field)
-
     if plot_ion:
         plt.ioff()
-
-    plot_field(field)
-    plt.show()
+        plt.show()
+    else:
+        plot_field(field)
+        plt.show()
 
 
 if __name__ == "__main__":
