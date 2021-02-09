@@ -13,6 +13,7 @@ def create(plot_ion=False):
     def evolve(field):
         # convolution = convolve(field, r_to_power, mode="same")
         neighbor_sum = emu.get_neighbor_sum(field)
+        ns = neighbor_sum
         # c = neighbor_sum
 
         # addition = 0  # initialize so rest of lines can all be +=
@@ -27,14 +28,21 @@ def create(plot_ion=False):
 
         alive_mask = field == 1
         dead_mask = field == 0
-        mask_2 = neighbor_sum == 2
-        mask_3 = neighbor_sum == 3
+        # mask_2 = neighbor_sum == 2
+        # mask_3 = neighbor_sum == 3
 
         new_field = np.zeros(field.shape).astype(int)  # need astype(int) to ensure correct Life behavior
         # born if 3 neighbors
-        new_field[dead_mask & mask_3] = 1
         # stay alive if 2 or 3 neighbors
-        new_field[alive_mask & (mask_2 | mask_3)] = 1
+        new_alive_mask = (
+            (dead_mask & (ns == 3)) |  # note to self: if you write e.g. `dead_mask & ns == 3`, the & will be processed first, not the ==
+            (alive_mask & ((ns == 2) | (ns == 3)))
+        )
+        new_field[new_alive_mask] = 1
+
+        # old way, this works
+        # new_field[dead_mask & mask_3] = 1
+        # new_field[alive_mask & (mask_2 | mask_3)] = 1
 
         return new_field
 
