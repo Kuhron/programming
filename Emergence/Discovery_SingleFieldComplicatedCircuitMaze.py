@@ -7,7 +7,7 @@ import EmergenceMathUtil as emu
 
 def create(plot_ion=False):
     def evolve(field):
-        dr = 5
+        dr = 6
         r_power = -1
         r_to_power = emu.get_r_to_power_array(dr, dr, r_power)
         convolution = convolve(field, r_to_power, mode="same")
