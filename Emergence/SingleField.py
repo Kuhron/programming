@@ -36,7 +36,7 @@ def create(plot_ion=False):
         # stay alive if 2 or 3 neighbors
         new_alive_mask = (
             (dead_mask & (ns == 3)) |  # note to self: if you write e.g. `dead_mask & ns == 3`, the & will be processed first, not the ==
-            (alive_mask & ((ns == 2) | (ns == 3)))
+            (alive_mask & ((ns >= 3) & (ns <= 4)))
         )
         new_field[new_alive_mask] = 1
 
