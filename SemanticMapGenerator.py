@@ -103,11 +103,12 @@ def add_initial_forms(conceptual_space):
     return cs
 
 
-def make_semantic_change(g):
+def make_semantic_change(g, extend_probability):
+    assert 0 <= extend_probability <= 1
     g = deepcopy(g)
     # select random node, either extend its meaning to a neighbor, or replace it with a novel word
     chosen_node = random.choice(list(g.nodes))  # random.choice(g.nodes) does weird thing where choice gets an int, and tries to access that int index on the iterable, but then g.nodes interprets that int index as a node name and throws KeyError
-    extend = random.random() < 0.9
+    extend = random.random() < extend_probability
     if extend:
         # extend this node's wordform to one of its neighbors, overwriting whatever was there before
         neighbors = list(g.neighbors(chosen_node))
@@ -129,9 +130,9 @@ def make_semantic_change(g):
     return g
 
 
-def make_n_semantic_changes(g, n):
+def make_n_semantic_changes(g, n, extend_probability):
     for i in range(n):
-        g = make_semantic_change(g)
+        g = make_semantic_change(g, extend_probability=extend_probability)
     return g
 
 
@@ -155,10 +156,10 @@ def get_concepts_by_wordform_dict(language_specific_graph):
     return d
 
 
-def evolve_language_on_conceptual_space(conceptual_space):
+def evolve_language_on_conceptual_space(conceptual_space, n_changes, extend_probability):
     g0 = conceptual_space
     g1 = add_initial_forms(g0)
-    g1 = make_n_semantic_changes(g1, 100)
+    g1 = make_n_semantic_changes(g1, n_changes, extend_probability=extend_probability)
     return g1
 
 
@@ -228,17 +229,41 @@ def get_gram_complete_subgraphs_single_language(language_specific_graph):
     return res 
 
 
-def simulate_languages(n_languages, n_concepts):
-    g0 = create_conceptual_space(n_concepts)
-    # draw_weighted_graph(g)
-
+def get_random_semantic_map(conceptual_space, n_languages, n_changes, extend_probability, print_form_meaning=True):
+    g0 = conceptual_space
     language_graphs = []
     for i in range(n_languages):
-        g1 = evolve_language_on_conceptual_space(g0)
+        g1 = evolve_language_on_conceptual_space(g0, n_changes, extend_probability=extend_probability)
         language_graphs.append(g1)
-        print_form_meaning_correspondence(g1)
+        if print_form_meaning:
+            print_form_meaning_correspondence(g1)
 
-    draw_semantic_map(g0, language_graphs)
+    return create_semantic_map(g0, language_graphs)
+
+
+def adjacency(g, np_array=False):
+    # the nx function returns a scipy sparse matrix
+    sparse_matrix = nx.linalg.graphmatrix.adjacency_matrix(g)
+    if np_array:
+        return sparse_matrix.toarray()
+    else:
+        return sparse_matrix
+
+
+def get_semantic_map_accuracy(n_concepts, n_languages, n_semantic_changes, extend_probability):
+    conceptual_space = create_conceptual_space(n_concepts=n_concepts)
+    semantic_map = get_random_semantic_map(
+        conceptual_space, n_languages=n_languages, n_changes=n_semantic_changes, 
+        extend_probability=extend_probability,
+        print_form_meaning=False,
+    )
+    # draw_semantic_map(semantic_map, with_edge_labels=False)
+
+    cs_adj = adjacency(conceptual_space, np_array=True)
+    sm_adj = adjacency(semantic_map, np_array=True)
+    assert cs_adj.size == sm_adj.size
+    diff = abs(sm_adj - cs_adj).sum() / sm_adj.size
+    return diff
 
 
 def draw_weighted_graph(g):
@@ -249,22 +274,47 @@ def draw_weighted_graph(g):
     plt.show()
 
 
-def draw_semantic_map(conceptual_space, language_specific_graphs):
+def draw_semantic_map(semantic_map, with_edge_labels=True):
     # for mid-edge text labels: https://stackoverflow.com/questions/47094949/labeling-edges-in-networkx
-    g = create_semantic_map(conceptual_space, language_specific_graphs)
+    g = semantic_map
     pos = nx.spring_layout(g)
     nx.draw(g, pos, 
         edge_color='black', width=1, linewidths=1,
         node_size=500, node_color='pink', alpha=0.9, 
         labels={node:node for node in g.nodes()},
     )
-    nx.draw_networkx_edge_labels(g, pos,
-        edge_labels={(u,v): "{}-{}".format(u,v) for (u,v) in g.edges},
-        font_color='red',
-    )
+    if with_edge_labels:
+        nx.draw_networkx_edge_labels(g, pos,
+            edge_labels={(u,v): "{}-{}".format(u,v) for (u,v) in g.edges},
+            font_color='red',
+        )
     plt.show()
 
 
+def plot_semantic_map_accuracy_by_number_of_languages(n_concepts, n_semantic_changes, extend_probability, n_trials):
+    xs = np.arange(1, 11)  # number of languages
+    ys = []
+    y_stds = []
+    for n_languages in xs:
+        print("getting semantic map accuracy for {} languages".format(n_languages))
+        these_ys = []
+        for trial_i in range(n_trials):
+            next_y = get_semantic_map_accuracy(n_concepts=n_concepts, n_languages=n_languages, n_semantic_changes=n_semantic_changes,
+                extend_probability=extend_probability,
+            )
+            these_ys.append(next_y)
+        y = np.mean(these_ys)
+        y_std = np.std(these_ys)
+        ys.append(y)
+        y_stds.append(y_std)
+    plt.errorbar(xs, ys, yerr=y_stds)
+    plt.show()
+
 
 if __name__ == "__main__":
-    simulate_languages(n_languages=5, n_concepts=100)
+    plot_semantic_map_accuracy_by_number_of_languages(
+        n_concepts=25,
+        n_semantic_changes=25,
+        extend_probability=0.9,
+        n_trials=3,
+    )
