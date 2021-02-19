@@ -227,7 +227,17 @@ cultural_principles = [
     "We can never be sure of the causes of an event.",
     "Truths can be found by thought alone.",
     "Truths can only be found by experimenting in the real world.",
-    
+    "Lying is an acceptable way to achieve one's ends.",
+    "Lying is never acceptable.",
+    "If you do something for someone else, that person now owes you.",
+    "People do not owe each other for good deeds.",
+    "The dead should be respected.",
+    "The dead should not be spoken of.",
+    "The dead deserve no more respect than they did during their lifetimes.",
+    "One should respect parents' wishes.",
+    "Children will do as they please.",
+    "Those with means should help those in need.",
+    "Everyone should fend for themselves.",
 ]
 
 
