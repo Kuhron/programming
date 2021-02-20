@@ -238,6 +238,8 @@ cultural_principles = [
     "Children will do as they please.",
     "Those with means should help those in need.",
     "Everyone should fend for themselves.",
+    "Appearances are deceiving.",
+    "Appearances can be trusted.",
 ]
 
 
