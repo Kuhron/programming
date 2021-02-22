@@ -57,8 +57,8 @@ get_kinsey_estimators <- function(n_hetero, n_homo, ci_confidence) {
 
 # Kinsey = 0 for all hetero, 6 for all homo
 # so Kinsey = 6 * prob(homo)
-n_hetero = 90
-n_homo = 5
+n_hetero = 80
+n_homo = 15
 ci_confidence = 0.75
 
 print(get_kinsey_estimators(n_hetero, n_homo, ci_confidence))
