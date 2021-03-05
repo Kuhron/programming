@@ -38,6 +38,41 @@ def evaluate_grouping(g, func):
     return func(x, y)
 
 
+def plot_slice(func, n_dims):
+    assert n_dims >= 2, "too few dimensions for slice"
+    arr = [random.randint(1,100) for i in range(n_dims)]
+    # select two indices in the array for the variables
+    x_index, y_index = random.sample(range(n_dims), 2)
+    arr[x_index] = "x"
+    arr[y_index] = "y"
+    xs = list(range(1,101))
+    ys = list(range(1,101))
+    zs = [[None for y in ys] for x in xs]
+    for x_i, x in enumerate(xs):
+        for y_i, y in enumerate(ys):
+            this_arr = [a for a in arr]
+            this_arr[x_index] = x
+            this_arr[y_index] = y
+            z = get_average_syntax_tree_value(this_arr, func)
+            zs[x_i][y_i] = z
+    plt.imshow(zs)
+    plt.colorbar()
+    plt.title(arr)
+    plt.show()
+
+
+def get_average_syntax_tree_value(arr, func):        
+    groupings = get_all_syntax_groupings(arr)
+    values = [evaluate_grouping(g, func) for g in groupings]
+    has_nan = np.nan in values  # this does work even though nan is not equal to itself; maybe it's checking with `is` instead of `==`
+    if has_nan:
+        values_without_nan = [x for x in values if not np.isnan(x)]
+    else:
+        values_without_nan = values
+    avg_value = np.mean(values_without_nan)  # do this before putting nan back in; also, do count multiplicity
+    return avg_value
+
+
 def report_stats(int_lst, func):
     groupings = get_all_syntax_groupings(lst)
     values = [evaluate_grouping(g, func) for g in groupings]
@@ -139,3 +174,4 @@ if __name__ == "__main__":
     lst = [random.randint(1, 100) for i in range(6)]
     report_stats(lst, func)
 
+    plot_slice(func, n_dims=5)
