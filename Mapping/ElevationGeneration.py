@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import matplotlib.collections as mcollections
-from mpl_toolkits.basemap import Basemap
+# from mpl_toolkits.basemap import Basemap  # don't use Basemap anymore; IcosahedralGeodesicLattice can now plot data itself
 from mpl_toolkits.mplot3d import Axes3D
 from scipy import ndimage
 from datetime import datetime, timedelta

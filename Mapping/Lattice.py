@@ -5,6 +5,7 @@
 
 import random
 import string
+import os
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.mplot3d import Axes3D
@@ -119,6 +120,15 @@ class Lattice:
             df[key_str] = [0 for p_i in point_indices]
         df = nm.change_globe(df, key_str)
         return df
+
+    def write_data(self, df, output_fp):
+        if os.path.exists(output_fp):
+            raise IOError("output filepath exists! Aborting. fp = {}".format(output_fp))
+        columns_to_exclude = ["usp", "xyz", "latlondeg"]  # coordinate things that can be recalculated or retrieved from memoization files as needed, don't store them in the database
+        # Note that by default, .drop() does not operate inplace; despite the ominous name, df is unharmed by this process. (from https://stackoverflow.com/questions/29763620/)
+        new_df = df.drop(columns_to_exclude, axis=1)
+        assert new_df is not df, "uh-oh, we edited the df in-place"
+        new_df.to_csv(output_fp, index_label="index")
 
     def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=False, save=False):
         data_point_indices = df.index
