@@ -20,8 +20,6 @@ from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 
 
-MAPPING_PROJECT_DIR = "/home/wesley/programming/Mapping/Projects/"
-
 
 def get_parameter_input(var_name, default_value):
     inp = input("set param {} (or just press enter for default value of {}): ".format(var_name, default_value))
@@ -38,8 +36,8 @@ def get_parameters_from_config_file():
     return d
 
 
-def save_config_for_version(param_dict, project_name, project_version):
-    fp = MAPPING_PROJECT_DIR + "{project_name}/Data/ParamConfig_{project_name}_v{project_version}.json".format(**locals())
+def save_config_for_version(param_dict, projects_dir, project_name, project_version):
+    fp = os.path.join(projects_dir, "{project_name}/Data/ParamConfig_{project_name}_v{project_version}.json".format(**locals()))
     with open(fp, "w") as f:
         json.dump(param_dict, f)
 
@@ -82,71 +80,78 @@ def get_key_strs_in_data_dir(data_dir, project_name, project_version):
     return key_strs
 
 
-def get_map_and_version(from_image, from_data, project_name, load_project_version):
+def get_map_and_version_from_image(projects_dir, project_name, image_names, image_latlons, color_conditions, condition_ranges):
     # cada_image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
-    if from_image:
-        raise NotImplementedError("need to make this work with ParamConfig.json so file can be specified there with dir")
+    raise NotImplementedError("need to make this work with ParamConfig.json so file can be specified there with dir")
 
-        # DANGER OF MEMORY LEAKS if use big maps! Watch top!
-        # image_fp_no_dir = "TestMap_Mako.png"
-        image_fp = image_dir + image_fp_no_dir
+    # DANGER OF MEMORY LEAKS if use big maps! Watch top!
+    # image_fp_no_dir = "TestMap_Mako.png"
+    image_fp = os.path.join(image_dir, image_fp_no_dir)
 
-        print("from image {}".format(image_fp))
+    print("from image {}".format(image_fp))
 
-        elevation_data_output_fp = image_dir + "EGD_" + image_fp_no_dir.replace(".png", ".txt")
-        plot_image_output_fp = image_dir + "EGP_" + image_fp_no_dir
-    
-        # color_condition_dict = {
-        #     # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
-        #     (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
-        #     (255, 255, 255, 255): (1, lambda x: x > 0, False),  # white = land
-        #     (  0,   0,   0, 255): (0, lambda x: True, False),  # black = unspecified, anything goes
-        #     # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
-        #     # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
-        # }
-        default_color = (0, 0, 0, 255)
-        latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
-        print("creating map lattice")
-        map_lattice = IcosahedralGeodesicLattice(iterations=6)
-        print("- done creating map lattice")
-        print("creating ElevationGenerationMap from image")
-        m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
-        print("- done creating ElevationGenerationMap")
-        m.freeze_coastlines()
-    elif from_data:
-        project_dir = MAPPING_PROJECT_DIR + "{}/".format(project_name)
-        data_dir = project_dir + "Data/"
-        if load_project_version == -1:
-            # use most recent version
-            existing_versions = get_project_versions_in_data_dir(data_dir, project_name)
-            existing_versions_int = [int(x) for x in existing_versions]  # only handle int versions for now
-            load_project_version = sorted(existing_versions_int)[-1]
-        project_version_array = [int(x) for x in str(load_project_version).split("-")]
+    elevation_data_output_fp = os.path.join(image_dir, "EGD_" + image_fp_no_dir.replace(".png", ".txt"))
+    plot_image_output_fp = os.path.join(image_dir, "EGP_" + image_fp_no_dir)
 
-        # latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
-        key_strs = get_key_strs_in_data_dir(data_dir, project_name, load_project_version)
-        print("found data files for keys {}".format(key_strs))
-        m = ElevationGenerationMap.from_data(key_strs, project_name, load_project_version)
+    # color_condition_dict = {
+    #     # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
+    #     (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
+    #     (255, 255, 255, 255): (1, lambda x: x > 0, False),  # white = land
+    #     (  0,   0,   0, 255): (0, lambda x: True, False),  # black = unspecified, anything goes
+    #     # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
+    #     # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
+    # }
+    default_color = (0, 0, 0, 255)
+    latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
+    print("creating map lattice")
+    map_lattice = IcosahedralGeodesicLattice(iterations=6)
+    print("- done creating map lattice")
+    print("creating ElevationGenerationMap from image")
+    m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
+    print("- done creating ElevationGenerationMap")
+    m.freeze_coastlines()
+    new_project_version = 0
+    return m, new_project_version
 
-        if generate_further_elevation_changes:
-            new_version_array = project_version_array[:-1] + [project_version_array[-1] + 1]
-            new_project_version = "-".join(str(x) for x in new_version_array)
-            print("loaded version {}, outputting version {}".format(load_project_version, new_project_version))
-            # elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_project_version)
-            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_project_version)
-        else:
-            # in case want to overwrite existing plot, e.g. after fixing plotting bugs
-            # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_project_version)
-            new_project_version = load_project_version
+
+def get_map_and_version_from_data(projects_dir, project_name, load_project_version):
+    project_dir = os.path.join(projects_dir, "{}/".format(project_name))
+    data_dir = os.path.join(project_dir, "Data/")
+    if load_project_version == -1:
+        # use most recent version
+        existing_versions = get_project_versions_in_data_dir(data_dir, project_name)
+        existing_versions_int = [int(x) for x in existing_versions]  # only handle int versions for now
+        load_project_version = sorted(existing_versions_int)[-1]
+    project_version_array = [int(x) for x in str(load_project_version).split("-")]
+
+    # latlon00, latlon01, latlon10, latlon11 = [(25, -15), (20, 10), (-2, -8), (2, 12)]
+    key_strs = get_key_strs_in_data_dir(data_dir, project_name, load_project_version)
+    print("found data files for keys {}".format(key_strs))
+    m = ElevationGenerationMap.from_data(key_strs, project_name, load_project_version)
+
+    if generate_further_elevation_changes:
+        new_version_array = project_version_array[:-1] + [project_version_array[-1] + 1]
+        new_project_version = "-".join(str(x) for x in new_version_array)
+        print("loaded version {}, outputting version {}".format(load_project_version, new_project_version))
+        # elevation_data_output_fp = project_dir + "Data/EGD_{0}_v{1}.txt".format(project_name, new_project_version) # use os.path.join
+        # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_project_version) # use os.path.join
     else:
-        lattice = IcosahedralGeodesicLattice(iterations=6)
-        m = ElevationGenerationMap(lattice)
-        m.fill_all("elevation", 0)
-        project_dir = MAPPING_PROJECT_DIR + "{}/".format(project_name)
-        os.mkdir(project_dir)
-        os.mkdir(project_dir + "Data/")
-        os.mkdir(project_dir + "Plots/")
-        new_project_version = 0
+        # in case want to overwrite existing plot, e.g. after fixing plotting bugs
+        # plot_image_output_fp = project_dir + "Plots/EGP_{0}_v{1}.png".format(project_name, new_project_version) # use os.path.join
+        new_project_version = load_project_version
+
+    return m, new_project_version
+
+
+def get_map_and_version_new(projects_dir):
+    lattice = IcosahedralGeodesicLattice(iterations=6)
+    m = ElevationGenerationMap(lattice)
+    m.fill_all("elevation", 0)
+    project_dir = os.path.join(projects_dir, "{}/".format(project_name))
+    os.mkdir(project_dir)
+    os.mkdir(os.path.join(project_dir, "Data/"))
+    os.mkdir(os.path.join(project_dir, "Plots/"))
+    new_project_version = 0
 
     return m, new_project_version
  
@@ -155,6 +160,8 @@ if __name__ == "__main__":
     params = get_parameters_from_config_file()
 
     big_abs = params["big_abs"]
+    color_conditions = params["color_conditions"]
+    condition_ranges = params["condition_ranges"]
     critical_abs = params["critical_abs"]
     expected_change_size_proportion_or_n_points = params["expected_change_size_proportion_or_n_points"]
     expected_touches_per_point = params["expected_touches_per_point"]
@@ -163,6 +170,8 @@ if __name__ == "__main__":
     generate_elevation_changes = params["generate_elevation_changes"]
     hotspot_max_magnitude_factor = params["hotspot_max_magnitude_factor"]
     hotspot_min_magnitude_factor = params["hotspot_min_magnitude_factor"]
+    image_latlons = params["image_latlons"]
+    image_names = params["image_names"]
     land_proportion = params["land_proportion"]
     load_project_version = params["load_project_version"]
     max_volcanism_change_magnitude = params["max_volcanism_change_magnitude"]
@@ -177,6 +186,7 @@ if __name__ == "__main__":
     plot_every_n_steps = params["plot_every_n_steps"]
     positive_feedback_in_elevation = params["positive_feedback_in_elevation"]
     project_name = params["project_name"]
+    projects_dir = params["projects_dir"]
     reference_area_ratio_at_big_abs = params["reference_area_ratio_at_big_abs"]
     reference_area_ratio_at_sea_level = params["reference_area_ratio_at_sea_level"]
     sigma_when_big = params["sigma_when_big"]
@@ -194,10 +204,12 @@ if __name__ == "__main__":
         print("importing from image")
         generate_initial_elevation_changes = generate_elevation_changes
         generate_further_elevation_changes = False
+        m, new_project_version = get_map_and_version_from_image(projects_dir, project_name, image_names, image_latlons, color_conditions, condition_ranges):
     elif from_data:
         print("importing from data")
         generate_initial_elevation_changes = False
         generate_further_elevation_changes = generate_elevation_changes
+        m, new_project_version = get_map_and_version_from_data(projects_dir, project_name, load_project_version)
     else:
         if not(generate_elevation_changes):
             print("you selected neither importation nor generation; nothing will happen")
@@ -205,9 +217,9 @@ if __name__ == "__main__":
         print("generating new data at random")
         generate_initial_elevation_changes = generate_elevation_changes
         generate_further_elevation_changes = False
+        m, new_project_version = get_map_and_version_new(projects_dir)
     
-    m, new_project_version = get_map_and_version(from_image, from_data, project_name, load_project_version)
-    save_config_for_version(params, project_name, new_project_version)
+    save_config_for_version(params, projects_dir, project_name, new_project_version)
     n_points_total = m.size()
     print("map size {} pixels".format(n_points_total))
     expected_change_sphere_proportion = convert_expected_change_size_to_proportion(expected_change_size_proportion_or_n_points, n_points_total)
