@@ -82,11 +82,18 @@ def get_key_strs_in_data_dir(data_dir, project_name, project_version):
 
 def get_map_and_version_from_image(projects_dir, project_name, image_names, image_latlons, color_conditions, condition_ranges):
     # cada_image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
-    raise NotImplementedError("need to make this work with ParamConfig.json so file can be specified there with dir")
 
     # DANGER OF MEMORY LEAKS if use big maps! Watch top!
     # image_fp_no_dir = "TestMap_Mako.png"
-    image_fp = os.path.join(image_dir, image_fp_no_dir)
+    project_dir = os.path.join(projects_dir, project_name)
+    image_dir = os.path.join(project_dir, "ImageImporting")
+    image_filename_regex = "EGII_" + project_name + "_(?P<variable>\w+)_(?P<image_name>\w+).png"
+    # EGII means Elevation Generation Input Image
+    files_in_dir = os.listdir(image_dir)
+    print(image_dir, files_in_dir)
+    re_matches = [re.match(image_filename_regex, filename) for filename in files_in_dir]
+    print(re_matches)
+    raise
 
     print("from image {}".format(image_fp))
 
@@ -107,7 +114,7 @@ def get_map_and_version_from_image(projects_dir, project_name, image_names, imag
     map_lattice = IcosahedralGeodesicLattice(iterations=6)
     print("- done creating map lattice")
     print("creating ElevationGenerationMap from image")
-    m = ElevationGenerationMap.from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice)
+    m = ElevationGenerationMap.from_images(image_fps, image_latlons, color_conditions, condition_ranges, map_lattice)
     print("- done creating ElevationGenerationMap")
     m.freeze_coastlines()
     new_project_version = 0
@@ -204,7 +211,7 @@ if __name__ == "__main__":
         print("importing from image")
         generate_initial_elevation_changes = generate_elevation_changes
         generate_further_elevation_changes = False
-        m, new_project_version = get_map_and_version_from_image(projects_dir, project_name, image_names, image_latlons, color_conditions, condition_ranges):
+        m, new_project_version = get_map_and_version_from_image(projects_dir, project_name, image_names, image_latlons, color_conditions, condition_ranges)
     elif from_data:
         print("importing from data")
         generate_initial_elevation_changes = False
