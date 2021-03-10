@@ -6,6 +6,7 @@
     "projects_dir": "/home/wesley/programming/Mapping/Projects/",
     "project_name": "CadaTest",
     "image_names": ["Circle", "Ilausa", "Mako"],
+    "image_variables": ["elevation", "volcanism"],
     "image_latlons": [
         {"00": [10, -10], "01": [10, 10], "10": [-10, -10], "11": [-10, 10]},
         {"00": [70, -100], "01": [80, -90], "10": [5, -110], "11": [-5, -85]},

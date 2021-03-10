@@ -991,6 +991,7 @@ class ElevationGenerationMap:
 
     @staticmethod
     def from_image(image_fp, color_condition_dict, default_color, latlon00, latlon01, latlon10, latlon11, map_lattice):
+    def from_images(image_fps_to_pass, image_latlons_to_pass, image_variables_to_pass, color_conditions, condition_ranges, map_lattice)
         print("called ElevationGenerationMap.from_image()")
         # all points in image matching something in the color dict should be that color no matter what
         # everything else is randomly generated

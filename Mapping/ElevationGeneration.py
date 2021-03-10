@@ -80,7 +80,7 @@ def get_key_strs_in_data_dir(data_dir, project_name, project_version):
     return key_strs
 
 
-def get_map_and_version_from_image(projects_dir, project_name, image_names, image_latlons, color_conditions, condition_ranges):
+def get_map_and_version_from_images(projects_dir, project_name, image_names, image_latlons, image_variables, color_conditions, condition_ranges):
     # cada_image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
 
     # DANGER OF MEMORY LEAKS if use big maps! Watch top!
@@ -90,33 +90,41 @@ def get_map_and_version_from_image(projects_dir, project_name, image_names, imag
     image_filename_regex = "EGII_" + project_name + "_(?P<variable>\w+)_(?P<image_name>\w+).png"
     # EGII means Elevation Generation Input Image
     files_in_dir = os.listdir(image_dir)
-    print(image_dir, files_in_dir)
+    print("imdir:", image_dir, "files:", files_in_dir)
     re_matches = [re.match(image_filename_regex, filename) for filename in files_in_dir]
-    print(re_matches)
-    raise
+    print("re matches:", re_matches)
+    # variable_groups = [match.group("variable") if match is not None else None for match in re_matches]
+    # image_name_groups = [match.group("image_name") if match is not None else None for match in re_matches]
 
-    print("from image {}".format(image_fp))
+    latlon_by_image_name = dict(zip(image_names, image_latlons))
 
-    elevation_data_output_fp = os.path.join(image_dir, "EGD_" + image_fp_no_dir.replace(".png", ".txt"))
-    plot_image_output_fp = os.path.join(image_dir, "EGP_" + image_fp_no_dir)
+    image_fps_to_pass = []
+    image_latlons_to_pass = []
+    image_variables_to_pass = []
 
-    # color_condition_dict = {
-    #     # (  0,  38, 255, 255): (0,  lambda x: x == 0, True),  # dark blue = sea level
-    #     (  0, 255, 255, 255): (-1, lambda x: x < 0, False),  # cyan = sea
-    #     (255, 255, 255, 255): (1, lambda x: x > 0, False),  # white = land
-    #     (  0,   0,   0, 255): (0, lambda x: True, False),  # black = unspecified, anything goes
-    #     # (  0, 255,  33, 255): (1,  lambda x: x > 0 or defect(), False),  # green = land
-    #     # (255,   0,   0, 255): (1,  lambda x: x > 0 or defect(), False),  # red = land (country borders)
-    # }
-    default_color = (0, 0, 0, 255)
-    latlon00, latlon01, latlon10, latlon11 = [(30, -30), (30, 30), (-30, -30), (-30, 30)]
-    print("creating map lattice")
-    map_lattice = IcosahedralGeodesicLattice(iterations=6)
-    print("- done creating map lattice")
-    print("creating ElevationGenerationMap from image")
-    m = ElevationGenerationMap.from_images(image_fps, image_latlons, color_conditions, condition_ranges, map_lattice)
-    print("- done creating ElevationGenerationMap")
-    m.freeze_coastlines()
+    for image_filename, match in zip(files_in_dir, re_matches):
+        if match is None:
+            continue
+        variable = match.group("variable")
+        image_name = match.group("image_name")
+        latlon = latlon_by_image_name[image_name]
+        image_fp = os.path.join(image_dir, image_filename)
+
+        image_fps_to_pass.append(image_fp)
+        image_latlons_to_pass.append(latlon)
+        image_variables_to_pass.append(variable)
+
+    print("from images: {}".format(list(zip(image_fps_to_pass, image_latlons_to_pass, image_variables_to_pass))))
+
+    # elevation_data_output_fp = os.path.join(image_dir, "EGD_" + image_fp_no_dir.replace(".png", ".txt"))
+    # plot_image_output_fp = os.path.join(image_dir, "EGP_" + image_fp_no_dir)
+
+    # map_lattice = IcosahedralGeodesicLattice(iterations=6)
+    # print("- done creating map lattice")
+    # print("creating ElevationGenerationMap from image")
+    m = ElevationGenerationMap.from_images(image_fps_to_pass, image_latlons_to_pass, image_variables_to_pass, color_conditions, condition_ranges, map_lattice)
+    # print("- done creating ElevationGenerationMap")
+    # m.freeze_coastlines()  # don't do this anymore
     new_project_version = 0
     return m, new_project_version
 
@@ -179,6 +187,7 @@ if __name__ == "__main__":
     hotspot_min_magnitude_factor = params["hotspot_min_magnitude_factor"]
     image_latlons = params["image_latlons"]
     image_names = params["image_names"]
+    image_variables = params["image_variables"]
     land_proportion = params["land_proportion"]
     load_project_version = params["load_project_version"]
     max_volcanism_change_magnitude = params["max_volcanism_change_magnitude"]
@@ -211,7 +220,7 @@ if __name__ == "__main__":
         print("importing from image")
         generate_initial_elevation_changes = generate_elevation_changes
         generate_further_elevation_changes = False
-        m, new_project_version = get_map_and_version_from_image(projects_dir, project_name, image_names, image_latlons, color_conditions, condition_ranges)
+        m, new_project_version = get_map_and_version_from_images(projects_dir, project_name, image_names, image_latlons, image_variables, color_conditions, condition_ranges)
     elif from_data:
         print("importing from data")
         generate_initial_elevation_changes = False
