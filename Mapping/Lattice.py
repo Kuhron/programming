@@ -32,14 +32,15 @@ class Lattice:
         # specific to the subclasses, depending on type of lattice
         raise NotImplementedError
 
-    def get_graph(self):
-        g = nx.Graph()
-        for p in self.adjacencies_by_point_index:  # add nodes first
-            g.add_node(p)
-        for p, neighs in self.adjacencies_by_point_index.items():  # now put edges between them
-            for p1 in neighs:
-                g.add_edge(p, p1)
-        return g
+    # def get_graph(self):
+    #     raise Exception("do not use")
+    #     g = nx.Graph()
+    #     for p in self.adjacencies_by_point_index:  # add nodes first
+    #         g.add_node(p)
+    #     for p, neighs in self.adjacencies_by_point_index.items():  # now put edges between them
+    #         for p1 in neighs:
+    #             g.add_edge(p, p1)
+    #     return g
 
     def n_points(self):
         return len(self.adjacencies)

@@ -18,6 +18,11 @@ def get_neighbor_sum(arr):
     # mode="same" means the output shape will be the same as the input one, because otherwise the convolution array will spill over the edges
 
 
+def get_neighbor_nonzero_sum(arr):
+    # count zeros vs nonzeros
+    return get_neighbor_sum(arr != 0)
+
+
 def get_r_array(max_x_displacement, max_y_displacement):
     dx = max_x_displacement
     dy = max_y_displacement

@@ -30,7 +30,7 @@ class IcosahedralGeodesicLattice(Lattice):
         self.adjacencies_by_point_index = adjacencies_by_point_index
         self.points = ordered_points
         self.usp_to_index = self.get_usp_to_index()
-        self.adjacencies = self.convert_adjacencies_to_usp()
+        # self.adjacencies = self.convert_adjacencies_to_usp()
         self.xyz_coords = []
         self.xyz_to_point_number = {}
         for point_number, p in enumerate(self.points):
@@ -39,7 +39,7 @@ class IcosahedralGeodesicLattice(Lattice):
             self.xyz_to_point_number[xyz] = point_number
         self.xyz_coords = np.array(self.xyz_coords)
         self.kdtree = KDTree(self.xyz_coords)
-        self.graph = self.get_graph()
+        # self.graph = self.get_graph()
 
     def get_adjacencies(self):
         cada_ii_radius_km = IcosahedralGeodesicLattice.CADA_II_RADIUS_KM
