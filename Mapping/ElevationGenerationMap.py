@@ -8,6 +8,7 @@ import networkx as nx
 from PIL import Image
 from sklearn.neighbors import KDTree
 from ArrayUtil import make_blank_condition_array, make_nan_array
+from Lattice import Lattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 import PlottingUtil as pu
@@ -996,22 +997,36 @@ class ElevationGenerationMap:
         # everything else is randomly generated
         # i.e., put the determined points in points_to_avoid for functions that take it
 
-        if any(len(x) != 4 for x in color_condition_dict.keys()):
-            raise ValueError("all color keys must have length 4, RGBA:\n{}".format(color_condition_dict.keys()))
+        df = map_lattice.create_dataframe()
+        for image_fp, image_latlon_set, image_variable in zip(image_fps, image_latlons, image_variables):
+            color_conditions_this_variable = color_conditions[image_variable]
+            condition_ranges_this_variable = condition_ranges[image_variable]
+            df = ElevationGenerationMap.add_image_data_to_lattice(image_fp, image_latlon_set, image_variable, color_conditions_this_variable, condition_ranges_this_variable, map_lattice, df)
 
+        return df  # TODO should return ElevationGenerationMap? Or is that even needed anymore now that the df holds this data?
+
+    @staticmethod
+    def add_image_data_to_lattice_dataframe(image_fp, image_latlons, image_variable, color_conditions, condition_ranges, map_lattice, df):
+        assert isinstance(map_lattice, Lattice), "map_lattice has wrong type: {}".format(type(map_lattice))
         im = Image.open(image_fp)
         width, height = im.size
         print("creating image lattice")
+        latlon00 = image_latlons["00"]
+        latlon01 = image_latlons["01"]
+        latlon10 = image_latlons["10"]
+        latlon11 = image_latlons["11"]
+
         image_lattice = LatitudeLongitudeLattice(
             height, width,  # rows, columns
             latlon00, latlon01, latlon10, latlon11
         )  # we are not actually going to add data to this lattice, but we will use it to get point coordinates more easily
         # later will need to be able to adjust edge length dynamically based on how fine the image grid is
         print("- done creating image lattice")
-        m = ElevationGenerationMap(map_lattice)
+
         arr = np.array(im)
         color_and_first_seen = {}
-        usp_to_fill_value = {}
+        condition_to_color = color_conditions
+        color_to_condition = {tuple(v):k for k,v in color_conditions.items()}
         usp_to_condition = {}
         print("mapping image points to value and condition")
         for x in range(height):
@@ -1019,21 +1034,19 @@ class ElevationGenerationMap:
                 print("x = {}/{}".format(x, height))
             for y in range(width):
                 color = tuple(arr[x, y])
-                if color not in color_condition_dict:
-                    color = default_color
-                    arr[x, y] = color
+                if color not in color_to_condition:
+                    color = None
                 if color not in color_and_first_seen:
                     print("got new color {} at {}".format(color, (x, y)))
                     color_and_first_seen[color] = (x, y)
-                if color in color_condition_dict:
-                    fill_value, condition, is_frozen = color_condition_dict[color]
-                    if fill_value is None:
-                        fill_value = 0
+                if color in color_to_condition:
+                    condition_name = color_to_condition[color]
                     xy = (x, y)
                     p = image_lattice.get_usp_from_lattice_position(xy)
-                    usp_to_fill_value[p] = fill_value
-                    usp_to_condition[p] = condition
+                    usp_to_condition[p] = condition_name
         print("- done mapping points to value and condition")
+        print(usp_to_condition)
+        input("press enter")
 
         print("creating map from lattice points to image points")
         map_lattice_points = map_lattice.points
@@ -1046,6 +1059,7 @@ class ElevationGenerationMap:
             image_point = image_lattice.closest_point_to(lattice_p)
             image_points_that_will_be_referenced.add(image_point)
         print("- done creating image points that will be referenced")
+
         # now for each of these image points, get the closest lattice point and use the image point for that lattice point, not others
         # because the others claiming the same closest image point will be outside the image boundaries, I think
         lattice_points_to_image_points = {}
@@ -1063,16 +1077,14 @@ class ElevationGenerationMap:
             # if the image is lower-resolution than the lattice, then start doing things the other way around, maybe?
                 # image_point = image_lattice.point_dict[(x, y)] 
                 # p = map_lattice.closest_point_to(image_point)  # closest point on lattice to this x, y point on the image
-            fill_value = usp_to_fill_value[image_p]
             condition = usp_to_condition[image_p]
-            m.fill_position(lattice_p, "elevation", fill_value)
-            m.add_condition_at_position(lattice_p, condition)
+            map_lattice.add_condition_name_at_position(lattice_p, condition)
             if is_frozen:
                 m.freeze_point(lattice_p)
         print("- done filling map values and conditions")
 
-        print("- returning ElevationGenerationMap from image")
-        return m
+        print("- returning DataFrame with image data added")
+        return df
 
     @staticmethod
     def from_data(key_strs, project_name, project_version):

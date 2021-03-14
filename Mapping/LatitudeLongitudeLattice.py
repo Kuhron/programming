@@ -27,8 +27,8 @@ class LatitudeLongitudeLattice(Lattice):
 
         self.create_point_dicts()
         self.adjacencies = self.get_adjacencies()
-        self.graph = self.get_graph()
-        self.xyz_coords = [p.get_coords("xyz") for p in self.points]
+        # self.graph = self.get_graph()
+        self.xyz_coords = np.array([p.get_coords("xyz") for p in self.points])
         self.kdtree = KDTree(self.xyz_coords)  # for distance calculation
     
     def create_point_dicts(self):

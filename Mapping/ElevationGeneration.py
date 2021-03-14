@@ -80,7 +80,7 @@ def get_key_strs_in_data_dir(data_dir, project_name, project_version):
     return key_strs
 
 
-def get_map_and_version_from_images(projects_dir, project_name, image_names, image_latlons, image_variables, color_conditions, condition_ranges):
+def get_map_and_version_from_images(map_lattice, projects_dir, project_name, image_names, image_latlons, image_variables, color_conditions, condition_ranges):
     # cada_image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
 
     # DANGER OF MEMORY LEAKS if use big maps! Watch top!
@@ -220,7 +220,8 @@ if __name__ == "__main__":
         print("importing from image")
         generate_initial_elevation_changes = generate_elevation_changes
         generate_further_elevation_changes = False
-        m, new_project_version = get_map_and_version_from_images(projects_dir, project_name, image_names, image_latlons, image_variables, color_conditions, condition_ranges)
+        map_lattice = IcosahedralGeodesicLattice(iterations=7)
+        m, new_project_version = get_map_and_version_from_images(map_lattice, projects_dir, project_name, image_names, image_latlons, image_variables, color_conditions, condition_ranges)
     elif from_data:
         print("importing from data")
         generate_initial_elevation_changes = False
