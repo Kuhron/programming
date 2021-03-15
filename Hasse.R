@@ -28,30 +28,18 @@ addPair <- function(x, y, labels, M) {
 # main
 
 labels <- c(
-  "Develarization",
-  "Grimm's Law",
-  "Fricative Voicing",
-  "Stress Shift",
-  "Vowel Deletion",
-  "Epenthesis",
-  "RS Reduction",
-  "Nasal Assimilation",
-  "Lowering",
-  "Great Gothic Vowel Shift",
-  "Long A Changes"
+  "*1", "*2", "*3", "*4", "*5"
 )
 
 M <- matrix(data=FALSE, nrow=length(labels), ncol=length(labels))
 
-M <- addPair("Stress Shift", "Vowel Deletion", labels, M)
-# M <- addPair("Vowel Deletion", "Great Gothic Vowel Shift", labels, M)  # WRONG
-M <- addPair("Great Gothic Vowel Shift", "Stress Shift", labels, M)
-M <- addPair("Grimm's Law", "Fricative Voicing", labels, M)
-M <- addPair("Develarization", "Nasal Assimilation", labels, M)
-M <- addPair("Vowel Deletion", "RS Reduction", labels, M)
-M <- addPair("Great Gothic Vowel Shift", "Long A Changes", labels, M)
-M <- addPair("Vowel Deletion", "Long A Changes", labels, M)
-M <- addPair("Fricative Voicing", "Stress Shift", labels, M)
-M <- addPair("Great Gothic Vowel Shift", "Lowering", labels, M)
+M <- addPair("*5", "*1", labels, M)
+M <- addPair("*5", "*3", labels, M)
+M <- addPair("*1", "*2", labels, M)
+M <- addPair("*3", "*2", labels, M)
+M <- addPair("*4", "*2", labels, M)
+M <- addPair("*5", "*2", labels, M)
+M <- addPair("*4", "*1", labels, M)
+M <- addPair("*4", "*2", labels, M)
 
 hasse(M, labels)
