@@ -28,18 +28,20 @@ addPair <- function(x, y, labels, M) {
 # main
 
 labels <- c(
-  "*1", "*2", "*3", "*4", "*5"
+  "Ditone Spreading (T-prime subcase)",
+  "Ditone Spreading (T-double-prime subcase)",
+  "5 Deletion",
+  "Default 2",
+  "214 Spreading",
+  "214-35 Replacement"
 )
 
 M <- matrix(data=FALSE, nrow=length(labels), ncol=length(labels))
 
-M <- addPair("*5", "*1", labels, M)
-M <- addPair("*5", "*3", labels, M)
-M <- addPair("*1", "*2", labels, M)
-M <- addPair("*3", "*2", labels, M)
-M <- addPair("*4", "*2", labels, M)
-M <- addPair("*5", "*2", labels, M)
-M <- addPair("*4", "*1", labels, M)
-M <- addPair("*4", "*2", labels, M)
+M <- addPair("214-35 Replacement", "Ditone Spreading (T-double-prime subcase)", labels, M)
+M <- addPair("Ditone Spreading (T-prime subcase)", "5 Deletion", labels, M)
+M <- addPair("Ditone Spreading (T-double-prime subcase)", "5 Deletion", labels, M)
+M <- addPair("5 Deletion", "Default 2", labels, M)
+M <- addPair("214 Spreading", "Default 2", labels, M)
 
 hasse(M, labels)
