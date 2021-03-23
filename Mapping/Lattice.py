@@ -7,7 +7,7 @@ import random
 import string
 import os
 import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+# from mpl_toolkits.basemap import Basemap
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.tri as tri  # interpolation of irregularly spaced data
 import numpy as np
@@ -194,7 +194,8 @@ class Lattice:
                     nth_plot = i*len(row) + j + 1
                     ax = fig.add_subplot(n_rows, n_cols, nth_plot)
                     # m = Basemap(projection="cyl")
-                    m = Basemap(projection="ortho", lat_0=lat_0, lon_0=lon_0, resolution='l')
+                    raise Exception("Basemap doesn't work anymore")
+                    # m = Basemap(projection="ortho", lat_0=lat_0, lon_0=lon_0, resolution='l')
                     m.drawmeridians(np.arange(0,360,30))
                     m.drawparallels(np.arange(-90,90,30))
                     MC = m.contourf(lons_deg, lats_deg, vals, levels=contour_levels, cmap=cmap, ax=ax, tri=True, latlon=True)  # latlon=True interprets first two args as LON and LAT RESPECTIVELY

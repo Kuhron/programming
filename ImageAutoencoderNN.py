@@ -1,5 +1,10 @@
 # looking at tutorial: https://blog.keras.io/building-autoencoders-in-keras.html
 
+# notes for future things to try:
+# how to get large NN with large dataset to work on laptop without that much memory: https://datascience.stackexchange.com/questions/10329/training-deep-nets-on-an-ordinary-laptop
+# how to load the dataset from directory piecemeal: https://machinelearningmastery.com/how-to-load-large-datasets-from-directories-for-deep-learning-with-keras/
+# how to make Generative Adversarial Network (another way besides autoencoder to get a neural net that can generate images similar to the dataset): https://towardsdatascience.com/writing-your-first-generative-adversarial-network-with-keras-2d16fd8d4889
+
 import keras
 from keras import layers
 from keras.datasets import mnist

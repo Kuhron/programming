@@ -1007,6 +1007,9 @@ class ElevationGenerationMap:
 
     @staticmethod
     def add_image_data_to_lattice_dataframe(image_fp, image_latlons, image_variable, color_conditions, condition_ranges, map_lattice, df):
+
+        raise Exception("try to deprecate this function in favor of cleaning it up into just a method for transforming image into data file with point indices on the Icosa, see TransformImageIntoMapData.py")
+
         assert isinstance(map_lattice, Lattice), "map_lattice has wrong type: {}".format(type(map_lattice))
         im = Image.open(image_fp)
         width, height = im.size
