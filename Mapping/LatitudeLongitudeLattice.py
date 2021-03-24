@@ -6,6 +6,7 @@ from sklearn.neighbors import KDTree
 from Lattice import Lattice
 from UnitSpherePoint import UnitSpherePoint
 import MapCoordinateMath as mcm
+import DeterminantInsideTriangle as det_in_tri
 
 
 class LatitudeLongitudeLattice(Lattice):
@@ -24,6 +25,11 @@ class LatitudeLongitudeLattice(Lattice):
         self.lat01, self.lon01 = latlon01
         self.lat10, self.lon10 = latlon10
         self.lat11, self.lon11 = latlon11
+
+        self.xyz00 = mcm.unit_vector_lat_lon_to_cartesian(self.lat00, self.lon00, deg=True)
+        self.xyz01 = mcm.unit_vector_lat_lon_to_cartesian(self.lat01, self.lon01, deg=True)
+        self.xyz10 = mcm.unit_vector_lat_lon_to_cartesian(self.lat10, self.lon10, deg=True)
+        self.xyz11 = mcm.unit_vector_lat_lon_to_cartesian(self.lat11, self.lon11, deg=True)
 
         self.create_point_dicts()
         self.adjacencies = self.get_adjacencies()
@@ -200,4 +206,11 @@ class LatitudeLongitudeLattice(Lattice):
         # chosen_one = neighbors[chosen_one_index]
         # return chosen_one
 
+    def contains_point_latlon(self, p):
+        if type(p) is UnitSpherePoint:
+            p_lat, p_lon = p.latlondeg()
+        else:
+            p_lat, p_lon = p_latlon
+        p_xyz = mcm.unit_vector_lat_lon_to_cartesian(p_lat, p_lon, deg=True)
+        return det_in_tri.point_is_in_quadrilateral(p_xyz, self.xyz00, self.xyz01, self.xyz10, self.xyz11)
 
