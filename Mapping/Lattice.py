@@ -131,13 +131,23 @@ class Lattice:
         assert new_df is not df, "uh-oh, we edited the df in-place"
         new_df.to_csv(output_fp, index_label="index")
 
-    def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=False, save=False):
+    def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=True, save=False, category_labels=None):
         data_point_indices = df.index
         # data_points = [self.points[p_i] for p_i in data_point_indices]
         latlons_deg = df["latlondeg"]
         lats_deg = np.array([ll[0] for ll in latlons_deg])
         lons_deg = np.array([ll[1] for ll in latlons_deg])
         vals = df[key_str]
+
+        if category_labels is not None:
+            # data is categorical, give it integers based on the list index of the category value
+            assert set(vals) - set(category_labels) == set(), "vals found: {}, category labels: {}, extra vals not accounted for".format(set(vals), category_labels)
+            new_vals = []
+            for val in vals:
+                new_val_index = category_labels.index(val)
+                new_vals.append(new_val_index)
+            vals = new_vals
+
         # print("lat range {} to {}\nlon range {} to {}".format(min(lats_deg), max(lats_deg), min(lons_deg), max(lons_deg)))
         # plt.scatter(lats_deg, lons_deg)
         # plt.show()

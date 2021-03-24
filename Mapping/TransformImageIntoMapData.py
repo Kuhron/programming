@@ -57,10 +57,11 @@ def get_condition_string_array_from_image_array(arr, color_to_str):
 
 if __name__ == "__main__":
     test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Mako.png"
-    latlon00 = [10,10]
-    latlon01 = [10,30]
-    latlon10 = [-10,10]
-    latlon11 = [-10,30]
+    # test_input_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/MientaDigitization_ThinnedBorders_Final.png"
+    latlon00 = [30,-30]
+    latlon01 = [30,30]
+    latlon10 = [-30,-30]
+    latlon11 = [-30,30]
 
     map_lattice = IcosahedralGeodesicLattice(iterations=6)
     im = Image.open(test_input_fp)
@@ -104,7 +105,14 @@ if __name__ == "__main__":
     # then assign the image lattice point's color/str to the map lattice point
     # then write these map lattice data strs to database file by point index
 
+    df = map_lattice.create_dataframe()
+    condition_labels = []
     with open("TestTransformImageIntoMapDataResult.txt", "w") as f:
         for p_i, val in sorted(point_values_to_assign.items()):
             f.write("{},{}\n".format(p_i, val))
+            condition_labels.append(val)
+    df["condition_label"] = condition_labels
 
+    category_labels = [None] + sorted(color_to_str.values())
+    map_lattice.plot_data(df, "condition_label", category_labels=category_labels, equirectangular=True)
+    plt.show()
