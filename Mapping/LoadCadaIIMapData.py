@@ -1,4 +1,5 @@
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
+import IcosahedronMath
 import NoiseMath as nm
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,7 +14,7 @@ if __name__ == "__main__":
 
     df = pd.read_csv(input_fp, index_col="index")
     n_rows = len(df.index)
-    iterations = IcosahedralGeodesicLattice.get_iterations_from_number_of_points(n_rows)
+    iterations = IcosahedronMath.get_iterations_from_number_of_points(n_rows)
     lattice = IcosahedralGeodesicLattice(iterations=iterations)
     lattice_df = lattice.create_dataframe()
     needed_columns = ["usp", "xyz", "latlondeg"]  # things left out of the written df

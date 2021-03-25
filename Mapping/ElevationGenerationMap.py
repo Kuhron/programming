@@ -11,6 +11,7 @@ from ArrayUtil import make_blank_condition_array, make_nan_array
 from Lattice import Lattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
+import IcosahedronMath
 import PlottingUtil as pu
 from UnitSpherePoint import UnitSpherePoint
 import ElevationChangeFunctions as elfs
@@ -1104,7 +1105,7 @@ class ElevationGenerationMap:
                 if p_i not in data_dict:
                     data_dict[p_i] = {}
                 data_dict[p_i][key_str] = data_dict_this_key[p_i][key_str]
-        n_iterations = IcosahedralGeodesicLattice.get_iterations_from_number_of_points(len(data_dict))
+        n_iterations = IcosahedronMath.get_iterations_from_number_of_points(len(data_dict))
         lattice = IcosahedralGeodesicLattice(iterations=n_iterations)
 
         return ElevationGenerationMap(lattice=lattice, data_dict=data_dict)
