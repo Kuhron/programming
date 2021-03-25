@@ -8,6 +8,7 @@ from sklearn.neighbors import KDTree
 from Lattice import Lattice
 from UnitSpherePoint import UnitSpherePoint
 import MapCoordinateMath as mcm
+import IcosahedronMath
 
 # memory profiling
 # import objgraph
@@ -66,112 +67,11 @@ class IcosahedralGeodesicLattice(Lattice):
         except FileNotFoundError:
             print("retrieving memoized icosahedron files for {} iterations failed; constructing from scratch".format(iterations_needed))
         
-
-        icosahedron_original_points_latlon = {
-            # north pole
-            "NP": (90, 0),
-            # north ring of five points, star with a point at lon 0
-            "NR0": (30, 0), "NRp72": (30, 72), "NRp144": (30, 144), "NRm72": (30, -72), "NRm144": (30, -144),
-            # south ring of five points, star with a point at lon 180
-            "SR180": (-30, 180), "SRp108": (-30, 108), "SRp36": (-30, 36), "SRm108": (-30, -108), "SRm36": (-30, -36),
-            # south pole
-            "SP": (-90, 0),
-        }
-        original_points_neighbors_by_name = {
-            # start with "north" neighbor, i.e., directly left on peel-rectangle representation (for poles the order should still obey counterclockwise, but starting point doesn't matter)
-            # poles
-            "NP": ["NR0", "NRp72", "NRp144", "NRm144", "NRm72"],  # going eastward (counterclockwise)
-            "SP": ["SR180", "SRp108", "SRp36", "SRm36", "SRm108"],  # going westward (counterclockwise)
-
-            # peel 0
-            "NR0": ["NP", "NRm72", "SRm36", "SRp36", "NRp72"],
-            "SRp36": ["NR0", "SRm36", "SP", "SRp108", "NRp72"],
-
-            # peel 1
-            "NRp72": ["NP", "NR0", "SRp36", "SRp108", "NRp144"],
-            "SRp108": ["NRp72", "SRp36", "SP", "SR180", "NRp144"],
-
-            # peel 2
-            "NRp144": ["NP", "NRp72", "SRp108", "SR180", "NRm144"],
-            "SR180": ["NRp144", "SRp108", "SP", "SRm108", "NRm144"],
-
-            # peel 3
-            "NRm144": ["NP", "NRp144", "SR180", "SRm108", "NRm72"],
-            "SRm108": ["NRm144", "SR180", "SP", "SRm36", "NRm72"],
-
-            # peel 4
-            "NRm72": ["NP", "NRm144", "SRm108", "SRm36", "NR0"],
-            "SRm36": ["NRm72", "SRm108", "SP", "SRp36", "NR0"],
-        }
-        assert len(original_points_neighbors_by_name) == 12 and all(len(vals) == 5 for vals in original_points_neighbors_by_name.values())
-        # check transitivity of neighborliness, since I input the lists manually
-        for point_name, neighbors in original_points_neighbors_by_name.items():
-            for neigh in neighbors:
-                assert point_name in original_points_neighbors_by_name[neigh], "intransitive adjacency with {} and {}".format(point_name, neigh)
-        # icosahedron points are correct now; time to divide edges
-
-        # put them in this ordering convention:
-        # north pole first, south pole second, omit these from all expansion operations, by only operating on points[2:] (non-pole points)
-        # new points are appended to the point list in the order they are created
-        # order the neighbors in the following order, and only bisect the edges from each point to the first three:
-        # - [north, west, southwest, (others)]. order of others doesn't matter that much, can just keep going counterclockwise
-        # ordering of neighbors for poles thus doesn't matter as that list will never be used for expansion
-
-        original_points_order_by_name = [
-            "NP", "SP",  # poles
-            "NR0", "SRp36",  # peel 0
-            "NRp72", "SRp108",  # peel 1
-            "NRp144", "SR180",  # peel 2
-            "NRm144", "SRm108",  # peel 3
-            "NRm72", "SRm36",  # peel 4
-        ]
-
-        # keep the point objects in a single array that can be indexed by point index
-        # the rest of the data, i.e., the adjacencies dictionary, should be all in terms of integer indices that refer to the points array
-
-        ordered_points = []
-        adjacencies_by_point_index = {}
-
-        # place original points in the list
-        for p_name in original_points_order_by_name:
-            point_index = len(ordered_points)
-            p_latlon = icosahedron_original_points_latlon[p_name]
-            p_xyz = mcm.unit_vector_lat_lon_to_cartesian(*p_latlon)
-            coords_dict = {"xyz": p_xyz, "latlondeg": p_latlon}
-            usp = UnitSpherePoint(coords_dict)
-            ordered_points.append(usp)
-        assert len(ordered_points) == 12, "initial icosa needs 12 vertices"
-
-        # add their neighbors by index
-        for point_index in range(len(ordered_points)):
-            point_name = original_points_order_by_name[point_index]
-            neighbor_names = original_points_neighbors_by_name[point_name]
-            neighbor_indices = [original_points_order_by_name.index(name) for name in neighbor_names]
-            adjacencies_by_point_index[point_index] = neighbor_indices
-            print("adjacencies now:\n{}\n".format(adjacencies_by_point_index))
+        ordered_points, adjacencies_by_point_index = IcosahedronMath.get_starting_points()
 
         # bisect edges until reach resolution
         print("bisecting for {} iterations".format(iterations_needed))
         for iteration_i in range(1, iterations_needed+1):
-        # while True:
-            # # check some random edges to get average edge length
-            # edge_lengths = []
-            # for _ in range(100):
-            #     random_point_index = random.choice(list(adjacencies_by_point_index.keys()))
-            #     neighbor_index = random.choice(adjacencies_by_point_index[random_point_index])
-            #     p0 = ordered_points[random_point_index]
-            #     p1 = ordered_points[neighbor_index]
-            #     angle_radians = UnitSpherePoint.get_angle_radians_between(p0, p1)
-            #     edge_length = cada_ii_radius_km * angle_radians
-            #     edge_lengths.append(edge_length)
-            # edge_length = np.mean(edge_lengths)
-            # print("edge_length = {} km, iteration {}".format(edge_length, iteration_i))
-            # if edge_length <= self.edge_length_km:
-            #     break
-            # else:
-            #     iteration_i += 1
-            #     # we checked e.g. iteration 0 the first time (just the icosahedron's 12 vertices), now are going to enter new iteration
-
             point_index_this_iteration_started_at = len(ordered_points)
             last_iteration_i = iteration_i - 1
             expected_index = 2 + 10 * 2 ** (2 * last_iteration_i)
@@ -364,19 +264,6 @@ class IcosahedralGeodesicLattice(Lattice):
             d[self.points[i]] = i
         return d
 
-    @staticmethod
-    def get_iterations_from_number_of_points(n):
-        try:
-            return {12: 0, 42: 1, 162: 2, 642: 3, 2562: 4, 10242: 5}[n]
-        except KeyError:
-            power2 = (n - 2) / 10
-            assert power2 % 1 == 0, "invalid number of points {}, should be equal to power of 2 times 10 plus 2, e.g. 642 or 10242".format(n)
-            log2 = np.log2(power2)
-            assert log2 % 1 == 0, "invalid power of 2: {}".format(power2)
-            two_i = int(log2)
-            iterations = two_i / 2
-            assert iterations % 1 == 0, "invalid 2i: {}".format(two_i)
-            return iterations
 
     def get_next_step_in_path(self, current_point, objective, points_to_avoid):
         # get vector to objective, project it onto plane tangent to sphere at current_point
