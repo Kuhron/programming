@@ -181,6 +181,23 @@ function denox() {
 }
 #function g() { git add -A; git commit -m "$1"; git push; }  # doesn't work
 
+function base() { 
+    case "$2" in
+        "10")
+            s2="" ;;
+        *)
+            s2="ibase=$2; " ;;
+    esac
+    case "$3" in
+        "10")
+            s3="" ;;
+        *)
+            s3="obase=$3; " ;;
+    esac
+    echo "converting $1 from base $2 to base $3"
+    echo "$s2$s3$1" | bc
+}
+
 export LESS="-SR"  # turns off line wrapping in less
 # export PYTHONPATH=$PYTHONPATH:/home/wesley/programming  # this is a bad idea if using python outside of programming dir, it will try to look for libraries there
 export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
