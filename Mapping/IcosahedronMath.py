@@ -68,6 +68,10 @@ def get_specific_adjacencies(point_numbers, n_iterations):
     return d
 
 
+def get_specific_adjacency(point_number, n_iterations):
+    return get_specific_adjacencies([point_number], n_iterations)[point_number]
+
+
 def get_specific_positions(point_numbers, n_iterations):
     verify_valid_point_numbers(point_numbers, n_iterations)
     memo_fp = get_position_memo_fp(n_iterations)
@@ -80,6 +84,10 @@ def get_specific_positions(point_numbers, n_iterations):
         assert pi == point_number
         d[pi] = {"xyz":xyz, "latlondeg":latlon}
     return d
+
+
+def get_specific_position(point_number, n_iterations):
+    return get_specific_positions([point_number], n_iterations)[point_number]
 
 
 def verify_valid_point_numbers(point_numbers, n_iterations):
@@ -351,8 +359,21 @@ def get_parent_point(point_number):
     # e.g. from gen 1 to 2, start with point 2, create points 42,43,44, then 3>45,46,47, ..., 41>159,160,161
     if point_number < 12:
         return None  # initial points have no parents
-    raise Exception("doesn't work, need to prove it")
-    return point_number//3 - 12  # not sure this will always work, TODO prove it
+    # see IcosaParentChildRelations.ods for math
+    return point_number // 3 - get_3adder_for_iteration(get_iteration_born(point_number))
+
+
+def get_3adder_for_iteration(i):
+    # see IcosaParentChildRelations.ods for math
+    # the 3adder is a function of iteration number, such that child_number = 3*(parent+adder)+child_index
+    numer = (10 * (4 ** (i-1)) - 4)
+    denom = 3
+    assert numer % denom == 0, "iteration {} gave non-int 3adder: {}".format(i, res)
+    return numer // denom  # avoid int() flooring for floats like x.9999
+
+
+def get_iteration_born(point_number):
+    return math.ceil(get_exact_iterations_from_points(point_number+1))
 
 
 def get_parent_point_direction_label(point_number):
@@ -375,18 +396,24 @@ def get_direction_label_from_number(i):
     return ["L", "DL", "D", "R", "UR", "U"][i]
 
 
+def test_parent_is_correct_neighbor():
+    # in the iteration where a point is born, its parent must be to its R, UR, or U, depending which number child it is of that parent
+    # in later iterations, the parent and child will be separated by intervening bisections of the edge connecting them
+    for i in range(100):
+        point_number = random.randint(12, 655362-1)
+        n_iterations = get_iterations_needed_for_point_number(point_number)
+        adj = get_specific_adjacency(point_number, n_iterations)
+        parent = get_parent_point(point_number)
+        parent_point_direction_number = get_parent_point_direction_number(point_number)
+        corresponding_neighbor = adj[parent_point_direction_number]
+        assert parent == corresponding_neighbor
+    print("test succeeded: parents are the correct neighbor nodes")
+
 
 if __name__ == "__main__":
-    point_number = random.randint(12, 655362-1)
-    n_iterations = get_iterations_needed_for_point_number(point_number)
     # n_points = get_exact_points_from_iterations(n_iterations)
     # plot_coordinate_patterns(n_iterations)
-
     # point_numbers = np.random.randint(0, n_points, (100,))
-    point_numbers = [point_number]
-    adj = get_specific_adjacencies(point_numbers, n_iterations)[point_number]
-    print(adj)
     # print(get_specific_positions(point_numbers, n_iterations))
-    print(get_parent_point(point_number))
-    parent_point_direction_number = get_parent_point_direction_number(point_number)
-    print(adj[parent_point_direction_number])
+    
+    test_parent_is_correct_neighbor()
