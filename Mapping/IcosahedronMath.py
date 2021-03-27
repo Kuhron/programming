@@ -18,7 +18,7 @@ def get_xyz_from_point_number(point_number):
     raise NotImplementedError
 
 
-def get_iterations_from_number_of_points(n):
+def get_iterations_from_points(n):
     try:
         # n_points(n_iters) = 10 * (4**n_iters) + 2
         return {12: 0, 42: 1, 162: 2, 642: 3, 2562: 4, 10242: 5}[n]
@@ -26,6 +26,15 @@ def get_iterations_from_number_of_points(n):
         iterations = get_exact_iterations_from_points(n)
         assert iterations % 1 == 0, "number of points {} gave non-int number of iterations; make sure it is 2+10*(4**n)".format(n)
         return iterations
+
+
+def get_points_from_iterations(n):
+    try:
+        return {0: 12, 1: 42, 2: 162, 3: 642, 4: 2562, 5: 10242}[n]
+    except KeyError:
+        points = get_exact_points_from_iterations(n)
+        assert points % 1 == 0, "number of iterations {} gave non-int number of points {}".format(n, points)
+        return points
 
 
 def get_exact_points_from_iterations(n_iters):
@@ -46,6 +55,7 @@ def get_iterations_needed_for_point_number(point_number):
 
 
 def get_specific_adjacencies(point_numbers, n_iterations):
+    verify_valid_point_numbers(point_numbers, n_iterations)
     memo_fp = get_adjacency_memo_fp(n_iterations)
     with open(memo_fp) as f:
         lines = f.readlines()
@@ -59,6 +69,7 @@ def get_specific_adjacencies(point_numbers, n_iterations):
 
 
 def get_specific_positions(point_numbers, n_iterations):
+    verify_valid_point_numbers(point_numbers, n_iterations)
     memo_fp = get_position_memo_fp(n_iterations)
     with open(memo_fp) as f:
         lines = f.readlines()
@@ -69,6 +80,17 @@ def get_specific_positions(point_numbers, n_iterations):
         assert pi == point_number
         d[pi] = {"xyz":xyz, "latlondeg":latlon}
     return d
+
+
+def verify_valid_point_numbers(point_numbers, n_iterations):
+    points_at_iter = get_exact_points_from_iterations(n_iterations)
+    for p in point_numbers:
+        if type(p) is not int:
+            raise TypeError("invalid point number, expected int: {}".format(p))
+        if p < 0:
+            raise ValueError("point number should be non-negative: {}".format(p))
+        if p >= points_at_iter:
+            raise ValueError("point number {} too high for {} iterations, which has {} points".format(p, n_iterations, points_at_iter))
 
 
 def parse_adjacency_line(l):
@@ -300,14 +322,71 @@ def get_sample_average_edge_length(points, adjacencies, radius):
     return edge_length
 
 
+def get_iterations_needed_for_edge_length(edge_length, radius):
+    # edge_length_km determines how high the resolution is
+    initial_edge_length = get_icosa_edge_length_from_radius_to_vertex(radius)  # edge length at iteration 0, when it's just the 12 vertices
+    factor = initial_edge_length / edge_length
+    # each iteration halves the edge length
+    iterations_needed = int(np.ceil(np.log2(factor)))
+    return iterations_needed
+
+
+def get_icosa_edge_length_from_radius_to_vertex(r):
+    # derive from the inverse formula at https://en.wikipedia.org/wiki/Regular_icosahedron
+    # radius of sphere that touches icosa at all vertices = (edge_length)/4 * sqrt(10 + 2*sqrt(5))
+    return r * 4 / np.sqrt(10 + 2 * np.sqrt(5))
+
+
+def get_opposite_neighbor_direction(i):
+    # call the directions (on rectangle representation) L, DL, D, R, UR, U (in counterclockwise order, as they appear on the rectangle representation for a generic peel-internal point)
+    return {0: 3, 3: 0, 1: 4, 4: 1, 2: 5, 5: 2}[i]  # map L vs R, DL vs UR, D vs U
+    # more succinctly could do return (i+3)%6, but the dict makes it more readable and also throws for unexpected stuff like 1.5 or -1
+
+
+def get_parent_point(point_number):
+    # each point except the initial 12 is created from a "parent", a pre-existing point from one of the previous iterations
+    # at each iteration, each existing point except the poles gets three new children
+    # so e.g. iteration 1 has 42 points, 40 of those get 3 children each, creating 120 new points, so iteration 2 has 162 points, correct
+    # so each new generation skips 0 and 1 (the poles) and starts with point #2 in creating the children
+    # e.g. from gen 1 to 2, start with point 2, create points 42,43,44, then 3>45,46,47, ..., 41>159,160,161
+    if point_number < 12:
+        return None  # initial points have no parents
+    raise Exception("doesn't work, need to prove it")
+    return point_number//3 - 12  # not sure this will always work, TODO prove it
+
+
+def get_parent_point_direction_label(point_number):
+    # 2's first children are 42,43,44, which look back to 2 in the directions of R, UR, U respectively
+    # these are the only three directions that a parent can be found in, and they will always happen in this order
+    m = point_number % 3
+    # for 42, m is 0, direction is R; 43 1 UR; 44 2 U
+    return ["R", "UR", "U"][m]
+
+
+def get_parent_point_direction_number(point_number):
+    return get_direction_number_from_label(get_parent_point_direction_label(point_number))
+
+
+def get_direction_number_from_label(s):
+    return ["L", "DL", "D", "R", "UR", "U"].index(s)
+
+
+def get_direction_label_from_number(i):
+    return ["L", "DL", "D", "R", "UR", "U"][i]
+
+
 
 if __name__ == "__main__":
-    n_iterations = 4
-    n_points = get_exact_points_from_iterations(n_iterations)
+    point_number = random.randint(12, 655362-1)
+    n_iterations = get_iterations_needed_for_point_number(point_number)
+    # n_points = get_exact_points_from_iterations(n_iterations)
     # plot_coordinate_patterns(n_iterations)
 
     # point_numbers = np.random.randint(0, n_points, (100,))
-    point_numbers = [3000]
-    print(get_specific_adjacencies(point_numbers, n_iterations))
-    print(get_specific_positions(point_numbers, n_iterations))
-
+    point_numbers = [point_number]
+    adj = get_specific_adjacencies(point_numbers, n_iterations)[point_number]
+    print(adj)
+    # print(get_specific_positions(point_numbers, n_iterations))
+    print(get_parent_point(point_number))
+    parent_point_direction_number = get_parent_point_direction_number(point_number)
+    print(adj[parent_point_direction_number])

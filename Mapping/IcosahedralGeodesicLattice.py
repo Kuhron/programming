@@ -47,14 +47,7 @@ class IcosahedralGeodesicLattice(Lattice):
         if self.iterations is not None:
             iterations_needed = self.iterations
         elif self.edge_length_km is not None:
-            # edge_length_km determines how high the resolution is
-            # derive from the inverse formula at https://en.wikipedia.org/wiki/Regular_icosahedron
-            # radius of sphere that touches icosa at all vertices = (edge_length)/4 * sqrt(10 + 2*sqrt(5))
-            icosa_edge_length_from_radius_to_vertex = lambda r: r * 4 / np.sqrt(10 + 2 * np.sqrt(5))
-            initial_edge_length_km = icosa_edge_length_from_radius_to_vertex(cada_ii_radius_km)
-            factor = initial_edge_length_km / self.edge_length_km
-            # each iteration halves the edge length
-            iterations_needed = int(np.ceil(np.log2(factor)))
+            iterations_needed = IcosahedronMath.get_iterations_needed_for_edge_length(self.edge_length_km, cada_ii_radius_km)
         else:
             raise
 
@@ -74,7 +67,7 @@ class IcosahedralGeodesicLattice(Lattice):
         for iteration_i in range(1, iterations_needed+1):
             point_index_this_iteration_started_at = len(ordered_points)
             last_iteration_i = iteration_i - 1
-            expected_index = 2 + 10 * 2 ** (2 * last_iteration_i)
+            expected_index = get_points_from_iterations(last_iteration_i)
             assert point_index_this_iteration_started_at == expected_index, "math error in number of points by iteration at i={}, expected {}, got {}".format(iteration_i, expected_index, point_index_this_iteration_started_at)
 
             # bisection and neighbor updating
@@ -82,9 +75,6 @@ class IcosahedralGeodesicLattice(Lattice):
             # don't add any neighbors for the poles
             # for all other points (inside the 5 peels), bisect the first three edges (north(west)ward, westward, and south(west)ward, roughly)
             # thus each existing peel point will add three new points
-
-            # call the directions (on rectangle representation) L, DL, D, R, UR, U (in counterclockwise order, as they appear on the rectangle representation for a generic peel-internal point)
-            get_opposite_neighbor_direction = lambda i: {0: 3, 3: 0, 1: 4, 4: 1, 2: 5, 5: 2}[i]  # map L vs R, DL vs UR, D vs U
 
             peel_point_indices = range(2, len(ordered_points))
             for p_i in peel_point_indices:
