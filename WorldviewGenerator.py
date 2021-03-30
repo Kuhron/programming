@@ -367,7 +367,16 @@ cultural_principles = [
     "People should take turns leading, and this should be done in an egalitarian way.",
     "People should take turns leading, and exchange of power should be determined by combat.",
     "People should take turns leading, and exchange of power should be done by intellectual debate.",
-    
+    "The intent behind a crime matters for determining the punishment.",
+    "Only the effect of a crime, not its intent, matters for determining the punishment.",
+    "People of another group are interchangeable in terms of revenge; any of them can be punished for the crimes of any other.",
+    "Revenge should only be had on the person who committed a crime.",
+    "Revenge should not exist.",
+    "A person's social relationships drive their actions.",
+    "A person's internal characteristics drive their actions.",
+    "No one is in control of their own actions.",
+    "People are in control of their own actions.",
+
 ]
 
 
