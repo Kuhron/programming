@@ -7,6 +7,7 @@ import random
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
 
 
@@ -57,7 +58,9 @@ def get_iterations_needed_for_point_number(point_number):
 def get_specific_adjacencies(point_numbers, n_iterations):
     verify_valid_point_numbers(point_numbers, n_iterations)
     memo_fp = get_adjacency_memo_fp(n_iterations)
+    # print("getting adjacency memo for iteration {}: {}".format(n_iterations, memo_fp))
     with open(memo_fp) as f:
+        print("memo accessed: {}".format(memo_fp))
         lines = f.readlines()
     lines = [lines[i] for i in point_numbers]
     d = {}
@@ -65,6 +68,7 @@ def get_specific_adjacencies(point_numbers, n_iterations):
         pi, neighbors = parse_adjacency_line(l)
         assert pi == point_number
         d[pi] = neighbors
+    # print("returning {}".format(d))
     return d
 
 
@@ -76,6 +80,7 @@ def get_specific_positions(point_numbers, n_iterations):
     verify_valid_point_numbers(point_numbers, n_iterations)
     memo_fp = get_position_memo_fp(n_iterations)
     with open(memo_fp) as f:
+        print("memo accessed: {}".format(memo_fp))
         lines = f.readlines()
     lines = [lines[i] for i in point_numbers]
     d = {}
@@ -86,7 +91,8 @@ def get_specific_positions(point_numbers, n_iterations):
     return d
 
 
-def get_specific_position(point_number, n_iterations):
+def get_specific_position(point_number):
+    n_iterations = get_iterations_needed_for_point_number(point_number)
     return get_specific_positions([point_number], n_iterations)[point_number]
 
 
@@ -99,6 +105,27 @@ def verify_valid_point_numbers(point_numbers, n_iterations):
             raise ValueError("point number should be non-negative: {}".format(p))
         if p >= points_at_iter:
             raise ValueError("point number {} too high for {} iterations, which has {} points".format(p, n_iterations, points_at_iter))
+
+
+def verify_can_have_children(point_number, n_iterations):
+    # point cannot have children in the same iteration when it is born, so require that the point existed one iteration ago (or earlier)
+    verify_valid_point_numbers([point_number], n_iterations-1)
+
+
+def is_valid_point_number(point_number, n_iterations):
+    try:
+        verify_valid_point_numbers([point_number], n_iterations)
+    except ValueError:
+        return False
+    return True
+
+
+def can_have_children(point_number, n_iterations):
+    try:
+        verify_can_have_children(point_number, n_iterations)
+    except ValueError:
+        return False
+    return True
 
 
 def parse_adjacency_line(l):
@@ -119,10 +146,24 @@ def parse_position_line(l):
     return pi, xyz, latlon
 
 
+def get_adjacency_line(point_number, ordered_neighbor_point_numbers):
+    s1 = str(point_number)
+    s2 = ",".join(str(x) for x in ordered_neighbor_point_numbers)
+    return s1 + ":" + s2 + "\n"
+
+
+def get_position_line(point_number, xyz, latlon):
+    s1 = str(point_number)
+    s2 = ",".join(str(x) for x in xyz)
+    s3 = ",".join(str(x) for x in latlon)
+    return s1 + ";" + s2 + ";" + s3 + "\n"
+
+
 def parse_adjacency_memo_file(memo_fp):
     # format: each line is index:neighbor_list (comma separated point numbers)
     # e.g. 0:1752,1914,2076,2238,2400
     with open(memo_fp) as f:
+        print("memo accessed: {}".format(memo_fp))
         lines = f.readlines()
     d = {}
     for l in lines:
@@ -135,6 +176,7 @@ def parse_position_memo_file(memo_fp):
     # format: each line is index:xyz;latlon (xyz and latlon are comma-separated)
     # e.g. 0:6.123233995736766e-17,0.0,1.0;90,0
     with open(memo_fp) as f:
+        print("memo accessed: {}".format(memo_fp))
         lines = f.readlines()
     d = {}
     for l in lines:
@@ -269,6 +311,7 @@ def get_starting_points_adjacency_named():
 
 
 def get_starting_points():
+    # print("getting starting icosa points")
     icosahedron_original_points_latlon = get_starting_points_latlon_named()
     original_points_neighbors_by_name = get_starting_points_adjacency_named()
 
@@ -310,9 +353,29 @@ def get_starting_points():
         neighbor_names = original_points_neighbors_by_name[point_name]
         neighbor_indices = [original_points_order_by_name.index(name) for name in neighbor_names]
         adjacencies_by_point_index[point_index] = neighbor_indices
-        print("adjacencies now:\n{}\n".format(adjacencies_by_point_index))
+        # print("adjacencies now:\n{}\n".format(adjacencies_by_point_index))
 
+    # print("done getting initial icosa points")
     return ordered_points, adjacencies_by_point_index
+
+
+def write_initial_memo_files():
+    ordered_points, adjacencies_by_point_index = get_starting_points()
+
+    s_adj = ""
+    s_pos = ""
+    for pi, p in enumerate(ordered_points):
+        adj = adjacencies_by_point_index[pi]
+        l_adj = get_adjacency_line(pi, adj)
+        l_pos = get_position_line(pi, p.xyz(), p.latlondeg())
+        assert l_adj[-1] == l_pos[-1] == "\n"
+        s_adj += l_adj
+        s_pos += l_pos
+    with open(get_adjacency_memo_fp(n_iterations=0), "w") as f:
+        f.write(s_adj)
+    with open(get_position_memo_fp(n_iterations=0), "w") as f:
+        f.write(s_pos)
+    print("initial memo files written")
 
 
 def get_sample_average_edge_length(points, adjacencies, radius):
@@ -351,7 +414,13 @@ def get_opposite_neighbor_direction(i):
     # more succinctly could do return (i+3)%6, but the dict makes it more readable and also throws for unexpected stuff like 1.5 or -1
 
 
-def get_parent_point(point_number):
+def get_child(parent, child_index, iteration):
+    verify_can_have_children(parent, iteration)  # make sure parent exists and is old enough to have children
+    adder = get_3adder_for_iteration(iteration)
+    return 3 * (parent + adder) + child_index
+
+
+def get_parent(point_number):
     # each point except the initial 12 is created from a "parent", a pre-existing point from one of the previous iterations
     # at each iteration, each existing point except the poles gets three new children
     # so e.g. iteration 1 has 42 points, 40 of those get 3 children each, creating 120 new points, so iteration 2 has 162 points, correct
@@ -361,6 +430,204 @@ def get_parent_point(point_number):
         return None  # initial points have no parents
     # see IcosaParentChildRelations.ods for math
     return point_number // 3 - get_3adder_for_iteration(get_iteration_born(point_number))
+
+
+def get_directional_parent(point_number):
+    # the parent at the other end of the edge that was bisected to produce this point
+    if point_number < 12:
+        return None
+    parent = get_parent(point_number)
+    iteration_born = get_iteration_born(point_number)
+    # print("{} was born i={}".format(point_number, iteration_born))
+    parent_adjacency_in_born_iteration = get_specific_adjacency(parent, iteration_born)
+    parent_adjacency_in_previous_iteration = get_specific_adjacency(parent, iteration_born-1)
+    # print("parent previous adjacency: {}".format(parent_adjacency_in_previous_iteration))
+    # print("parent current adjacency: {}".format(parent_adjacency_in_born_iteration))
+    index_of_this_point_from_parent = parent_adjacency_in_born_iteration.index(point_number)
+    previous_point_at_that_index = parent_adjacency_in_previous_iteration[index_of_this_point_from_parent]
+    return previous_point_at_that_index
+    # this avoids problems with indexing directions from the 12 initial points which only have 5 adjacencies with ill-defined directions
+
+
+def get_parents(point_number):
+    p0 = get_parent(point_number)
+    p1 = get_directional_parent(point_number)
+    return [p0, p1]
+
+
+def get_parent_chain(point_number):
+    # go forward in time, starting from the initial point which gives rise ultimately to this one
+    # return list of tuples, one for each iteration starting with zero up to and including the one where this point was born
+    # tuples are (iteration, parent, child_index, child) where parent is reproducing this generation and child is born this generation
+    if point_number < 12:
+        iteration_born = 0
+        parent = None
+        child_index = None
+        child = point_number
+        tup = (iteration_born, parent, child_index, child)
+        return [tup]
+    else:
+        iteration_born = get_iteration_born(point_number)
+        child_index = get_child_index(point_number)
+        parent = get_parent(point_number)
+        parent_iteration_born = get_iteration_born(parent)
+        previous_chain = get_parent_chain(parent)
+        chain = [x for x in previous_chain]
+        iterations_with_same_parent = list(range(parent_iteration_born+1, iteration_born))
+        for i in iterations_with_same_parent:
+            this_child_index = None
+            this_child = None
+            tup = (i, parent, this_child_index, this_child)
+            chain.append(tup)
+        
+        # tup for this point
+        final_tup = (iteration_born, parent, child_index, point_number)
+        chain.append(final_tup)
+        assert len(chain) == iteration_born + 1
+        return chain
+
+
+def get_adjacency_recursive(point_number, iteration):
+    # TODO use get_adjacency_when_born() here
+    # for non-born iterations, use the formula for child number from parent, index, and iteration
+
+    if iteration == get_iteration_born(point_number):
+        return get_adjacency_when_born(point_number)
+
+    if point_number < 12:
+        # they have only 5, gets more complicated
+        raise NotImplementedError
+    # children born this iteration are easy to find for points >= 2
+    childL = get_child(point_number, 0, iteration)
+    childDL = get_child(point_number, 1, iteration)
+    childD = get_child(point_number, 2, iteration)
+    
+    # then the other three can be gotten as the children of the point's previous neighbors
+    previous_adj = get_adjacency_recursive(point_number, iteration-1)
+    neighborR = previous_adj[get_direction_number_from_label("R")]
+    neighborUR = previous_adj[get_direction_number_from_label("UR")]
+    neighborU = previous_adj[get_direction_number_from_label("U")]
+
+    # the new R is the previous R's L child (index 0)
+    childR = get_child(neighborR, 0, iteration)
+    # the new UR is the previous UR's DL child (index 1)
+    childUR = get_child(neighborUR, 1, iteration)
+    # the new U is the previous U's D child (index 2)
+    childU = get_child(neighborU, 2, iteration)
+
+    adj_labels = {
+        "L": childL, "DL": childDL, "D": childD,
+        "R": childR, "UR": childUR, "U": childU,
+    }
+    adj = convert_adjacency_label_dict_to_list(adj_labels)
+    return adj
+
+
+def get_adjacency_when_born(point_number):
+    print("get_adjacency_when_born({})".format(point_number))
+    iteration = get_iteration_born(point_number)
+
+    if point_number < 12:
+        point_list, adjacency_dict = get_starting_points()
+        return adjacency_dict[point_number]
+
+    # see AdjacencyInduction.png about how to get the current adjacency from the previous generation's
+    child_index = get_child_index(point_number)
+    parent = get_parent(point_number)
+    parent_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
+    parL = parent_adjacency[get_direction_number_from_label("L")]
+    parDL = parent_adjacency[get_direction_number_from_label("DL")]
+    parD = parent_adjacency[get_direction_number_from_label("D")]
+    parR = parent_adjacency[get_direction_number_from_label("R")]
+    parUR = parent_adjacency[get_direction_number_from_label("UR")]
+    parU = parent_adjacency[get_direction_number_from_label("U")]
+
+    if child_index == 0:
+        # parent plus its L, DL, U neighbors will give you all six new neighbors
+        neighbors = {}
+        # the new point is between parent and L, so parent is the R neighbor
+        neighbors["R"] = parent
+        # the parent's old left neighbor is the new point's L neighbor
+        neighbors["L"] = parL
+        # the parent's upper neighbor's D child (index 2) is the new point's UR neighbor
+        neighbors["UR"] = get_child(parU, 2, iteration)
+        # the parent's upper neighbor's DL child (index 1) is the new point's U neighbor
+        neighbors["U"] = get_child(parU, 1, iteration)
+        # the parent's left neighbor's D child (index 2) is the new point's DL neighbor
+        neighbors["DL"] = get_child(parL, 2, iteration)
+        # the parent's DL child (index 1) is the new point's D neighbor
+        neighbors["D"] = get_child(parent, 1, iteration)
+    elif child_index == 1:
+        # parent plus its L, DL, D neighbors will give you all six new neighbors
+        neighbors = {}
+        # the parent is the UR
+        neighbors["UR"] = parent
+        # the parent's DL is the DL
+        neighbors["DL"] = parDL
+        # the parent's D child (index 2) is the R
+        neighbors["R"] = get_child(parent, 2, iteration)
+        # the parent's L child (index 0) is the U
+        neighbors["U"] = get_child(parent, 0, iteration)
+        # the parent's left's D child (index 2) is the L
+        neighbors["L"] = get_child(parL, 2, iteration)
+        # the parent's down's L child (index 0) is the D
+        neighbors["D"] = get_child(parD, 0, iteration)
+    elif child_index == 2:
+        # parent plus its DL, D, R neighbors will give you all six new neighbors
+        neighbors = {}
+        # the parent is the U
+        neighbors["U"] = parent
+        # the parent's D is the D
+        neighbors["D"] = parD
+        # the parent's R's L child (index 0) is the UR
+        neighbors["UR"] = get_child(parR, 0, iteration)
+        # the parent's R's DL child (index 1) is the R
+        neighbors["R"] = get_child(parR, 1, iteration)
+        # the parent's DL child (index 1) is the L
+        neighbors["L"] = get_child(parent, 1, iteration)
+        # the parent's D's L child (index 0) is the D
+        neighbors["D"] = get_child(parD, 0, iteration)
+    else:
+        raise RuntimeError("invalid child index encountered: {}".format(child_index))
+
+    return convert_adjacency_label_dict_to_list(neighbors)
+
+
+def convert_adjacency_label_dict_to_list(neighbors):
+    adj = []
+    for neighbor_index in range(6):
+        dir_label = get_direction_label_from_number(neighbor_index)
+        adj.append(neighbors[dir_label])
+    return adj
+
+
+def get_child_index(point_number):
+    # index that the point is for its parent in the generation it was born
+    # if it was the Left child, 0; if it was the DownLeft child, 1; if it was the Down child, 2
+    if point_number < 12:
+        return None
+    return point_number % 3
+
+
+def get_parent_positions(point_number):
+    p0, p1 = get_parents(point_number)
+    pos0 = get_specific_position(p0)
+    pos1 = get_specific_position(p1)
+    return pos0, pos1
+
+
+def get_position_from_parents(point_number):
+    if point_number < 12:
+        pos, adj = get_initial_points()
+        return pos[point_number]
+    pos0, pos1 = get_parent_positions(point_number)
+    xyz0 = np.array(pos0["xyz"])
+    xyz1 = np.array(pos1["xyz"])
+    latlon0 = np.array(pos0["latlondeg"])
+    latlon1 = np.array(pos1["latlondeg"])
+    xyz = (xyz0 + xyz1)/2
+    latlon = (latlon0 + latlon1)/2
+    return {"xyz": xyz, "latlondeg": latlon}
 
 
 def get_3adder_for_iteration(i):
@@ -373,6 +640,10 @@ def get_3adder_for_iteration(i):
 
 
 def get_iteration_born(point_number):
+    if point_number < 0:
+        raise ValueError("invalid point number {}".format(point_number))
+    elif point_number < 12:
+        return 0
     return math.ceil(get_exact_iterations_from_points(point_number+1))
 
 
@@ -403,17 +674,53 @@ def test_parent_is_correct_neighbor():
         point_number = random.randint(12, 655362-1)
         n_iterations = get_iterations_needed_for_point_number(point_number)
         adj = get_specific_adjacency(point_number, n_iterations)
-        parent = get_parent_point(point_number)
+        parent = get_parent(point_number)
         parent_point_direction_number = get_parent_point_direction_number(point_number)
         corresponding_neighbor = adj[parent_point_direction_number]
         assert parent == corresponding_neighbor
     print("test succeeded: parents are the correct neighbor nodes")
 
 
+def test_children_are_correct_neighbors():
+    # use function to calculate child number analytically = 3*(parent+adder)+child_index
+    # verify that it matches the child numbers gotten from adjacency bisection
+    for i in range(100):
+        point_number = random.randint(12, 327682-1)  # exclude the last memoized iteration since they won't have children yet
+        born_iteration = get_iteration_born(point_number)
+        for n_iterations in range(born_iteration, 9):
+            adj = get_specific_adjacency(point_number, n_iterations)
+            # print("p{} i{} adj: {}".format(point_number, n_iterations, adj))
+            if n_iterations > born_iteration:
+                children = [get_child(point_number, child_index, n_iterations) for child_index in [0,1,2]]
+                # print("children", children)
+                assert children == adj[:3]
+    print("test succeeded: children are the correct neighbor nodes")
+
+
+
 if __name__ == "__main__":
     # n_points = get_exact_points_from_iterations(n_iterations)
     # plot_coordinate_patterns(n_iterations)
     # point_numbers = np.random.randint(0, n_points, (100,))
-    # print(get_specific_positions(point_numbers, n_iterations))
-    
-    test_parent_is_correct_neighbor()
+    # print(get_specific_positions(point_numbers, n_iterations))    
+    # test_parent_is_correct_neighbor()
+    # test_children_are_correct_neighbors()
+
+    # write_initial_memo_files()
+
+    # for point_number in range(0, 162):
+    #     p0 = get_parent(point_number)
+    #     p1 = get_directional_parent(point_number)
+    #     print("{} {} -> {}".format(p0, p1, point_number))
+    # print(get_position_from_parents(point_number))
+
+    # TODO idea: knowing the parent from a number tells you roughly where it will be,
+    # can try getting the position using this information (e.g. max of distance x from the parent location)
+    # and recursing until you get to a point with known location, then go back up the chain of parents until you know all their locations
+    # not sure this will work, I'm trying to avoid recalculating or memoizing the entire icosa for getting info about a single point
+
+    # point_number = random.randint(1000, 100000)
+    # print(point_number)
+    # print(get_parent_chain(point_number))
+    # print(get_adjacency_recursive(point_number, get_iteration_born(point_number)))
+    print(get_adjacency_when_born(3000))

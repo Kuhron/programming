@@ -47,6 +47,13 @@ class UnitSpherePoint:
 
     def latlondeg(self):
         return self.tuples["latlondeg"]
+
+    def latlonrad(self):
+        tup = self.latlondeg()
+        return tuple(x*np.pi/180 for x in tup)
+
+    def latlon(self):
+        raise Exception("please use .latlondeg() or .latlonrad()")
     
     def distance(self, other):
         assert type(other) is UnitSpherePoint
