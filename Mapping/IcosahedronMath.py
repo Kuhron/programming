@@ -55,12 +55,12 @@ def get_iterations_needed_for_point_number(point_number):
     return math.ceil(iters_exact)
 
 
-def get_specific_adjacencies(point_numbers, n_iterations):
+def get_specific_adjacencies_from_memo(point_numbers, n_iterations):
     verify_valid_point_numbers(point_numbers, n_iterations)
     memo_fp = get_adjacency_memo_fp(n_iterations)
     # print("getting adjacency memo for iteration {}: {}".format(n_iterations, memo_fp))
     with open(memo_fp) as f:
-        print("memo accessed: {}".format(memo_fp))
+        notify_memo_accessed(memo_fp)
         lines = f.readlines()
     lines = [lines[i] for i in point_numbers]
     d = {}
@@ -72,15 +72,15 @@ def get_specific_adjacencies(point_numbers, n_iterations):
     return d
 
 
-def get_specific_adjacency(point_number, n_iterations):
-    return get_specific_adjacencies([point_number], n_iterations)[point_number]
+def get_specific_adjacency_from_memo(point_number, n_iterations):
+    return get_specific_adjacencies_from_memo([point_number], n_iterations)[point_number]
 
 
-def get_specific_positions(point_numbers, n_iterations):
+def get_specific_positions_from_memo(point_numbers, n_iterations):
     verify_valid_point_numbers(point_numbers, n_iterations)
     memo_fp = get_position_memo_fp(n_iterations)
     with open(memo_fp) as f:
-        print("memo accessed: {}".format(memo_fp))
+        notify_memo_accessed(memo_fp)
         lines = f.readlines()
     lines = [lines[i] for i in point_numbers]
     d = {}
@@ -91,9 +91,9 @@ def get_specific_positions(point_numbers, n_iterations):
     return d
 
 
-def get_specific_position(point_number):
+def get_specific_position_from_memo(point_number):
     n_iterations = get_iterations_needed_for_point_number(point_number)
-    return get_specific_positions([point_number], n_iterations)[point_number]
+    return get_specific_positions_from_memo([point_number], n_iterations)[point_number]
 
 
 def verify_valid_point_numbers(point_numbers, n_iterations):
@@ -163,7 +163,7 @@ def parse_adjacency_memo_file(memo_fp):
     # format: each line is index:neighbor_list (comma separated point numbers)
     # e.g. 0:1752,1914,2076,2238,2400
     with open(memo_fp) as f:
-        print("memo accessed: {}".format(memo_fp))
+        notify_memo_accessed(memo_fp)
         lines = f.readlines()
     d = {}
     for l in lines:
@@ -176,7 +176,7 @@ def parse_position_memo_file(memo_fp):
     # format: each line is index:xyz;latlon (xyz and latlon are comma-separated)
     # e.g. 0:6.123233995736766e-17,0.0,1.0;90,0
     with open(memo_fp) as f:
-        print("memo accessed: {}".format(memo_fp))
+        notify_memo_accessed(memo_fp)
         lines = f.readlines()
     d = {}
     for l in lines:
@@ -310,6 +310,18 @@ def get_starting_points_adjacency_named():
     return original_points_neighbors_by_name
 
 
+def get_original_points_order_by_name():
+    original_points_order_by_name = [
+        "NP", "SP",  # poles
+        "NR0", "SRp36",  # peel 0
+        "NRp72", "SRp108",  # peel 1
+        "NRp144", "SR180",  # peel 2
+        "NRm144", "SRm108",  # peel 3
+        "NRm72", "SRm36",  # peel 4
+    ]
+    return original_points_order_by_name
+
+
 def get_starting_points():
     # print("getting starting icosa points")
     icosahedron_original_points_latlon = get_starting_points_latlon_named()
@@ -322,14 +334,7 @@ def get_starting_points():
     # - [north, west, southwest, (others)]. order of others doesn't matter that much, can just keep going counterclockwise
     # ordering of neighbors for poles thus doesn't matter as that list will never be used for expansion
 
-    original_points_order_by_name = [
-        "NP", "SP",  # poles
-        "NR0", "SRp36",  # peel 0
-        "NRp72", "SRp108",  # peel 1
-        "NRp144", "SR180",  # peel 2
-        "NRm144", "SRm108",  # peel 3
-        "NRm72", "SRm36",  # peel 4
-    ]
+    original_points_order_by_name = get_original_points_order_by_name()
 
     # keep the point objects in a single array that can be indexed by point index
     # the rest of the data, i.e., the adjacencies dictionary, should be all in terms of integer indices that refer to the points array
@@ -357,6 +362,38 @@ def get_starting_points():
 
     # print("done getting initial icosa points")
     return ordered_points, adjacencies_by_point_index
+
+
+def get_starting_point_neighbor_identity(point_number):
+    # for 0 and 1 (the poles) this is still weird, it's not clear what the directions (L,DL,D,R,UR,U) would mean for them, ill-defined like east of the south pole
+    # but for the other 10 starting points, there are five neighbors but one of them acts like two directions
+    # e.g. on the northern ring, from the perspective of the peel below (west of) the point, the L neighbor is the north pole
+    # but from the perspective of the peel above (east of) the point, the U neighbor is the north pole
+    d = {}
+    assert type(point_number) is int, point_number
+    assert 2 <= point_number < 12, "invalid point for neighbor identity: {}".format(point_number)
+    ring = get_starting_point_ring(point_number)
+    if ring == "northern_ring":
+        return ("L", "U")
+    elif ring == "southern_ring":
+        return ("D", "R")
+    else:
+        raise ValueError("invalid ring {}".format(ring))
+
+
+def get_starting_point_ring(starting_point):
+    original_points_order_by_name = get_original_points_order_by_name()
+    ring_code = original_points_order_by_name[starting_point][:2]
+    if ring_code == "NP":
+        return "north_pole"
+    elif ring_code == "SP":
+        return "south_pole"
+    elif ring_code == "NR":
+        return "northern_ring"
+    elif ring_code == "SR":
+        return "southern_ring"
+    else:
+        raise ValueError("invalid ring code {}".format(ring_code))
 
 
 def write_initial_memo_files():
@@ -439,8 +476,8 @@ def get_directional_parent(point_number):
     parent = get_parent(point_number)
     iteration_born = get_iteration_born(point_number)
     # print("{} was born i={}".format(point_number, iteration_born))
-    parent_adjacency_in_born_iteration = get_specific_adjacency(parent, iteration_born)
-    parent_adjacency_in_previous_iteration = get_specific_adjacency(parent, iteration_born-1)
+    parent_adjacency_in_born_iteration = get_specific_adjacency_from_memo(parent, iteration_born)
+    parent_adjacency_in_previous_iteration = get_specific_adjacency_from_memo(parent, iteration_born-1)
     # print("parent previous adjacency: {}".format(parent_adjacency_in_previous_iteration))
     # print("parent current adjacency: {}".format(parent_adjacency_in_born_iteration))
     index_of_this_point_from_parent = parent_adjacency_in_born_iteration.index(point_number)
@@ -487,16 +524,46 @@ def get_parent_chain(point_number):
         return chain
 
 
+def unify_five_and_six(adjacency, point_number):
+    # converts the five-point adjacencies for points 2-11 (inclusive) into six-point, where two of the points are the same according to the neighbor identities for those 10 points
+    if point_number >= 12:
+        assert len(adjacency) == 6
+        return adjacency
+    elif point_number < 2:
+        raise Exception("cannot unify adjacency to six-point for point number {}".format(point_number))
+
+    identity_pair = get_starting_point_neighbor_identity(point_number)
+    idx, idy = identity_pair
+    idx_int = get_direction_number_from_label(idx)
+    idy_int = get_direction_number_from_label(idy)
+    # what order are the neighbors in originally? want a dict or something for better ease of constructing the faux-6-neighbor list
+    # they always start with L and go counterclockwise
+    # so a point on northern ring will be L/U,DL,D,R,UR, need to add L/U at end
+    # and a point on southern ring will be L,DL,D/R,UR,U, need to add another D/R after the first one
+    if identity_pair == ("L", "U"):
+        # northern ring
+        assert idx_int == 0 and idy_int == 5
+        adj = adjacency + [adjacency[0]]
+    elif identity_pair == ("D", "R"):
+        # southern ring
+        assert idx_int == 2 and idy_int == 3
+        adj = adjacency[:3] + [adjacency[2]] + adjacency[3:]
+    else:
+        raise ValueError("invalid identity pair {}".format(identity_pair))
+
+    return adj
+
+
 def get_adjacency_recursive(point_number, iteration):
-    # TODO use get_adjacency_when_born() here
+    # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
 
     if iteration == get_iteration_born(point_number):
         return get_adjacency_when_born(point_number)
 
-    if point_number < 12:
-        # they have only 5, gets more complicated
-        raise NotImplementedError
+    if point_number in [0, 1]:
+        raise NotImplementedError("cannot yet get adjacency recursively for point {}".format(point_number))
+
     # children born this iteration are easy to find for points >= 2
     childL = get_child(point_number, 0, iteration)
     childDL = get_child(point_number, 1, iteration)
@@ -504,6 +571,7 @@ def get_adjacency_recursive(point_number, iteration):
     
     # then the other three can be gotten as the children of the point's previous neighbors
     previous_adj = get_adjacency_recursive(point_number, iteration-1)
+    previous_adj = unify_five_and_six(previous_adj, point_number)
     neighborR = previous_adj[get_direction_number_from_label("R")]
     neighborUR = previous_adj[get_direction_number_from_label("UR")]
     neighborU = previous_adj[get_direction_number_from_label("U")]
@@ -529,12 +597,18 @@ def get_adjacency_when_born(point_number):
 
     if point_number < 12:
         point_list, adjacency_dict = get_starting_points()
-        return adjacency_dict[point_number]
+        adj_raw = adjacency_dict[point_number]
+        return adj_raw  # just return the five-length one here in case this is the final call, only use the casting to six-length when it's an intermediate step to getting some non-initial point's adjacency
 
     # see AdjacencyInduction.png about how to get the current adjacency from the previous generation's
     child_index = get_child_index(point_number)
     parent = get_parent(point_number)
     parent_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
+    if parent < 12:
+        # need to account that for the initial points other than the poles, there is a relation in which two of the neighbor directions point to the same neighbor point
+        parent_adjacency = unify_five_and_six(parent_adjacency, parent)
+        assert len(parent_adjacency) == 6
+
     parL = parent_adjacency[get_direction_number_from_label("L")]
     parDL = parent_adjacency[get_direction_number_from_label("DL")]
     parD = parent_adjacency[get_direction_number_from_label("D")]
@@ -585,8 +659,8 @@ def get_adjacency_when_born(point_number):
         neighbors["R"] = get_child(parR, 1, iteration)
         # the parent's DL child (index 1) is the L
         neighbors["L"] = get_child(parent, 1, iteration)
-        # the parent's D's L child (index 0) is the D
-        neighbors["D"] = get_child(parD, 0, iteration)
+        # the parent's D's L child (index 0) is the DL
+        neighbors["DL"] = get_child(parD, 0, iteration)
     else:
         raise RuntimeError("invalid child index encountered: {}".format(child_index))
 
@@ -611,8 +685,8 @@ def get_child_index(point_number):
 
 def get_parent_positions(point_number):
     p0, p1 = get_parents(point_number)
-    pos0 = get_specific_position(p0)
-    pos1 = get_specific_position(p1)
+    pos0 = get_specific_position_from_memo(p0)
+    pos1 = get_specific_position_from_memo(p1)
     return pos0, pos1
 
 
@@ -667,13 +741,20 @@ def get_direction_label_from_number(i):
     return ["L", "DL", "D", "R", "UR", "U"][i]
 
 
+def notify_memo_accessed(memo_fp):
+    # depending what I want at the time, maybe do nothing, maybe just print that it was accessed, or maybe raise exception if I'm trying to avoid any memoization at all
+    # pass
+    print("memo accessed: {}".format(memo_fp))
+    # raise RuntimeError("memo accessed but shouldn't be: {}".format(memo_fp))  # advantage here that it will show the call stack
+
+
 def test_parent_is_correct_neighbor():
     # in the iteration where a point is born, its parent must be to its R, UR, or U, depending which number child it is of that parent
     # in later iterations, the parent and child will be separated by intervening bisections of the edge connecting them
     for i in range(100):
         point_number = random.randint(12, 655362-1)
         n_iterations = get_iterations_needed_for_point_number(point_number)
-        adj = get_specific_adjacency(point_number, n_iterations)
+        adj = get_specific_adjacency_from_memo(point_number, n_iterations)
         parent = get_parent(point_number)
         parent_point_direction_number = get_parent_point_direction_number(point_number)
         corresponding_neighbor = adj[parent_point_direction_number]
@@ -688,7 +769,7 @@ def test_children_are_correct_neighbors():
         point_number = random.randint(12, 327682-1)  # exclude the last memoized iteration since they won't have children yet
         born_iteration = get_iteration_born(point_number)
         for n_iterations in range(born_iteration, 9):
-            adj = get_specific_adjacency(point_number, n_iterations)
+            adj = get_specific_adjacency_from_memo(point_number, n_iterations)
             # print("p{} i{} adj: {}".format(point_number, n_iterations, adj))
             if n_iterations > born_iteration:
                 children = [get_child(point_number, child_index, n_iterations) for child_index in [0,1,2]]
@@ -696,6 +777,16 @@ def test_children_are_correct_neighbors():
                 assert children == adj[:3]
     print("test succeeded: children are the correct neighbor nodes")
 
+
+def test_adjacency_when_born():
+    for i in range(100):
+        # point_number = random.randint(0, 41)
+        point_number = i
+        print("checking adjacency when born of p#{}".format(point_number))
+        res_no_memo = get_adjacency_when_born(point_number)
+        res_memo = get_specific_adjacency_from_memo(point_number, get_iteration_born(point_number))
+        assert res_no_memo == res_memo, "{} != {}".format(res_no_memo, res_memo)
+    print("test succeeded: adjacency calculated from scratch is the same as the memoized adjacency")
 
 
 if __name__ == "__main__":
@@ -723,4 +814,4 @@ if __name__ == "__main__":
     # print(point_number)
     # print(get_parent_chain(point_number))
     # print(get_adjacency_recursive(point_number, get_iteration_born(point_number)))
-    print(get_adjacency_when_born(3000))
+    test_adjacency_when_born()
