@@ -535,6 +535,9 @@ def unify_five_and_six(adjacency, point_number):
         return adjacency
     elif point_number < 2:
         raise Exception("cannot unify adjacency to six-point for point number {}".format(point_number))
+    elif len(adjacency) == 6:
+        # it's already in 6-point form, return it
+        return adjacency
 
     identity_pair = get_starting_point_neighbor_identity(point_number)
     idx, idy = identity_pair
@@ -561,6 +564,7 @@ def unify_five_and_six(adjacency, point_number):
 def get_adjacency_recursive(point_number, iteration):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
+    print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
 
     if iteration == get_iteration_born(point_number):
         return get_adjacency_when_born(point_number)
@@ -578,6 +582,8 @@ def get_adjacency_recursive(point_number, iteration):
         else:
             raise ValueError("shouldn't happen")
 
+    print("reached lower cases for p#{} i#{}".format(point_number, iteration))
+
     # children born this iteration are easy to find for points >= 2
     childL = get_child(point_number, 0, iteration)
     childDL = get_child(point_number, 1, iteration)
@@ -590,17 +596,21 @@ def get_adjacency_recursive(point_number, iteration):
     neighborUR = previous_adj[get_direction_number_from_label("UR")]
     neighborU = previous_adj[get_direction_number_from_label("U")]
 
+    neighborU_is_north_pole = neighborU == 0
+    neighborR_is_south_pole = neighborR == 1
+
     # the new R is the previous R's L child (index 0)
-    childR = get_child(neighborR, 0, iteration)
+    childR = get_south_pole_neighbor(iteration=iteration, previous_neighbor_in_direction=point_number) if neighborR_is_south_pole else get_child(neighborR, 0, iteration)
     # the new UR is the previous UR's DL child (index 1)
     childUR = get_child(neighborUR, 1, iteration)
     # the new U is the previous U's D child (index 2)
-    childU = get_child(neighborU, 2, iteration)
+    childU = get_north_pole_neighbor(iteration=iteration, previous_neighbor_in_direction=point_number) if neighborU_is_north_pole else get_child(neighborU, 2, iteration)
 
     adj_labels = {
         "L": childL, "DL": childDL, "D": childD,
         "R": childR, "UR": childUR, "U": childU,
     }
+    print("got adj_labels {}".format(adj_labels))
     adj = convert_adjacency_label_dict_to_list(adj_labels)
     return adj
 
@@ -622,7 +632,7 @@ def get_adjacency_when_born(point_number):
         assert parent not in [0, 1], "parent of p#{} is a pole ({}) but this should not happen".format(point_number, parent)
         # need to account that for the initial points other than the poles, there is a relation in which two of the neighbor directions point to the same neighbor point
         parent_adjacency = unify_five_and_six(parent_adjacency, parent)
-        assert len(parent_adjacency) == 6
+        assert len(parent_adjacency) == 6, "parent p#{} has adjacency of wrong length: {}".format(parent, parent_adjacency)
 
     print("using parent adjacency {}".format(parent_adjacency))
     parL = parent_adjacency[get_direction_number_from_label("L")]
@@ -640,7 +650,17 @@ def get_adjacency_when_born(point_number):
         previous_np_adj = get_adjacency_recursive(0, iteration-1)
     if parR_is_south_pole or parD_is_south_pole:
         previous_sp_adj = get_adjacency_recursive(1, iteration-1)
+    parent_on_NR = is_initial_northern_ring_point(parent)
+    parent_on_SR = is_initial_southern_ring_point(parent)
+    on_northern_seam = is_on_northern_seam(point_number)
+    on_northern_seam_and_parent_has_five_neighbors = on_northern_seam and parent_on_NR
+    on_northern_seam_and_parent_has_six_neighbors = on_northern_seam and not parent_on_NR
+    on_southern_seam = is_on_southern_seam(point_number)
+    on_southern_seam_and_parent_has_five_neighbors = on_southern_seam and parent_on_SR
+    on_southern_seam_and_parent_has_six_neighbors = on_southern_seam and not parent_on_SR
 
+    # so many conditions
+    # ugggggh oh god why
     if child_index == 0:
         # parent plus its L, DL, U neighbors will give you all six new neighbors
         neighbors = {}
@@ -649,9 +669,9 @@ def get_adjacency_when_born(point_number):
         # the parent's old left neighbor is the new point's L neighbor
         neighbors["L"] = parL
         # the parent's upper neighbor's D child (index 2) is the new point's UR neighbor
-        neighbors["UR"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj), 1, iteration) if parU_is_north_pole else get_child(parU, 2, iteration)
+        neighbors["UR"] = get_child(parUR, 1, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 1, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 2, iteration)
         # the parent's upper neighbor's DL child (index 1) is the new point's U neighbor
-        neighbors["U"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj), 0, iteration) if parU_is_north_pole else get_child(parU, 1, iteration)
+        neighbors["U"] = get_child(parUR, 0, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 0, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 1, iteration)
         # the parent's left neighbor's D child (index 2) is the new point's DL neighbor
         neighbors["DL"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
         # the parent's DL child (index 1) is the new point's D neighbor
@@ -668,9 +688,9 @@ def get_adjacency_when_born(point_number):
         # the parent's L child (index 0) is the U
         neighbors["U"] = get_child(parent, 0, iteration)
         # the parent's left's D child (index 2) is the L
-        neighbors["L"] = get_child(parL, 2, iteration)
+        neighbors["L"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
         # the parent's down's L child (index 0) is the D
-        neighbors["D"] = get_child(parD, 0, iteration)
+        neighbors["D"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
     elif child_index == 2:
         # parent plus its DL, D, R neighbors will give you all six new neighbors
         neighbors = {}
@@ -679,18 +699,45 @@ def get_adjacency_when_born(point_number):
         # the parent's D is the D
         neighbors["D"] = parD
         # the parent's R's L child (index 0) is the UR
-        neighbors["UR"] = get_child(parR, 0, iteration)
+        neighbors["UR"] = get_child(parUR, 1, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 1, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 0, iteration)
         # the parent's R's DL child (index 1) is the R
-        neighbors["R"] = get_child(parR, 1, iteration)
+        neighbors["R"] = get_child(parUR, 2, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 2, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 1, iteration)
         # the parent's DL child (index 1) is the L
         neighbors["L"] = get_child(parent, 1, iteration)
         # the parent's D's L child (index 0) is the DL
-        neighbors["DL"] = get_child(parD, 0, iteration)
+        neighbors["DL"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
     else:
         raise RuntimeError("invalid child index encountered: {}".format(child_index))
 
     print("child index {} gave neighbors {}".format(child_index, neighbors))
     return convert_adjacency_label_dict_to_list(neighbors)
+
+
+def is_on_northern_seam(p):
+    # the seams are the edges touching the north pole, from the pole to its five original neighbors
+    if is_initial_northern_ring_point(p):
+        return True
+    else:
+        parent = get_parent(p)
+        child_index = get_child_index(p)
+        return child_index == 0 and is_on_northern_seam(parent)
+
+
+def is_on_southern_seam(p):
+    if is_initial_southern_ring_point(p):
+        return True
+    else:
+        parent = get_parent(p)
+        child_index = get_child_index(p)
+        return child_index == 2 and is_on_southern_seam(parent)
+
+
+def is_initial_northern_ring_point(p):
+    return p in [2, 4, 6, 8, 10]
+
+
+def is_initial_southern_ring_point(p):
+    return p in [3, 5, 7, 9, 11]
 
 
 def get_north_pole_neighbor(iteration, previous_neighbor_in_direction):
@@ -843,7 +890,7 @@ def test_adjacency_when_born():
         print("checking adjacency when born of p#{}".format(point_number))
         res_no_memo = get_adjacency_when_born(point_number)
         res_memo = get_specific_adjacency_from_memo(point_number, get_iteration_born(point_number))
-        assert res_no_memo == res_memo, "{} != {}".format(res_no_memo, res_memo)
+        assert res_no_memo == res_memo, "mismatch for p#{} when born:\ncomputed: {}\nmemoized: {}".format(point_number, res_no_memo, res_memo)
     print("test succeeded: adjacency calculated from scratch is the same as the memoized adjacency")
 
 
