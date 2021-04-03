@@ -532,6 +532,24 @@ def is_parent_and_child(parent, child):
     return parent == get_parent(child)
 
 
+def is_parent_and_child_direction(a, b, iteration):
+    # returns whether b is in a child-like direction from a's perspective
+    # assert can_have_children(a, iteration)  # this is NOT necessary; it's just about DIRECTION, not actual children
+    # however, if a is a pole, need to either raise or return False (it can't be a parent)
+    assert a != b, "cannot check child-directionality from point {} to itself; check that this was intended".format(a)
+    # print("checking if {}>{} is parent to child direction at i={}".format(a, b, iteration))
+    if a in [0, 1]:
+        # print("a is a pole, returning that child-directionality is False")
+        return False
+        # raise ValueError("can't get child-like direction from the poles; point number is {}".format(a))
+    a_adj = get_adjacency_recursive(a, iteration)
+    # print("a_adj for a={}: {}".format(a, a_adj))
+    b_index = a_adj.index(b)
+    res = b_index in [0,1,2]
+    # print("found {} at index {} in a_adj {}, child-directionality is {}".format(b, b_index, a_adj, res))
+    return res
+
+
 def unify_five_and_six(adjacency, point_number):
     # converts the five-point adjacencies for points 2-11 (inclusive) into six-point, where two of the points are the same according to the neighbor identities for those 10 points
     if point_number >= 12:
@@ -568,7 +586,7 @@ def unify_five_and_six(adjacency, point_number):
 def get_adjacency_recursive(point_number, iteration):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
-    print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
+    # print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
 
     if iteration == get_iteration_born(point_number):
         return get_adjacency_when_born(point_number)
@@ -586,135 +604,244 @@ def get_adjacency_recursive(point_number, iteration):
         else:
             raise ValueError("shouldn't happen")
 
-    print("reached lower cases for p#{} i#{}".format(point_number, iteration))
+    # print("reached lower cases for p#{} i#{}".format(point_number, iteration))
 
     # children born this iteration are easy to find for points >= 2
     childL = get_child(point_number, 0, iteration)
     childDL = get_child(point_number, 1, iteration)
     childD = get_child(point_number, 2, iteration)
+    neighbors = [childL, childDL, childD]
+    if point_number < 12:
+        neighbors += [None, None]
+    else:
+        neighbors += [None, None, None]
     
-    # then the other three can be gotten as the children of the point's previous neighbors
+    # then the other two/three can be gotten as the children of the point's previous neighbors
     previous_adj = get_adjacency_recursive(point_number, iteration-1)
-    previous_adj = unify_five_and_six(previous_adj, point_number)
-    neighborR = previous_adj[get_direction_number_from_label("R")]
-    neighborUR = previous_adj[get_direction_number_from_label("UR")]
-    neighborU = previous_adj[get_direction_number_from_label("U")]
+    assert len(neighbors) == len(previous_adj), "adjacency length for p#{} changed".format(point_number)
+    for neigh_i in range(len(previous_adj)):
+        if neighbors[neigh_i] is None:
+            previous_neighbor = previous_adj[neigh_i]
+            new_neighbor = get_generic_point_neighbor(previous_neighbor, point_number, iteration)  # the new neighbor of that point in the direction of this point
+            neighbors[neigh_i] = new_neighbor
 
-    neighborU_is_north_pole = neighborU == 0
-    neighborR_is_south_pole = neighborR == 1
+    return neighbors
 
-    # the new R is the previous R's L child (index 0)
-    childR = get_south_pole_neighbor(point_number, iteration) if neighborR_is_south_pole else get_child(neighborR, 0, iteration)
-    # the new UR is the previous UR's DL child (index 1)
-    childUR = get_child(neighborUR, 1, iteration)
-    # the new U is the previous U's D child (index 2)
-    childU = get_north_pole_neighbor(point_number, iteration) if neighborU_is_north_pole else get_child(neighborU, 2, iteration)
+    # --- old stuff; should no longer make any use of direction labels for this
+    # previous_adj = unify_five_and_six(previous_adj, point_number)
+    # neighborR = previous_adj[get_direction_number_from_label("R")]
+    # neighborUR = previous_adj[get_direction_number_from_label("UR")]
+    # neighborU = previous_adj[get_direction_number_from_label("U")]
 
-    adj_labels = {
-        "L": childL, "DL": childDL, "D": childD,
-        "R": childR, "UR": childUR, "U": childU,
-    }
-    print("got adj_labels {}".format(adj_labels))
-    adj = convert_adjacency_label_dict_to_list(adj_labels)
-    return adj
+    # neighborU_is_north_pole = neighborU == 0
+    # neighborR_is_south_pole = neighborR == 1
+
+    # # the new R is the previous R's L child (index 0)
+    # childR = get_south_pole_neighbor(point_number, iteration) if neighborR_is_south_pole else get_child(neighborR, 0, iteration)
+    # # the new UR is the previous UR's DL child (index 1)
+    # childUR = get_child(neighborUR, 1, iteration)
+    # # the new U is the previous U's D child (index 2)
+    # childU = get_north_pole_neighbor(point_number, iteration) if neighborU_is_north_pole else get_child(neighborU, 2, iteration)
+
+    # adj_labels = {
+    #     "L": childL, "DL": childDL, "D": childD,
+    #     "R": childR, "UR": childUR, "U": childU,
+    # }
+    # print("got adj_labels {}".format(adj_labels))
+    # adj = convert_adjacency_label_dict_to_list(adj_labels)
+    # return adj
+
+
+def get_neighbor_clockwise_step(central_point, central_point_adjacency, reference_neighbor, n_steps):
+    if central_point == 0:
+        # clockwise around the north pole is DL, opposite of UR
+        new_n_steps = -1 * n_steps
+        return go_upright_from_north_pole_neighbor(reference_neighbor, central_point_adjacency, n_steps=new_n_steps)
+    elif central_point == 1:
+        # clockwise around the south pole is UR
+        new_n_steps = n_steps
+        return go_upright_from_south_pole_neighbor(reference_neighbor, central_point_adjacency, n_steps=new_n_steps)
+
+    original_index = central_point_adjacency.index(reference_neighbor)
+    # clockwise means going from L->DL->D->R->UR->U->L i.e. along the list toward the right, wrapping around
+    new_index = (original_index + n_steps) % len(central_point_adjacency)  # this way we don't care whether parent has five neighbors or six; do you feel lucky, punk?
+    return central_point_adjacency[new_index]
+
+
+def get_index_clockwise_step(original_index, n_steps, n_neighbors):
+    assert n_neighbors in [5, 6]
+    return (original_index + n_steps) % n_neighbors
 
 
 def get_adjacency_when_born(point_number):
-    print("get_adjacency_when_born({})".format(point_number))
+    # print("get_adjacency_when_born({})".format(point_number))
     iteration = get_iteration_born(point_number)
 
     if point_number < 12:
         point_list, adjacency_dict = get_starting_points()
         adj_raw = adjacency_dict[point_number]
+        # print("returning known raw adjacency when born for starting point p#{}".format(point_number))
         return adj_raw  # just return the five-length one here in case this is the final call, only use the casting to six-length when it's an intermediate step to getting some non-initial point's adjacency
 
-    # see AdjacencyInduction.png about how to get the current adjacency from the previous generation's
-    child_index = get_child_index(point_number)
+    # --- new stuff with attempts at unification
+
     parent = get_parent(point_number)
-    parent_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
-    if parent < 12:
-        assert parent not in [0, 1], "parent of p#{} is a pole ({}) but this should not happen".format(point_number, parent)
-        # need to account that for the initial points other than the poles, there is a relation in which two of the neighbor directions point to the same neighbor point
-        parent_adjacency = unify_five_and_six(parent_adjacency, parent)
-        assert len(parent_adjacency) == 6, "parent p#{} has adjacency of wrong length: {}".format(parent, parent_adjacency)
+    child_index = get_child_index(point_number)
+    parent_previous_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
+    # the child index of this new point is the same as what its actual index in the adjacency list will be (of its parent)
+    # since the adjacency list is in the order L,DL,D,R,UR,U
+    # and children are made L,DL,D
+    directional_parent = parent_previous_adjacency[child_index]
+    parent_previous_cw_neighbor = get_neighbor_clockwise_step(parent, parent_previous_adjacency, directional_parent, 1)
+    parent_previous_ccw_neighbor = get_neighbor_clockwise_step(parent, parent_previous_adjacency, directional_parent, -1)
 
-    print("using parent adjacency {}".format(parent_adjacency))
-    parL = parent_adjacency[get_direction_number_from_label("L")]
-    parDL = parent_adjacency[get_direction_number_from_label("DL")]
-    parD = parent_adjacency[get_direction_number_from_label("D")]
-    parR = parent_adjacency[get_direction_number_from_label("R")]
-    parUR = parent_adjacency[get_direction_number_from_label("UR")]
-    parU = parent_adjacency[get_direction_number_from_label("U")]
+    # shorthands
+    point_a = parent_previous_cw_neighbor
+    point_b = parent_previous_ccw_neighbor
 
-    parL_is_north_pole = parL == 0
-    parU_is_north_pole = parU == 0
-    parR_is_south_pole = parR == 1
-    parD_is_south_pole = parD == 1
-    if parL_is_north_pole or parU_is_north_pole:
-        previous_np_adj = get_adjacency_recursive(0, iteration-1)
-    if parR_is_south_pole or parD_is_south_pole:
-        previous_sp_adj = get_adjacency_recursive(1, iteration-1)
-    parent_on_NR = is_initial_northern_ring_point(parent)
-    parent_on_SR = is_initial_southern_ring_point(parent)
-    on_northern_seam = is_on_northern_seam(point_number)
-    on_northern_seam_and_parent_has_five_neighbors = on_northern_seam and parent_on_NR
-    on_northern_seam_and_parent_has_six_neighbors = on_northern_seam and not parent_on_NR
-    on_southern_seam = is_on_southern_seam(point_number)
-    on_southern_seam_and_parent_has_five_neighbors = on_southern_seam and parent_on_SR
-    on_southern_seam_and_parent_has_six_neighbors = on_southern_seam and not parent_on_SR
+    # the five-neighbor points are born from the aether at iteration 0, so we can assume this point has six neighbors
+    neighbors = [None, None, None, None, None, None]
+    # a parent's children will only ever be in its peel, and thus will share its child-direction orientation
+    # thus, directional parent's direction index will be the same as this child's child index
+    # and parent's index from child's perspective will be the opposite of that
+    neighbors[child_index] = directional_parent
+    index_of_parent = get_opposite_neighbor_direction(child_index)
+    neighbors[index_of_parent] = parent
+
+    # for the other four points, we know which edges they lie on, and they should(?) be the child of one or the other point around that edge
+    
+    # the point between point_a and parent
+    # it is 1 counterclockwise from parent
+    pa_par_index_from_child = get_index_clockwise_step(index_of_parent, n_steps=-1, n_neighbors=6)
+    assert neighbors[pa_par_index_from_child] is None, "slot already filled"
+    pa_par_from_a = get_generic_point_neighbor(point_a, parent, iteration)
+    pa_par_from_par = get_generic_point_neighbor(parent, point_a, iteration)
+    assert pa_par_from_a == pa_par_from_par
+    pa_par = pa_par_from_a
+    neighbors[pa_par_index_from_child] = pa_par
+
+    # the point between point_a and directional_parent
+    # it is 1 clockwise from dpar
+    pa_dpar_index_from_child = get_index_clockwise_step(child_index, n_steps=1, n_neighbors=6)
+    assert neighbors[pa_dpar_index_from_child] is None, "slot already filled"
+    pa_dpar_from_a = get_generic_point_neighbor(point_a, directional_parent, iteration)
+    pa_dpar_from_dpar = get_generic_point_neighbor(directional_parent, point_a, iteration)
+    assert pa_dpar_from_a == pa_dpar_from_dpar
+    pa_dpar = pa_dpar_from_a
+    neighbors[pa_dpar_index_from_child] = pa_dpar
+
+    # the point between point_b and parent
+    # it is 1 clockwise from par
+    pb_par_index_from_child = get_index_clockwise_step(index_of_parent, n_steps=1, n_neighbors=6)
+    assert neighbors[pb_par_index_from_child] is None, "slot already filled"
+    pb_par_from_b = get_generic_point_neighbor(point_b, parent, iteration)
+    pb_par_from_par = get_generic_point_neighbor(parent, point_b, iteration)
+    assert pb_par_from_b == pb_par_from_par
+    pb_par = pb_par_from_b
+    neighbors[pb_par_index_from_child] = pb_par
+
+    # the point between point_b and directional_parent
+    # it is 1 counterclockwise from dpar
+    pb_dpar_index_from_child = get_index_clockwise_step(child_index, n_steps=-1, n_neighbors=6)
+    assert neighbors[pb_dpar_index_from_child] is None, "slot already filled"
+    pb_dpar_from_b = get_generic_point_neighbor(point_b, directional_parent, iteration)
+    pb_dpar_from_dpar = get_generic_point_neighbor(directional_parent, point_b, iteration)
+    assert pb_dpar_from_b == pb_dpar_from_dpar
+    pb_dpar = pb_dpar_from_b
+    neighbors[pb_dpar_index_from_child] = pb_dpar
+
+
+    # --- old stuff with too many conditions, gonna try unifying it ---
+
+    # see AdjacencyInduction.png about how to get the current adjacency from the previous generation's
+    # parent = get_parent(point_number)
+    # --- new stuff with attempts at unification
+    # child_index = get_child_index(point_number)
+    # parent_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
+    # if parent < 12:
+    #     assert parent not in [0, 1], "parent of p#{} is a pole ({}) but this should not happen".format(point_number, parent)
+    #     # need to account that for the initial points other than the poles, there is a relation in which two of the neighbor directions point to the same neighbor point
+    #     parent_adjacency = unify_five_and_six(parent_adjacency, parent)
+    #     assert len(parent_adjacency) == 6, "parent p#{} has adjacency of wrong length: {}".format(parent, parent_adjacency)
+
+    # print("using parent adjacency {}".format(parent_adjacency))
+    # parL = parent_adjacency[get_direction_number_from_label("L")]
+    # parDL = parent_adjacency[get_direction_number_from_label("DL")]
+    # parD = parent_adjacency[get_direction_number_from_label("D")]
+    # parR = parent_adjacency[get_direction_number_from_label("R")]
+    # parUR = parent_adjacency[get_direction_number_from_label("UR")]
+    # parU = parent_adjacency[get_direction_number_from_label("U")]
+
+    # parL_is_north_pole = parL == 0
+    # parU_is_north_pole = parU == 0
+    # parR_is_south_pole = parR == 1
+    # parD_is_south_pole = parD == 1
+    # if parL_is_north_pole or parU_is_north_pole:
+    #     previous_np_adj = get_adjacency_recursive(0, iteration-1)
+    # if parR_is_south_pole or parD_is_south_pole:
+    #     previous_sp_adj = get_adjacency_recursive(1, iteration-1)
+    # parent_on_NR = is_initial_northern_ring_point(parent)
+    # parent_on_SR = is_initial_southern_ring_point(parent)
+    # on_northern_seam = is_on_northern_seam(point_number)
+    # on_northern_seam_and_parent_has_five_neighbors = on_northern_seam and parent_on_NR
+    # on_northern_seam_and_parent_has_six_neighbors = on_northern_seam and not parent_on_NR
+    # on_southern_seam = is_on_southern_seam(point_number)
+    # on_southern_seam_and_parent_has_five_neighbors = on_southern_seam and parent_on_SR
+    # on_southern_seam_and_parent_has_six_neighbors = on_southern_seam and not parent_on_SR
 
     # so many conditions
     # ugggggh oh god why
-    if child_index == 0:
-        # parent plus its L, DL, U neighbors will give you all six new neighbors
-        neighbors = {}
-        # the new point is between parent and L, so parent is the R neighbor
-        neighbors["R"] = parent
-        # the parent's old left neighbor is the new point's L neighbor
-        neighbors["L"] = parL
-        # the parent's upper neighbor's D child (index 2) is the new point's UR neighbor
-        neighbors["UR"] = get_child(parUR, 1, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 1, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 2, iteration)
-        # the parent's upper neighbor's DL child (index 1) is the new point's U neighbor
-        neighbors["U"] = get_child(parUR, 0, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 0, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 1, iteration)
-        # the parent's left neighbor's D child (index 2) is the new point's DL neighbor
-        neighbors["DL"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
-        # the parent's DL child (index 1) is the new point's D neighbor
-        neighbors["D"] = get_child(parent, 1, iteration)
-    elif child_index == 1:
-        # parent plus its L, DL, D neighbors will give you all six new neighbors
-        neighbors = {}
-        # the parent is the UR
-        neighbors["UR"] = parent
-        # the parent's DL is the DL
-        neighbors["DL"] = parDL
-        # the parent's D child (index 2) is the R
-        neighbors["R"] = get_child(parent, 2, iteration)
-        # the parent's L child (index 0) is the U
-        neighbors["U"] = get_child(parent, 0, iteration)
-        # the parent's left's D child (index 2) is the L
-        neighbors["L"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
-        # the parent's down's L child (index 0) is the D
-        neighbors["D"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
-    elif child_index == 2:
-        # parent plus its DL, D, R neighbors will give you all six new neighbors
-        neighbors = {}
-        # the parent is the U
-        neighbors["U"] = parent
-        # the parent's D is the D
-        neighbors["D"] = parD
-        # the parent's R's L child (index 0) is the UR
-        neighbors["UR"] = get_child(parUR, 1, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 1, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 0, iteration)
-        # the parent's R's DL child (index 1) is the R
-        neighbors["R"] = get_child(parUR, 2, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 2, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 1, iteration)
-        # the parent's DL child (index 1) is the L
-        neighbors["L"] = get_child(parent, 1, iteration)
-        # the parent's D's L child (index 0) is the DL
-        neighbors["DL"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
-    else:
-        raise RuntimeError("invalid child index encountered: {}".format(child_index))
+    # if child_index == 0:
+    #     # parent plus its L, DL, U neighbors will give you all six new neighbors
+    #     neighbors = {}
+    #     # the new point is between parent and L, so parent is the R neighbor
+    #     neighbors["R"] = parent
+    #     # the parent's old left neighbor is the new point's L neighbor
+    #     neighbors["L"] = parL
+    #     # the parent's upper neighbor's D child (index 2) is the new point's UR neighbor
+    #     neighbors["UR"] = get_child(parUR, 1, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 1, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 2, iteration)
+    #     # the parent's upper neighbor's DL child (index 1) is the new point's U neighbor
+    #     neighbors["U"] = get_child(parUR, 0, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 0, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 1, iteration)
+    #     # the parent's left neighbor's D child (index 2) is the new point's DL neighbor
+    #     neighbors["DL"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
+    #     # the parent's DL child (index 1) is the new point's D neighbor
+    #     neighbors["D"] = get_child(parent, 1, iteration)
+    # elif child_index == 1:
+    #     # parent plus its L, DL, D neighbors will give you all six new neighbors
+    #     neighbors = {}
+    #     # the parent is the UR
+    #     neighbors["UR"] = parent
+    #     # the parent's DL is the DL
+    #     neighbors["DL"] = parDL
+    #     # the parent's D child (index 2) is the R
+    #     neighbors["R"] = get_child(parent, 2, iteration)
+    #     # the parent's L child (index 0) is the U
+    #     neighbors["U"] = get_child(parent, 0, iteration)
+    #     # the parent's left's D child (index 2) is the L
+    #     neighbors["L"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
+    #     # the parent's down's L child (index 0) is the D
+    #     neighbors["D"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
+    # elif child_index == 2:
+    #     # parent plus its DL, D, R neighbors will give you all six new neighbors
+    #     neighbors = {}
+    #     # the parent is the U
+    #     neighbors["U"] = parent
+    #     # the parent's D is the D
+    #     neighbors["D"] = parD
+    #     # the parent's R's L child (index 0) is the UR
+    #     neighbors["UR"] = get_child(parUR, 1, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 1, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 0, iteration)
+    #     # the parent's R's DL child (index 1) is the R
+    #     neighbors["R"] = get_child(parUR, 2, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 2, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 1, iteration)
+    #     # the parent's DL child (index 1) is the L
+    #     neighbors["L"] = get_child(parent, 1, iteration)
+    #     # the parent's D's L child (index 0) is the DL
+    #     neighbors["DL"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
+    # else:
+    #     raise RuntimeError("invalid child index encountered: {}".format(child_index))
 
-    print("child index {} gave neighbors {}".format(child_index, neighbors))
-    return convert_adjacency_label_dict_to_list(neighbors)
+    # print("got neighbors of p#{} when born at i={}: {}".format(point_number, iteration, neighbors))
+    # return convert_adjacency_label_dict_to_list(neighbors)
+    return neighbors  # try populating it as list by index rather than using direction labels at all
 
 
 def is_on_northern_seam(p):
@@ -759,24 +886,26 @@ def get_south_pole_neighbor(previous_neighbor_in_direction, iteration):
 
 
 def get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration):
-    print("getting neighbor of p#{} at i={}, in the direction of neighbor p#{} at i={}".format(point, iteration, previous_neighbor_in_direction, iteration-1))
+    # print("getting neighbor of p#{} at i={}, in the direction of neighbor p#{} at i={}".format(point, iteration, previous_neighbor_in_direction, iteration-1))
     if point == 0:
         return get_north_pole_neighbor(previous_neighbor_in_direction, iteration)
     elif point == 1:
         return get_south_pole_neighbor(previous_neighbor_in_direction, iteration)
 
     # we don't care if it's actually a parent and child, we just care that one of these directions is such that we can make a NEW child from one of the points (and thus get the child's number analytically)
-    desired_point_is_in_child_direction_from_neighbor = # is_parent_and_child(previous_neighbor_in_direction, point)
-    desired_point_is_in_child_direction_from_point = # is_parent_and_child(point, previous_neighbor_in_direction)
+    # print("checking child-directionality between {} and {}".format(point, previous_neighbor_in_direction))
+    desired_point_is_in_child_direction_from_neighbor = is_parent_and_child_direction(previous_neighbor_in_direction, point, iteration-1)
+    desired_point_is_in_child_direction_from_point = is_parent_and_child_direction(point, previous_neighbor_in_direction, iteration-1)
+    # print("done checking child-directionality, got {}>{} {}; {}>{} {}".format(previous_neighbor_in_direction, point, desired_point_is_in_child_direction_from_neighbor, point, previous_neighbor_in_direction, desired_point_is_in_child_direction_from_point))
 
-    if desired_point_is_child_of_neighbor:
+    if desired_point_is_in_child_direction_from_neighbor:
         # get the neighbor's new child
         # child index should equal the adjacency index since adjacency is in order L,DL,D,R,UR,U and child index is in order L,DL,D
         neighbor_previous_adjacency = get_adjacency_recursive(previous_neighbor_in_direction, iteration-1)
         index_of_point_from_neighbor_perspective = neighbor_previous_adjacency.index(point)
         child_index = index_of_point_from_neighbor_perspective
         return get_child(previous_neighbor_in_direction, child_index, iteration)
-    elif desired_point_is_child_of_point:
+    elif desired_point_is_in_child_direction_from_point:
         previous_adjacency = get_adjacency_recursive(point, iteration-1)
         index_of_neighbor_from_point_perspective = previous_adjacency.index(previous_neighbor_in_direction)
         child_index = index_of_neighbor_from_point_perspective
@@ -936,6 +1065,21 @@ def test_pole_adjacency():
     print("test succeeded: pole adjacency calculated from scratch is the same as the memoized adjacency")
 
 
+def test_get_generic_point_neighbor():
+    for point in range(0, 642):
+        born_iteration = get_iteration_born(point)
+        for di in [1, 2, 3]:
+            iteration = born_iteration + di  # don't make it the born generation, so we'll have a previous neighbor
+            for neigh_index in range(6 if point >= 12 else 5):
+                print("\n-- test_get_generic_point_neighbor: case p#{} i={} ni={}".format(point, iteration, neigh_index))
+                previous_neighbor_in_direction = get_specific_adjacency_from_memo(point, iteration-1)[neigh_index]
+                new_p = get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration)
+                # print(new_p)
+                adj = get_specific_adjacency_from_memo(point, iteration)
+                # print(adj[neigh_index])
+                assert new_p == adj[neigh_index]
+    print("test succeeded: generic point neighbor works")
+
 
 if __name__ == "__main__":
     # n_points = get_exact_points_from_iterations(n_iterations)
@@ -956,14 +1100,6 @@ if __name__ == "__main__":
     # print(get_parent_chain(point_number))
     # print(get_adjacency_recursive(point_number, get_iteration_born(point_number)))
 
-    # test_pole_adjacency()
-    # test_adjacency_when_born()  # TODO still fails
-
-    point = random.randint(0, 200)
-    iteration = random.randrange(get_iteration_born(point), 4)
-    neigh_index = random.randrange(6) if point >= 12 else random.randrange(5)
-    previous_neighbor_in_direction = get_specific_adjacency_from_memo(point, iteration-1)[neigh_index]
-    new_p = get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration)
-    print(new_p)
-    adj = get_specific_adjacency_from_memo(point, iteration)
-    print(adj[neigh_index])
+    test_pole_adjacency()
+    test_adjacency_when_born()
+    test_get_generic_point_neighbor()
