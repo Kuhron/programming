@@ -11,6 +11,8 @@ import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
 
 
+
+
 def get_latlon_from_point_number(point_number):
     raise NotImplementedError
 
@@ -399,7 +401,9 @@ def get_starting_point_ring(starting_point):
 
 
 def write_initial_memo_files():
-    ordered_points, adjacencies_by_point_index = get_starting_points()
+    # ordered_points, adjacencies_by_point_index = get_starting_points()
+    ordered_points = STARTING_POINTS_ORDERED
+    adjacencies_by_point_index = STARTING_POINTS_ADJACENCY
 
     s_adj = ""
     s_pos = ""
@@ -532,7 +536,7 @@ def is_parent_and_child(parent, child):
     return parent == get_parent(child)
 
 
-def is_parent_and_child_direction(a, b, iteration):
+def is_parent_and_child_direction(a, b, iteration, STARTING_POINTS):
     # returns whether b is in a child-like direction from a's perspective
     # assert can_have_children(a, iteration)  # this is NOT necessary; it's just about DIRECTION, not actual children
     # however, if a is a pole, need to either raise or return False (it can't be a parent)
@@ -542,7 +546,7 @@ def is_parent_and_child_direction(a, b, iteration):
         # print("a is a pole, returning that child-directionality is False")
         return False
         # raise ValueError("can't get child-like direction from the poles; point number is {}".format(a))
-    a_adj = get_adjacency_recursive(a, iteration)
+    a_adj = get_adjacency_recursive(a, iteration, STARTING_POINTS)
     # print("a_adj for a={}: {}".format(a, a_adj))
     b_index = a_adj.index(b)
     res = b_index in [0,1,2]
@@ -583,23 +587,23 @@ def unify_five_and_six(adjacency, point_number):
     return adj
 
 
-def get_adjacency_recursive(point_number, iteration):
+def get_adjacency_recursive(point_number, iteration, STARTING_POINTS):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
     # print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
 
     if iteration == get_iteration_born(point_number):
-        return get_adjacency_when_born(point_number)
+        return get_adjacency_when_born(point_number, STARTING_POINTS)
 
     if point_number in [0, 1]:
         if iteration == 0:
-            ordered_points, adj = get_starting_points()
+            ordered_points, adj = STARTING_POINTS
             return adj[point_number]
         elif point_number == 0:
-            previous_adj = get_adjacency_recursive(point_number, iteration-1)
+            previous_adj = get_adjacency_recursive(point_number, iteration-1, STARTING_POINTS)
             return [get_north_pole_neighbor(previous_neighbor, iteration) for previous_neighbor in previous_adj]
         elif point_number == 1:
-            previous_adj = get_adjacency_recursive(point_number, iteration-1)
+            previous_adj = get_adjacency_recursive(point_number, iteration-1, STARTING_POINTS)
             return [get_south_pole_neighbor(previous_neighbor, iteration) for previous_neighbor in previous_adj]
         else:
             raise ValueError("shouldn't happen")
@@ -617,12 +621,12 @@ def get_adjacency_recursive(point_number, iteration):
         neighbors += [None, None, None]
     
     # then the other two/three can be gotten as the children of the point's previous neighbors
-    previous_adj = get_adjacency_recursive(point_number, iteration-1)
+    previous_adj = get_adjacency_recursive(point_number, iteration-1, STARTING_POINTS)
     assert len(neighbors) == len(previous_adj), "adjacency length for p#{} changed".format(point_number)
     for neigh_i in range(len(previous_adj)):
         if neighbors[neigh_i] is None:
             previous_neighbor = previous_adj[neigh_i]
-            new_neighbor = get_generic_point_neighbor(previous_neighbor, point_number, iteration)  # the new neighbor of that point in the direction of this point
+            new_neighbor = get_generic_point_neighbor(previous_neighbor, point_number, iteration, STARTING_POINTS)  # the new neighbor of that point in the direction of this point
             neighbors[neigh_i] = new_neighbor
 
     return neighbors
@@ -673,12 +677,12 @@ def get_index_clockwise_step(original_index, n_steps, n_neighbors):
     return (original_index + n_steps) % n_neighbors
 
 
-def get_adjacency_when_born(point_number):
+def get_adjacency_when_born(point_number, STARTING_POINTS):
     # print("get_adjacency_when_born({})".format(point_number))
     iteration = get_iteration_born(point_number)
 
     if point_number < 12:
-        point_list, adjacency_dict = get_starting_points()
+        point_list, adjacency_dict = STARTING_POINTS
         adj_raw = adjacency_dict[point_number]
         # print("returning known raw adjacency when born for starting point p#{}".format(point_number))
         return adj_raw  # just return the five-length one here in case this is the final call, only use the casting to six-length when it's an intermediate step to getting some non-initial point's adjacency
@@ -687,7 +691,7 @@ def get_adjacency_when_born(point_number):
 
     parent = get_parent(point_number)
     child_index = get_child_index(point_number)
-    parent_previous_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
+    parent_previous_adjacency = get_adjacency_recursive(parent, iteration-1, STARTING_POINTS)  # adjacency of parent in PREVIOUS iteration
     # the child index of this new point is the same as what its actual index in the adjacency list will be (of its parent)
     # since the adjacency list is in the order L,DL,D,R,UR,U
     # and children are made L,DL,D
@@ -714,8 +718,8 @@ def get_adjacency_when_born(point_number):
     # it is 1 counterclockwise from parent
     pa_par_index_from_child = get_index_clockwise_step(index_of_parent, n_steps=-1, n_neighbors=6)
     assert neighbors[pa_par_index_from_child] is None, "slot already filled"
-    pa_par_from_a = get_generic_point_neighbor(point_a, parent, iteration)
-    pa_par_from_par = get_generic_point_neighbor(parent, point_a, iteration)
+    pa_par_from_a = get_generic_point_neighbor(point_a, parent, iteration, STARTING_POINTS)
+    pa_par_from_par = get_generic_point_neighbor(parent, point_a, iteration, STARTING_POINTS)
     assert pa_par_from_a == pa_par_from_par
     pa_par = pa_par_from_a
     neighbors[pa_par_index_from_child] = pa_par
@@ -724,8 +728,8 @@ def get_adjacency_when_born(point_number):
     # it is 1 clockwise from dpar
     pa_dpar_index_from_child = get_index_clockwise_step(child_index, n_steps=1, n_neighbors=6)
     assert neighbors[pa_dpar_index_from_child] is None, "slot already filled"
-    pa_dpar_from_a = get_generic_point_neighbor(point_a, directional_parent, iteration)
-    pa_dpar_from_dpar = get_generic_point_neighbor(directional_parent, point_a, iteration)
+    pa_dpar_from_a = get_generic_point_neighbor(point_a, directional_parent, iteration, STARTING_POINTS)
+    pa_dpar_from_dpar = get_generic_point_neighbor(directional_parent, point_a, iteration, STARTING_POINTS)
     assert pa_dpar_from_a == pa_dpar_from_dpar
     pa_dpar = pa_dpar_from_a
     neighbors[pa_dpar_index_from_child] = pa_dpar
@@ -734,8 +738,8 @@ def get_adjacency_when_born(point_number):
     # it is 1 clockwise from par
     pb_par_index_from_child = get_index_clockwise_step(index_of_parent, n_steps=1, n_neighbors=6)
     assert neighbors[pb_par_index_from_child] is None, "slot already filled"
-    pb_par_from_b = get_generic_point_neighbor(point_b, parent, iteration)
-    pb_par_from_par = get_generic_point_neighbor(parent, point_b, iteration)
+    pb_par_from_b = get_generic_point_neighbor(point_b, parent, iteration, STARTING_POINTS)
+    pb_par_from_par = get_generic_point_neighbor(parent, point_b, iteration, STARTING_POINTS)
     assert pb_par_from_b == pb_par_from_par
     pb_par = pb_par_from_b
     neighbors[pb_par_index_from_child] = pb_par
@@ -744,8 +748,8 @@ def get_adjacency_when_born(point_number):
     # it is 1 counterclockwise from dpar
     pb_dpar_index_from_child = get_index_clockwise_step(child_index, n_steps=-1, n_neighbors=6)
     assert neighbors[pb_dpar_index_from_child] is None, "slot already filled"
-    pb_dpar_from_b = get_generic_point_neighbor(point_b, directional_parent, iteration)
-    pb_dpar_from_dpar = get_generic_point_neighbor(directional_parent, point_b, iteration)
+    pb_dpar_from_b = get_generic_point_neighbor(point_b, directional_parent, iteration, STARTING_POINTS)
+    pb_dpar_from_dpar = get_generic_point_neighbor(directional_parent, point_b, iteration, STARTING_POINTS)
     assert pb_dpar_from_b == pb_dpar_from_dpar
     pb_dpar = pb_dpar_from_b
     neighbors[pb_dpar_index_from_child] = pb_dpar
@@ -885,7 +889,7 @@ def get_south_pole_neighbor(previous_neighbor_in_direction, iteration):
     return get_child(previous_neighbor_in_direction, child_index=2, iteration=iteration)
 
 
-def get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration):
+def get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration, STARTING_POINTS):
     # print("getting neighbor of p#{} at i={}, in the direction of neighbor p#{} at i={}".format(point, iteration, previous_neighbor_in_direction, iteration-1))
     if point == 0:
         return get_north_pole_neighbor(previous_neighbor_in_direction, iteration)
@@ -894,19 +898,19 @@ def get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration)
 
     # we don't care if it's actually a parent and child, we just care that one of these directions is such that we can make a NEW child from one of the points (and thus get the child's number analytically)
     # print("checking child-directionality between {} and {}".format(point, previous_neighbor_in_direction))
-    desired_point_is_in_child_direction_from_neighbor = is_parent_and_child_direction(previous_neighbor_in_direction, point, iteration-1)
-    desired_point_is_in_child_direction_from_point = is_parent_and_child_direction(point, previous_neighbor_in_direction, iteration-1)
+    desired_point_is_in_child_direction_from_neighbor = is_parent_and_child_direction(previous_neighbor_in_direction, point, iteration-1, STARTING_POINTS)
+    desired_point_is_in_child_direction_from_point = is_parent_and_child_direction(point, previous_neighbor_in_direction, iteration-1, STARTING_POINTS)
     # print("done checking child-directionality, got {}>{} {}; {}>{} {}".format(previous_neighbor_in_direction, point, desired_point_is_in_child_direction_from_neighbor, point, previous_neighbor_in_direction, desired_point_is_in_child_direction_from_point))
 
     if desired_point_is_in_child_direction_from_neighbor:
         # get the neighbor's new child
         # child index should equal the adjacency index since adjacency is in order L,DL,D,R,UR,U and child index is in order L,DL,D
-        neighbor_previous_adjacency = get_adjacency_recursive(previous_neighbor_in_direction, iteration-1)
+        neighbor_previous_adjacency = get_adjacency_recursive(previous_neighbor_in_direction, iteration-1, STARTING_POINTS)
         index_of_point_from_neighbor_perspective = neighbor_previous_adjacency.index(point)
         child_index = index_of_point_from_neighbor_perspective
         return get_child(previous_neighbor_in_direction, child_index, iteration)
     elif desired_point_is_in_child_direction_from_point:
-        previous_adjacency = get_adjacency_recursive(point, iteration-1)
+        previous_adjacency = get_adjacency_recursive(point, iteration-1, STARTING_POINTS)
         index_of_neighbor_from_point_perspective = previous_adjacency.index(previous_neighbor_in_direction)
         child_index = index_of_neighbor_from_point_perspective
         return get_child(point, child_index, iteration)
@@ -1043,37 +1047,49 @@ def test_children_are_correct_neighbors():
     print("test succeeded: children are the correct neighbor nodes")
 
 
-def test_adjacency_when_born():
-    for i in range(100):
+def test_adjacency_when_born(STARTING_POINTS):
+    for i in range(162):
         # point_number = random.randint(0, 41)
         point_number = i
         print("checking adjacency when born of p#{}".format(point_number))
-        res_no_memo = get_adjacency_when_born(point_number)
+        res_no_memo = get_adjacency_when_born(point_number, STARTING_POINTS)
         res_memo = get_specific_adjacency_from_memo(point_number, get_iteration_born(point_number))
         assert res_no_memo == res_memo, "mismatch for p#{} when born:\ncomputed: {}\nmemoized: {}".format(point_number, res_no_memo, res_memo)
     print("test succeeded: adjacency calculated from scratch is the same as the memoized adjacency")
 
 
-def test_pole_adjacency():
+def test_adjacency_recursive(STARTING_POINTS):
+    for point in range(0, 80):
+        born_iteration = get_iteration_born(point)
+        for di in [1, 2, 3]:
+            iteration = born_iteration + di
+            print("\n-- test_adjacency_recursive p#{} i={}".format(point, iteration))
+            adj = get_adjacency_recursive(point, iteration, STARTING_POINTS)
+            adj_from_memo = get_specific_adjacency_from_memo(point, iteration)
+            assert adj == adj_from_memo
+    print("test succeeded: getting adjacency recursively matches memoized adjacency")
+
+
+def test_pole_adjacency(STARTING_POINTS):
     for iteration in range(9):
-        p0rec = get_adjacency_recursive(0, iteration)
+        p0rec = get_adjacency_recursive(0, iteration, STARTING_POINTS)
         p0memo = get_specific_adjacency_from_memo(0, iteration)
-        p1rec = get_adjacency_recursive(1, iteration)
+        p1rec = get_adjacency_recursive(1, iteration, STARTING_POINTS)
         p1memo = get_specific_adjacency_from_memo(1, iteration)
         assert p0rec == p0memo, "north pole mismatch: {} vs {}".format(p0rec, p0memo)
         assert p1rec == p1memo, "north pole mismatch: {} vs {}".format(p1rec, p1memo)
     print("test succeeded: pole adjacency calculated from scratch is the same as the memoized adjacency")
 
 
-def test_get_generic_point_neighbor():
-    for point in range(0, 642):
+def test_get_generic_point_neighbor(STARTING_POINTS):
+    for point in range(0, 20):
         born_iteration = get_iteration_born(point)
         for di in [1, 2, 3]:
             iteration = born_iteration + di  # don't make it the born generation, so we'll have a previous neighbor
             for neigh_index in range(6 if point >= 12 else 5):
                 print("\n-- test_get_generic_point_neighbor: case p#{} i={} ni={}".format(point, iteration, neigh_index))
                 previous_neighbor_in_direction = get_specific_adjacency_from_memo(point, iteration-1)[neigh_index]
-                new_p = get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration)
+                new_p = get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration, STARTING_POINTS)
                 # print(new_p)
                 adj = get_specific_adjacency_from_memo(point, iteration)
                 # print(adj[neigh_index])
@@ -1082,6 +1098,8 @@ def test_get_generic_point_neighbor():
 
 
 if __name__ == "__main__":
+    STARTING_POINTS = get_starting_points()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
+
     # n_points = get_exact_points_from_iterations(n_iterations)
     # plot_coordinate_patterns(n_iterations)
     # point_numbers = np.random.randint(0, n_points, (100,))
@@ -1100,6 +1118,7 @@ if __name__ == "__main__":
     # print(get_parent_chain(point_number))
     # print(get_adjacency_recursive(point_number, get_iteration_born(point_number)))
 
-    test_pole_adjacency()
-    test_adjacency_when_born()
-    test_get_generic_point_neighbor()
+    # test_pole_adjacency(STARTING_POINTS)
+    # test_adjacency_when_born(STARTING_POINTS)
+    # test_get_generic_point_neighbor(STARTING_POINTS)
+    test_adjacency_recursive(STARTING_POINTS)
