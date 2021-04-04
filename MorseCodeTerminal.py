@@ -1,9 +1,9 @@
 import datetime
+import random
 import pyaudio
 import string
 import time
 import wave
-import winsound
 
 import numpy as np
 
@@ -80,6 +80,8 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.add_command("s", self.change_save_status, "Turn on saving to file if arg is 1, else turn off if arg is 0.")
         self.add_command("c", self.change_initial_click, "Turn on initial click on each beep if arg is 1, else turn off if arg is 0.")
         self.add_command("p", self.change_play_status, "Turn on out-loud play if arg is 1, else turn off if arg is 0.")
+        self.add_command("rand", self.play_random_sentence, "Play a random sentence for ear training purposes.")
+        self.add_command("hz", self.process_hz_input, "Change tone frequency to arg if given, else show current tone frequency in Hz.")
 
     def change_save_status(self, a=None):
         return self.change_binary_attribute("save_status", a)
@@ -112,10 +114,45 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.letter_gap = self.dah
         self.word_gap = int(1200 / self.wpm * 7)
 
+    def process_hz_input(self, hz=None):
+        if hz is not None:
+            self.update_hz(int(hz))
+            return
+        else:
+            return self.tone_hz
+
+    def update_hz(self, hz):
+        self.tone_hz = hz
+
+    def play_random_sentence(self, n_words=None):
+        corpus_fp = "epictetus-discourses.txt"
+        with open(corpus_fp) as f:
+            contents = f.read()
+        split = contents.split(" ")
+        words = []
+        start_index = random.randrange(len(split)-100)
+        n_words_to_get = 10 if n_words is None else int(n_words)
+        i = start_index
+        while True:
+            w = split[i].strip()
+            if w != "":
+                words.append(w)
+            if len(words) >= n_words_to_get:
+                break
+            if i >= len(split):
+                break
+            i += 1
+        sentence = " ".join(words).replace("\n", " ")
+        print("\n"+sentence+"\n")
+        self.play(sentence)
+
     def translate(self, s):
         s = [x for x in s.upper() if x in string.ascii_uppercase + "0123456789., "]
         morse = [MORSE_TABLE[x] for x in s]
         return morse
+
+    def pad_morse(self, morse):
+        return [" "]*2 + morse + [" "]*2
 
     def play(self, user_input):
         audio_out = pyaudio.PyAudio()
@@ -125,10 +162,12 @@ class MorseCodeTerminal(Terminal.Terminal):
             channels=1,
             rate=rate,
             output=True,
+            frames_per_buffer=256,
         )
 
         full_signal = []
         morse = self.translate(user_input)
+        morse = self.pad_morse(morse)
 
         for x in morse:
             if x == " ":
