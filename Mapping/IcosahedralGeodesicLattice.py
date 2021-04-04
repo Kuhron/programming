@@ -15,10 +15,6 @@ import IcosahedronMath
 
 
 class IcosahedralGeodesicLattice(Lattice):
-    EARTH_RADIUS_KM = 6371
-    CADA_II_RADIUS_FACTOR = 2.116
-    CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
-
     def __init__(self, edge_length_km=None, iterations=None):
         super().__init__()  # make project name
         assert int(edge_length_km is None) + int(iterations is None) == 1, "need either edge_length_km or iterations, not both, got {} and {}".format(edge_length_km, iterations)
@@ -43,7 +39,7 @@ class IcosahedralGeodesicLattice(Lattice):
         # self.graph = self.get_graph()
 
     def get_adjacencies(self):
-        cada_ii_radius_km = IcosahedralGeodesicLattice.CADA_II_RADIUS_KM
+        cada_ii_radius_km = IcosahedronMath.CADA_II_RADIUS_KM
         if self.iterations is not None:
             iterations_needed = self.iterations
         elif self.edge_length_km is not None:

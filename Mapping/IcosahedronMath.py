@@ -3,14 +3,20 @@
 
 
 import math
+import functools
 import random
 import os
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
 
 
+
+EARTH_RADIUS_KM = 6371
+CADA_II_RADIUS_FACTOR = 2.116
+CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
 
 def get_latlon_from_point_number(point_number):
@@ -44,6 +50,7 @@ def get_exact_points_from_iterations(n_iters):
     return 2 + 10 * (4 ** n_iters)
 
 
+@functools.lru_cache(maxsize=10000)
 def get_exact_iterations_from_points(n_points):
     return np.log((n_points - 2)/10) / np.log(4)  # just use change of base since np.log(arr, b) doesn't like arrays
 
@@ -344,7 +351,7 @@ def get_starting_points():
     # the rest of the data, i.e., the adjacencies dictionary, should be all in terms of integer indices that refer to the points array
 
     ordered_points = []
-    adjacencies_by_point_index = {}
+    adjacencies_by_point_index = [None for i in range(12)]
 
     # place original points in the list
     for p_name in original_points_order_by_name:
@@ -366,6 +373,22 @@ def get_starting_points():
 
     # print("done getting initial icosa points")
     return ordered_points, adjacencies_by_point_index
+
+
+def get_starting_points_immutable():
+    ordered_points, adj = get_starting_points()
+    assert type(ordered_points) is list
+    assert all(type(x) is UnitSpherePoint for x in ordered_points)
+    ordered_points = tuple(ordered_points)
+    assert type(adj) is list
+    new_adj = ()
+    for x in adj:
+        assert type(x) is list
+        assert all(type(y) is int for y in x)
+        x_tup = tuple(x)
+        extend_tup = (x_tup,)
+        new_adj = new_adj + extend_tup
+    return (ordered_points, new_adj)
 
 
 def get_starting_point_neighbor_identity(point_number):
@@ -457,6 +480,7 @@ def get_opposite_neighbor_direction(i):
     # more succinctly could do return (i+3)%6, but the dict makes it more readable and also throws for unexpected stuff like 1.5 or -1
 
 
+@functools.lru_cache(maxsize=10000)
 def get_child(parent, child_index, iteration):
     if parent in [0, 1]:
         raise ValueError("point {} cannot have children".format(parent))
@@ -465,6 +489,7 @@ def get_child(parent, child_index, iteration):
     return 3 * (parent + adder) + child_index
 
 
+@functools.lru_cache(maxsize=10000)
 def get_parent(point_number):
     # each point except the initial 12 is created from a "parent", a pre-existing point from one of the previous iterations
     # at each iteration, each existing point except the poles gets three new children
@@ -536,7 +561,7 @@ def is_parent_and_child(parent, child):
     return parent == get_parent(child)
 
 
-def is_parent_and_child_direction(a, b, iteration, STARTING_POINTS):
+def is_parent_and_child_direction(a, b, a_adjacency):
     # returns whether b is in a child-like direction from a's perspective
     # assert can_have_children(a, iteration)  # this is NOT necessary; it's just about DIRECTION, not actual children
     # however, if a is a pole, need to either raise or return False (it can't be a parent)
@@ -546,9 +571,7 @@ def is_parent_and_child_direction(a, b, iteration, STARTING_POINTS):
         # print("a is a pole, returning that child-directionality is False")
         return False
         # raise ValueError("can't get child-like direction from the poles; point number is {}".format(a))
-    a_adj = get_adjacency_recursive(a, iteration, STARTING_POINTS)
-    # print("a_adj for a={}: {}".format(a, a_adj))
-    b_index = a_adj.index(b)
+    b_index = a_adjacency.index(b)
     res = b_index in [0,1,2]
     # print("found {} at index {} in a_adj {}, child-directionality is {}".format(b, b_index, a_adj, res))
     return res
@@ -587,6 +610,7 @@ def unify_five_and_six(adjacency, point_number):
     return adj
 
 
+@functools.lru_cache(maxsize=10000)
 def get_adjacency_recursive(point_number, iteration, STARTING_POINTS):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
@@ -677,6 +701,7 @@ def get_index_clockwise_step(original_index, n_steps, n_neighbors):
     return (original_index + n_steps) % n_neighbors
 
 
+@functools.lru_cache(maxsize=10000)
 def get_adjacency_when_born(point_number, STARTING_POINTS):
     # print("get_adjacency_when_born({})".format(point_number))
     iteration = get_iteration_born(point_number)
@@ -896,22 +921,23 @@ def get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration,
     elif point == 1:
         return get_south_pole_neighbor(previous_neighbor_in_direction, iteration)
 
+    previous_neighbor_adjacency = get_adjacency_recursive(previous_neighbor_in_direction, iteration-1, STARTING_POINTS)
+    previous_point_adjacency = get_adjacency_recursive(point, iteration-1, STARTING_POINTS)
+
     # we don't care if it's actually a parent and child, we just care that one of these directions is such that we can make a NEW child from one of the points (and thus get the child's number analytically)
     # print("checking child-directionality between {} and {}".format(point, previous_neighbor_in_direction))
-    desired_point_is_in_child_direction_from_neighbor = is_parent_and_child_direction(previous_neighbor_in_direction, point, iteration-1, STARTING_POINTS)
-    desired_point_is_in_child_direction_from_point = is_parent_and_child_direction(point, previous_neighbor_in_direction, iteration-1, STARTING_POINTS)
+    desired_point_is_in_child_direction_from_neighbor = is_parent_and_child_direction(previous_neighbor_in_direction, point, previous_neighbor_adjacency)
+    desired_point_is_in_child_direction_from_point = is_parent_and_child_direction(point, previous_neighbor_in_direction, previous_point_adjacency)
     # print("done checking child-directionality, got {}>{} {}; {}>{} {}".format(previous_neighbor_in_direction, point, desired_point_is_in_child_direction_from_neighbor, point, previous_neighbor_in_direction, desired_point_is_in_child_direction_from_point))
 
     if desired_point_is_in_child_direction_from_neighbor:
         # get the neighbor's new child
         # child index should equal the adjacency index since adjacency is in order L,DL,D,R,UR,U and child index is in order L,DL,D
-        neighbor_previous_adjacency = get_adjacency_recursive(previous_neighbor_in_direction, iteration-1, STARTING_POINTS)
-        index_of_point_from_neighbor_perspective = neighbor_previous_adjacency.index(point)
+        index_of_point_from_neighbor_perspective = previous_neighbor_adjacency.index(point)
         child_index = index_of_point_from_neighbor_perspective
         return get_child(previous_neighbor_in_direction, child_index, iteration)
     elif desired_point_is_in_child_direction_from_point:
-        previous_adjacency = get_adjacency_recursive(point, iteration-1, STARTING_POINTS)
-        index_of_neighbor_from_point_perspective = previous_adjacency.index(previous_neighbor_in_direction)
+        index_of_neighbor_from_point_perspective = previous_point_adjacency.index(previous_neighbor_in_direction)
         child_index = index_of_neighbor_from_point_perspective
         return get_child(point, child_index, iteration)
     else:
@@ -1058,16 +1084,33 @@ def test_adjacency_when_born(STARTING_POINTS):
     print("test succeeded: adjacency calculated from scratch is the same as the memoized adjacency")
 
 
-def test_adjacency_recursive(STARTING_POINTS):
-    for point in range(0, 80):
+def test_adjacency_recursive(STARTING_POINTS, compare_memo=True):
+    t0 = time.time()
+    iterations_reported_as_having_no_memo = set()
+    for point in range(40962, 163842):
         born_iteration = get_iteration_born(point)
-        for di in [1, 2, 3]:
-            iteration = born_iteration + di
-            print("\n-- test_adjacency_recursive p#{} i={}".format(point, iteration))
+        if True: # for di in [1, 2, 3]:
+            iteration = max(born_iteration, 18)  # born_iteration + di
             adj = get_adjacency_recursive(point, iteration, STARTING_POINTS)
-            adj_from_memo = get_specific_adjacency_from_memo(point, iteration)
-            assert adj == adj_from_memo
-    print("test succeeded: getting adjacency recursively matches memoized adjacency")
+            if point % 1000 == 0:# and di == 1:
+                print("\n-- test_adjacency_recursive p#{} i={}".format(point, iteration))
+                print("adj: {}".format(adj))
+            if compare_memo:
+                try:
+                    adj_from_memo = get_specific_adjacency_from_memo(point, iteration)
+                    assert adj == adj_from_memo
+                except FileNotFoundError:
+                    if iteration not in iterations_reported_as_having_no_memo:
+                        print("skipping memo check for iteration {} because no memo file exists".format(iteration))
+                        iterations_reported_as_having_no_memo.add(iteration)
+                    else:
+                        pass
+    if compare_memo:
+        print("test succeeded: getting adjacency recursively matches memoized adjacency")
+    else:
+        print("test succeeded: finished computing adjacency recursively but did not check memo")
+    t1 = time.time()
+    print("time elapsed: {:.4f} seconds".format(t1-t0))
 
 
 def test_pole_adjacency(STARTING_POINTS):
@@ -1098,7 +1141,7 @@ def test_get_generic_point_neighbor(STARTING_POINTS):
 
 
 if __name__ == "__main__":
-    STARTING_POINTS = get_starting_points()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
+    STARTING_POINTS = get_starting_points_immutable()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
 
     # n_points = get_exact_points_from_iterations(n_iterations)
     # plot_coordinate_patterns(n_iterations)
@@ -1121,4 +1164,8 @@ if __name__ == "__main__":
     # test_pole_adjacency(STARTING_POINTS)
     # test_adjacency_when_born(STARTING_POINTS)
     # test_get_generic_point_neighbor(STARTING_POINTS)
-    test_adjacency_recursive(STARTING_POINTS)
+    test_adjacency_recursive(STARTING_POINTS, compare_memo=False)
+
+    radius = CADA_II_RADIUS_KM
+    for edge_length in [1000, 100, 10, 1, 0.1]:
+        print("edge length {} km on Cada II requires {} iterations".format(edge_length, get_iterations_needed_for_edge_length(edge_length, radius)))

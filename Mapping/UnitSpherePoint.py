@@ -83,3 +83,8 @@ class UnitSpherePoint:
         xyz1 = np.array(p1.get_coords("xyz"))
         return mcm.angle_between_vectors(xyz0, xyz1)
 
+    def get_immutable(self):
+        return tuple(self.tuples)
+
+    def __hash__(self):
+        return hash(self.get_immutable())
