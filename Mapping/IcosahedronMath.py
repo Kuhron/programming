@@ -502,15 +502,16 @@ def get_parent(point_number):
     return point_number // 3 - get_3adder_for_iteration(get_iteration_born(point_number))
 
 
-def get_directional_parent(point_number):
+@functools.lru_cache(maxsize=10000)
+def get_directional_parent(point_number, STARTING_POINTS):
     # the parent at the other end of the edge that was bisected to produce this point
     if point_number < 12:
         return None
     parent = get_parent(point_number)
     iteration_born = get_iteration_born(point_number)
     # print("{} was born i={}".format(point_number, iteration_born))
-    parent_adjacency_in_born_iteration = get_specific_adjacency_from_memo(parent, iteration_born)
-    parent_adjacency_in_previous_iteration = get_specific_adjacency_from_memo(parent, iteration_born-1)
+    parent_adjacency_in_born_iteration = get_adjacency_recursive(parent, iteration_born, STARTING_POINTS)
+    parent_adjacency_in_previous_iteration = get_adjacency_recursive(parent, iteration_born-1, STARTING_POINTS)
     # print("parent previous adjacency: {}".format(parent_adjacency_in_previous_iteration))
     # print("parent current adjacency: {}".format(parent_adjacency_in_born_iteration))
     index_of_this_point_from_parent = parent_adjacency_in_born_iteration.index(point_number)
@@ -519,9 +520,9 @@ def get_directional_parent(point_number):
     # this avoids problems with indexing directions from the 12 initial points which only have 5 adjacencies with ill-defined directions
 
 
-def get_parents(point_number):
+def get_parents(point_number, STARTING_POINTS):
     p0 = get_parent(point_number)
-    p1 = get_directional_parent(point_number)
+    p1 = get_directional_parent(point_number, STARTING_POINTS)
     return [p0, p1]
 
 
@@ -978,25 +979,30 @@ def get_child_index(point_number):
     return point_number % 3
 
 
-def get_parent_positions(point_number):
-    p0, p1 = get_parents(point_number)
-    pos0 = get_specific_position_from_memo(p0)
-    pos1 = get_specific_position_from_memo(p1)
+@functools.lru_cache(maxsize=10000)
+def get_parent_positions(point_number, STARTING_POINTS):
+    p0, p1 = get_parents(point_number, STARTING_POINTS)
+    pos0 = get_position_recursive(p0, STARTING_POINTS)
+    pos1 = get_position_recursive(p1, STARTING_POINTS)
     return pos0, pos1
 
 
-def get_position_from_parents(point_number):
+def get_position_from_parents(point_number, STARTING_POINTS):
     if point_number < 12:
-        pos, adj = get_initial_points()
-        return pos[point_number]
-    pos0, pos1 = get_parent_positions(point_number)
-    xyz0 = np.array(pos0["xyz"])
-    xyz1 = np.array(pos1["xyz"])
-    latlon0 = np.array(pos0["latlondeg"])
-    latlon1 = np.array(pos1["latlondeg"])
-    xyz = (xyz0 + xyz1)/2
-    latlon = (latlon0 + latlon1)/2
+        pos, adj = STARTING_POINTS
+        return pos[point_number].tuples
+    pos0, pos1 = get_parent_positions(point_number, STARTING_POINTS)
+    p0 = UnitSpherePoint(pos0)
+    p1 = UnitSpherePoint(pos1)
+    midpoint = UnitSpherePoint.get_midpoint(p0, p1)
+    xyz = midpoint.xyz()
+    latlon = midpoint.latlondeg()
     return {"xyz": xyz, "latlondeg": latlon}
+
+
+@functools.lru_cache(maxsize=10000)
+def get_position_recursive(point_number, STARTING_POINTS):
+    return get_position_from_parents(point_number, STARTING_POINTS)
 
 
 def get_3adder_for_iteration(i):
@@ -1087,24 +1093,23 @@ def test_adjacency_when_born(STARTING_POINTS):
 def test_adjacency_recursive(STARTING_POINTS, compare_memo=True):
     t0 = time.time()
     iterations_reported_as_having_no_memo = set()
-    for point in range(40962, 163842):
+    for i in range(1000):
+        point = random.randint(0, 655362)
         born_iteration = get_iteration_born(point)
-        if True: # for di in [1, 2, 3]:
-            iteration = max(born_iteration, 18)  # born_iteration + di
-            adj = get_adjacency_recursive(point, iteration, STARTING_POINTS)
-            if point % 1000 == 0:# and di == 1:
-                print("\n-- test_adjacency_recursive p#{} i={}".format(point, iteration))
-                print("adj: {}".format(adj))
-            if compare_memo:
-                try:
-                    adj_from_memo = get_specific_adjacency_from_memo(point, iteration)
-                    assert adj == adj_from_memo
-                except FileNotFoundError:
-                    if iteration not in iterations_reported_as_having_no_memo:
-                        print("skipping memo check for iteration {} because no memo file exists".format(iteration))
-                        iterations_reported_as_having_no_memo.add(iteration)
-                    else:
-                        pass
+        iteration = max(born_iteration, random.randint(6, 20))
+        adj = get_adjacency_recursive(point, iteration, STARTING_POINTS)
+        print("\n-- test_adjacency_recursive p#{} i={}".format(point, iteration))
+        print("adj: {}".format(adj))
+        if compare_memo:
+            try:
+                adj_from_memo = get_specific_adjacency_from_memo(point, iteration)
+                assert adj == adj_from_memo
+            except FileNotFoundError:
+                if iteration not in iterations_reported_as_having_no_memo:
+                    print("skipping memo check for iteration {} because no memo file exists".format(iteration))
+                    iterations_reported_as_having_no_memo.add(iteration)
+                else:
+                    pass
     if compare_memo:
         print("test succeeded: getting adjacency recursively matches memoized adjacency")
     else:
@@ -1140,9 +1145,46 @@ def test_get_generic_point_neighbor(STARTING_POINTS):
     print("test succeeded: generic point neighbor works")
 
 
-if __name__ == "__main__":
-    STARTING_POINTS = get_starting_points_immutable()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
+def test_report_cada_ii_iteration_requirements():
+    radius = CADA_II_RADIUS_KM
+    for edge_length in [1000, 100, 10, 1, 0.1]:
+        print("edge length {} km on Cada II requires {} iterations".format(edge_length, get_iterations_needed_for_edge_length(edge_length, radius)))
 
+
+def test_position_recursive(STARTING_POINTS, compare_memo=True):
+    t0 = time.time()
+    iterations_reported_as_having_no_memo = set()
+    for i in range(1000):
+        point = random.randint(0, 655362)
+        born_iteration = get_iteration_born(point)
+        iteration = born_iteration
+        pos = get_position_recursive(point, STARTING_POINTS)
+        print("\n-- test_position_recursive p#{} i={}".format(point, iteration))
+        print("pos: {}".format(pos))
+        if compare_memo:
+            try:
+                pos_from_memo = get_specific_position_from_memo(point)
+                assert np.allclose(pos["xyz"], pos_from_memo["xyz"], rtol=1e-6), "{} does not match {}".format(pos, pos_from_memo)
+                assert np.allclose(pos["latlondeg"], pos_from_memo["latlondeg"], rtol=1e-6), "{} does not match {}".format(pos, pos_from_memo)
+            except FileNotFoundError:
+                if iteration not in iterations_reported_as_having_no_memo:
+                    print("skipping memo check for iteration {} because no memo file exists".format(iteration))
+                    iterations_reported_as_having_no_memo.add(iteration)
+                else:
+                    pass
+    if compare_memo:
+        print("test succeeded: getting position recursively matches memoized position")
+    else:
+        print("test succeeded: finished computing position recursively but did not check memo")
+    t1 = time.time()
+    print("time elapsed: {:.4f} seconds".format(t1-t0))
+
+
+STARTING_POINTS = get_starting_points_immutable()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
+# is it a bad idea to define the global later than the functions?
+
+
+if __name__ == "__main__":
     # n_points = get_exact_points_from_iterations(n_iterations)
     # plot_coordinate_patterns(n_iterations)
     # point_numbers = np.random.randint(0, n_points, (100,))
@@ -1165,7 +1207,5 @@ if __name__ == "__main__":
     # test_adjacency_when_born(STARTING_POINTS)
     # test_get_generic_point_neighbor(STARTING_POINTS)
     test_adjacency_recursive(STARTING_POINTS, compare_memo=False)
-
-    radius = CADA_II_RADIUS_KM
-    for edge_length in [1000, 100, 10, 1, 0.1]:
-        print("edge length {} km on Cada II requires {} iterations".format(edge_length, get_iterations_needed_for_edge_length(edge_length, radius)))
+    # test_report_cada_ii_iteration_requirements()
+    test_position_recursive(STARTING_POINTS, compare_memo=False)

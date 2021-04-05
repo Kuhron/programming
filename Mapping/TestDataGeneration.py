@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # df["elevation_expectation_omega"] = np.repeat(0.5, len(df.index))
     df = nm.add_random_data_circles(df, "elevation", n_patches=500)
     # df = nm.add_random_data_radial_waves(df, "elevation", n_waves=1000, expected_amplitude=100)
-    # df = nm.add_random_data_jagged_patches(df, "elevation", test_lattice.adjacencies, test_lattice.usp_to_index, n_patches=1000)
+    # df = nm.add_random_data_jagged_patches(df, "elevation", test_lattice.adjacencies, test_lattice.get_index_of_usp, n_patches=1000)
     # df = nm.add_random_data_spikes(df, "elevation", n_spikes=len(df.index), sigma=100)
     df = nm.add_random_data_independent_all_points(df, "elevation", n_iterations=1000, sigma=10)
     h_stretch_parameters = np.random.uniform(0, 1, 200)**0.25  # skew towards 1

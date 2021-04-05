@@ -23,20 +23,37 @@ class IcosahedralGeodesicLattice(Lattice):
             assert iterations % 1 == 0, "need int value for iterations if supplied, got {}".format(iterations)
             iterations = int(iterations)
         self.iterations = iterations
-        ordered_points, adjacencies_by_point_index = self.get_adjacencies()
-        self.adjacencies_by_point_index = adjacencies_by_point_index
-        self.points = ordered_points
-        self.usp_to_index = self.get_usp_to_index()
+        self.n_points = IcosahedronMath.get_points_from_iterations(self.iterations)
+        # ordered_points, adjacencies_by_point_index = self.get_adjacencies()
+        # self.adjacencies_by_point_index = adjacencies_by_point_index
+        # self.points = ordered_points
         # self.adjacencies = self.convert_adjacencies_to_usp()
-        self.xyz_coords = []
-        self.xyz_to_point_number = {}
-        for point_number, p in enumerate(self.points):
-            xyz = tuple(p.get_coords("xyz"))
-            self.xyz_coords.append(xyz)
-            self.xyz_to_point_number[xyz] = point_number
-        self.xyz_coords = np.array(self.xyz_coords)
-        self.kdtree = KDTree(self.xyz_coords)
+        self.kdtree = KDTree(self.get_xyz_coords())
         # self.graph = self.get_graph()
+
+    def get_coords(self, coord_system=None, point_indices=None):
+        # allow getting only a subset of the points so don't have to hold everything in memory all at once
+        coords = []
+        if point_indices is None:
+            point_indices = self.get_point_indices()
+        for point_number in point_indices:
+            pos = IcosahedronMath.get_position_recursive(point_number, IcosahedronMath.STARTING_POINTS)
+            try:
+                coords.append(pos[coord_system])
+            except KeyError:
+                coords.append(pos)
+        if coord_system is not None:
+            coords = np.array(coords)
+        return coords
+
+    def get_xyz_coords(self, point_indices=None):
+        return self.get_coords(coord_system="xyz", point_indices=point_indices)
+
+    def get_latlondeg_coords(self, point_indices=None):
+        return self.get_coords(coord_system="latlondeg", point_indices=point_indices)
+
+    def get_point_indices(self):
+        return list(range(self.n_points))
 
     def get_adjacencies(self):
         cada_ii_radius_km = IcosahedronMath.CADA_II_RADIUS_KM
@@ -244,12 +261,8 @@ class IcosahedralGeodesicLattice(Lattice):
             adjacencies_usp[usp] = adj_usps
         return adjacencies_usp
 
-    def get_usp_to_index(self):
-        d = {}
-        for i in range(len(self.points)):
-            d[self.points[i]] = i
-        return d
-
+    def get_index_of_usp(self, usp):
+        return usp.point_number
 
     def get_next_step_in_path(self, current_point, objective, points_to_avoid):
         # get vector to objective, project it onto plane tangent to sphere at current_point

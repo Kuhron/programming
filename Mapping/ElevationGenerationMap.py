@@ -294,7 +294,7 @@ class ElevationGenerationMap:
         coords_dict = {"xyz": tuple(mean_ps_xyz), "latlondeg": tuple(mean_ps_latlon)}
         changing_reg_center_of_mass_raw = UnitSpherePoint(coords_dict)
         changing_reg_center_of_mass = self.lattice.closest_point_to(changing_reg_center_of_mass_raw)
-        com_index = self.lattice.usp_to_index[changing_reg_center_of_mass]
+        com_index = self.lattice.get_index_of_usp(changing_reg_center_of_mass)
         e_center_of_mass = self.get_value_at_position(com_index, "elevation")
         reference_p = changing_reg_center_of_mass
 
@@ -309,7 +309,7 @@ class ElevationGenerationMap:
 
         assert np.isfinite(reference_area_ratio), "reference area ratio = {}, from e_center_of_mass={}, big_abs={}".format(reference_area_ratio, e_center_of_mass, big_abs)
 
-        reference_p_i = self.lattice.usp_to_index[reference_p] 
+        reference_p_i = self.lattice.get_index_of_usp(reference_p)
         reference_n_points = max(1, int(round(reference_area_ratio * changing_reg_n_points)))
         reference_reg = self.get_circle_around_point(reference_p_i, n_points=reference_n_points)
         elevations_in_refreg = [self.get_value_at_position(p_i, "elevation") for p_i in reference_reg]

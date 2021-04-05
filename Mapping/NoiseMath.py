@@ -224,7 +224,7 @@ def add_random_data_sigmoid_decay_hills(df, key_str, n_hills, h_stretch_paramete
     return df
 
 
-def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index, n_patches, area_proportions=None):
+def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index_function, n_patches, area_proportions=None):
     print("adding {} jagged patches of variable {}".format(n_patches, key_str))
     if area_proportions is None:
         area_proportions = get_area_proportions_power_law(n_patches)
@@ -246,7 +246,7 @@ def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index, n_pat
         for p_i in range(patch_size):
             chosen_point = random.choice(list(edge))
             # print("chosen: {}".format(chosen))
-            chosen_p_i = usp_to_index[chosen_point]
+            chosen_p_i = usp_to_index_function(chosen_point)
             patch_points.add(chosen_point)
             patch_indices.add(chosen_p_i)
             edge |= set(adjacencies[chosen_point])

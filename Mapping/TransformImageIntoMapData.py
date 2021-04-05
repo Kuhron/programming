@@ -87,7 +87,6 @@ if __name__ == "__main__":
     print(np.unique(str_arr))
 
     # now get map lattice points which are inside the image lattice
-    # TODO make a method of LatitudeLongitudeLattice which can determine if a USP is inside it or not
     image_lattice_points_in_order = image_lattice.points
     str_arr_in_order = str_arr.reshape((str_arr.size,))
     str_at_image_lattice_point = dict(zip(image_lattice_points_in_order, str_arr_in_order))
@@ -97,7 +96,7 @@ if __name__ == "__main__":
         if in_image:
             closest_image_point = image_lattice.closest_point_to(p)
             value_to_assign = str_at_image_lattice_point[closest_image_point]
-            p_i = map_lattice.usp_to_index[p]
+            p_i = map_lattice.get_index_of_usp(p)
             point_values_to_assign[p_i] = value_to_assign
             print("point {} now has value {}".format(p_i, value_to_assign))
 

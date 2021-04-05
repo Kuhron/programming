@@ -106,12 +106,13 @@ class Lattice:
         ax.scatter(xs, ys, zs)
         plt.show()
 
-    def create_dataframe(self):
-        point_indices = list(range(len(self.points)))
+    def create_dataframe(self, point_indices=None):
+        if point_indices is None:
+            point_indices = self.get_point_indices()
         df = pd.DataFrame(index=point_indices)
-        df["usp"] = self.points
-        df["xyz"] = [np.array(p.xyz()) for p in self.points]
-        df["latlondeg"] = [np.array(p.latlondeg()) for p in self.points]
+        xyz_coords, latlondeg_coords = self.get_coords(point_indices)
+        df["xyz"] = xyz_coords
+        df["latlondeg"] = latlondeg_coords
         return df
 
     def place_random_data(self, key_str, df=None):
