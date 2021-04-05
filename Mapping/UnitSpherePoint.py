@@ -11,6 +11,8 @@ class UnitSpherePoint:
         }
 
         for coords_system, coords_tuple in coords_dict.items():
+            if type(coords_tuple) is not tuple:
+                coords_tuple = tuple(coords_tuple)
             if coords_system == "xyz":
                 self.tuples["xyz"] = coords_tuple
                #self.tuples["latlondeg"] = mcm.unit_vector_cartesian_to_lat_lon(*coords_tuple, deg=True)

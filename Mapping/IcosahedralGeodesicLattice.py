@@ -33,24 +33,36 @@ class IcosahedralGeodesicLattice(Lattice):
 
     def get_coords(self, coord_system=None, point_indices=None):
         # allow getting only a subset of the points so don't have to hold everything in memory all at once
-        coords = []
+        xyz_coords = []
+        latlondeg_coords = []
+        if coord_system == "xyz":
+            # python varnames are nametags on objects
+            coords = xyz_coords
+        elif coord_system == "latlondeg":
+            coords = latlondeg_coords
+        elif coord_system is None:
+            # again, nametag on object, the object should change while this name continues to refer to it
+            coords = [xyz_coords, latlondeg_coords]
+        else:
+            raise ValueError("unknown coordinate system {}".format(coord_system))
+
         if point_indices is None:
             point_indices = self.get_point_indices()
         for point_number in point_indices:
             pos = IcosahedronMath.get_position_recursive(point_number, IcosahedronMath.STARTING_POINTS)
-            try:
-                coords.append(pos[coord_system])
-            except KeyError:
-                coords.append(pos)
-        if coord_system is not None:
-            coords = np.array(coords)
+            if coord_system is None:
+                xyz_coords.append(tuple(pos["xyz"]))
+                latlondeg_coords.append(tuple(pos["latlondeg"]))
+            else:
+                tup = tuple(pos[coord_system])
+                coords.append(tup)
         return coords
 
     def get_xyz_coords(self, point_indices=None):
-        return self.get_coords(coord_system="xyz", point_indices=point_indices)
+        return np.array(self.get_coords(coord_system="xyz", point_indices=point_indices))
 
     def get_latlondeg_coords(self, point_indices=None):
-        return self.get_coords(coord_system="latlondeg", point_indices=point_indices)
+        return np.array(self.get_coords(coord_system="latlondeg", point_indices=point_indices))
 
     def get_point_indices(self):
         return list(range(self.n_points))

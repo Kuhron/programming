@@ -110,7 +110,7 @@ class Lattice:
         if point_indices is None:
             point_indices = self.get_point_indices()
         df = pd.DataFrame(index=point_indices)
-        xyz_coords, latlondeg_coords = self.get_coords(point_indices)
+        xyz_coords, latlondeg_coords = self.get_coords(point_indices=point_indices)
         df["xyz"] = xyz_coords
         df["latlondeg"] = latlondeg_coords
         return df
