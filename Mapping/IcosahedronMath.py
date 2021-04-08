@@ -1055,18 +1055,18 @@ def get_nearest_icosa_point_to_latlon(latlon, maximum_distance, planet_radius, S
 
 
 def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius, STARTING_POINTS):
-    print("getting nearest icosa point to {}".format(xyz))
+    # print("getting nearest icosa point to {}".format(xyz))
     max_distance_normalized = maximum_distance / planet_radius
     candidate_usps, candidate_adjacencies = STARTING_POINTS
     iteration = 0
     while True:
-        print("i={}".format(iteration))
+        # print("i={}".format(iteration))
         nearest_candidate_usp, distance = get_nearest_neighbor_to_xyz(xyz, candidate_usps)
         assert nearest_candidate_usp.point_number is not None
-        print("nearest candidate is {} at distance of {}".format(nearest_candidate_usp, distance))
+        # print("nearest candidate is {} at distance of {}".format(nearest_candidate_usp, distance))
         if distance <= max_distance_normalized:
-            print("done getting nearest icosa point to {}".format(xyz))
-            return nearest_candidate_usp
+            # print("done getting nearest icosa point to {}".format(xyz))
+            return nearest_candidate_usp, distance
 
         iteration += 1
         if iteration > 30:
@@ -1240,6 +1240,20 @@ def test_position_recursive(STARTING_POINTS, compare_memo=True):
     print("time elapsed: {:.4f} seconds".format(t1-t0))
 
 
+def test_get_nearest_point_to_latlon():
+    maximum_distance = 1
+    max_point_number = -1
+    planet_radius = CADA_II_RADIUS_KM
+    for i in range(100):
+        latlon = UnitSpherePoint.get_random_unit_sphere_point().latlondeg()
+        p, distance = get_nearest_icosa_point_to_latlon(latlon, maximum_distance, planet_radius, STARTING_POINTS)
+        max_point_number = max(max_point_number, p.point_number)
+        print("result: {} which is {} units away from {}".format(p, distance*planet_radius, latlon))
+    max_iter = get_iteration_born(max_point_number)
+    points_needed = get_points_from_iterations(max_iter)
+    print("test succeeded: got sufficiently near icosa points for various latlons; largest point number encountered was {}, which requires {} iterations, having a total of {} points".format(max_point_number, max_iter, points_needed))
+
+
 STARTING_POINTS = get_starting_points_immutable()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
 # is it a bad idea to define the global later than the functions?
 
@@ -1269,7 +1283,4 @@ if __name__ == "__main__":
     # test_adjacency_recursive(STARTING_POINTS, compare_memo=False)
     # test_report_cada_ii_iteration_requirements()
     # test_position_recursive(STARTING_POINTS, compare_memo=False)
-
-    latlon = UnitSpherePoint.get_random_unit_sphere_point().latlondeg()
-    p = get_nearest_icosa_point_to_latlon(latlon, 1, CADA_II_RADIUS_KM, STARTING_POINTS)
-    print(p)
+    test_get_nearest_point_to_latlon() 

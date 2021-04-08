@@ -40,7 +40,7 @@ class UnitSpherePoint:
     def __repr__(self):
         x, y, z = self.get_coords("xyz")
         lat, lon = self.get_coords("latlondeg")
-        return "USP #{}:({}, {}, {}):({}, {})deg".format(self.point_number, x, y, z, lat, lon)
+        return "<USP #{} (x={:+}, y={:+}, z={:+}) (lat={:+} deg, lon={:+} deg)>".format(self.point_number, x, y, z, lat, lon)
     
     def get_coords(self, coords_system):
         return self.tuples[coords_system]
