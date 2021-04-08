@@ -1207,7 +1207,7 @@ def test_get_generic_point_neighbor(STARTING_POINTS):
 
 def test_report_cada_ii_iteration_requirements():
     radius = CADA_II_RADIUS_KM
-    for edge_length in [1000, 100, 10, 1, 0.1]:
+    for edge_length in [1000, 100, 10, 1, 0.1, 0.01, 0.001]:
         print("edge length {} km on Cada II requires {} iterations".format(edge_length, get_iterations_needed_for_edge_length(edge_length, radius)))
 
 
@@ -1241,10 +1241,10 @@ def test_position_recursive(STARTING_POINTS, compare_memo=True):
 
 
 def test_get_nearest_point_to_latlon():
-    maximum_distance = 1
+    maximum_distance = 0.001
     max_point_number = -1
     planet_radius = CADA_II_RADIUS_KM
-    for i in range(100):
+    for i in range(10000):
         latlon = UnitSpherePoint.get_random_unit_sphere_point().latlondeg()
         p, distance = get_nearest_icosa_point_to_latlon(latlon, maximum_distance, planet_radius, STARTING_POINTS)
         max_point_number = max(max_point_number, p.point_number)
@@ -1281,6 +1281,6 @@ if __name__ == "__main__":
     # test_adjacency_when_born(STARTING_POINTS)
     # test_get_generic_point_neighbor(STARTING_POINTS)
     # test_adjacency_recursive(STARTING_POINTS, compare_memo=False)
-    # test_report_cada_ii_iteration_requirements()
+    test_report_cada_ii_iteration_requirements()
     # test_position_recursive(STARTING_POINTS, compare_memo=False)
-    test_get_nearest_point_to_latlon() 
+    # test_get_nearest_point_to_latlon()
