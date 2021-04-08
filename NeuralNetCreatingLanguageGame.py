@@ -12,5 +12,6 @@
 # so each agent needs four components: neural net picture -> sound representation; neural net sound representation -> picture (both are trained separately, can't "invert" the function of a neural net by passing things backwards because it won't be one-to-one); device converting sound representation -> sound; device converting sound -> sound representation
 # the devices for sound conversion cannot be trained on data; they are just endowed, and have some innate inter-speaker variation
 # could they eventually learn to create a conventional system of sound encodings for pictures? i.e. a language to describe the pictures in the box# could even have different agents with different neural net structures
+# also maybe they should not evaluate actual similarity of the pictures, but perceived similarity (i.e., would they describe it the same way, they ignore little details that would contribute to the cost function but which they don't care about)
 # start simple with these ideas, give them the basic components needed and see what they can learn
 

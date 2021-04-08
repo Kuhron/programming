@@ -68,11 +68,9 @@ def invert_hue(rgba):
     return np.array([r2, g2, b2, a])
 
 
-def get_contour_levels(min_value, max_value, prefer_positive=False):
+def get_contour_levels(min_value, max_value, prefer_positive=False, n_sea_contours=20, n_land_contours=100):
     if prefer_positive:
         # print("getting contour levels from elevation limits min = {}, max = {}".format(min_elevation, max_elevation))
-        n_sea_contours = 20
-        n_land_contours = 100
         min_elevation = min_value
         max_elevation = max_value
     
@@ -102,7 +100,7 @@ def get_contour_levels(min_value, max_value, prefer_positive=False):
 
     else:
         # symmetrical between positive and negative
-        n_contours_each_sign = 100
+        n_contours_each_sign = n_land_contours
         max_abs = max(abs(min_value), abs(max_value))
         # in case it's all zero, still want levels to be increasing so it doesn't throw error
         max_abs = max(max_abs, 1)

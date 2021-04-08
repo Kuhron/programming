@@ -27,6 +27,12 @@ def get_xyz_from_point_number(point_number):
     raise NotImplementedError
 
 
+def get_usp_from_point_number(point_number):
+    pos = get_position_recursive(point_number, STARTING_POINTS)
+    assert type(pos) is dict
+    return UnitSpherePoint(pos, point_number=point_number)
+
+
 def get_iterations_from_points(n):
     try:
         # n_points(n_iters) = 10 * (4**n_iters) + 2
@@ -354,12 +360,12 @@ def get_starting_points():
     adjacencies_by_point_index = [None for i in range(12)]
 
     # place original points in the list
-    for p_name in original_points_order_by_name:
+    for point_number, p_name in enumerate(original_points_order_by_name):
         point_index = len(ordered_points)
         p_latlon = icosahedron_original_points_latlon[p_name]
         p_xyz = mcm.unit_vector_lat_lon_to_cartesian(*p_latlon)
         coords_dict = {"xyz": p_xyz, "latlondeg": p_latlon}
-        usp = UnitSpherePoint(coords_dict)
+        usp = UnitSpherePoint(coords_dict, point_number)
         ordered_points.append(usp)
     assert len(ordered_points) == 12, "initial icosa needs 12 vertices"
 
@@ -1042,6 +1048,60 @@ def get_direction_label_from_number(i):
     return ["L", "DL", "D", "R", "UR", "U"][i]
 
 
+def get_nearest_icosa_point_to_latlon(latlon, maximum_distance, planet_radius, STARTING_POINTS):
+    lat, lon = latlon
+    xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon)
+    return get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius, STARTING_POINTS)
+
+
+def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius, STARTING_POINTS):
+    print("getting nearest icosa point to {}".format(xyz))
+    max_distance_normalized = maximum_distance / planet_radius
+    candidate_usps, candidate_adjacencies = STARTING_POINTS
+    iteration = 0
+    while True:
+        print("i={}".format(iteration))
+        nearest_candidate_usp, distance = get_nearest_neighbor_to_xyz(xyz, candidate_usps)
+        assert nearest_candidate_usp.point_number is not None
+        print("nearest candidate is {} at distance of {}".format(nearest_candidate_usp, distance))
+        if distance <= max_distance_normalized:
+            print("done getting nearest icosa point to {}".format(xyz))
+            return nearest_candidate_usp
+
+        iteration += 1
+        if iteration > 30:
+            break
+        nearest_candidate_neighbor_point_numbers = get_adjacency_recursive(nearest_candidate_usp.point_number, iteration, STARTING_POINTS)
+        nearest_candidate_neighbors_usp = [get_usp_from_point_number(pi) for pi in nearest_candidate_neighbor_point_numbers]
+        candidate_usps = nearest_candidate_neighbors_usp + [nearest_candidate_usp]
+
+    raise RuntimeError("while loop ran too many times")
+
+
+def get_nearest_neighbor_to_latlon(latlon, candidates_usp):
+    lat, lon = latlon
+    xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon)
+    candidates = [cand.xyz() for cand in candidates_usp]
+    return get_nearest_neighbor_to_xyz(xyz, candidates_usp)
+
+
+def get_nearest_neighbor_to_xyz(xyz, candidates_usp):
+    min_distance = np.inf
+    nearest_neighbors = []
+    for c in candidates_usp:
+        c_xyz = c.xyz()
+        d = mcm.xyz_distance(xyz, c_xyz)
+        if d < min_distance:
+            nearest_neighbors = [c]
+            min_distance = d
+        elif d == min_distance:
+            nearest_neighbors.append(c)
+    if len(nearest_neighbors) == 1:
+        return nearest_neighbors[0], min_distance
+    else:
+        raise RuntimeError("got more than one nearest neighbor: {}".format(nearest_neighbors))
+
+
 def notify_memo_accessed(memo_fp):
     # depending what I want at the time, maybe do nothing, maybe just print that it was accessed, or maybe raise exception if I'm trying to avoid any memoization at all
     # pass
@@ -1206,6 +1266,10 @@ if __name__ == "__main__":
     # test_pole_adjacency(STARTING_POINTS)
     # test_adjacency_when_born(STARTING_POINTS)
     # test_get_generic_point_neighbor(STARTING_POINTS)
-    test_adjacency_recursive(STARTING_POINTS, compare_memo=False)
+    # test_adjacency_recursive(STARTING_POINTS, compare_memo=False)
     # test_report_cada_ii_iteration_requirements()
-    test_position_recursive(STARTING_POINTS, compare_memo=False)
+    # test_position_recursive(STARTING_POINTS, compare_memo=False)
+
+    latlon = UnitSpherePoint.get_random_unit_sphere_point().latlondeg()
+    p = get_nearest_icosa_point_to_latlon(latlon, 1, CADA_II_RADIUS_KM, STARTING_POINTS)
+    print(p)

@@ -6,7 +6,7 @@ import numpy as np
 
 if __name__ == "__main__":
     edge_length_km = None
-    iterations = 5
+    iterations = 6
     test_lattice = IcosahedralGeodesicLattice(edge_length_km=edge_length_km, iterations=iterations)
     # test_lattice.plot_points()
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     df = test_lattice.create_dataframe()
     # df = nm.add_random_data_circles(df, "elevation_expectation", n_patches=1000)
     # df["elevation_expectation_omega"] = np.repeat(0.5, len(df.index))
-    df = nm.add_random_data_circles(df, "elevation", n_patches=1000)
+    df = nm.add_random_data_circles(df, "elevation", n_patches=2000)
     # df = nm.add_random_data_radial_waves(df, "elevation", n_waves=1000, expected_amplitude=100)
     # df = nm.add_random_data_jagged_patches(df, "elevation", test_lattice.adjacencies, test_lattice.get_index_of_usp, n_patches=1000)
     # df = nm.add_random_data_spikes(df, "elevation", n_spikes=len(df.index), sigma=100)
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # df = nm.add_random_data_sigmoid_decay_hills(df, "elevation", n_hills=200, h_stretch_parameters=h_stretch_parameters)  # pointier hills
     # df = nm.add_random_data_sigmoid_decay_hills(df, "elevation", n_hills=200, h_stretch_parameters=np.repeat(0, 200))  # wider plateaus
     # test_lattice.plot_data(df, "elevation_expectation", equirectangular=True, save=True, size_inches=(48, 24))
-    test_lattice.plot_data(df, "elevation", equirectangular=True, save=True, size_inches=(48, 24))
+    test_lattice.plot_data(df, "elevation", equirectangular=True, save=True, size_inches=(48, 24), contour_lines=True)
 
     plt.show()
     print("done")

@@ -4,11 +4,12 @@ import MapCoordinateMath as mcm
 
 
 class UnitSpherePoint:
-    def __init__(self, coords_dict):
+    def __init__(self, coords_dict, point_number=None):
         self.tuples = {
             "xyz": None,
             "latlondeg": None,
         }
+        self.point_number = point_number
 
         for coords_system, coords_tuple in coords_dict.items():
             if type(coords_tuple) is not tuple:
@@ -39,16 +40,24 @@ class UnitSpherePoint:
     def __repr__(self):
         x, y, z = self.get_coords("xyz")
         lat, lon = self.get_coords("latlondeg")
-        return "USP:({}, {}, {}):({}, {})deg".format(x, y, z, lat, lon)
+        return "USP #{}:({}, {}, {}):({}, {})deg".format(self.point_number, x, y, z, lat, lon)
     
     def get_coords(self, coords_system):
         return self.tuples[coords_system]
 
-    def xyz(self):
-        return self.tuples["xyz"]
+    def xyz(self, as_array=False):
+        xyz = self.tuples["xyz"]
+        if as_array:
+            return np.array(xyz)
+        else:
+            return xyz
 
-    def latlondeg(self):
-        return self.tuples["latlondeg"]
+    def latlondeg(self, as_array=False):
+        latlon = self.tuples["latlondeg"]
+        if as_array:
+            return np.array(latlon)
+        else:
+            return latlon
 
     def latlonrad(self):
         tup = self.latlondeg()
@@ -90,3 +99,13 @@ class UnitSpherePoint:
 
     def __hash__(self):
         return hash(self.get_immutable())
+
+    @staticmethod
+    def get_random_unit_sphere_point():
+        a = np.random.normal(0,1,(3,))
+        a /= np.linalg.norm(a)
+        xyz = a
+        latlondeg = mcm.unit_vector_cartesian_to_lat_lon(*xyz)
+        return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg})
+
+

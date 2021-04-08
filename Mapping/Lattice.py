@@ -132,7 +132,7 @@ class Lattice:
         assert new_df is not df, "uh-oh, we edited the df in-place"
         new_df.to_csv(output_fp, index_label="index")
 
-    def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=True, save=False, category_labels=None):
+    def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=True, save=False, category_labels=None, contour_lines=False):
         data_point_indices = df.index
         # data_points = [self.points[p_i] for p_i in data_point_indices]
         latlons_deg = df["latlondeg"]
@@ -163,9 +163,11 @@ class Lattice:
         if cmap is None:
             # default to showing elevation
             cmap = pu.get_land_and_sea_colormap()
-            contour_levels = pu.get_contour_levels(min_val, max_val, prefer_positive=True)
+            contourf_levels = pu.get_contour_levels(min_val, max_val, prefer_positive=True)
+            contour_line_levels = pu.get_contour_levels(min_val, max_val, prefer_positive=True, n_sea_contours=5, n_land_contours=15)
         else:
-            contour_levels = pu.get_contour_levels(min_val, max_val, prefer_positive=False)
+            contourf_levels = pu.get_contour_levels(min_val, max_val, prefer_positive=False)
+            contour_line_levels = contourf_levels
 
         # debugging: print contour levels and colors
         # for level_i in range(len(contour_levels)):
@@ -193,9 +195,10 @@ class Lattice:
             interpolator = tri.LinearTriInterpolator(triang, z)
             Xi, Yi = np.meshgrid(xi, yi)
             zi = interpolator(Xi, Yi)
-            # plt.contour(xi, yi, zi, levels=contour_levels, linewidths=0.5, colors='k')
-            MC = plt.contourf(xi, yi, zi, levels=contour_levels, cmap=cmap)
+            MC = plt.contourf(xi, yi, zi, levels=contourf_levels, cmap=cmap)
             clb = plt.colorbar(MC, ax=plt.gca())  # without these args, it will say it can't find a mappable object for colorbar
+            if contour_lines:
+                plt.contour(xi, yi, zi, levels=contour_line_levels, linewidths=0.5, colors='k')
             clb.ax.set_title(key_str)
             plt.gca().set_facecolor('k')  # contourf won't draw over this for out-of-range values
         else:
@@ -209,7 +212,7 @@ class Lattice:
                     # m = Basemap(projection="ortho", lat_0=lat_0, lon_0=lon_0, resolution='l')
                     m.drawmeridians(np.arange(0,360,30))
                     m.drawparallels(np.arange(-90,90,30))
-                    MC = m.contourf(lons_deg, lats_deg, vals, levels=contour_levels, cmap=cmap, ax=ax, tri=True, latlon=True)  # latlon=True interprets first two args as LON and LAT RESPECTIVELY
+                    MC = m.contourf(lons_deg, lats_deg, vals, levels=contourf_levels, cmap=cmap, ax=ax, tri=True, latlon=True)  # latlon=True interprets first two args as LON and LAT RESPECTIVELY
                     # m.contour(lons_deg, lats_deg, vals, levels=[min(vals), 0, max(vals)], colors="k", ax=ax, tri=True, latlon=True)
         
                     # parallel_labels_bools = [1, 1, 0, 0]  # are labels placed at [left right top bottom]

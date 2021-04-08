@@ -3,6 +3,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from UnitSpherePoint import UnitSpherePoint
 
 
 def point_is_in_triangle(p, triangle_points):
@@ -73,14 +74,8 @@ def get_centroid(triangle_points):
     return centroid
 
 
-def get_random_unit_sphere_point():
-    a = np.random.normal(0,1,(3,))
-    a /= np.linalg.norm(a)
-    return a
-
-
 def get_triangle_points():
-    return [get_random_unit_sphere_point() for i in range(3)]
+    return [UnitSpherePoint.get_random_unit_sphere_point().xyz(as_array=True) for i in range(3)]
 
 
 def plot_sphere_mesh(fig, ax):
@@ -108,7 +103,7 @@ def test_centroid_inside_triangle():
 
 def scatter_3d_test():
     triangle_points = get_triangle_points()
-    test_points = [get_random_unit_sphere_point() for i in range(1000)]
+    test_points = [UnitSpherePoint.get_random_unit_sphere_point().xyz(as_array=True) for i in range(1000)]
 
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')

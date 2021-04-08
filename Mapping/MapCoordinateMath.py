@@ -186,6 +186,11 @@ def get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_
     return radius_from_center_in_3d
 
 
+def xyz_distance(xyz0, xyz1):
+    xyz0 = np.array(xyz0)
+    xyz1 = np.array(xyz1)
+    return np.linalg.norm(xyz1-xyz0)
+
 
 
 if __name__ == "__main__":
