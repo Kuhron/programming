@@ -214,8 +214,12 @@ def add_noise_to_spectrum(spectrum, noise_average_amplitude=1):
 
 
 def add_noise_to_spectra(spectra, noise_average_amplitude=1):
-    noisy_spectrum = get_noisy_spectrum(average_amplitude=noise_average_amplitude)
-    return [(s+noisy_spectrum)/2 for s in spectra]
+    res = []
+    for s in spectra:
+        noisy_spectrum = get_noisy_spectrum(average_amplitude=noise_average_amplitude)
+        s2 = (s+noisy_spectrum)/2
+        res.append(s2)
+    return res
 
 
 def get_noisy_spectrum(average_amplitude=1):
@@ -343,17 +347,19 @@ def plot_spectrum(spectrum, show=True):
         plt.show()
 
 
-def plot_spectra(spectra, show=True, equal_ylim=True):
+def plot_spectra(spectra, equal_ylim=True):
+    plt.ion()
     l2s = get_log_frequency_domain()
     plt.title("spectrum in log-Hz domain")
     max_y = max(s.max() for s in spectra)
     for i, s in enumerate(spectra):
-        plt.subplot(len(spectra), 1, i+1)
+        plt.gca().clear()
         plt.plot(l2s, s)
         plt.ylim(0, max_y)
         set_xticks()
-    if show:
-        plt.show()
+        plt.draw()
+        plt.pause(0.1)
+    plt.show()
 
 
 def plot_spectrum_and_fft(spectrum, waveform=None):
@@ -372,7 +378,6 @@ if __name__ == "__main__":
     # plot_basis_spectra()
     # spectrum = get_random_spectrum(average_amplitude=1)
     # spectra = get_random_spectrum_sequence(n_spectra=7, frames_per_spectrum=5, average_amplitude=1)
-    # noisy_spectra = add_noise_to_spectra(spectra, noise_average_amplitude=0.5)
     # wav.write_signal_to_wav(waveform, "BasisSpectraOutput.wav")
     # plot_spectrum_and_fft(spectrum, waveform)
 
@@ -385,14 +390,12 @@ if __name__ == "__main__":
     articulators = get_articulators()
     # articulation_vector = get_random_articulation_vector(articulators)
     articulation_vectors = get_random_articulation_vectors(articulators, n_vectors=4)
-    print(articulation_vectors)
     # spectrum = get_spectrum_from_vector_in_articulation(articulation_vector, articulators)
     spectra = get_spectra_from_vectors_in_articulation(articulation_vectors, articulators, frames_per_vector=20)
+    spectra = add_noise_to_spectra(spectra, noise_average_amplitude=0.5)
     # plot_spectrum(spectrum)
     # plot_spectra(spectra)
     # signal = convert_spectrum_to_waveform(spectrum, seconds=1)
     signal = convert_spectrum_sequence_to_waveform(spectra, seconds=3)
-
-    # signal = convert_spectrum_sequence_to_waveform(noisy_spectra, seconds=3)
     wav.write_signal_to_wav(signal, "BasisSpectraOutput.wav")
     # plot_spectra(spectra)
