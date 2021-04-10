@@ -35,3 +35,5 @@ Genetics/ncbi_dataset/
 
 # image files for random ML stuff
 ImageDatasets/
+
+BasisSpectrumOutput/

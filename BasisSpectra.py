@@ -8,8 +8,8 @@ import random
 import Music.WavUtil as wav
 
 
-MIN_HZ = 440*(2**(-21/12))
-MAX_HZ = 440*(2**(+51/12))
+MIN_HZ = 440*(2**(-2 + 3/12))
+MAX_HZ = 440*(2**(+1 + 3/12))
 
 
 class Articulator:
@@ -37,47 +37,65 @@ class Articulator:
         
 
 class SpikeArticulator(Articulator):
-    def __init__(self, mu, dx):
-        self.mu = mu
-        self.dx = dx
+    MIN_MU = np.log2(MIN_HZ)
+    MAX_MU = np.log2(MAX_HZ)
+    MIN_DX = 1/1200
+    MAX_DX = 1/6
+
+    def __init__(self, mu_01, dx_01):
+        assert 0 <= mu_01 <= 1, mu_01
+        self.mu_01 = mu_01
+        assert 0 <= dx_01 <= 1, dx_01
+        self.dx_01 = dx_01
+        self.mu = SpikeArticulator.MIN_MU + mu_01 * (SpikeArticulator.MAX_MU - SpikeArticulator.MIN_MU)
+        self.dx = SpikeArticulator.MIN_DX + dx_01 * (SpikeArticulator.MAX_DX - SpikeArticulator.MIN_DX)
 
     def get_spectrum_function(self):
         return spectrum_spike(self.mu, self.dx)
 
     def vector(self):
-        return np.array([self.mu, self.dx])
+        return np.array([self.mu_01, self.dx_01])
 
     @staticmethod
     def in_default_position():
-        return SpikeArticulator(mu=np.log2(440), dx=1/12)
+        return SpikeArticulator(mu_01=0.5, dx_01=0.5)
 
     @staticmethod
     def random():
-        mu = random.uniform(np.log2(MIN_HZ), np.log2(MAX_HZ))
-        dx = abs(np.random.normal(0, 1/2))
-        return SpikeArticulator(mu, dx)
+        mu_01 = random.random()
+        dx_01 = random.random()
+        return SpikeArticulator(mu_01, dx_01)
 
 
 class NormalArticulator(Articulator):
-    def __init__(self, mu, sigma):
-        self.mu = mu
-        self.sigma = sigma
-    
+    MIN_MU = np.log2(MIN_HZ)
+    MAX_MU = np.log2(MAX_HZ)
+    MIN_SIGMA = 1/1200
+    MAX_SIGMA = 1/12
+
+    def __init__(self, mu_01, sigma_01):
+        assert 0 <= mu_01 <= 1, mu_01
+        self.mu_01 = mu_01
+        assert 0 <= sigma_01 <= 1, sigma_01
+        self.sigma_01 = sigma_01
+        self.mu = NormalArticulator.MIN_MU + mu_01 * (NormalArticulator.MAX_MU - NormalArticulator.MIN_MU)
+        self.sigma = NormalArticulator.MIN_SIGMA + sigma_01 * (NormalArticulator.MAX_SIGMA - NormalArticulator.MIN_SIGMA)
+   
     def get_spectrum_function(self):
         return spectrum_normal(self.mu, self.sigma)
 
     def vector(self):
-        return np.array([self.mu, self.sigma])
+        return np.array([self.mu_01, self.sigma_01])
 
     @staticmethod
     def in_default_position():
-        return NormalArticulator(mu=np.log2(440), sigma=1/12)
+        return NormalArticulator(mu_01=0.5, sigma_01=0.5)
 
     @staticmethod
     def random():
-        mu = random.uniform(np.log2(MIN_HZ), np.log2(MAX_HZ))
-        sigma = abs(np.random.normal(0, 1/2))
-        return NormalArticulator(mu, sigma)
+        mu_01 = random.random()
+        sigma_01 = random.random()
+        return NormalArticulator(mu_01, sigma_01)
     
 
 def spectrum_normal(mu, sigma):
@@ -93,7 +111,7 @@ def spectrum_spike(mu, dx):
 def get_log_frequency_domain():
     min_l2 = np.log2(MIN_HZ)
     max_l2 = np.log2(MAX_HZ)
-    l2s = np.linspace(min_l2, max_l2, 1000)
+    l2s = np.arange(min_l2, max_l2, 1/12)
     return l2s
 
 
@@ -269,7 +287,7 @@ def get_articulators():
     return [SpikeArticulator.in_default_position() for i in range(3)] + [NormalArticulator.in_default_position() for i in range(3)]
 
 
-def get_default_position_vector(articulators):
+def get_default_position_vector(articulators, dimensions=1):
     res = None
     for art in articulators:
         default_pos = type(art).in_default_position()
@@ -278,7 +296,13 @@ def get_default_position_vector(articulators):
             res = v
         else:
             res = np.concatenate([res, v])
-    return res
+    if dimensions == 1:
+        assert res.shape == (res.size,)
+        return res
+    elif dimensions == 2:
+        return res.reshape((1, res.size))
+    else:
+        raise ValueError("bad dimensions {}".format(dimensions))
 
 
 def get_random_articulation_vector(articulators):
@@ -315,8 +339,9 @@ def get_spectra_from_vectors_in_articulation(vectors, articulators, frames_per_v
     # move alpha through articulator space NOT spectrum space
     # so we want the articulator to have to move its mu value from a to b, for example
     # rather than just a pointwise linear combination of the spectra, which will not get the pitch moving continuously from a to b
-    z = get_default_position_vector(articulators)
-    initial_vectors = [z] + vectors + [z]
+    z = get_default_position_vector(articulators, dimensions=2)
+    assert type(vectors) is np.ndarray, type(vectors)
+    initial_vectors = np.concatenate([z, vectors, z])
     # interpolate linearly between neighboring articulator positions, also flank by default position vectors (articulatory setting)
     res = []
     for v0, v1 in zip(initial_vectors[:-1], initial_vectors[1:]):
@@ -338,13 +363,16 @@ def plot_random_spectrum():
     plot_spectrum(spectrum)
 
 
-def plot_spectrum(spectrum, show=True):
+def plot_spectrum(spectrum, show=True, title=True, color=None, ax=None):
     l2s = get_log_frequency_domain()
-    plt.plot(l2s, spectrum)
-    plt.title("spectrum in log-Hz domain")
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.plot(l2s, spectrum, color=color)
+    if title:
+        ax.set_title("spectrum in log-Hz domain")  # plt.title() but ax.set_title()
     set_xticks()
     if show:
-        plt.show()
+        ax.show()
 
 
 def plot_spectra(spectra, equal_ylim=True):

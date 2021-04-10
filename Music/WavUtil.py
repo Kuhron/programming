@@ -74,12 +74,15 @@ def send_signal_to_audio_out(signal):
 
 def write_signal_to_wav(signal, filepath, rate=RATE):
     signal = np.array(signal)
+    desired_amplitude = 0.8 * MAX_AMPLITUDE
+    max_abs = abs(signal).max()
+    if max_abs > 0:
+        signal *= desired_amplitude / max_abs
     with wave.open(filepath, "w") as spf:
         spf.setnchannels(1)
         spf.setsampwidth(2)
         spf.setframerate(rate)
         spf.setnframes(len(signal))
-        signal *= (0.8 * MAX_AMPLITUDE) / max(abs(max(signal)), abs(min(signal)))
         spf.writeframes(signal.astype("Int16").tobytes())
 
 
