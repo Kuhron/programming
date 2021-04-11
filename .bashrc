@@ -161,12 +161,13 @@ alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
 # function null() { "$@" &> /dev/null ;}  # doesn't work
-function aco() { 
+function aco() {  # play acoma audio files matching string
     b=$(
         a=$(echo $1 | sed -e "s/\-[0-9]\./\./g;s/\.mp3//g"); 
         find . | grep -i $a | grep -v mp3);
     echo $b | sed -e "s/ /\n/g"; echo "$b" | xargs -I % sh -c '{ aplay %; sleep 1; }';
 }
+function bright () { xrandr --output $(xrandr | grep " connected" | cut -f1 -d " ") --brightness $1 ;}
 
 # nox, for obscuring entire terminal into a font unreadable by others, usually for use with lynx browser
 function nox() {

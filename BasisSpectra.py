@@ -11,6 +11,19 @@ import Music.WavUtil as wav
 MIN_HZ = 440*(2**(-2 + 3/12))
 MAX_HZ = 440*(2**(+1 + 3/12))
 
+# desmos calculator about potential way to get a formant envelope over harmonics: https://www.desmos.com/calculator/ujriaeh4ps
+# f1(x), f2(x), and f3(x) are normal distributions with mus m1 m2 m3 and sigmas s1 s2 s3, with all of those params restricted to interval [0,1] and x also in [0,1] (supposed to represent the log2-hz domain from min_hz to max_hz)
+# importantly, I removed the 1/sigma*sqrt(2*pi) for the normal distributions so the mode peak would always be at a height of 1: f1(x) = exp(-1/2 * ((x-m1)/s1)^2), simil f2 and f3
+# g123(x) is the average of f1 f2 f3
+# could easily add more formants by adding more fs and putting them in the g average
+# the actual function showing the spectrum is h123(x) = h(x) * g123(x)
+# h(x) is the bump function at harmonics, has a parameter t which is the "tolerance", i.e. the amount of deviation from a harmonic where the h(x) function should have support; it can range from 0 (no support anywhere) to 0.5 (support everywhere); I was using about 0.1 and it looked good
+# h(x) = j(x) where 1/2 - abs(1/F0 * mod(2^(Fmin+x*Fmax),F0) - 1/2 <= t; 0 elsewhere
+# j(x) is the cosine wave creating the bumps at the right places in h(x)
+# j(x) = cos^2 (pi/(2*t) * (1/2 - abs(1/F0 * mod(2^(Fmin+x*Fmax),F0) - 1/2)))
+# F0 is a param, the fundamental frequency
+# Fmin and Fmax are supposed to help x be a scaling parameter in log2-hz domain (by having the term Fmin + x*Fmax which should give a log2-freq with x being an alpha along that scale), but I don't think this quite works right yet (as of 2021-04-11)
+
 
 class Articulator:
     # methods implemented on subclass-specific basis are omitted here
