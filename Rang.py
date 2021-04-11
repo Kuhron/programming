@@ -5,6 +5,8 @@ import requests
 import webbrowser
 import sys
 
+import pandas as pd
+import numpy as np
 from bs4 import BeautifulSoup
 
 
@@ -58,6 +60,61 @@ def get_populous_us_cities(n_cities):
     return random.sample(cities, n_cities)
 
 
+def get_us_location_weighted_by_population():
+    # level = "state"
+    # level = "county"
+    level = "city"
+    pop_data = get_us_location_population_data()
+    d = pop_data[level]
+    names, pops = zip(*d.items())
+    p = np.array(pops) / sum(pops)
+    chosen_index = np.random.choice(np.arange(len(names)), p=p)
+    chosen = names[chosen_index]
+    return chosen
+
+
+def get_us_location_population_data():
+    data_fp = "Census_2010-2019_all.csv"
+    df = pd.read_csv(data_fp, engine='python')  # without engine="python", get UnicodeDecodeError
+    name_colname = "NAME"
+    state_colname = "STNAME"
+    pop_colname = "POPESTIMATE2019"
+    names = df[name_colname]
+    states = df[state_colname]
+    pops = df[pop_colname]
+
+    is_state = lambda name, state: name == state
+    state_pops = {}
+    new_names = []
+    for name, state, pop in zip(names, states, pops):
+        if is_state(name, state):
+            state_pops[name] = pop
+        else:
+            new_names.append(name)
+    names = new_names
+
+    is_county = lambda name: name.endswith("County") and not name.startswith("Balance of")
+    county_pops = {}
+    new_names = []
+    for name, state, pop in zip(names, states, pops):
+        if is_county(name):
+            tup = (name, state)
+            county_pops[tup] = pop
+        else:
+            new_names.append(name)
+    names = new_names
+
+    city_pops = {}  # include county residues as if they were cities ("Balance of X County")
+    for name, state, pop in zip(names, states, pops):
+        assert not is_state(name, state)
+        assert not is_county(name)
+        name = name.replace("Balance of ", "Unincorporated places in ")
+        tup = (name, state)
+        city_pops[tup] = pop
+
+    return {"state": state_pops, "county": county_pops, "city": city_pops}
+
+
 def open_location_in_google_maps(lat, lon):
     zoom_level = 6  # int, bigger is zoomed farther in
     url = "http://www.google.com/maps/place/{lat},{lon}/@{lat},{lon},{zoom_level}z".format(**locals())
@@ -84,7 +141,8 @@ if __name__ == "__main__":
         mode = input("Select mode:\n"
             "1. World\n"
             "2. Continental US (approx.)\n"
-            "3. US cities over 100,000 people\n")
+            "3. US cities over 100,000 people\n"
+            "4. US location weighted by population\n")
     if mode == "1":
         loc = get_random_latitude_and_longitude(degrees=True)
         print(loc)
@@ -99,6 +157,9 @@ if __name__ == "__main__":
         n_cities = int(input("How many cities? "))
         for city in get_populous_us_cities(n_cities):
             print(city)
+    elif mode == "4":
+        loc = get_us_location_weighted_by_population()
+        print(loc)
 
 # TODO: rang road trip, between cities and/or points
 
