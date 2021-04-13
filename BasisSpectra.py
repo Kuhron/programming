@@ -124,7 +124,8 @@ def spectrum_spike(mu, dx):
 def get_log_frequency_domain():
     min_l2 = np.log2(MIN_HZ)
     max_l2 = np.log2(MAX_HZ)
-    l2s = np.arange(min_l2, max_l2, 1/12)
+    # l2s = np.arange(min_l2, max_l2, 1/12)
+    l2s = np.linspace(min_l2, max_l2, 5)  # debug
     return l2s
 
 
@@ -250,7 +251,7 @@ def add_noise_to_spectra(spectra, noise_average_amplitude=1):
         noisy_spectrum = get_noisy_spectrum(average_amplitude=noise_average_amplitude)
         s2 = (s+noisy_spectrum)/2
         res.append(s2)
-    return res
+    return np.array(res)
 
 
 def get_noisy_spectrum(average_amplitude=1):
@@ -269,16 +270,22 @@ def get_random_spectrum(average_amplitude=1):
     return get_spectrum_from_vector_in_basis(vector, average_amplitude=average_amplitude)
 
 
-def get_zero_spectrum():
+def get_zero_spectrum(dimensions=1):
     length = len(get_basis_spectra())
     vector = np.zeros((length,))
-    return get_spectrum_from_vector_in_basis(vector, average_amplitude=0)
+    spec = get_spectrum_from_vector_in_basis(vector, average_amplitude=0)
+    if dimensions == 1:
+        return spec.reshape((spec.size,))
+    elif dimensions == 2:
+        return spec.reshape((1, spec.size,))
+    else:
+        raise ValueError("bad dimensions {}".format(dimensions))
 
 
 def get_random_spectrum_sequence(n_spectra, frames_per_spectrum, average_amplitude=1):
-    z = get_zero_spectrum()
-    initial_spectra = [z] + [get_random_spectrum(average_amplitude=average_amplitude) for i in range(n_spectra)] + [z]
+    initial_spectra = np.array([get_random_spectrum(average_amplitude=average_amplitude) for i in range(n_spectra)])
     # interpolate linearly between neighboring spectra, also flank by zero-intensity spectra
+    initial_spectra = add_flanking_zero_spectra(initial_spectra)
     # frames_between_spectra = frames_per_spectrum - 1
     res = []
     for s0, s1 in zip(initial_spectra[:-1], initial_spectra[1:]):
@@ -296,8 +303,16 @@ def get_random_spectrum_sequence(n_spectra, frames_per_spectrum, average_amplitu
     return res
 
 
+def add_flanking_zero_spectra(spectra):
+    z = get_zero_spectrum(dimensions=2)
+    spectra = np.concatenate([z, spectra, z])
+    return spectra
+
+
 def get_articulators():
-    return [SpikeArticulator.in_default_position() for i in range(3)] + [NormalArticulator.in_default_position() for i in range(3)]
+    n_spike_articulators = 1
+    n_normal_articulators = 0
+    return [SpikeArticulator.in_default_position() for i in range(n_spike_articulators)] + [NormalArticulator.in_default_position() for i in range(n_normal_articulators)]
 
 
 def get_default_position_vector(articulators, dimensions=1):
@@ -352,12 +367,10 @@ def get_spectra_from_vectors_in_articulation(vectors, articulators, frames_per_v
     # move alpha through articulator space NOT spectrum space
     # so we want the articulator to have to move its mu value from a to b, for example
     # rather than just a pointwise linear combination of the spectra, which will not get the pitch moving continuously from a to b
-    z = get_default_position_vector(articulators, dimensions=2)
-    assert type(vectors) is np.ndarray, type(vectors)
-    initial_vectors = np.concatenate([z, vectors, z])
     # interpolate linearly between neighboring articulator positions, also flank by default position vectors (articulatory setting)
+    # DON'T add flanking default articulations here, this is just articulation -> spectra conversion, the flanks should be added elsewhere
     res = []
-    for v0, v1 in zip(initial_vectors[:-1], initial_vectors[1:]):
+    for v0, v1 in zip(vectors[:-1], vectors[1:]):
         for a in range(frames_per_vector):
             alpha = a/frames_per_vector
             v = (1-alpha) * v0 + alpha * v1
@@ -365,10 +378,18 @@ def get_spectra_from_vectors_in_articulation(vectors, articulators, frames_per_v
             res.append(spectrum)
 
     # now add the last one
-    final_spectrum = get_spectrum_from_vector_in_articulation(initial_vectors[-1], articulators)
+    final_spectrum = get_spectrum_from_vector_in_articulation(vectors[-1], articulators)
     res.append(final_spectrum)
-    assert len(res) == 1 + frames_per_vector * (len(initial_vectors) - 1)
-    return res
+    assert len(res) == 1 + frames_per_vector * (len(vectors) - 1)
+    return np.array(res)
+
+
+def add_flanking_default_articulations(articulation_vectors, articulators):
+    z = get_default_position_vector(articulators, dimensions=2)
+    assert type(articulation_vectors) is np.ndarray, type(articulation_vectors)
+    # initial_vectors = [z] + vectors + [z]  # wrong, it adds them elementwise, I want instead a sequence of [z, v1, v2, ..., vn, z]
+    articulation_vectors = np.concatenate([z, articulation_vectors, z])  # this creates the sequence [z, v1, v2, ..., vn, z] instead of elementwise addition
+    return articulation_vectors
 
 
 def plot_random_spectrum():

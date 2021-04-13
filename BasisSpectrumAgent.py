@@ -27,7 +27,7 @@ import Music.WavUtil as wav
 class Agent:
     def __init__(self, articulators, image_vector_len):
         self.articulators = articulators
-        self.mouth = Mouth(articulators, n_articulation_positions_per_sequence=5, noise_average_amplitude=0.1)
+        self.mouth = Mouth(articulators, n_articulation_positions_per_sequence=2, noise_average_amplitude=0.1)
         self.image_vector_len = image_vector_len
         self.single_articulation_vector_len = self.mouth.single_artv_len
         self.full_articulation_vector_len = self.mouth.full_artv_len
@@ -56,24 +56,31 @@ class Agent:
         ip_output_layer = layers.Dense(self.image_vector_len)(ip_hidden_layers[-1])
         self.interpreter = Interpreter(ip_input_layer, ip_hidden_layers, ip_output_layer)
 
-    def babble(self, samples, epochs, batch_size):
-        x_train, y_train = self.create_babble_dataset_for_ear(samples)
-        x_test, y_test = self.create_babble_dataset_for_ear(max(10, int(samples*0.1)))
-        print("x_train shape {}, y_train shape {}".format(x_train.shape, y_train.shape))
+    def babble(self, n_samples, epochs, batch_size):
+        x_train, y_train = self.create_babble_dataset_for_ear(n_samples)
+        expected_x_train_shape = (n_samples, self.full_spectrum_vector_len)
+        expected_y_train_shape = (n_samples, self.full_articulation_vector_len)
+        assert x_train.shape == expected_x_train_shape, "expected {}, got {}".format(expected_x_train_shape, x_train.shape)
+        assert y_train.shape == expected_y_train_shape, "expected {}, got {}".format(expected_y_train_shape, y_train.shape)
+        x_test, y_test = self.create_babble_dataset_for_ear(max(10, int(n_samples*0.1)))
         self.ear.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=True, validation_data=(x_test, y_test))
 
-    def create_babble_dataset_for_ear(self, batch_size):
+    def create_babble_dataset_for_ear(self, n_samples):
         x = []
         y = []
-        for i in range(batch_size):
+        for i in range(n_samples):
             this_x, this_y = self.create_single_babble_data_point_for_ear()
+            assert len(this_x) == self.full_spectrum_vector_len, "expected len {}, got {}".format(self.full_spectrum_vector_len, len(this_x))
+            assert len(this_y) == self.full_articulation_vector_len, "expected len {}, got {}".format(self.full_articulation_vector_len, len(this_y))
             x.append(this_x)
             y.append(this_y)
         return np.array(x), np.array(y)
 
     def create_single_babble_data_point_for_ear(self):
-        articulation_vector = self.mouth.get_random_full_articulation_vector()
+        articulation_vector = self.mouth.get_random_full_articulation_vector(dimensions=1)
         spectrum = self.mouth.pronounce(articulation_vector)
+        assert len(articulation_vector) == self.full_articulation_vector_len, "expected len {}, got {}".format(self.full_articulation_vector_len, len(articulation_vector))
+        assert len(spectrum) == self.full_spectrum_vector_len, "expected len {}, got {}".format(self.full_spectrum_vector_len, len(spectrum))
         return (spectrum, articulation_vector)
 
     def get_random_seed_articulation_vectors_for_images(self, images):
@@ -145,17 +152,18 @@ class Mouth:
 
         self.articulators = articulators
         self.single_artv_len = self.get_single_articulation_vector_length()
-        self.full_artv_len = self.n_articulation_positions_per_sequence * self.single_artv_len
+        self.full_artv_len = self.get_full_articulation_vector_length()
         self.single_specv_len = self.get_single_spectrum_vector_length()
-        self.full_specv_len = self.n_articulation_positions_per_sequence * self.single_specv_len
+        self.full_specv_len = self.get_full_spectrum_vector_length()
 
     def get_random_single_articulation_vector(self):
-        artv, = bs.get_random_articulation_vectors(self.articulators, n_vectors=1)
+        artv = bs.get_random_articulation_vectors(self.articulators, n_vectors=1)
         return np.array(artv)
 
-    def get_random_full_articulation_vector(self, dimensions=2):
+    def get_random_full_articulation_vector(self, dimensions):
         artvs = bs.get_random_articulation_vectors(self.articulators, n_vectors=self.n_articulation_positions_per_sequence)
         artvs = np.array(artvs)
+        artvs = bs.add_flanking_default_articulations(artvs, self.articulators)
         if dimensions == 1:
             return artvs.reshape((artvs.size,))
         elif dimensions == 2:
@@ -165,12 +173,23 @@ class Mouth:
 
     def get_single_articulation_vector_length(self):
         artv = self.get_random_single_articulation_vector()
-        return len(artv)
+        return artv.size
+
+    def get_full_articulation_vector_length(self):
+        artv = self.get_random_full_articulation_vector(dimensions=1)
+        return artv.size
 
     def get_single_spectrum_vector_length(self):
         articulation_vector = self.get_random_single_articulation_vector()
+        # full_articulation_vector = bs.add_flanking_default_articulations(articulation_vector, self.articulators)
+        # full_articulation_vector = full_articulation_vector.reshape((full_articulation_vector.size,))
         spectrum_vector = self.pronounce(articulation_vector)
-        return len(spectrum_vector)
+        return spectrum_vector.size
+
+    def get_full_spectrum_vector_length(self):
+        full_articulation_vector = self.get_random_full_articulation_vector(dimensions=1)
+        spectrum_vector = self.pronounce(full_articulation_vector)
+        return spectrum_vector.size
 
     def convert_full_spectrum_vector_to_spectrum_sequence(self, full_spectrum_vector):
         # the spectrum vector may actually represent multiple points in time, a sequence of articulations
@@ -196,8 +215,8 @@ class Mouth:
             input_artv_len, = full_articulation_vector.shape
         elif len(full_articulation_vector.shape) == 2:
             one, input_artv_len = full_articulation_vector.shape
-            full_articulation_vector = full_articulation_vector.reshape((input_artv_len,))  # get rid of the single-sample row dimension
             assert one == 1, "invalid artv shape: {}".format(full_articulation_vector.shape)
+            full_articulation_vector = full_articulation_vector.reshape((input_artv_len,))  # get rid of the single-sample row dimension
         else:
             raise ValueError("invalid artv shape: {}".format(full_articulation_vector.shape))
         assert input_artv_len % self.single_artv_len == 0, "articulation vector wrong size, needed multiple of {}, got {}".format(self.single_artv_len, input_artv_len)
@@ -209,12 +228,21 @@ class Mouth:
         return np.array(articulation_vectors)
 
     def pronounce(self, articulation_vector, add_noise=True):
+        # expects a flat vector like a neural net's output
         # should add noise when playing the game or talking to oneself, but not when showing the spectrum representation that has been learned
         articulation_vectors = self.convert_full_articulation_vector_to_articulation_sequence(articulation_vector)
+        assert articulation_vectors.size == articulation_vector.size, "artv size was not conserved"
+        # articulation_vectors = bs.add_flanking_default_articulations(articulation_vectors, self.articulators)  # a full artv should already have these, so this is redundant
+        # print(articulation_vectors)
+        # input("L232")
         spectra = bs.get_spectra_from_vectors_in_articulation(articulation_vectors, self.articulators, frames_per_vector=self.frames_per_vector)
+        # print(spectra)
+        # input("L235")
         if add_noise:
-            spectra = bs.add_noise_to_spectra(spectra, noise_average_amplitude=self.noise_average_amplitude)
-        spectrum_vector = np.array(spectra).flatten()
+            spectra_with_noise = bs.add_noise_to_spectra(spectra, noise_average_amplitude=self.noise_average_amplitude)
+            assert spectra_with_noise.size == spectra.size, "spectra size was not conserved"
+            spectra = spectra_with_noise
+        spectrum_vector = np.array(spectra).reshape((spectra.size,))
         return spectrum_vector
 
 
@@ -309,7 +337,7 @@ if __name__ == "__main__":
         print("creating agent #{}".format(i))
         arts = bs.get_articulators()
         a = Agent(arts, mnist_vector_len)
-        a.babble(samples=2000, epochs=25, batch_size=100)  # babbling is true feedback, the real auditory spectrum made by articulation
+        a.babble(n_samples=2000, epochs=25, batch_size=100)  # babbling is true feedback, the real auditory spectrum made by articulation
         a.seed_eye(get_subsample(mnist_x_train, 10))
         # the eye and interpreter seeding is false feedback
         # just intended to get the model started on something non-degenerate that will later be overwritten by convention created among the agents
