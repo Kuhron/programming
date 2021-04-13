@@ -124,8 +124,8 @@ def spectrum_spike(mu, dx):
 def get_log_frequency_domain():
     min_l2 = np.log2(MIN_HZ)
     max_l2 = np.log2(MAX_HZ)
-    # l2s = np.arange(min_l2, max_l2, 1/12)
-    l2s = np.linspace(min_l2, max_l2, 5)  # debug
+    l2s = np.arange(min_l2, max_l2, 1/12)
+    # l2s = np.linspace(min_l2, max_l2, 5)  # debug
     return l2s
 
 
@@ -143,7 +143,7 @@ def get_xtick_values_hz():
     min_hz_order_mag = math.floor(np.log10(MIN_HZ))
     max_hz_order_mag = math.floor(np.log10(MAX_HZ))
     res = []
-    current = MIN_HZ
+    current = 10**min_hz_order_mag
     current_order_mag = min_hz_order_mag
     while True:
         res.append(current)
@@ -162,16 +162,22 @@ def is_power_of_10(x):
 
 
 def get_xtick_labels(xtick_values_hz):
-    return [str(x) if is_power_of_10(x) else "" for x in xtick_values_hz]
+    labels = [str(x) if is_power_of_10(x) else "" for x in xtick_values_hz]
+
+    # debug
+    # for hz, label in zip(xtick_values_hz, labels):
+    #     print("xtick {} Hz -> label {}".format(hz, repr(label)))
+
+    return labels
 
 
-def set_xticks():
+def set_xticks(ax, labels=True):
     xticks_hz = get_xtick_values_hz()
     xticks_log2 = np.log2(xticks_hz)
-    xtick_labels = get_xtick_labels(xticks_hz)
+    xtick_labels = get_xtick_labels(xticks_hz) if labels else [""] * len(xticks_hz)
     # print(xtick_labels)
-    plt.xticks(xticks_log2)
-    plt.gca().set_xticklabels(xtick_labels)
+    ax.set_xticks(xticks_log2)
+    ax.set_xticklabels(xtick_labels)
 
 
 def plot_basis_spectra():
@@ -181,7 +187,8 @@ def plot_basis_spectra():
     for f in basis_spectra:
         ys = f(l2s)
         plt.plot(l2s, ys)
-    set_xticks()
+    ax = plt.gca()
+    set_xticks(ax)
     plt.show()
 
 
@@ -199,6 +206,25 @@ def get_spectrum_from_vector_in_basis(vector, average_amplitude=1):
     else:
         spectrum *= average_amplitude / spectrum.mean()
     return spectrum
+
+
+def normalize_spectrum_vector_to_01(spectrum_vector):
+    max_val = spectrum_vector.max()
+    if max_val <= 0:
+        raise ValueError("spectrum vector with no positive values")
+    min_val = spectrum_vector.min()
+    if min_val < 0:
+        raise ValueError("spectrum vector with negative values")
+    if min_val == max_val:
+        raise ValueError("spectrum vector with no range cannot be normalized to 01")
+    return 0 + spectrum_vector * (1-0)/(max_val-min_val)
+
+
+def normalize_spectrum_vectors_to_01(spectra):
+    res = []
+    for spectrum in spectra:
+        res.append(normalize_spectrum_vector_to_01(spectrum))
+    return np.array(res)
 
 
 def convert_spectrum_to_hz_domain(spectrum):
@@ -258,7 +284,7 @@ def get_noisy_spectrum(average_amplitude=1):
     # something like red noise (low frequencies common) with some fluctuation
     l2s = get_log_frequency_domain()
     f = spectrum_spike(mu=np.log2(MIN_HZ), dx=np.log2(MAX_HZ/MIN_HZ))
-    factors = np.random.normal(1,0.5,(len(l2s),))
+    factors = abs(np.random.normal(1,0.5,(len(l2s),)))
     spectrum = f(l2s) * factors
     spectrum *= average_amplitude / spectrum.mean()
     return spectrum
@@ -284,8 +310,8 @@ def get_zero_spectrum(dimensions=1):
 
 def get_random_spectrum_sequence(n_spectra, frames_per_spectrum, average_amplitude=1):
     initial_spectra = np.array([get_random_spectrum(average_amplitude=average_amplitude) for i in range(n_spectra)])
-    # interpolate linearly between neighboring spectra, also flank by zero-intensity spectra
-    initial_spectra = add_flanking_zero_spectra(initial_spectra)
+    # interpolate linearly between neighboring spectra, also flank by zero-intensity spectra if you want
+    # initial_spectra = add_flanking_zero_spectra(initial_spectra)
     # frames_between_spectra = frames_per_spectrum - 1
     res = []
     for s0, s1 in zip(initial_spectra[:-1], initial_spectra[1:]):
@@ -310,8 +336,8 @@ def add_flanking_zero_spectra(spectra):
 
 
 def get_articulators():
-    n_spike_articulators = 1
-    n_normal_articulators = 0
+    n_spike_articulators = 0
+    n_normal_articulators = 4
     return [SpikeArticulator.in_default_position() for i in range(n_spike_articulators)] + [NormalArticulator.in_default_position() for i in range(n_normal_articulators)]
 
 
@@ -333,7 +359,7 @@ def get_default_position_vector(articulators, dimensions=1):
         raise ValueError("bad dimensions {}".format(dimensions))
 
 
-def get_random_articulation_vector(articulators):
+def get_random_articulation_vector(articulators, dimensions=1):
     # this vector encodes information about how each articulator is positioned
     res = None
     for articulator in articulators:
@@ -343,11 +369,17 @@ def get_random_articulation_vector(articulators):
             res = v
         else:
             res = np.concatenate([res, v])
-    return res
+    if dimensions == 1:
+        return res.reshape((res.size,))
+    elif dimensions == 2:
+        return res.reshape((1, res.size,))
+    else:
+        raise ValueError("bad dimensions {}".format(dimensions))
 
 
 def get_random_articulation_vectors(articulators, n_vectors):
-    return [get_random_articulation_vector(articulators) for i in range(n_vectors)]
+    res = [get_random_articulation_vector(articulators) for i in range(n_vectors)]
+    return np.array(res)
 
 
 def get_spectrum_from_vector_in_articulation(vector, articulators):
@@ -363,12 +395,12 @@ def get_spectrum_from_vector_in_articulation(vector, articulators):
     return res
 
 
-def get_spectra_from_vectors_in_articulation(vectors, articulators, frames_per_vector):
+def get_spectra_from_vectors_in_articulation(vectors, articulators, frames_per_vector, normalize_01=True):
     # move alpha through articulator space NOT spectrum space
     # so we want the articulator to have to move its mu value from a to b, for example
     # rather than just a pointwise linear combination of the spectra, which will not get the pitch moving continuously from a to b
     # interpolate linearly between neighboring articulator positions, also flank by default position vectors (articulatory setting)
-    # DON'T add flanking default articulations here, this is just articulation -> spectra conversion, the flanks should be added elsewhere
+    # DON'T add flanking default articulations here, this is just articulation -> spectra conversion, the flanks should be added elsewhere if you want them
     res = []
     for v0, v1 in zip(vectors[:-1], vectors[1:]):
         for a in range(frames_per_vector):
@@ -381,7 +413,11 @@ def get_spectra_from_vectors_in_articulation(vectors, articulators, frames_per_v
     final_spectrum = get_spectrum_from_vector_in_articulation(vectors[-1], articulators)
     res.append(final_spectrum)
     assert len(res) == 1 + frames_per_vector * (len(vectors) - 1)
-    return np.array(res)
+    res = np.array(res)
+    if normalize_01:
+        # normalizing on an individual-vector basis rather than the whole full vector sequence at once will allow every stage to span the interval [0,1] in intensity, rather than middle stages being too quiet because they have greater dispersion across frequency domain
+        res = normalize_spectrum_vectors_to_01(res)
+    return res
 
 
 def add_flanking_default_articulations(articulation_vectors, articulators):
@@ -392,21 +428,78 @@ def add_flanking_default_articulations(articulation_vectors, articulators):
     return articulation_vectors
 
 
+def plot_random_articulation():
+    artv = get_random_articulation_vector(get_articulators(), dimensions=1)
+    plot_articulation(artv)
+
+
+def plot_articulation(articulation, show=True, title=True, color=None, ax=None, tick_labels=False):
+    xs = range(len(articulation))
+    if ax is None:
+        fig, ax = plt.subplots()
+    ax.plot(xs, articulation, color=color)
+    ax.set_ylim((-0.1,1.1))
+    xticks = xs
+    if tick_labels:
+        ax.set_xticks(xticks)
+    else:
+        ax.set_xticks(xticks)  # try to suppress stupid warning about fixed formatter whatever: https://github.com/matplotlib/matplotlib/issues/18848
+        ax.set_xticklabels(["" for x in ax.get_xticks()])
+    if title:
+        ax.set_title("articulation vector")
+    if show:
+        plt.show()
+
+
 def plot_random_spectrum():
     spectrum = get_random_spectrum()
     plot_spectrum(spectrum)
 
 
-def plot_spectrum(spectrum, show=True, title=True, color=None, ax=None):
+def plot_random_articulation_and_spectrum():
+    articulators = get_articulators()
+    artv = get_random_articulation_vector(articulators, dimensions=1)
+    spectrum = get_spectrum_from_vector_in_articulation(artv, articulators)
+    ax = plt.subplot(2,1,1)
+    plot_articulation(artv, show=False, ax=ax)
+    ax = plt.subplot(2,1,2)
+    plot_spectrum(spectrum, show=False, ax=ax)
+    plt.show()
+
+
+def plot_random_articulation_and_spectrum_sequence():
+    articulators = get_articulators()
+    n_vectors = 3
+    flank = False
+
+    artvs = get_random_articulation_vectors(articulators, n_vectors)
+    # if flank:
+    #     artvs = add_flanking_default_articulations(artvs, articulators)
+    #     specvs = get_spectra_from_vectors_in_articulation(artvs, articulators, frames_per_vector=1, normalize_01=True)
+    #     n_vectors += 2  # to account for the flanking
+    for vi in range(n_vectors):
+        artv = artvs[vi]
+        specv = specvs[vi]
+        title = vi == 0
+        tick_labels = vi == n_vectors-1
+        ax = plt.subplot(n_vectors, 2, 2*vi+1)
+        plot_articulation(artv, show=False, ax=ax, title=title, tick_labels=tick_labels)
+        ax = plt.subplot(n_vectors, 2, 2*vi+2)
+        plot_spectrum(specv, show=False, ax=ax, title=title, tick_labels=tick_labels)
+    plt.show()
+
+
+def plot_spectrum(spectrum, show=True, title=True, color=None, ax=None, tick_labels=True):
     l2s = get_log_frequency_domain()
     if ax is None:
         fig, ax = plt.subplots()
     ax.plot(l2s, spectrum, color=color)
+    ax.set_ylim(-0.1, 1.1)
     if title:
         ax.set_title("spectrum in log-Hz domain")  # plt.title() but ax.set_title()
-    set_xticks()
+    set_xticks(ax, labels=tick_labels)
     if show:
-        ax.show()
+        plt.show()
 
 
 def plot_spectra(spectra, equal_ylim=True):
@@ -418,7 +511,8 @@ def plot_spectra(spectra, equal_ylim=True):
         plt.gca().clear()
         plt.plot(l2s, s)
         plt.ylim(0, max_y)
-        set_xticks()
+        ax = plt.gca()
+        set_xticks(ax)
         plt.draw()
         plt.pause(0.1)
     plt.show()
@@ -451,13 +545,18 @@ if __name__ == "__main__":
 
     articulators = get_articulators()
     # articulation_vector = get_random_articulation_vector(articulators)
-    articulation_vectors = get_random_articulation_vectors(articulators, n_vectors=4)
+    # articulation_vectors = get_random_articulation_vectors(articulators, n_vectors=4)
     # spectrum = get_spectrum_from_vector_in_articulation(articulation_vector, articulators)
-    spectra = get_spectra_from_vectors_in_articulation(articulation_vectors, articulators, frames_per_vector=20)
-    spectra = add_noise_to_spectra(spectra, noise_average_amplitude=0.5)
+    # spectra = get_spectra_from_vectors_in_articulation(articulation_vectors, articulators, frames_per_vector=20)
+    # spectra = add_noise_to_spectra(spectra, noise_average_amplitude=0.5)
     # plot_spectrum(spectrum)
     # plot_spectra(spectra)
     # signal = convert_spectrum_to_waveform(spectrum, seconds=1)
-    signal = convert_spectrum_sequence_to_waveform(spectra, seconds=3)
-    wav.write_signal_to_wav(signal, "BasisSpectraOutput.wav")
+    # signal = convert_spectrum_sequence_to_waveform(spectra, seconds=3)
+    # wav.write_signal_to_wav(signal, "BasisSpectraOutput.wav")
     # plot_spectra(spectra)
+
+    # plot_random_articulation()
+    # plot_random_articulation_and_spectrum()
+    plot_random_articulation_and_spectrum_sequence()
+

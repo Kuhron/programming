@@ -25,10 +25,14 @@ import Music.WavUtil as wav
 
 
 class Agent:
-    def __init__(self, articulators, image_vector_len):
+    def __init__(self, articulators, image_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude):
         self.articulators = articulators
-        self.mouth = Mouth(articulators, n_articulation_positions_per_sequence=2, noise_average_amplitude=0.1)
         self.image_vector_len = image_vector_len
+        self.n_articulation_positions_per_sequence = n_articulation_positions_per_sequence
+        self.noise_average_amplitude = noise_average_amplitude
+
+        self.mouth = Mouth(articulators, n_articulation_positions_per_sequence=n_articulation_positions_per_sequence, noise_average_amplitude=noise_average_amplitude)
+
         self.single_articulation_vector_len = self.mouth.single_artv_len
         self.full_articulation_vector_len = self.mouth.full_artv_len
         self.single_spectrum_vector_len = self.mouth.single_specv_len
@@ -163,7 +167,6 @@ class Mouth:
     def get_random_full_articulation_vector(self, dimensions):
         artvs = bs.get_random_articulation_vectors(self.articulators, n_vectors=self.n_articulation_positions_per_sequence)
         artvs = np.array(artvs)
-        artvs = bs.add_flanking_default_articulations(artvs, self.articulators)
         if dimensions == 1:
             return artvs.reshape((artvs.size,))
         elif dimensions == 2:
@@ -181,7 +184,6 @@ class Mouth:
 
     def get_single_spectrum_vector_length(self):
         articulation_vector = self.get_random_single_articulation_vector()
-        # full_articulation_vector = bs.add_flanking_default_articulations(articulation_vector, self.articulators)
         # full_articulation_vector = full_articulation_vector.reshape((full_articulation_vector.size,))
         spectrum_vector = self.pronounce(articulation_vector)
         return spectrum_vector.size
@@ -227,12 +229,12 @@ class Mouth:
             articulation_vectors.append(section)
         return np.array(articulation_vectors)
 
+
     def pronounce(self, articulation_vector, add_noise=True):
         # expects a flat vector like a neural net's output
         # should add noise when playing the game or talking to oneself, but not when showing the spectrum representation that has been learned
         articulation_vectors = self.convert_full_articulation_vector_to_articulation_sequence(articulation_vector)
         assert articulation_vectors.size == articulation_vector.size, "artv size was not conserved"
-        # articulation_vectors = bs.add_flanking_default_articulations(articulation_vectors, self.articulators)  # a full artv should already have these, so this is redundant
         # print(articulation_vectors)
         # input("L232")
         spectra = bs.get_spectra_from_vectors_in_articulation(articulation_vectors, self.articulators, frames_per_vector=self.frames_per_vector)
@@ -242,6 +244,7 @@ class Mouth:
             spectra_with_noise = bs.add_noise_to_spectra(spectra, noise_average_amplitude=self.noise_average_amplitude)
             assert spectra_with_noise.size == spectra.size, "spectra size was not conserved"
             spectra = spectra_with_noise
+        spectra = bs.normalize_spectrum_vectors_to_01(spectra)
         spectrum_vector = np.array(spectra).reshape((spectra.size,))
         return spectrum_vector
 
@@ -255,20 +258,19 @@ class Interpreter:
         self.model.compile(optimizer="adam", loss="mean_squared_error")
 
 
-def play_game(agents, images, n_rounds):
-    image_i = 0
+def play_game(agents, images, n_rounds, images_per_turn):
     for round_i in range(n_rounds):
         print("playing game round {}".format(round_i))
         for agent_i in range(len(agents)):
             describer = agents[agent_i]
             # guessers = [agents[i] for i in range(len(agents)) if i != agent_i]
-            image = images[image_i]
-            spectrum = describer.describe_image(image)
-            for participant in agents:
-                # the describer should also train their other networks on what they said
-                # guess = guesser.guess_image_from_spectrum(spectrum)
-                participant.fit_spectrum_to_image(spectrum, image)
-            image_i += 1
+            for image_i in range(images_per_turn):
+                image = random.choice(images)
+                spectrum = describer.describe_image(image)
+                for participant in agents:
+                    # the describer should also train their other networks on what they said
+                    # guess = guesser.guess_image_from_spectrum(spectrum)
+                    participant.fit_spectrum_to_image(spectrum, image)
 
 
 def get_subsample(x, n_samples):
@@ -278,37 +280,47 @@ def get_subsample(x, n_samples):
     return samples
 
 
-def show_spectra_for_images(agents, images, n_images, show=True, save_sound=False, save_plot=False):
+def show_articulations_and_spectra_for_images(agents, images, n_images, show=True, save_sound=False, save_plot=False):
     images = get_subsample(images, n_images)
     for i, image in enumerate(images):
-        show_spectra_for_image(agents, image, show=False, title=True, save_sound=save_sound, image_label=str(i), save_plot=save_plot)
+        show_articulations_and_spectra_for_image(agents, image, show=False, title=True, save_sound=save_sound, image_label=str(i), save_plot=save_plot)
         if show:
             plt.show()
 
 
-def show_spectra_for_image(agents, image, show=True, title=True, save_sound=False, image_label=None, save_plot=False):
+def show_articulations_and_spectra_for_image(agents, image, show=True, title=True, tick_labels=True, save_sound=False, image_label=None, save_plot=False):
     n_articulation_positions_per_sequence = agents[0].mouth.n_articulation_positions_per_sequence
     n_rows = 1 + n_articulation_positions_per_sequence  # one row for the image itself, one each for each segment in the word
-    n_cols = 1
+    n_cols = 2  # left column for articulations, right column for spectra
 
     fig, axes = plt.subplots(n_rows, n_cols)
 
     # imshow the image array
-    axes[0].imshow(image)
+    axes[0,0].imshow(image)
+    axes[0,0].axis("off")  # just show image without xy ticks
+    axes[0,1].axis("off")  # don't show this one, since there's nothing there
 
     # show the spectrum components
     for agent_i, agent in enumerate(agents):
-        agent_color_rgba = tuple(np.random.uniform(0, 1, (3,))) + (0.75,)
+        preset_colors = ["r", "b", "g", "k"]
+        if agent_i < len(preset_colors):
+            agent_color_rgba = preset_colors[agent_i]
+        else:
+            agent_color_rgba = tuple(np.random.uniform(0, 1, (3,))) + (0.75,)
         assert n_articulation_positions_per_sequence == agent.mouth.n_articulation_positions_per_sequence
 
-        agent_full_articulation_vector = agent.get_articulation_from_image(image)
-        agent_articulation_sequence = agent.mouth.convert_full_articulation_vector_to_articulation_sequence(agent_full_articulation_vector)
+        agent_raw_articulation_vector = agent.get_articulation_from_image(image)
+        agent_articulation_sequence = agent.mouth.convert_full_articulation_vector_to_articulation_sequence(agent_raw_articulation_vector)
+        n_segments = agent_articulation_sequence.shape[0]
+        assert n_segments == agent.n_articulation_positions_per_sequence, "articulation sequence has {} segments but should have {}:\n{}".format(n_segments, agent.n_articulation_positions_per_sequence, agent_articulation_sequence)
         with open("BasisSpectrumOutput/BasisSpectrumArticulation_image{}_agent{}.txt".format(image_label, agent_i), "w") as f:
-            n_segments = agent_articulation_sequence.shape[0]
             for seg_i in range(n_segments):
-                f.write("segment {}: {}\n".format(seg_i, agent_articulation_sequence[seg_i]))
+                artv = agent_articulation_sequence[seg_i]
+                vec_str = "[" + ", ".join("{:.4f}".format(x) for x in artv) + "]"
+                f.write("segment {}: {}\n".format(seg_i, vec_str))
 
-        agent_full_spectrum_vector = agent.describe_image(image, add_noise=False)
+        agent_full_articulation_vector = agent_articulation_sequence.reshape((agent_articulation_sequence.size,))
+        agent_full_spectrum_vector = agent.mouth.pronounce(agent_full_articulation_vector, add_noise=True)
         agent_spectrum_sequence = agent.mouth.convert_full_spectrum_vector_to_spectrum_sequence(agent_full_spectrum_vector)
         if save_sound:
             assert image_label is not None
@@ -316,15 +328,20 @@ def show_spectra_for_image(agents, image, show=True, title=True, save_sound=Fals
             signal = bs.convert_spectrum_sequence_to_waveform(agent_spectrum_sequence, seconds=2)
             wav.write_signal_to_wav(signal, sound_fp)
         for articulation_i in range(n_articulation_positions_per_sequence):
-            ax = axes[articulation_i+1]
-            title = articulation_i == 0 and title
+            articulation_ax = axes[articulation_i+1, 0]
+            spectrum_ax = axes[articulation_i+1, 1]
+            title_this_iter = articulation_i == 0 and title
+            tick_labels_this_iter = articulation_i == n_articulation_positions_per_sequence-1 and tick_labels
+            articulation = agent_articulation_sequence[articulation_i]
+            bs.plot_articulation(articulation, show=show, title=title_this_iter, tick_labels=tick_labels_this_iter, color=agent_color_rgba, ax=articulation_ax)
             spectrum = agent_spectrum_sequence[articulation_i]
-            bs.plot_spectrum(spectrum, show=show, title=title, color=agent_color_rgba, ax=ax)
+            bs.plot_spectrum(spectrum, show=show, title=title_this_iter, tick_labels=tick_labels_this_iter, color=agent_color_rgba, ax=spectrum_ax)
     if save_plot:
         assert image_label is not None
         plt.savefig("BasisSpectrumOutput/BasisSpectrumPlot_image{}.png".format(image_label))
     if show:
         plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":
@@ -332,17 +349,31 @@ if __name__ == "__main__":
     mnist_vector_len = 28**2
     (mnist_x_train, mnist_y_train), (mnist_x_test, mnist_y_test) = mnist.load_data()
     n_agents = 2
+    n_articulation_positions_per_sequence = 3
+    noise_average_amplitude = 0
+    n_babble_samples = 100
+    n_babble_epochs = 5
+    babble_batch_size = 100
+    n_eye_seed_samples = 10
+    n_interpreter_seed_samples = 10
     agents = []
     for i in range(n_agents):
         print("creating agent #{}".format(i))
         arts = bs.get_articulators()
-        a = Agent(arts, mnist_vector_len)
-        a.babble(n_samples=2000, epochs=25, batch_size=100)  # babbling is true feedback, the real auditory spectrum made by articulation
-        a.seed_eye(get_subsample(mnist_x_train, 10))
+        a = Agent(arts, mnist_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude)
+        
+        # babbling is true feedback, the real auditory spectrum made by articulation
+        a.babble(n_samples=n_babble_samples, epochs=n_babble_epochs, batch_size=babble_batch_size)
+
         # the eye and interpreter seeding is false feedback
         # just intended to get the model started on something non-degenerate that will later be overwritten by convention created among the agents
-        a.seed_interpreter(get_subsample(mnist_x_train, 10))
+        a.seed_eye(get_subsample(mnist_x_train, n_eye_seed_samples))
+        a.seed_interpreter(get_subsample(mnist_x_train, n_interpreter_seed_samples))
+
         agents.append(a)
 
-    play_game(agents, mnist_x_train, n_rounds=5)
-    show_spectra_for_images(agents, mnist_x_train, n_images=2, save_sound=True, save_plot=True, show=False)
+    n_rounds = 1
+    images_per_turn=1
+    play_game(agents, mnist_x_train, n_rounds=n_rounds, images_per_turn=images_per_turn)
+    n_images_to_save = 5
+    show_articulations_and_spectra_for_images(agents, mnist_x_train, n_images=n_images_to_save, save_sound=True, save_plot=True, show=False)
