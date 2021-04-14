@@ -10,6 +10,8 @@ import Music.WavUtil as wav
 
 MIN_HZ = 440*(2**(-2 + 3/12))
 MAX_HZ = 440*(2**(+1 + 3/12))
+MIN_L2HZ = np.log2(MIN_HZ)
+MAX_L2HZ = np.log2(MAX_HZ)
 
 # desmos calculator about potential way to get a formant envelope over harmonics: https://www.desmos.com/calculator/ujriaeh4ps
 # f1(x), f2(x), and f3(x) are normal distributions with mus m1 m2 m3 and sigmas s1 s2 s3, with all of those params restricted to interval [0,1] and x also in [0,1] (supposed to represent the log2-hz domain from min_hz to max_hz)
@@ -109,7 +111,34 @@ class NormalArticulator(Articulator):
         mu_01 = random.random()
         sigma_01 = random.random()
         return NormalArticulator(mu_01, sigma_01)
-    
+
+
+class ExpCosSquaredArticulator(Articulator):
+    OMEGA_MIN = 15/2 * np.pi
+    OMEGA_MAX = 31/2 * np.pi
+
+    def __init__(self, omega_01, phase_01):
+        self.omega_01 = omega_01
+        self.phase_01 = phase_01
+        self.omega = ExpCosSquaredArticulator.OMEGA_MIN + self.omega_01 * (ExpCosSquaredArticulator.OMEGA_MAX - ExpCosSquaredArticulator.OMEGA_MIN)
+        self.phase = self.phase_01 * np.pi  # phase min is 0 and phase max is pi
+
+    def get_spectrum_function(self):
+        return spectrum_exp_cos_squared(self.omega, self.phase)
+
+    def vector(self):
+        return np.array([self.omega_01, self.phase_01])
+
+    @staticmethod
+    def in_default_position():
+        return ExpCosSquaredArticulator(omega_01=0.5, phase_01=0.5)
+
+    @staticmethod
+    def random():
+        omega_01 = random.random()
+        phase_01 = random.random()
+        return ExpCosSquaredArticulator(omega_01, phase_01)
+ 
 
 def spectrum_normal(mu, sigma):
     # beware lambda closure
@@ -119,6 +148,20 @@ def spectrum_normal(mu, sigma):
 def spectrum_spike(mu, dx):
     # a triangle with peak at mu, extending to dx on each side
     return lambda x, b=mu, a=dx: 1/a * np.maximum(0, a-abs(x-b))
+
+
+def spectrum_cos_squared(omega, phase):
+    return lambda x, w=omega, p=phase: np.cos(w * freq_to_01(x) + p)**2
+
+
+def spectrum_exp_cos_squared(omega, phase):
+    return lambda x, w=omega, p=phase, b=1.25: np.cos(b**(w * freq_to_01(x) + p))**2
+
+
+def freq_to_01(x):
+    alpha = (x - MIN_L2HZ) / (MAX_L2HZ - MIN_L2HZ)
+    assert ((0 <= alpha) & (alpha <= 1)).all(), "bad frequency {}".format(x)
+    return alpha
 
 
 def get_log_frequency_domain():
@@ -217,12 +260,17 @@ def normalize_spectrum_vector_to_01(spectrum_vector):
         raise ValueError("spectrum vector with negative values")
     if min_val == max_val:
         raise ValueError("spectrum vector with no range cannot be normalized to 01")
-    return 0 + spectrum_vector * (1-0)/(max_val-min_val)
+    f = lambda x: (spectrum_vector - min_val) / (max_val - min_val)
+    res = f(spectrum_vector)
+    # input("check correct individual spectrum normalization: {} , {}".format(res.min(), res.max()))
+    return res
 
 
 def normalize_spectrum_vectors_to_01(spectra):
+    n_spectra, spec_len = spectra.shape
     res = []
-    for spectrum in spectra:
+    for spec_i in range(n_spectra):
+        spectrum = spectra[spec_i, :]
         res.append(normalize_spectrum_vector_to_01(spectrum))
     return np.array(res)
 
@@ -337,8 +385,13 @@ def add_flanking_zero_spectra(spectra):
 
 def get_articulators():
     n_spike_articulators = 0
-    n_normal_articulators = 4
-    return [SpikeArticulator.in_default_position() for i in range(n_spike_articulators)] + [NormalArticulator.in_default_position() for i in range(n_normal_articulators)]
+    n_normal_articulators = 0
+    n_exp_cos_squared_articulators = 8
+    res = []
+    res += [SpikeArticulator.in_default_position() for i in range(n_spike_articulators)]
+    res += [NormalArticulator.in_default_position() for i in range(n_normal_articulators)]
+    res += [ExpCosSquaredArticulator.in_default_position() for i in range(n_exp_cos_squared_articulators)]
+    return res
 
 
 def get_default_position_vector(articulators, dimensions=1):
@@ -417,6 +470,7 @@ def get_spectra_from_vectors_in_articulation(vectors, articulators, frames_per_v
     if normalize_01:
         # normalizing on an individual-vector basis rather than the whole full vector sequence at once will allow every stage to span the interval [0,1] in intensity, rather than middle stages being too quiet because they have greater dispersion across frequency domain
         res = normalize_spectrum_vectors_to_01(res)
+        # input("check correct spectrum sequence normalization: {} , {}".format(res.min(), res.max()))
     return res
 
 
@@ -470,13 +524,13 @@ def plot_random_articulation_and_spectrum():
 def plot_random_articulation_and_spectrum_sequence():
     articulators = get_articulators()
     n_vectors = 3
-    flank = False
+    # flank = False
 
     artvs = get_random_articulation_vectors(articulators, n_vectors)
     # if flank:
     #     artvs = add_flanking_default_articulations(artvs, articulators)
-    #     specvs = get_spectra_from_vectors_in_articulation(artvs, articulators, frames_per_vector=1, normalize_01=True)
     #     n_vectors += 2  # to account for the flanking
+    specvs = get_spectra_from_vectors_in_articulation(artvs, articulators, frames_per_vector=1, normalize_01=True)
     for vi in range(n_vectors):
         artv = artvs[vi]
         specv = specvs[vi]

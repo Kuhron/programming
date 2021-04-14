@@ -25,7 +25,8 @@ import Music.WavUtil as wav
 
 
 class Agent:
-    def __init__(self, articulators, image_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude):
+    def __init__(self, name, articulators, image_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude):
+        self.name = name
         self.articulators = articulators
         self.image_vector_len = image_vector_len
         self.n_articulation_positions_per_sequence = n_articulation_positions_per_sequence
@@ -43,7 +44,9 @@ class Agent:
         eye_hl1 = layers.Dense(self.image_vector_len, activation="relu")(eye_hl0)
         eye_hidden_layers = [eye_hl0, eye_hl1]
         # if the articulators expect articulator param values in [0, 1], then anything outputting articulation vector should have activation of sigmoid
-        eye_output_layer = layers.Dense(self.full_articulation_vector_len, activation="sigmoid")(eye_hidden_layers[-1])
+        eye_output_regularizer = keras.regularizers.l2(l2=1e-2)  # penalize large values of articulation vector components
+        eye_output_layer = layers.Dense(self.full_articulation_vector_len, activation="sigmoid", 
+            activity_regularizer=eye_output_regularizer)(eye_hidden_layers[-1])
         self.eye = Eye(eye_input_layer, eye_hidden_layers, eye_output_layer)
 
         ear_input_layer = keras.Input(shape=(self.full_spectrum_vector_len,))
@@ -60,7 +63,11 @@ class Agent:
         ip_output_layer = layers.Dense(self.image_vector_len)(ip_hidden_layers[-1])
         self.interpreter = Interpreter(ip_input_layer, ip_hidden_layers, ip_output_layer)
 
+    def __repr__(self):
+        return "<Agent {}>".format(self.name)
+
     def babble(self, n_samples, epochs, batch_size):
+        print("\n-- babbling {}".format(self.name))
         x_train, y_train = self.create_babble_dataset_for_ear(n_samples)
         expected_x_train_shape = (n_samples, self.full_spectrum_vector_len)
         expected_y_train_shape = (n_samples, self.full_articulation_vector_len)
@@ -68,6 +75,7 @@ class Agent:
         assert y_train.shape == expected_y_train_shape, "expected {}, got {}".format(expected_y_train_shape, y_train.shape)
         x_test, y_test = self.create_babble_dataset_for_ear(max(10, int(n_samples*0.1)))
         self.ear.model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=True, validation_data=(x_test, y_test))
+        print("\n-- done babbling {}".format(self.name))
 
     def create_babble_dataset_for_ear(self, n_samples):
         x = []
@@ -85,6 +93,12 @@ class Agent:
         spectrum = self.mouth.pronounce(articulation_vector)
         assert len(articulation_vector) == self.full_articulation_vector_len, "expected len {}, got {}".format(self.full_articulation_vector_len, len(articulation_vector))
         assert len(spectrum) == self.full_spectrum_vector_len, "expected len {}, got {}".format(self.full_spectrum_vector_len, len(spectrum))
+        
+        # debug
+        # articulations = self.mouth.convert_full_articulation_vector_to_articulation_sequence(articulation_vector)
+        # spectra = self.mouth.convert_full_spectrum_vector_to_spectrum_sequence(spectrum)
+        # show_articulations_and_spectra_simple(articulations, spectra)
+
         return (spectrum, articulation_vector)
 
     def get_random_seed_articulation_vectors_for_images(self, images):
@@ -95,17 +109,21 @@ class Agent:
         articulation_vectors = np.array(articulation_vectors)
         return articulation_vectors
 
-    def seed_eye(self, images):
+    def seed_eye(self, images, epochs):
+        print("\n-- seeding eye {}".format(self.name))
         # give the Eye just a few images along with random articulations to train on, so it's not starting from nothing
         articulation_vectors = self.get_random_seed_articulation_vectors_for_images(images)
         images = images.reshape(images.shape[0], self.image_vector_len)
-        self.eye.model.fit(images, articulation_vectors, epochs=20, shuffle=True)
+        self.eye.model.fit(images, articulation_vectors, epochs=epochs, shuffle=True)
+        print("\n-- done seeding eye {}".format(self.name))
 
-    def seed_interpreter(self, images):
+    def seed_interpreter(self, images, epochs):
+        print("\n-- seeding interpreter {}".format(self.name))
         # give the interpreter a few random articulation vectors and images to train on, so it's not starting from nothing
         articulation_vectors = self.get_random_seed_articulation_vectors_for_images(images)
         images = images.reshape(images.shape[0], self.image_vector_len)
-        self.interpreter.model.fit(articulation_vectors, images, epochs=20, shuffle=True)
+        self.interpreter.model.fit(articulation_vectors, images, epochs=epochs, shuffle=True)
+        print("\n-- done seeding interpreter {}".format(self.name))
 
     def get_articulation_from_image(self, image):
         image = image.reshape((1, self.image_vector_len))
@@ -135,7 +153,8 @@ class Eye:
         self.hidden_layers = eye_hidden_layers
         self.output_layer = eye_output_layer
         self.model = keras.Model(eye_input_layer, eye_output_layer)
-        self.model.compile(optimizer="adam", loss="mean_squared_error")
+        opt = keras.optimizers.Adam(learning_rate=1e-5)
+        self.model.compile(optimizer=opt, loss="mean_squared_error")
 
 
 class Ear:
@@ -144,7 +163,18 @@ class Ear:
         self.hidden_layers = ear_hidden_layers
         self.output_layer = ear_output_layer
         self.model = keras.Model(ear_input_layer, ear_output_layer)
-        self.model.compile(optimizer="adam", loss="mean_squared_error")
+        opt = keras.optimizers.Adam(learning_rate=1e-5)
+        self.model.compile(optimizer=opt, loss="mean_squared_error")
+
+
+class Interpreter:
+    def __init__(self, ip_input_layer, ip_hidden_layers, ip_output_layer):
+        self.input_layer = ip_input_layer
+        self.hidden_layers = ip_hidden_layers
+        self.output_layer = ip_output_layer
+        self.model = keras.Model(ip_input_layer, ip_output_layer)
+        opt = keras.optimizers.Adam(learning_rate=1e-5)
+        self.model.compile(optimizer=opt, loss="binary_crossentropy")  # image output needs binary cross-entropy
 
 
 class Mouth:
@@ -165,8 +195,10 @@ class Mouth:
         return np.array(artv)
 
     def get_random_full_articulation_vector(self, dimensions):
+        # input("mouth has {} articulators".format(len(self.articulators)))
         artvs = bs.get_random_articulation_vectors(self.articulators, n_vectors=self.n_articulation_positions_per_sequence)
         artvs = np.array(artvs)
+        # input("artvs shape {}".format(artvs.shape))
         if dimensions == 1:
             return artvs.reshape((artvs.size,))
         elif dimensions == 2:
@@ -249,16 +281,9 @@ class Mouth:
         return spectrum_vector
 
 
-class Interpreter:
-    def __init__(self, ip_input_layer, ip_hidden_layers, ip_output_layer):
-        self.input_layer = ip_input_layer
-        self.hidden_layers = ip_hidden_layers
-        self.output_layer = ip_output_layer
-        self.model = keras.Model(ip_input_layer, ip_output_layer)
-        self.model.compile(optimizer="adam", loss="mean_squared_error")
-
 
 def play_game(agents, images, n_rounds, images_per_turn):
+    print("\n-- playing game with {} for {} rounds".format(agents, n_rounds))
     for round_i in range(n_rounds):
         print("playing game round {}".format(round_i))
         for agent_i in range(len(agents)):
@@ -271,6 +296,7 @@ def play_game(agents, images, n_rounds, images_per_turn):
                     # the describer should also train their other networks on what they said
                     # guess = guesser.guess_image_from_spectrum(spectrum)
                     participant.fit_spectrum_to_image(spectrum, image)
+    print("\n-- done playing game")
 
 
 def get_subsample(x, n_samples):
@@ -280,12 +306,33 @@ def get_subsample(x, n_samples):
     return samples
 
 
+def show_articulations_and_spectra_simple(articulations, spectra):
+    n_articulations, single_artv_len = articulations.shape
+    n_spectra, single_specv_len = spectra.shape
+    assert n_articulations == n_spectra
+    n_rows = n_spectra
+    n_cols = 2
+    fig, axes = plt.subplots(n_rows, n_cols)
+    for row_i in range(n_spectra):
+        art_ax = axes[row_i, 0]
+        spec_ax = axes[row_i, 1]
+        articulation = articulations[row_i, :]
+        spectrum = spectra[row_i, :]
+        title_this_iter = row_i == 0
+        tick_labels_this_iter = row_i == n_spectra-1
+        bs.plot_articulation(articulation, show=False, title=title_this_iter, tick_labels=tick_labels_this_iter, ax=art_ax)
+        bs.plot_spectrum(spectrum, show=False, title=title_this_iter, tick_labels=tick_labels_this_iter, ax=spec_ax)
+    plt.show()
+
+
 def show_articulations_and_spectra_for_images(agents, images, n_images, show=True, save_sound=False, save_plot=False):
+    print("\n-- saving/showing output articulations and spectra")
     images = get_subsample(images, n_images)
     for i, image in enumerate(images):
         show_articulations_and_spectra_for_image(agents, image, show=False, title=True, save_sound=save_sound, image_label=str(i), save_plot=save_plot)
         if show:
             plt.show()
+    print("\n-- done saving/showing output articulations and spectra")
 
 
 def show_articulations_and_spectra_for_image(agents, image, show=True, title=True, tick_labels=True, save_sound=False, image_label=None, save_plot=False):
@@ -351,29 +398,34 @@ if __name__ == "__main__":
     n_agents = 2
     n_articulation_positions_per_sequence = 3
     noise_average_amplitude = 0
-    n_babble_samples = 100
-    n_babble_epochs = 5
+    n_babble_samples = 100000
+    n_babble_epochs = 100
     babble_batch_size = 100
-    n_eye_seed_samples = 10
-    n_interpreter_seed_samples = 10
+    n_eye_seed_samples = 1
+    n_eye_seed_epochs = 1
+    n_interpreter_seed_samples = 1
+    n_interpreter_seed_epochs = 1
+    n_rounds = 1000
+    images_per_turn = 10
+    n_images_to_save = 100
+
     agents = []
     for i in range(n_agents):
         print("creating agent #{}".format(i))
+        name = "Agent{}".format(i)
         arts = bs.get_articulators()
-        a = Agent(arts, mnist_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude)
+        # input("got {} arts".format(len(arts)))
+        a = Agent(name, arts, mnist_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude)
         
         # babbling is true feedback, the real auditory spectrum made by articulation
         a.babble(n_samples=n_babble_samples, epochs=n_babble_epochs, batch_size=babble_batch_size)
 
         # the eye and interpreter seeding is false feedback
         # just intended to get the model started on something non-degenerate that will later be overwritten by convention created among the agents
-        a.seed_eye(get_subsample(mnist_x_train, n_eye_seed_samples))
-        a.seed_interpreter(get_subsample(mnist_x_train, n_interpreter_seed_samples))
+        a.seed_eye(get_subsample(mnist_x_train, n_eye_seed_samples), epochs=n_eye_seed_epochs)
+        a.seed_interpreter(get_subsample(mnist_x_train, n_interpreter_seed_samples), epochs=n_interpreter_seed_epochs)
 
         agents.append(a)
 
-    n_rounds = 1
-    images_per_turn=1
     play_game(agents, mnist_x_train, n_rounds=n_rounds, images_per_turn=images_per_turn)
-    n_images_to_save = 5
     show_articulations_and_spectra_for_images(agents, mnist_x_train, n_images=n_images_to_save, save_sound=True, save_plot=True, show=False)
