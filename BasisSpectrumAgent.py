@@ -395,7 +395,7 @@ if __name__ == "__main__":
     # should call get_articulators() for each instance of Agent, so it's not pointing to the same objects among different agents (you can't have the same tongue as someone else)
     mnist_vector_len = 28**2
     (mnist_x_train, mnist_y_train), (mnist_x_test, mnist_y_test) = mnist.load_data()
-    n_agents = 2
+    n_agents = 4
     n_articulation_positions_per_sequence = 3
     noise_average_amplitude = 0
     n_babble_samples = 100000

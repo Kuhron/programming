@@ -8,8 +8,8 @@ import random
 import Music.WavUtil as wav
 
 
-MIN_HZ = 440*(2**(-2 + 3/12))
-MAX_HZ = 440*(2**(+1 + 3/12))
+MIN_HZ = 440*(2**(-4 + 3/12))
+MAX_HZ = 440*(2**(+4 + 3/12))
 MIN_L2HZ = np.log2(MIN_HZ)
 MAX_L2HZ = np.log2(MAX_HZ)
 
@@ -46,9 +46,12 @@ class Articulator:
     def n_params(self):
         return len(self.vector())
 
+    def extra_init_kwargs(self):
+        return {}
+
     @classmethod
-    def from_vector(cls, v):
-        return cls(*v)
+    def from_vector(cls, v, **kwargs):
+        return cls(*v, **kwargs)
         
 
 class SpikeArticulator(Articulator):
@@ -114,30 +117,33 @@ class NormalArticulator(Articulator):
 
 
 class ExpCosSquaredArticulator(Articulator):
-    OMEGA_MIN = 15/2 * np.pi
-    OMEGA_MAX = 31/2 * np.pi
-
-    def __init__(self, omega_01, phase_01):
+    def __init__(self, omega_01, phase_01, omega_min, omega_max):
         self.omega_01 = omega_01
         self.phase_01 = phase_01
-        self.omega = ExpCosSquaredArticulator.OMEGA_MIN + self.omega_01 * (ExpCosSquaredArticulator.OMEGA_MAX - ExpCosSquaredArticulator.OMEGA_MIN)
-        self.phase = self.phase_01 * np.pi  # phase min is 0 and phase max is pi
+        self.omega_min = omega_min
+        self.omega_max = omega_max
+        self.omega = omega_min + self.omega_01 * (omega_max - omega_min)
+        self.phase = self.phase_01 * np.pi  # period of cos^2 is pi, so if it goes 0 to pi then 01 of 0 will give similar result as 01 of 1
 
     def get_spectrum_function(self):
         return spectrum_exp_cos_squared(self.omega, self.phase)
 
     def vector(self):
+        # DON'T train the omega_min and omega_max
         return np.array([self.omega_01, self.phase_01])
 
+    def extra_init_kwargs(self):
+        return {"omega_min": self.omega_min, "omega_max": self.omega_max}
+
     @staticmethod
-    def in_default_position():
-        return ExpCosSquaredArticulator(omega_01=0.5, phase_01=0.5)
+    def in_default_position(omega_min, omega_max):
+        return ExpCosSquaredArticulator(omega_01=0.5, phase_01=0.5, omega_min=omega_min, omega_max=omega_max)
 
     @staticmethod
     def random():
         omega_01 = random.random()
         phase_01 = random.random()
-        return ExpCosSquaredArticulator(omega_01, phase_01)
+        return ExpCosSquaredArticulator(omega_01, phase_01, omega_min=5/2*np.pi, omega_max=31/2*np.pi)
  
 
 def spectrum_normal(mu, sigma):
@@ -390,7 +396,15 @@ def get_articulators():
     res = []
     res += [SpikeArticulator.in_default_position() for i in range(n_spike_articulators)]
     res += [NormalArticulator.in_default_position() for i in range(n_normal_articulators)]
-    res += [ExpCosSquaredArticulator.in_default_position() for i in range(n_exp_cos_squared_articulators)]
+
+    for i in range(n_exp_cos_squared_articulators):
+        start_pi_factor = 1
+        step_pi_factor = 1/2
+        omega_min = (start_pi_factor * np.pi) + i*(step_pi_factor * np.pi)
+        omega_max = ((start_pi_factor + step_pi_factor) * np.pi) + i*(step_pi_factor * np.pi)
+        art = ExpCosSquaredArticulator.in_default_position(omega_min, omega_max)
+        res.append(art)
+
     return res
 
 
@@ -442,7 +456,8 @@ def get_spectrum_from_vector_in_articulation(vector, articulators):
         n_params = art.n_params()
         sub_vector = vector[:n_params]
         vector = vector[n_params:]
-        art = type(art).from_vector(sub_vector)
+        extra_init_kwargs = art.extra_init_kwargs()
+        art = type(art).from_vector(sub_vector, **extra_init_kwargs)
         spectrum = art.get_spectrum()
         res += spectrum
     return res

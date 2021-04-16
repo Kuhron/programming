@@ -64,9 +64,9 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.dit = 1
         self.dah = 3
 
-        self.update_wpm(30)
+        self.update_wpm(35)
 
-        self.tone_hz = 700
+        self.tone_hz = 2**(np.log2(440) +3/12 -12/12)
 
         self.initialize_commands()
         self.save_status = False
@@ -82,6 +82,7 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.add_command("p", self.change_play_status, "Turn on out-loud play if arg is 1, else turn off if arg is 0.")
         self.add_command("rand", self.play_random_sentence, "Play a random sentence for ear training purposes.")
         self.add_command("hz", self.process_hz_input, "Change tone frequency to arg if given, else show current tone frequency in Hz.")
+        self.add_command("repeat", self.repeat, "Repeat the input until interrupted by Ctrl+C")
 
     def change_save_status(self, a=None):
         return self.change_binary_attribute("save_status", a)
@@ -153,6 +154,11 @@ class MorseCodeTerminal(Terminal.Terminal):
 
     def pad_morse(self, morse):
         return [" "]*2 + morse + [" "]*2
+
+    def repeat(self, *user_input):
+        user_input = " ".join(user_input)
+        while True:
+            self.play(user_input)
 
     def play(self, user_input):
         audio_out = pyaudio.PyAudio()
