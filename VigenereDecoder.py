@@ -63,7 +63,7 @@ def get_random_key():
 
 
 def get_random_message():
-    fp = "/home/wesley/programming/moby_dick.txt"
+    fp = "/home/wesley/programming/moby-dick.txt"
     with open(fp) as f:
         contents = f.read()
     n = len(contents)

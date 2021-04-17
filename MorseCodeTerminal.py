@@ -4,6 +4,7 @@ import pyaudio
 import string
 import time
 import wave
+import readline  # press up to be able to get previously typed terminal input
 
 import numpy as np
 
@@ -49,10 +50,10 @@ MORSE_TABLE = {
     "8": "---..",
     "9": "----.",
     ".": ".-.-.-",
-    "!": ".-.-.-",  # for simplicity
-    "?": ".-.-.-",  # for simplicity
+    "!": "-.-.--",
+    "?": "..--..",
     ",": "--..--",
-    "\'": "--..--",  # for simplicity
+    "\'": ".----.",
     " ": " ",
 }
 
@@ -72,6 +73,7 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.save_status = False
         self.initial_click = False
         self.play_status = True
+        self.word_by_word = True
 
     def initialize_commands(self):
         super().initialize_commands()
@@ -80,9 +82,10 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.add_command("s", self.change_save_status, "Turn on saving to file if arg is 1, else turn off if arg is 0.")
         self.add_command("c", self.change_initial_click, "Turn on initial click on each beep if arg is 1, else turn off if arg is 0.")
         self.add_command("p", self.change_play_status, "Turn on out-loud play if arg is 1, else turn off if arg is 0.")
-        self.add_command("rand", self.play_random_sentence, "Play a random sentence for ear training purposes.")
+        self.add_command("rand", self.play_random_sentence, "Play a random sequence of {arg} words.")
         self.add_command("hz", self.process_hz_input, "Change tone frequency to arg if given, else show current tone frequency in Hz.")
-        self.add_command("repeat", self.repeat, "Repeat the input until interrupted by Ctrl+C")
+        self.add_command("repeat", self.repeat, "Repeat the input (args) until interrupted by Ctrl+C")
+        self.add_command("wbw", self.change_word_by_word, "Turn on word-by-word printing if arg is 1, else turn off if arg is 0.")
 
     def change_save_status(self, a=None):
         return self.change_binary_attribute("save_status", a)
@@ -92,6 +95,9 @@ class MorseCodeTerminal(Terminal.Terminal):
 
     def change_play_status(self, a=None):
         return self.change_binary_attribute("play_status", a)
+
+    def change_word_by_word(self, a=None):
+        return self.change_binary_attribute("word_by_word", a)
 
     def process_normal_input(self, user_input):
         self.play(user_input)
@@ -126,7 +132,7 @@ class MorseCodeTerminal(Terminal.Terminal):
         self.tone_hz = hz
 
     def play_random_sentence(self, n_words=None):
-        corpus_fp = "epictetus-discourses.txt"
+        corpus_fp = random.choice(["epictetus-discourses.txt", "war-and-peace.txt", "frankenstein.txt", "moby-dick.txt", "jekyll-and-hyde.txt", "dracula.txt", "monte-cristo.txt"])
         with open(corpus_fp) as f:
             contents = f.read()
         split = contents.split(" ")
@@ -160,7 +166,7 @@ class MorseCodeTerminal(Terminal.Terminal):
         while True:
             self.play(user_input)
 
-    def play(self, user_input):
+    def play(self, user_input, pad=True):
         audio_out = pyaudio.PyAudio()
         rate = 44100
         stream = audio_out.open(
@@ -173,35 +179,57 @@ class MorseCodeTerminal(Terminal.Terminal):
 
         full_signal = []
         morse = self.translate(user_input)
-        morse = self.pad_morse(morse)
+        if pad:
+            morse = self.pad_morse(morse)
 
-        for x in morse:
-            if x == " ":
-                silence = wav.get_silence_for_duration((self.word_gap - self.letter_gap) / 1000)
-                wav.send_signal_to_stream(silence, stream)
-                if self.save_status:
-                    full_signal.extend(silence)
-            else:
-                durations = [self.dit if y == "." else self.dah for y in x]
-                for duration in durations:
-                    # winsound.Beep(self.tone_hz, duration)
-                    signal = wav.get_signal_from_freq(self.tone_hz, duration / 1000, initial_click=self.initial_click)
-                    if self.play_status:
-                        wav.send_signal_to_stream(signal, stream)
+        if self.word_by_word:
+            morse_words = list_split(morse, " ", retain_delimiter=True)
+            user_input_words = user_input.split(" ")
+            # make padding match
+            for wi, mw in enumerate(morse_words):
+                if mw == [" "]:
+                    user_input_words = [" "] + user_input_words
+                else:
+                    break
+            for wi, mw in enumerate(morse_words[::-1]):
+                if mw == [" "]:
+                    user_input_words = user_input_words + [" "]
+                else:
+                    break
+            assert len(morse_words) == len(user_input_words), "{}\n!=\n{}".format(morse_words, user_input_words)
+        else:
+            morse_words = morse
+
+        for wi, morse_word in enumerate(morse_words):
+            if self.word_by_word and morse_word != [" "]:
+                print("-- " + user_input_words[wi])
+            for morse_letter in morse_word:
+                if morse_letter == " ":
+                    silence = wav.get_silence_for_duration((self.word_gap - self.letter_gap) / 1000)
+                    wav.send_signal_to_stream(silence, stream)
                     if self.save_status:
-                        full_signal.extend(signal)
-                    # self.sleep(self.beep_gap)
-                    silence = wav.get_silence_for_duration(self.beep_gap / 1000)
+                        full_signal.extend(silence)
+                else:
+                    durations = [self.dit if morse_tone == "." else self.dah for morse_tone in morse_letter]
+                    for duration in durations:
+                        # winsound.Beep(self.tone_hz, duration)
+                        signal = wav.get_signal_from_freq(self.tone_hz, duration / 1000, initial_click=self.initial_click)
+                        if self.play_status:
+                            wav.send_signal_to_stream(signal, stream)
+                        if self.save_status:
+                            full_signal.extend(signal)
+                        # self.sleep(self.beep_gap)
+                        silence = wav.get_silence_for_duration(self.beep_gap / 1000)
+                        if self.play_status:
+                            wav.send_signal_to_stream(silence, stream)
+                        if self.save_status:
+                            full_signal.extend(silence)
+                    # self.sleep(self.letter_gap - self.beep_gap)
+                    silence = wav.get_silence_for_duration((self.letter_gap - self.beep_gap) / 1000)
                     if self.play_status:
                         wav.send_signal_to_stream(silence, stream)
                     if self.save_status:
                         full_signal.extend(silence)
-                # self.sleep(self.letter_gap - self.beep_gap)
-                silence = wav.get_silence_for_duration((self.letter_gap - self.beep_gap) / 1000)
-                if self.play_status:
-                    wav.send_signal_to_stream(silence, stream)
-                if self.save_status:
-                    full_signal.extend(silence)
 
         stream.stop_stream()
         stream.close()
@@ -236,6 +264,23 @@ class MorseCodeTerminal(Terminal.Terminal):
 
     def sleep(self, t):
         time.sleep(t / 1000)
+
+
+def list_split(lst, delim, retain_delimiter=False):
+    res = []
+    current_sublst = []
+    for item in lst:
+        if item == delim:
+            if retain_delimiter:
+                current_sublst.append(item)
+            res.append(current_sublst)
+            current_sublst = []
+        else:
+            current_sublst.append(item)
+    if current_sublst != []:
+        res.append(current_sublst)
+    return res
+
 
 
 if __name__ == "__main__":

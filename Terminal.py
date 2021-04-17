@@ -43,7 +43,7 @@ class Terminal:
 
     def show_help(self):
         for flag, command in sorted(self.commands.items()):
-            print("{:4s} {1}".format(flag, command.help))
+            print("{0:4s} {1}".format(flag, command.help))
         print()
 
     def quit(self):
