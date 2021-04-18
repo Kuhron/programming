@@ -32,6 +32,7 @@ class LatitudeLongitudeLattice(Lattice):
         self.xyz11 = mcm.unit_vector_lat_lon_to_cartesian(self.lat11, self.lon11, deg=True)
 
         self.create_point_dicts()
+        self.n_points = self.get_n_points()
         self.adjacencies = self.get_adjacencies()
         # self.graph = self.get_graph()
         self.xyz_coords = np.array([p.get_coords("xyz") for p in self.points])
@@ -96,29 +97,38 @@ class LatitudeLongitudeLattice(Lattice):
         usp = self.points[point_number]
         return usp
 
+    def get_point_number_from_usp(self, usp):
+        return self.points.index(usp)
+
+    def get_position_mathematical(self, point_number):
+        return self.points[point_number].tuples
+
     def get_adjacencies(self):
         print("getting adjacencies for LatitudeLongitudeLattice")
         # build it from x, y first and then convert to UnitSpherePoint using the point_dict
-        d = {}
+        d_point_number = {}
         for x in range(self.x_size):
             for y in range(self.y_size):
                 # 4 neighbors, not 8 (8 causes problems because rivers can flow through each other, for example)
+                point_number = self.lattice_position_to_point_number[(x,y)]
                 neighbors = [
                     (x+1, y), (x-1, y),
                     (x, y+1), (x, y-1),
                 ]
                 neighbors = self.filter_invalid_points(neighbors)
-                d[(x, y)] = neighbors
+                neighbors_pn = [self.lattice_position_to_point_number[(x,y)] for (x,y) in neighbors]
+                d_point_number[point_number] = neighbors_pn
 
         # convert to UnitSpherePoint
-        d_usp = {}
-        for k, neighbors_list in d.items():
-            k_usp = self.get_usp_from_lattice_position(k)
-            ns_usp = [self.get_usp_from_lattice_position(n) for n in neighbors_list]
-            d_usp[k_usp] = ns_usp
+        # horribly inefficient, just do adjacencies by point number like you started to in icosa lattice, and if you need usp either calculate it or look it up from self.points
+        #d_usp = {}
+        #for k, neighbors_list in d.items():
+        #    k_usp = self.get_usp_from_lattice_position(k)
+        #    ns_usp = [self.get_usp_from_lattice_position(n) for n in neighbors_list]
+        #    d_usp[k_usp] = ns_usp
 
         print("- done getting adjacencies")
-        return d_usp
+        return d_point_number
 
     def average_latlon(self):
         half_x = self.x_size/2
@@ -131,8 +141,8 @@ class LatitudeLongitudeLattice(Lattice):
             deg=True
         )
 
-    def get_all_points(self):
-        return {(x, y) for x in range(self.x_size) for y in range(self.y_size)}
+    def get_all_points_rc(self):
+        return [(x, y) for x in range(self.x_size) for y in range(self.y_size)]
 
     def is_corner_pixel(self, x, y):
         return x in [0, self.x_size-1] and y in [0, self.y_size-1]

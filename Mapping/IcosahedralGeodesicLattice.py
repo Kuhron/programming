@@ -23,6 +23,8 @@ class IcosahedralGeodesicLattice(Lattice):
             assert iterations % 1 == 0, "need int value for iterations if supplied, got {}".format(iterations)
             iterations = int(iterations)
         self.iterations = iterations
+        if iterations > 7:
+            warn_iterations(iterations)
         self.n_points = IcosahedronMath.get_points_from_iterations(self.iterations)
         # ordered_points, adjacencies_by_point_index = self.get_adjacencies()
         # self.adjacencies_by_point_index = adjacencies_by_point_index
@@ -31,57 +33,8 @@ class IcosahedralGeodesicLattice(Lattice):
         self.kdtree = self.get_kdtree()
         # self.graph = self.get_graph()
 
-    def get_coords(self, coord_system=None, point_indices=None):
-        # allow getting only a subset of the points so don't have to hold everything in memory all at once
-        print("getting coords for IcosahedralGeodesicLattice")
-        xyz_coords = []
-        latlondeg_coords = []
-        if coord_system == "xyz":
-            # python varnames are nametags on objects
-            coords = xyz_coords
-        elif coord_system == "latlondeg":
-            coords = latlondeg_coords
-        elif coord_system is None:
-            # again, nametag on object, the object should change while this name continues to refer to it
-            coords = [xyz_coords, latlondeg_coords]
-        else:
-            raise ValueError("unknown coordinate system {}".format(coord_system))
-
-        if point_indices is None:
-            point_indices = self.get_point_indices()
-        for point_number in point_indices:
-            if point_number % 1000 == 0:
-                print("point number {}/{}".format(point_number, len(point_indices)))
-            pos = IcosahedronMath.get_position_recursive(point_number, IcosahedronMath.STARTING_POINTS)
-            if coord_system is None:
-                xyz_coords.append(tuple(pos["xyz"]))
-                latlondeg_coords.append(tuple(pos["latlondeg"]))
-            else:
-                tup = tuple(pos[coord_system])
-                coords.append(tup)
-        print("done getting coords for IcosahedralGeodesicLattice")
-        return coords
-
-    def get_xyz_coords(self, point_indices=None):
-        print("getting xyz_coords for IcosahedralGeodesicLattice")
-        res = np.array(self.get_coords(coord_system="xyz", point_indices=point_indices))
-        print("done getting xyz_coords for IcosahedralGeodesicLattice")
-        return res
-
-    def get_latlondeg_coords(self, point_indices=None):
-        print("getting latlondeg_coords for IcosahedralGeodesicLattice")
-        res = np.array(self.get_coords(coord_system="latlondeg", point_indices=point_indices))
-        print("done getting latlondeg_coords for IcosahedralGeodesicLattice")
-        return res
-
-    def get_kdtree(self):
-        print("getting KDTree")
-        res = KDTree(self.get_xyz_coords())
-        print("done getting KDTree")
-        return res
-
-    def get_point_indices(self):
-        return list(range(self.n_points))
+    def get_position_mathematical(self, point_number):
+        return IcosahedronMath.get_position_recursive(point_number, IcosahedronMath.STARTING_POINTS)
 
     def get_adjacencies(self):
         cada_ii_radius_km = IcosahedronMath.CADA_II_RADIUS_KM
@@ -93,8 +46,7 @@ class IcosahedralGeodesicLattice(Lattice):
             raise
 
         if iterations_needed > 7:
-            print("You requested {} iterations of precision IcosahedralGeodesicLattice, but it is memory-intensive to go above 7.".format(iterations_needed))
-            input("press enter to continue if desired")
+            warn_iterations(iterations_needed)
 
         try:
             return IcosahedralGeodesicLattice.get_adjacencies_from_memoization_file(iterations_needed)
@@ -323,6 +275,10 @@ class IcosahedralGeodesicLattice(Lattice):
             chosen_neighbor_point_index = np.random.choice(neighbor_indices, p=weights)
         return chosen_neighbor_point_index
 
+
+def warn_iterations(iterations):
+    print("You requested {} iterations of precision IcosahedralGeodesicLattice, but it is memory-intensive to go above 7. You should probably use IcosahedronMath functions instead of keeping a giant lattice in memory.".format(iterations))
+    input("press enter to continue if desired")
 
 
 if __name__ == "__main__":

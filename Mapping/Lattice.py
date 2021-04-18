@@ -42,14 +42,69 @@ class Lattice:
     #             g.add_edge(p, p1)
     #     return g
 
-    def n_points(self):
-        return len(self.adjacencies)
+    def get_n_points(self):
+        return len(self.points)
 
     def get_random_point_index(self):
         return random.randrange(len(self.points))
 
     def get_neighbors(self, p_i):
         return self.adjacencies_by_point_index[p_i]
+
+    def get_coords(self, coord_system=None, point_indices=None):
+        # allow getting only a subset of the points so don't have to hold everything in memory all at once
+        print("getting coords for {}".format(type(self)))
+        xyz_coords = []
+        latlondeg_coords = []
+        if coord_system == "xyz":
+            # python varnames are nametags on objects
+            coords = xyz_coords
+        elif coord_system == "latlondeg":
+            coords = latlondeg_coords
+        elif coord_system is None:
+            # again, nametag on object, the object should change while this name continues to refer to it
+            coords = [xyz_coords, latlondeg_coords]
+        else:
+            raise ValueError("unknown coordinate system {}".format(coord_system))
+
+        if point_indices is None:
+            point_indices = self.get_point_indices()
+        for point_number in point_indices:
+            if point_number % 1000 == 0:
+                print("point number {}/{}".format(point_number, len(point_indices)))
+            pos = self.get_position_mathematical(point_number)
+            if coord_system is None:
+                xyz_coords.append(tuple(pos["xyz"]))
+                latlondeg_coords.append(tuple(pos["latlondeg"]))
+            else:
+                tup = tuple(pos[coord_system])
+                coords.append(tup)
+        print("done getting coords for {}".format(type(self)))
+        return coords
+
+    def get_xyz_coords(self, point_indices=None):
+        print("getting xyz_coords for {}".format(type(self)))
+        res = np.array(self.get_coords(coord_system="xyz", point_indices=point_indices))
+        print("done getting xyz_coords for {}".format(type(self)))
+        return res
+
+    def get_latlondeg_coords(self, point_indices=None):
+        print("getting latlondeg_coords for {}".format(type(self)))
+        res = np.array(self.get_coords(coord_system="latlondeg", point_indices=point_indices))
+        print("done getting latlondeg_coords for {}".format(type(self)))
+        return res
+
+    def get_kdtree(self):
+        print("getting KDTree")
+        res = KDTree(self.get_xyz_coords())
+        print("done getting KDTree")
+        return res
+
+    def get_point_indices(self):
+        return list(range(self.n_points))
+
+    def get_position_mathematical(self, point_number):
+        raise NotImplementedError("subclass should implement")
 
     def closest_point_to(self, usp):
         assert type(usp) is UnitSpherePoint
@@ -64,7 +119,7 @@ class Lattice:
         point_xyz = tuple(self.kdtree.data[index])
         point_number = self.xyz_to_point_number[point_xyz]
         usp = self.points[point_number]
-        return usp
+        return point_number, usp
 
     def get_random_path(self, a, b, points_to_avoid):
         # start and end should inch toward each other
@@ -110,14 +165,15 @@ class Lattice:
         if point_indices is None:
             point_indices = self.get_point_indices()
         df = pd.DataFrame(index=point_indices)
-        xyz_coords, latlondeg_coords = self.get_coords(point_indices=point_indices)
-        df["xyz"] = xyz_coords
-        df["latlondeg"] = latlondeg_coords
+        # xyz_coords, latlondeg_coords = self.get_coords(point_indices=point_indices)
+        # df["xyz"] = xyz_coords
+        # df["latlondeg"] = latlondeg_coords
         return df
 
     def place_random_data(self, key_str, df=None):
         if df is None:
             df = self.create_dataframe()
+        point_indices = df.index
         if key_str not in df.columns:
             df[key_str] = [0 for p_i in point_indices]
         df = nm.change_globe(df, key_str)

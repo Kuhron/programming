@@ -23,10 +23,13 @@
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime
+import time
 
 from Lattice import Lattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
+import IcosahedronMath
 import MapCoordinateMath as mcm
 
 
@@ -55,25 +58,72 @@ def get_condition_string_array_from_image_array(arr, color_to_str):
     return str_arr
 
 
-if __name__ == "__main__":
-    test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Mako.png"
-    # test_input_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/MientaDigitization_ThinnedBorders_Final.png"
-    latlon00 = [30,-30]
-    latlon01 = [30,30]
-    latlon10 = [-30,-30]
-    latlon11 = [-30,30]
-
-    map_lattice = IcosahedralGeodesicLattice(iterations=6)
+def get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str):
     im = Image.open(test_input_fp)
     width, height = im.size
 
     image_lattice = LatitudeLongitudeLattice(
         height, width,  # rows, columns
         latlon00, latlon01, latlon10, latlon11
-    )  # we are not actually going to add data to this lattice, but we will use it to get point coordinates more easily
+    )
 
     arr = np.array(im)
     assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
+    str_arr = get_condition_string_array_from_image_array(arr, color_to_str)
+
+    df = image_lattice.create_dataframe()
+
+    df_index = df.index
+    point_indices = image_lattice.get_point_indices()
+    assert len(df_index) == len(point_indices)
+    assert list(df_index) == list(point_indices)
+    df[key_str] = ["" for p_i in point_indices]
+    original_df_size = df.size
+
+    print("strings found in image:", np.unique(str_arr))
+    print("creating image lattice")
+    for x in range(image_lattice.x_size):
+        print(f"row {x}")
+        assert df.size == original_df_size, "df growing out of control"  # catching assignment bug that tries to make new column/multi-index on every assignment
+        for y in range(image_lattice.y_size):
+            # color = arr[x,y]
+            point_number = image_lattice.lattice_position_to_point_number[(x,y)]
+            # print("point number is {}".format(point_number))
+            str_val = str_arr[x,y]
+            df[key_str][point_number] = str_val
+            # print("str_val is {}".format(str_val))
+            # print("df size is now {}".format(df.size))
+
+    print("done creating image lattice")
+    return image_lattice, df
+
+
+def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance, planet_radius):
+    STARTING_POINTS = IcosahedronMath.STARTING_POINTS
+
+    print("finding icosa points near image lattice points")
+    d = {}
+    for x in range(image_lattice.x_size):
+        print(f"row {x}")
+        for y in range(image_lattice.y_size):
+            point_number = image_lattice.lattice_position_to_point_number[(x,y)]
+            point = image_lattice.points[point_number]
+            latlon = point.latlondeg()
+            nearest_icosa_point, distance_normalized, distance_km = IcosahedronMath.get_nearest_icosa_point_to_latlon(latlon, icosa_point_tolerance, planet_radius, STARTING_POINTS)
+            # print(f"\nimage ({x}, {y}); point #{point_number}; point {point}; icosa point within {icosa_point_tolerance_km} km = {nearest_icosa_point} at distance of {distance_km} km away")
+            d[point_number] = nearest_icosa_point
+    print("done finding icosa points near image lattice points")
+    return d
+
+
+if __name__ == "__main__":
+    test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Circle.png"
+    # test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Mako.png"
+    # test_input_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/MientaDigitization_ThinnedBorders_Final.png"
+    latlon00 = [30.04,-30.01]
+    latlon01 = [30.03,30.04]
+    latlon10 = [-30.05,-30.08]
+    latlon11 = [-30.02,30.09]
 
     # just translate the colors into strings
     color_to_str = {
@@ -83,22 +133,37 @@ if __name__ == "__main__":
         (255, 0, 0, 255): "red",
     }
 
-    str_arr = get_condition_string_array_from_image_array(arr, color_to_str)
-    print(np.unique(str_arr))
+    key_str = "color_condition"
+    image_lattice, df = get_lattice_from_image(test_input_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
+    print(df)
+    print("inspect above df")
+    icosa_point_tolerance_km = 1
+    planet_radius_km = IcosahedronMath.CADA_II_RADIUS_KM
+    # icosa_points = find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance_km, planet_radius_km)
+
+    icosa_iterations_of_precision = IcosahedronMath.get_iterations_needed_for_edge_length(icosa_point_tolerance_km, planet_radius_km)
+    n_icosa_points = IcosahedronMath.get_points_from_iterations(icosa_iterations_of_precision)
 
     # now get map lattice points which are inside the image lattice
     image_lattice_points_in_order = image_lattice.points
-    str_arr_in_order = str_arr.reshape((str_arr.size,))
-    str_at_image_lattice_point = dict(zip(image_lattice_points_in_order, str_arr_in_order))
-    point_values_to_assign = {p_i: None for p_i in range(len(map_lattice.points))}
-    for p in map_lattice.points:
-        in_image = image_lattice.contains_point_latlon(p)
+    point_values_to_assign = {}
+    t0 = time.time()
+    for p_i in range(n_icosa_points):
+        if p_i % 1000 == 0 and p_i != 0:
+            progress_proportion = p_i / n_icosa_points
+            elapsed = time.time() - t0
+            rate = progress_proportion / elapsed
+            remaining_proportion = 1 - progress_proportion
+            eta = remaining_proportion / rate
+            eta_str = str(datetime.timedelta(seconds=eta))
+            print("icosa point {} of {} ({}%), ETA {}".format(p_i, n_icosa_points, 100*progress_proportion, eta_str))
+        usp = IcosahedronMath.get_usp_from_point_number(p_i)
+        in_image = image_lattice.contains_point_latlon(usp)
         if in_image:
-            closest_image_point = image_lattice.closest_point_to(p)
-            value_to_assign = str_at_image_lattice_point[closest_image_point]
-            p_i = map_lattice.get_index_of_usp(p)
+            closest_image_point_index, closest_image_point = image_lattice.closest_point_to(usp)
+            value_to_assign = df[key_str][closest_image_point_index]
             point_values_to_assign[p_i] = value_to_assign
-            print("point {} now has value {}".format(p_i, value_to_assign))
+            # print("point {} now has value {}".format(p_i, value_to_assign))
 
     # for each of those, associate it with the image lattice point which is closest to it
     # then assign the image lattice point's color/str to the map lattice point

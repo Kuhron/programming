@@ -1061,12 +1061,13 @@ def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius, STARTIN
     iteration = 0
     while True:
         # print("i={}".format(iteration))
-        nearest_candidate_usp, distance = get_nearest_neighbor_to_xyz(xyz, candidate_usps)
+        nearest_candidate_usp, distance_normalized = get_nearest_neighbor_to_xyz(xyz, candidate_usps)
         assert nearest_candidate_usp.point_number is not None
         # print("nearest candidate is {} at distance of {}".format(nearest_candidate_usp, distance))
-        if distance <= max_distance_normalized:
+        if distance_normalized <= max_distance_normalized:
             # print("done getting nearest icosa point to {}".format(xyz))
-            return nearest_candidate_usp, distance
+            distance_in_units = distance_normalized * planet_radius
+            return nearest_candidate_usp, distance_normalized, distance_in_units
 
         iteration += 1
         if iteration > 30:
@@ -1099,7 +1100,7 @@ def get_nearest_neighbor_to_xyz(xyz, candidates_usp):
     if len(nearest_neighbors) == 1:
         return nearest_neighbors[0], min_distance
     else:
-        raise RuntimeError("got more than one nearest neighbor: {}".format(nearest_neighbors))
+        raise RuntimeError("got more than one nearest neighbor to xyz {}: {}\nIf you are finding icosa points for an image lattice, try repositioning the image slightly so that it is not symmetric about the equator.".format(xyz, nearest_neighbors))
 
 
 def notify_memo_accessed(memo_fp):
