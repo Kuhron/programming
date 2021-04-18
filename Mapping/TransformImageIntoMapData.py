@@ -58,7 +58,7 @@ def get_condition_string_array_from_image_array(arr, color_to_str):
     return str_arr
 
 
-def get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str):
+def get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, with_coords=False):
     im = Image.open(test_input_fp)
     width, height = im.size
 
@@ -71,7 +71,7 @@ def get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, col
     assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
     str_arr = get_condition_string_array_from_image_array(arr, color_to_str)
 
-    df = image_lattice.create_dataframe()
+    df = image_lattice.create_dataframe(with_coords=with_coords)
 
     df_index = df.index
     point_indices = image_lattice.get_point_indices()
@@ -104,7 +104,7 @@ def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_toler
     print("finding icosa points near image lattice points")
     d = {}
     for x in range(image_lattice.x_size):
-        print(f"row {x}")
+        print(f"row {x}/{image_lattice.x_size} ({100*x/image_lattice.size :.4f}%)")
         for y in range(image_lattice.y_size):
             point_number = image_lattice.lattice_position_to_point_number[(x,y)]
             point = image_lattice.points[point_number]
@@ -114,6 +114,11 @@ def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_toler
             d[point_number] = nearest_icosa_point
     print("done finding icosa points near image lattice points")
     return d
+
+
+def write_image_conditions_lattice_agnostic(image_fp, output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str):
+    image_lattice, df = get_lattice_from_image(test_input_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, with_coords=True)
+    df.to_csv(output_fp)
 
 
 if __name__ == "__main__":
@@ -127,17 +132,21 @@ if __name__ == "__main__":
 
     # just translate the colors into strings
     color_to_str = {
-        (0, 255, 255, 255): "cyan",
-        (0, 38, 255, 255): "blue",
-        (255, 255, 255, 255): "white",
-        (255, 0, 0, 255): "red",
+        (0, 255, 255, 255): "sea",
+        (0, 38, 255, 255): "coast",
+        (255, 255, 255, 255): "land",
+        (255, 0, 0, 255): "land",
     }
 
-    key_str = "color_condition"
-    image_lattice, df = get_lattice_from_image(test_input_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
-    print(df)
-    print("inspect above df")
-    icosa_point_tolerance_km = 1
+    key_str = "elevation"
+
+    test_output_fp = test_input_fp.replace(".png", f"_data_{key_str}.csv")
+    assert test_output_fp != test_input_fp
+    write_image_conditions_lattice_agnostic(test_input_fp, test_output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
+    input("got here")
+
+    # image_lattice, df = get_lattice_from_image(test_input_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
+    icosa_point_tolerance_km = 250
     planet_radius_km = IcosahedronMath.CADA_II_RADIUS_KM
     # icosa_points = find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance_km, planet_radius_km)
 
@@ -169,14 +178,14 @@ if __name__ == "__main__":
     # then assign the image lattice point's color/str to the map lattice point
     # then write these map lattice data strs to database file by point index
 
-    df = map_lattice.create_dataframe()
-    condition_labels = []
-    with open("TestTransformImageIntoMapDataResult.txt", "w") as f:
-        for p_i, val in sorted(point_values_to_assign.items()):
-            f.write("{},{}\n".format(p_i, val))
-            condition_labels.append(val)
-    df["condition_label"] = condition_labels
+    # map_df = map_lattice.create_dataframe()
+    # condition_labels = []
+    # with open("TestTransformImageIntoMapDataResult.txt", "w") as f:
+    #     for p_i, val in sorted(point_values_to_assign.items()):
+    #         f.write("{},{}\n".format(p_i, val))
+    #         condition_labels.append(val)
+    # map_df["condition_label"] = condition_labels
 
-    category_labels = [None] + sorted(color_to_str.values())
-    map_lattice.plot_data(df, "condition_label", category_labels=category_labels, equirectangular=True)
-    plt.show()
+    # category_labels = [None] + sorted(color_to_str.values())
+    # map_lattice.plot_data(df, "condition_label", category_labels=category_labels, equirectangular=True)
+    # plt.show()

@@ -20,7 +20,7 @@ if __name__ == "__main__":
     #     objgraph.show_backrefs([obj], max_depth=10)
 
     # making example images and data for each type of noise generation function
-    df = test_lattice.create_dataframe()
+    df = test_lattice.create_dataframe(with_coords=True)
     # df = nm.add_random_data_circles(df, "elevation_expectation", n_patches=1000)
     # df["elevation_expectation_omega"] = np.repeat(0.5, len(df.index))
     df = nm.add_random_data_circles(df, "elevation", n_patches=2000)
