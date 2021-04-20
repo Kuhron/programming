@@ -134,7 +134,7 @@ if __name__ == "__main__":
         "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImisTolinDigitization_ThinnedBorders_Final.png": it_latlons,
         "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/SertorisunIslandsDigitization_ThinnedBorders_Final.png": si_latlons,
     }
-    save_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/output.png"
+    save_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ContinentsPlacedOutput.png"
     if os.path.exists(save_fp):
         input("Warning, file exists and will be overwritten by plot: {}\npress enter to continue".format(save_fp))
     plot_images_on_globe(image_fp_to_latlon, save_fp=save_fp)
