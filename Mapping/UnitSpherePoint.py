@@ -15,6 +15,7 @@ class UnitSpherePoint:
             if type(coords_tuple) is not tuple:
                 coords_tuple = tuple(coords_tuple)
             if coords_system == "xyz":
+                x,y,z = coords_tuple  # catch shape problems
                 self.tuples["xyz"] = coords_tuple
                #self.tuples["latlondeg"] = mcm.unit_vector_cartesian_to_lat_lon(*coords_tuple, deg=True)
                 #check = mcm.unit_vector_lat_lon_to_cartesian(*self.tuples["latlondeg"], deg=True)
@@ -22,6 +23,7 @@ class UnitSpherePoint:
                 #if np.linalg.norm(diff) > 1e-6:
                 #    print("bad conversion:\ncoords_tuple: {}\ncheck: {}\ntuples: {}".format(coords_tuple, check, self.tuples))
             elif coords_system == "latlondeg":
+                lat,lon = coords_tuple  # catch shape problems
                 self.tuples["latlondeg"] = coords_tuple
                 #self.tuples["xyz"] = mcm.unit_vector_lat_lon_to_cartesian(*coords_tuple, deg=True)
                 #check = mcm.unit_vector_cartesian_to_lat_lon(*self.tuples["xyz"], deg=True)

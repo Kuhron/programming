@@ -101,7 +101,7 @@ def unit_vector_cartesian_to_lat_lon(x, y, z, deg=True):
 
 
 def rotate_partially_toward_other_unit_vector(p, q, alpha):
-    print("rotate_partially called\n- p shape {}:\n- q shape {}:\n- alpha shape {}:".format(p.shape, q.shape, alpha.shape))
+    # print("rotate_partially called\n- p shape {}:\n- q shape {}:\n- alpha shape {}:".format(p.shape, q.shape, alpha.shape))
     # get vector starting from p and rotating alpha of the way towards q
     assert p.shape[0] == q.shape[0] == 3, "must apply function to 3D vectors (perhaps with larger array structure inside those three elements), got p shape {}, q shape {}".format(p.shape, q.shape)
     # assert abs(1-np.linalg.norm(p)) < 1e-6 and abs(1-np.linalg.norm(q)) < 1e-6, "must apply function to unit vectors"
@@ -136,7 +136,7 @@ def rotate_partially_toward_other_unit_vector(p, q, alpha):
     z = z_p + z_d
     assert z.shape[1:] == alpha.shape, "shape problem, got z shape {}".format(z.shape)
     assert z.shape[0] == 3, "shape problem, got z shape {}".format(z.shape)
-    print("- returning z")
+    # print("- returning z")
     return z
 
 
