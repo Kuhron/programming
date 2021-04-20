@@ -122,7 +122,7 @@ if __name__ == "__main__":
     mienta_latlons = [(30,62), (30.1,118), (-30.1,62), (-30,118)]
     oz_latlons = [(-35.1,-160), (-30,-38), (-35.1,145), (-35,20)]
     it_latlons = [(67,-125), (67,125), (45, -20), (45,40)]
-    si_latlons = [(-11.2, 154.3), (-11.2, 155.4), (-12.4, 154.1), (-12.4, 155.7)]  # Sertorisun Islands can take up approx 1 sq degree, giving area similar to West Virginia
+    si_latlons = [(-11.2, 154.3), (-11.2, 155.8), (-12.7, 154.3), (-12.7, 155.8)]  # Sertorisun Islands can take up approx 1 sq degree, giving area similar to West Virginia
     image_fp_to_latlon = {
         # "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Ilausa.png" : [(10,-10),(10,10.1),(-10.1,-9.9),(-10,10)],
         # "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Circle.png": [(65,-100),(70,-90),(55,-95),(60,-85)],
