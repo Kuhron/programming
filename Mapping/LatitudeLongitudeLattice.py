@@ -42,7 +42,7 @@ class LatitudeLongitudeLattice(Lattice):
         return self.r_size * self.c_size
 
     def get_points(self):
-        for latlondeg, xyz in zip(self.get_latlondegs(), self.get_xyzs()):
+        for latlondeg, xyz in zip(self.get_latlondegs_generator(), self.get_xyzs_generator()):
             usp = UnitSpherePoint({"latlondeg": latlondeg, "xyz": xyz})
             yield usp
 
@@ -69,7 +69,7 @@ class LatitudeLongitudeLattice(Lattice):
         return res
 
     def get_latlondegs_generator(self):
-        for r, c in self.get_rc_tuples():
+        for r, c in self.get_rc_generator():
             latlondeg = self.single_rc_to_latlon(r, c)
             yield latlondeg
 
@@ -81,7 +81,7 @@ class LatitudeLongitudeLattice(Lattice):
         return res
 
     def get_xyzs_generator(self):
-        for latlondeg in self.get_latlondegs():
+        for latlondeg in self.get_latlondegs_generator():
             lat, lon = latlondeg
             xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon, deg=True)
             yield xyz

@@ -162,6 +162,7 @@ class Lattice:
         plt.show()
 
     def create_dataframe(self, point_indices=None, with_coords=False):
+        print(f"creating DataFrame for {type(self)}")
         if point_indices is None:
             point_indices = self.get_point_indices()
         df = pd.DataFrame(index=point_indices)
@@ -169,6 +170,7 @@ class Lattice:
             xyz_coords, latlondeg_coords = self.get_coords(point_indices=point_indices)
             df["xyz"] = xyz_coords
             df["latlondeg"] = latlondeg_coords
+        print(f"done creating DataFrame for {type(self)}")
         return df
 
     def place_random_data(self, key_str, df=None):

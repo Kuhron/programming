@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import datetime
 import time
 import random
+import csv
 import pandas as pd
 
 from Lattice import Lattice
@@ -46,6 +47,7 @@ def get_rgba_color_array_from_image_array(arr):
 
 
 def get_condition_string_array_from_image_array(arr, color_to_str):
+    print("getting condition string array")
     color_arr = get_rgba_color_array_from_image_array(arr)
     r_size, c_size, rgba_len = arr.shape
     assert rgba_len == 4
@@ -54,21 +56,29 @@ def get_condition_string_array_from_image_array(arr, color_to_str):
     # if using np array, needs to be dtype object, not str or tuple, so np not trying to iterate (it will just put the first char of the str if you do that)
     # something like str_arr[color_arr == color] would be nice, but it complains about elementwise comparison and doesn't give the correct result (they all come up false)
     for r in range(r_size):
+        if r % 100 == 0:
+            print(f"row {r}/{r_size}")
         for c in range(c_size):
             color = color_arr[r,c]
             # assert type(color_in_img) is tuple  # this must be true since it's a dict key, don't bother checking each time
             try:
                 s = color_to_str[color]
             except KeyError:
-                print(f"Warning: Color {color} was found in the image, but it is not in the color_to_str dict.")
+                print(f"Warning: Color {color} was found in the image at (r,c) = ({r},{c}), but it is not in the color_to_str dict.")
                 s = input("Please type a value to be used for this color (default empty string): ").strip()
                 color_to_str[color] = s
             str_arr[r][c] = s
+    print("done getting condition string array")
     return str_arr
 
 
 def get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, with_coords=False):
-    im = Image.open(test_input_fp)
+    im = Image.open(image_fp)
+    shrink_debug = False
+    if shrink_debug:
+        im = shrink_resolution(im)
+    else:
+        input("opened image with PIL; check memory usage")
     width, height = im.size
 
     image_lattice = LatitudeLongitudeLattice(
@@ -88,23 +98,56 @@ def get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, col
     assert list(df_index) == list(point_indices)
     df[key_str] = ["" for p_i in point_indices]
     original_df_size = df.size
+    str_lst = []
 
     print("strings found in image:", np.unique(str_arr))
-    print("creating image lattice")
-    for x in range(image_lattice.x_size):
-        print(f"row {x}/{image_lattice.x_size} ({100*x/image_lattice.x_size :.2f}%)")
+    print("adding condition values to DataFrame")
+    for (r,c), point_number in zip(image_lattice.get_rc_generator(), point_indices):
+        if c == 0:
+            print(f"row {r}/{image_lattice.r_size} ({100*r/image_lattice.r_size :.2f}%)")
         assert df.size == original_df_size, "df growing out of control"  # catching assignment bug that tries to make new column/multi-index on every assignment
-        for y in range(image_lattice.y_size):
-            # color = arr[x,y]
-            point_number = image_lattice.lattice_position_to_point_number[(x,y)]
-            # print("point number is {}".format(point_number))
-            str_val = str_arr[x][y]
-            df[key_str][point_number] = str_val
-            # print("str_val is {}".format(str_val))
-            # print("df size is now {}".format(df.size))
+        str_val = str_arr[r][c]
+        # df[key_str][point_number] = str_val  # too slow?
+        str_lst.append(str_val)
+        # print("str_val is {}".format(str_val))
+        # print("df size is now {}".format(df.size))
+    df[key_str] = str_lst
 
-    print("done creating image lattice")
+    print("done adding condition values to DataFrame")
     return image_lattice, df
+
+
+def shrink_resolution(im):
+    # so giant images don't take up huge amounts of memory just for the purposes of plotting where they go on the globe (high resolution not necessary for this)
+    print("Notice: shrinking resolution of image. If you do not want this, remove calls to shrink_resolution(im)")
+    max_len = 100
+    r,c = im.size
+    new_r = min(max_len, r)
+    new_c = min(max_len, c)
+    r_factor = new_r/r
+    c_factor = new_c/c
+    # choose the SMALLER factor and shrink the whole image that amount
+    factor = min(r_factor, c_factor)
+    new_r = int(r*factor)
+    new_c = int(r*factor)
+    im = im.resize((new_r, new_c), Image.NEAREST)
+    return im
+
+
+def get_image_fp_to_latlon(image_location_data_fp):
+    d = {}
+    with open(image_location_data_fp) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            # print(row)
+            image_fp = row["filepath"]
+            latlon00 = (float(row["lat00"]), float(row["lon00"]))
+            latlon01 = (float(row["lat01"]), float(row["lon01"]))
+            latlon10 = (float(row["lat10"]), float(row["lon10"]))
+            latlon11 = (float(row["lat11"]), float(row["lon11"]))
+            latlons = [latlon00, latlon01, latlon10, latlon11]
+            d[image_fp] = latlons
+    return d
 
 
 def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance, planet_radius):
@@ -112,14 +155,14 @@ def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_toler
 
     print("finding icosa points near image lattice points")
     d = {}
-    for x in range(image_lattice.x_size):
-        print(f"row {x}/{image_lattice.x_size} ({100*x/image_lattice.x_size :.2f}%)")
-        for y in range(image_lattice.y_size):
-            point_number = image_lattice.lattice_position_to_point_number[(x,y)]
+    for r in range(image_lattice.r_size):
+        print(f"row {r}/{image_lattice.r_size} ({100*r/image_lattice.r_size :.2f}%)")
+        for c in range(image_lattice.c_size):
+            point_number = image_lattice.get_point_number_from_lattice_position(r,c)
             point = image_lattice.points[point_number]
             latlon = point.latlondeg()
             nearest_icosa_point, distance_normalized, distance_km = IcosahedronMath.get_nearest_icosa_point_to_latlon(latlon, icosa_point_tolerance, planet_radius, STARTING_POINTS)
-            # print(f"\nimage ({x}, {y}); point #{point_number}; point {point}; icosa point within {icosa_point_tolerance_km} km = {nearest_icosa_point} at distance of {distance_km} km away")
+            # print(f"\nimage ({r},{c}); point #{point_number}; point {point}; icosa point within {icosa_point_tolerance_km} km = {nearest_icosa_point} at distance of {distance_km} km away")
             d[point_number] = nearest_icosa_point
     print("done finding icosa points near image lattice points")
     return d
@@ -127,10 +170,10 @@ def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_toler
 
 def write_image_conditions_lattice_agnostic(image_fp, output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, icosa_distance_normalized):
     print("writing image conditions df to {}".format(output_fp))
-    image_lattice, df = get_lattice_from_image(test_input_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, with_coords=False)
+    image_lattice, df = get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, with_coords=False)
     print("getting approx icosa points for image pixels")
     approx_icosa_point_numbers = []
-    for pi, p in enumerate(image_lattice.points):
+    for pi, p in enumerate(image_lattice.get_points()):
         if pi % 1000 == 0 and pi != 0:
             print(f"point {pi}/{image_lattice.n_points} ({100*pi/image_lattice.n_points :.2f}%)")
         approx_p, d_norm, d_units = IcosahedronMath.get_nearest_icosa_point_to_latlon(p.latlondeg(), icosa_distance_normalized, planet_radius=1, STARTING_POINTS=IcosahedronMath.STARTING_POINTS)
@@ -148,15 +191,11 @@ def write_image_conditions_lattice_agnostic(image_fp, output_fp, latlon00, latlo
 
 
 if __name__ == "__main__":
-    test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Ilausa.png"
-    # test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Circle.png"
-    # test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Mako.png"
-    # test_input_fp = "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_volcanism_Mako.png"
-    # test_input_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/MientaDigitization_ThinnedBorders_Final.png"
-    latlon00 = [50.01,-120.4]
-    latlon01 = [50.02,-110.1]
-    latlon10 = [0.1,-120.4]
-    latlon11 = [0.1,-110.1]
+    image_location_data_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImageToLocationDict.csv"
+    image_fp_to_latlon = get_image_fp_to_latlon(image_location_data_fp)
+    image_fp, latlons = random.choice([x for x in image_fp_to_latlon.items() if "Legron" in x[0]])
+    latlon00, latlon01, latlon10, latlon11 = latlons
+    print("reading image {}".format(image_fp))
 
     # just translate the colors into strings
     color_to_str = {
@@ -164,6 +203,8 @@ if __name__ == "__main__":
         (0, 38, 255, 255): "coast",
         (255, 255, 255, 255): "land",
         (255, 0, 0, 255): "land",
+        (1, 255, 255, 255): "sea",
+        (18, 254, 255, 255): "sea",  # probably some stupid anti-aliasing in Pinta
     }
 
     key_str = "elevation"
@@ -176,12 +217,12 @@ if __name__ == "__main__":
     corner_coords_str = ";".join(latlon_to_corner_coord_str(latlon) for latlon in [latlon00, latlon01, latlon10, latlon11])
     resolution_str = "cada{}km".format(icosa_point_tolerance_km)
     test_output_fp_info_str = f"_{key_str}_{corner_coords_str}_{resolution_str}.csv"
-    test_output_fp = test_input_fp.replace(".png", test_output_fp_info_str)
-    assert test_output_fp != test_input_fp, "input_fp didn't contain .png"
-    write_image_conditions_lattice_agnostic(test_input_fp, test_output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, icosa_distance_normalized)
+    test_output_fp = image_fp.replace(".png", test_output_fp_info_str)
+    assert test_output_fp != image_fp, "input_fp didn't contain .png"
+    write_image_conditions_lattice_agnostic(image_fp, test_output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, icosa_distance_normalized)
     input("got here")
 
-    # image_lattice, df = get_lattice_from_image(test_input_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
+    # image_lattice, df = get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
     # icosa_points = find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance_km, planet_radius_km)
 
     icosa_iterations_of_precision = IcosahedronMath.get_iterations_needed_for_edge_length(icosa_point_tolerance_km, planet_radius_km)

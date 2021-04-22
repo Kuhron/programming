@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 
 import MapCoordinateMath as mcm
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
+from TransformImageIntoMapData import get_image_fp_to_latlon, shrink_resolution
 
 
 def get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, latlon11):
@@ -18,23 +19,6 @@ def get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, lat
     )
     arr = np.array(im)
     return image_lattice, arr
-
-
-def shrink_resolution(im):
-    # so giant images don't take up huge amounts of memory just for the purposes of plotting where they go on the globe (high resolution not necessary for this)
-    print("Notice: shrinking resolution of image. If you do not want this, remove calls to shrink_resolution(im)")
-    max_len = 100
-    r,c = im.size
-    new_r = min(max_len, r)
-    new_c = min(max_len, c)
-    r_factor = new_r/r
-    c_factor = new_c/c
-    # choose the SMALLER factor and shrink the whole image that amount
-    factor = min(r_factor, c_factor)
-    new_r = int(r*factor)
-    new_c = int(r*factor)
-    im = im.resize((new_r, new_c), Image.ANTIALIAS)
-    return im
 
 
 def get_latlon_to_color_dict(image_fp, latlon00, latlon01, latlon10, latlon11):
@@ -74,22 +58,6 @@ def get_xyrgba_array(image_fp, latlon00, latlon01, latlon10, latlon11):
         lst.append(tup)
     print("- done getting xyrgba array for {}".format(image_fp))
     return lst
-
-
-def get_image_fp_to_latlon(image_location_data_fp):
-    d = {}
-    with open(image_location_data_fp) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            # print(row)
-            image_fp = row["filepath"]
-            latlon00 = (float(row["lat00"]), float(row["lon00"]))
-            latlon01 = (float(row["lat01"]), float(row["lon01"]))
-            latlon10 = (float(row["lat10"]), float(row["lon10"]))
-            latlon11 = (float(row["lat11"]), float(row["lon11"]))
-            latlons = [latlon00, latlon01, latlon10, latlon11]
-            d[image_fp] = latlons
-    return d
 
 
 def add_opaque_background(image_fp):
