@@ -26,10 +26,10 @@ class Agent:
         endowment = {}
         needs = {}
         for good in goods:
-            production_skill[good] = max(1, np.random.normal(10,5))
-            endowment[good] = random.uniform(1, 10)
-            needs[good] = max(1, np.random.normal(10, 5))
-        forgiveness = abs(np.random.normal(5, 5))
+            production_skill[good] = 1+np.random.lognormal(1,5)
+            endowment[good] = 1+np.random.lognormal(1,5)
+            needs[good] = 1+np.random.lognormal(1,5)
+        forgiveness = 1+np.random.lognormal(1,5)
         return Agent(name, production_skill, endowment, needs, forgiveness)
 
     def get_marginal_utility(self, good):
@@ -205,7 +205,7 @@ def below_need_constant_then_zero_marginal_utility(amount_had, amount_needed):
 
 if __name__ == "__main__":
     goods = ["water", "salt"] #, "grain", "metal", "wood", "meat", "fire"]
-    n_agents = 4
+    n_agents = 100
     agents = []
     for i in range(n_agents):
         name = f"{i}"
@@ -213,22 +213,23 @@ if __name__ == "__main__":
         agents.append(agent)
 
     n_days = 100
+    alive_agents = [a for a in agents]
     for day in range(n_days):
         print(f"\nDay {day}")
-        agents = [a for a in agents if a.alive]
-        if len(agents) == 0:
+        if len(alive_agents) == 0:
             print("everyone is dead")
             break
         for i in range(10 * n_agents):
             print("\n-- begin new transaction")
-            a = random.choice(agents)
-            a.find_good(goods, agents)
+            a = random.choice(alive_agents)
+            a.find_good(goods, alive_agents)
             a.report_inventory_and_needs(goods)
             # input("press enter to continue")
         print("\n-- begin consumption period")
-        for a in agents:
+        for a in alive_agents:
             a.pass_day(goods)
-        print(f"Day {day} is now over.")
+        alive_agents = [a for a in agents if a.alive]
+        print(f"Day {day} is now over. {len(alive_agents)}/{len(agents)} people are alive.")
 
     # TODO make all trading one direction only, over time people accumulate social trust amount
     # if someone becomes less trusted (has reputation as a defector), people will be less likely to trade with them at all (won't raise prices, will just refuse to interact, cutting them out of the social network)

@@ -1,4 +1,5 @@
 import os
+import csv
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
@@ -75,6 +76,22 @@ def get_xyrgba_array(image_fp, latlon00, latlon01, latlon10, latlon11):
     return lst
 
 
+def get_image_fp_to_latlon(image_location_data_fp):
+    d = {}
+    with open(image_location_data_fp) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            # print(row)
+            image_fp = row["filepath"]
+            latlon00 = (float(row["lat00"]), float(row["lon00"]))
+            latlon01 = (float(row["lat01"]), float(row["lon01"]))
+            latlon10 = (float(row["lat10"]), float(row["lon10"]))
+            latlon11 = (float(row["lat11"]), float(row["lon11"]))
+            latlons = [latlon00, latlon01, latlon10, latlon11]
+            d[image_fp] = latlons
+    return d
+
+
 def add_opaque_background(image_fp):
     # https://stackoverflow.com/questions/50898034/how-replace-transparent-with-a-color-in-pillow
     im = Image.open(image_fp)
@@ -118,22 +135,8 @@ def plot_images_on_globe(image_fp_to_latlon, save_fp=None):
 
 
 if __name__ == "__main__":
-    legron_latlons = [(41,-130), (33,-50), (-38,-130), (-38.1,-50)]
-    mienta_latlons = [(30,62), (30.1,118), (-30.1,62), (-30,118)]
-    oz_latlons = [(-35.1,-160), (-30,-38), (-35.1,145), (-35,20)]
-    it_latlons = [(67,-125), (67,125), (45, -20), (45,40)]
-    si_latlons = [(-11.2, 154.3), (-11.2, 155.8), (-12.7, 154.3), (-12.7, 155.8)]  # Sertorisun Islands can take up approx 1 sq degree, giving area similar to West Virginia
-    image_fp_to_latlon = {
-        # "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Ilausa.png" : [(10,-10),(10,10.1),(-10.1,-9.9),(-10,10)],
-        # "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Circle.png": [(65,-100),(70,-90),(55,-95),(60,-85)],
-        # "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_elevation_Mako.png": [(-40,-40),(-40,-20),(-60,-49),(-59,-29)],
-        # "/home/wesley/programming/Mapping/Projects/CadaTest/ImageImporting/EGII_CadaTest_volcanism_Mako.png": [(50,50),(50,55),(45,50),(45,55.1)],
-        "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/LegronCombinedDigitization_ThinnedBorders_Final.png": legron_latlons,
-        "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/MientaDigitization_ThinnedBorders_Final.png": mienta_latlons,
-        "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/OligraZitomoDigitization_ThinnedBorders_Final.png": oz_latlons,
-        "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImisTolinDigitization_ThinnedBorders_Final.png": it_latlons,
-        "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/SertorisunIslandsDigitization_ThinnedBorders_Final.png": si_latlons,
-    }
+    image_location_data_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImageToLocationDict.csv"
+    image_fp_to_latlon = get_image_fp_to_latlon(image_location_data_fp)
     save_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ContinentsPlacedOutput.png"
     if os.path.exists(save_fp):
         input("Warning, file exists and will be overwritten by plot: {}\npress enter to continue".format(save_fp))
