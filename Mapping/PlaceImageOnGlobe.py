@@ -11,7 +11,7 @@ from TransformImageIntoMapData import get_image_fp_to_latlon, shrink_resolution
 
 def get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, latlon11):
     im = Image.open(image_fp)
-    im = shrink_resolution(im)
+    # im = shrink_resolution(im)
     width, height = im.size
     image_lattice = LatitudeLongitudeLattice(
         height, width,

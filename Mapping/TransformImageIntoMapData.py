@@ -193,18 +193,18 @@ def write_image_conditions_lattice_agnostic(image_fp, output_fp, latlon00, latlo
 if __name__ == "__main__":
     image_location_data_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImageToLocationDict.csv"
     image_fp_to_latlon = get_image_fp_to_latlon(image_location_data_fp)
-    image_fp, latlons = random.choice([x for x in image_fp_to_latlon.items() if "Legron" in x[0]])
+    image_fp, latlons = random.choice([x for x in image_fp_to_latlon.items() if "Oligra" in x[0]])
     latlon00, latlon01, latlon10, latlon11 = latlons
     print("reading image {}".format(image_fp))
 
     # just translate the colors into strings
     color_to_str = {
-        (0, 255, 255, 255): "sea",
-        (0, 38, 255, 255): "coast",
-        (255, 255, 255, 255): "land",
-        (255, 0, 0, 255): "land",
-        (1, 255, 255, 255): "sea",
-        (18, 254, 255, 255): "sea",  # probably some stupid anti-aliasing in Pinta
+        (0, 0, 0, 255): "",  # black means unspecified for condition
+        (0, 255, 255, 255): "sea",  # must be negative, but no magnitude requirement
+        (0, 38, 255, 255): "coast",  # coast can be shallow sea or low land, so abs < something like 10 meters
+        (255, 255, 255, 255): "land",  # must be positive, but no magnitude requirement
+        (255, 0, 0, 255): "land",  # country borders, ignore for elevation
+        (0, 148, 255, 255)  : "shallow",  # must be negative but shallow (Imis Tolin), say max 5 meters below sea level
     }
 
     key_str = "elevation"
