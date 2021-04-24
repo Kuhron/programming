@@ -193,7 +193,8 @@ def write_image_conditions_lattice_agnostic(image_fp, output_fp, latlon00, latlo
 if __name__ == "__main__":
     image_location_data_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImageToLocationDict.csv"
     image_fp_to_latlon = get_image_fp_to_latlon(image_location_data_fp)
-    image_fp, latlons = random.choice([x for x in image_fp_to_latlon.items() if "Oligra" in x[0]])
+    search_substr = "Sertor"
+    image_fp, latlons = random.choice([x for x in image_fp_to_latlon.items() if search_substr in x[0]])
     latlon00, latlon01, latlon10, latlon11 = latlons
     print("reading image {}".format(image_fp))
 

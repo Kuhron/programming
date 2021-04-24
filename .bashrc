@@ -173,7 +173,16 @@ function bright () { xrandr --output $(xrandr | grep " connected" | cut -f1 -d "
 function nox() {
     : # nop
     clear
-    dconf write /org/gnome/desktop/interface/monospace-font-name "'Braille Normal 800 11'"
+    echo "bm"
+    read mode
+    case "$mode" in
+        "b")
+            dconf write /org/gnome/desktop/interface/monospace-font-name "'Braille Normal 800 11'" ;;
+        "m")
+            dconf write /org/gnome/desktop/interface/monospace-font-name "'MorseCodeScript 9'" ;;
+        *)
+            echo "invalid mode" ;;
+    esac
 }
 function denox() {
     : # nop
