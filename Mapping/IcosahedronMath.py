@@ -19,15 +19,17 @@ CADA_II_RADIUS_FACTOR = 2.116
 CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
 
-def get_latlon_from_point_number(point_number):
-    raise NotImplementedError
+def get_latlon_from_point_number(point_number, STARTING_POINTS):
+    pos = get_position_recursive(point_number, STARTING_POINTS)
+    return pos["latlondeg"]
 
 
 def get_xyz_from_point_number(point_number):
-    raise NotImplementedError
+    pos = get_position_recursive(point_number, STARTING_POINTS)
+    return pos["xyz"]
 
 
-def get_usp_from_point_number(point_number):
+def get_usp_from_point_number(point_number, STARTING_POINTS):
     pos = get_position_recursive(point_number, STARTING_POINTS)
     assert type(pos) is dict
     return UnitSpherePoint(pos, point_number=point_number)
@@ -1101,6 +1103,61 @@ def get_nearest_neighbor_to_xyz(xyz, candidates_usp):
         return nearest_neighbors[0], min_distance
     else:
         raise RuntimeError("got more than one nearest neighbor to xyz {}: {}\nIf you are finding icosa points for an image lattice, try repositioning the image slightly so that it is not symmetric about the equator.".format(xyz, nearest_neighbors))
+
+
+def get_usp_generator(iterations, STARTING_POINTS):
+    print(f"getting usp generator for {iterations} iterations")
+    n_points = get_points_from_iterations(iterations)
+    for pi in range(n_points):
+        usp = get_usp_from_point_number(pi, STARTING_POINTS)
+        yield usp
+    print(f"done getting usp generator for {iterations} iterations")
+
+
+def get_xyz_generator(iterations, STARTING_POINTS):
+    print(f"getting xyz generator for {iterations} iterations")
+    n_points = get_points_from_iterations(iterations)
+    for pi in range(n_points):
+        xyz = get_xyz_from_point_number(pi, STARTING_POINTS)
+        yield xyz
+    print(f"done getting xyz generator for {iterations} iterations")
+
+
+def get_latlon_generator(iterations, STARTING_POINTS):
+    print(f"getting latlon generator for {iterations} iterations")
+    n_points = get_points_from_iterations(iterations)
+    for pi in range(n_points):
+        latlon = get_latlon_from_point_number(pi, STARTING_POINTS)
+        yield latlon
+    print(f"getting latlon generator for {iterations} iterations")
+
+
+def is_in_latlon_rectangle(lat, lon, min_lat, max_lat, min_lon, max_lon):
+    return min_lat <= lat <= max_lat and min_lon <= lon <= max_lon
+
+
+def get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, iterations, STARTING_POINTS):
+    print(f"getting usps in latlon rectangle for {iterations} iterations. this function is very inefficient")
+    g = get_usp_generator(iterations, STARTING_POINTS)
+    res = []
+    for p in g:
+        lat, lon = p.latlondeg()
+        if is_in_latlon_rectangle(lat, lon, min_lat, max_lat, min_lon, max_lon):
+            res.append(p)
+    print(f"done getting usps in latlon rectangle for {iterations} iterations")
+    return res
+
+
+def get_latlons_of_points_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, iterations, STARTING_POINTS):
+    print(f"getting latlons in latlon rectangle for {iterations} iterations. this function is very inefficient")
+    # this will be horribly inefficient for large iterations and small rectangles since it's just brute force checking every point on the whole planet, so can optimize later if needed
+    g = get_latlon_generator(iterations, STARTING_POINTS)
+    res = []
+    for lat, lon in g:
+        if is_in_latlon_rectangle(lat, lon, min_lat, max_lat, min_lon, max_lon):
+            res.append((lat, lon))
+    print(f"done getting latlons in latlon rectangle for {iterations} iterations")
+    return res
 
 
 def notify_memo_accessed(memo_fp):

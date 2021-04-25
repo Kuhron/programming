@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+import itertools
+import scipy
 
 
 def get_land_and_sea_colormap():
@@ -109,4 +111,53 @@ def get_contour_levels(min_value, max_value, prefer_positive=False, n_sea_contou
     return contour_levels
 
 
+def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons, with_axis=False):
+    min_lat, max_lat = lat_range if lat_range is not None else (-90, 90)
+    min_lon, max_lon = lon_range if lon_range is not None else (-180, 180)
+    interpolation_lats = np.linspace(min_lat, max_lat, n_lats)
+    interpolation_lons = np.linspace(min_lon, max_lon, n_lons)
+    interpolation_grid_latlon = np.array(list(itertools.product(interpolation_lats, interpolation_lons)))
+    print(f"interpolation lats has shape {interpolation_lats.shape}")
+    print(f"interpolation lons has shape {interpolation_lons.shape}")
+    print(f"interpolation grid has shape {interpolation_grid_latlon.shape}")
+
+    # interpolate
+    interpolated = scipy.interpolate.griddata(data_coords, values, interpolation_grid_latlon, method="linear")
+    print(f"interpolated has shape {interpolated.shape}")
+    len_interp, = interpolated.shape
+    len_lats, = interpolation_lats.shape
+    len_lons, = interpolation_lons.shape
+    assert len_lats * len_lons == len_interp
+
+    # make grid that imshow will like
+    # x is longitude, y is latitude
+    n_rows = len_lats
+    n_cols = len_lons
+    Z = np.empty((n_rows, n_cols), dtype=float)
+    for id_lat, lat in enumerate(interpolation_lats):
+        row_number = id_lat
+        for id_lon, lon in enumerate(interpolation_lons):
+            col_number = id_lon
+            value_index = row_number * (n_cols) + col_number
+            assert (interpolation_grid_latlon[value_index] == (lat, lon)).all(), f"transposition error at row,col ({row_number}, {col_number}), which is latlon ({lat}, {lon})"
+            value = interpolated[value_index]
+            Z[row_number, col_number] = value
+
+    if with_axis:
+        fig, ax = plt.subplots()
+        fig.set_size_inches(8,4)
+        fig.add_axes(ax)
+    else:
+        # plot without any axes or frame
+        fig = plt.figure(frameon=False)
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        fig.set_size_inches(8,4)
+        ax.set_axis_off()
+        fig.add_axes(ax)
+
+    im = ax.imshow(Z, extent=[min_lon, max_lon, max_lat, min_lat])  # need y axis backwards since imshow reads rows from top down
+    plt.xlim(min_lon, max_lon)
+    plt.ylim(min_lat, max_lat)
+    if with_axis:
+        plt.colorbar(im)
 

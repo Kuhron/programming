@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import scipy
 
 import MapCoordinateMath as mcm
+import PlottingUtil as pu
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from TransformImageIntoMapData import get_image_fp_to_latlon, shrink_resolution
 
@@ -106,7 +107,7 @@ def plot_images_on_globe_scatter(image_fp_to_latlon, save_fp=None, show=True, sh
         plt.show()
 
 
-def plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=None, show=True, shrink=True):
+def plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=None, show=True, shrink=True, lat_range=None, lon_range=None):
     full_xyrgba_array = []
     for image_fp, latlons in image_fp_to_latlon.items():
         latlon00, latlon01, latlon10, latlon11 = latlons
@@ -121,51 +122,12 @@ def plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=None, show=True, shr
     colors = arr[:, 2:]
     colors /= 255
 
-    interpolation_lons = np.arange(-180, 180, 1)
-    interpolation_lats = np.arange(-90, 90, 1)
-    interpolation_grid_latlon = np.array(list(itertools.product(interpolation_lats, interpolation_lons)))
-    print(f"interpolation lats has shape {interpolation_lats.shape}")
-    print(f"interpolation lons has shape {interpolation_lons.shape}")
-    print(f"interpolation grid has shape {interpolation_grid_latlon.shape}")
-    values = np.array([np.linalg.norm(c) for c in colors])  # just pick something for now so it gets float values to interpolate
+    values = np.array([np.linalg.norm(c) for c in colors])
+    # values = np.array([np.random.normal(np.linalg.norm(c),0.05) for c in colors])  # just pick something for now so it gets float values to interpolate
 
-    # interpolate
-    interpolated = scipy.interpolate.griddata(data_coords, values, interpolation_grid_latlon, method="linear")
-    print(f"interpolated has shape {interpolated.shape}")
-    len_interp, = interpolated.shape
-    len_lats, = interpolation_lats.shape
-    len_lons, = interpolation_lons.shape
-    assert len_lats * len_lons == len_interp
-
-    # make grid that imshow will like
-    # x is longitude, y is latitude
-    n_rows = len_lats
-    n_cols = len_lons
-    Z = np.empty((n_rows, n_cols), dtype=float)
-    for id_lat, lat in enumerate(interpolation_lats):
-        row_number = id_lat
-        for id_lon, lon in enumerate(interpolation_lons):
-            col_number = id_lon
-            value_index = row_number * (n_cols) + col_number
-            assert (interpolation_grid_latlon[value_index] == (lat, lon)).all(), f"transposition error at row,col ({row_number}, {col_number}), which is latlon ({lat}, {lon})"
-            value = interpolated[value_index]
-            Z[row_number, col_number] = value
-
-    # plot without any axes or frame
-    # fig = plt.figure(frameon=False)
-    # ax = plt.Axes(fig, [0., 0., 1., 1.])
-    fig, ax = plt.subplots()
-
-    fig.set_size_inches(8,4)
-    # ax.set_axis_off()
-    fig.add_axes(ax)
-
-    # ax.scatter(lons, lats, c=colors)
-    ax.imshow(Z, extent=[-180, 180, 90, -90])  # need y axis backwards since imshow reads rows from top down
-    plt.xlim(-180,180)
-    plt.ylim(-90,90)
-    plt.rcParams['figure.facecolor'] = "black"
-    plt.rcParams['savefig.facecolor'] = "black"
+    n_lats = 1000
+    n_lons = 2000
+    pu.plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons)
     if save_fp is not None:
         plt.savefig(save_fp, facecolor="black")
         add_opaque_background(save_fp)  # because matplotlib facecolor is being a huge pain and never works
@@ -182,4 +144,4 @@ if __name__ == "__main__":
         input("Warning, file exists and will be overwritten by plot: {}\npress enter to continue".format(save_fp))
 
     # plot_images_on_globe_scatter(image_fp_to_latlon, save_fp=save_fp, show=True, shrink=True)
-    plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=save_fp, show=True, shrink=True)
+    plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=save_fp, show=True, shrink=True, lat_range=[-30,30], lon_range=[-150,-90])
