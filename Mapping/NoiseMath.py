@@ -163,13 +163,21 @@ def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude):
     return df
 
 
-def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None, control_conditions_every_n_steps=None, control_rate=1):
+def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None, control_conditions_every_n_steps=None, control_rate=1, infer_condition=False):
     print("adding {} circles of variable {}".format(n_patches, key_str))
     if area_proportions is None:
         area_proportions = get_area_proportions_power_law(n_patches)
     assert len(area_proportions) == n_patches
     if key_str not in df.columns:
         df[key_str] = np.zeros((len(df.index),))
+
+    if infer_condition:
+        # use this for nearest-neighbor condition finding
+        has_condition = get_has_condition_mask(df, key_str)
+        xyzs = np.array([np.array(list(tup)) for tup in df.loc[has_condition, "xyz"]])
+        xyz_kdtree = scipy.spatial.KDTree(xyzs)
+    else:
+        xyz_kdtree = None
 
     for i in range(n_patches):
         area_proportion = area_proportions[i]
@@ -196,17 +204,18 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
         df.loc[in_region_mask_index, key_str] += d_val
 
         if control_conditions_every_n_steps is not None and i != 0 and i % control_conditions_every_n_steps == 0:
-            df = control_for_condition_ranges(df, key_str, control_rate=control_rate)
+            df = control_for_condition_ranges(df, key_str, control_rate=control_rate, pin_zero=False, infer_condition=infer_condition, xyz_kdtree=xyz_kdtree)
     
-    df = control_for_condition_ranges(df, key_str, control_rate=1)  # do it at end no matter what, with full control rate to ensure conditions are met
+    df = control_for_condition_ranges(df, key_str, control_rate=1, pin_zero=True, infer_condition=infer_condition, xyz_kdtree=xyz_kdtree)  # do it at end no matter what, with full control rate to ensure conditions are met
     assert meets_conditions(df, key_str), "failed to adjust df correctly"
     return df
 
 
-def control_for_condition_ranges(df, key_str, control_rate=1):
+def control_for_condition_ranges(df, key_str, control_rate=1, pin_zero=False, infer_condition=False, xyz_kdtree=None):
     print(f"adjusting deviations in {key_str}")
     min_val_colname = f"min_{key_str}"
     max_val_colname = f"max_{key_str}"
+
     if min_val_colname not in df.columns:
         print(f"control_for_condition_ranges found no min for {key_str}")
         df[min_val_colname] = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
@@ -217,6 +226,12 @@ def control_for_condition_ranges(df, key_str, control_rate=1):
         df[max_val_colname] = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
     else:
         df[max_val_colname] = df[max_val_colname].fillna(np.nan)  # make sure it's a datatype we can work with, not None
+
+    if infer_condition:
+        # do some nearest-neighbors-weighted probabilistic choosing of condition for points with no condition specified, e.g. if its nearest neighbors with conditions are all land, it should probably also be land
+        if xyz_kdtree is None:
+            xyz_kdtree = scipy.spatial.KDTree(df["xyz"])
+        df = add_inferred_condition_to_df(df, key_str, xyz_kdtree, k_neighbors=6)
 
     # do some kind of smooth surface addition (e.g. cubic spline over the whole map) to match the conditions
     deviations = get_deviations_from_condition_values(values=df[key_str], min_values=df[min_val_colname], max_values=df[max_val_colname])
@@ -229,9 +244,16 @@ def control_for_condition_ranges(df, key_str, control_rate=1):
         pass
     else:
         assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, before adjustment"
-        non_na_deviations = deviations[~pd.isna(deviations)]
+        
+        if pin_zero:  # keep zero deviation points (things that meet their conditions) in the interpolation, which may mean that adjustment of nearby points which *don't* meet their conditions will be more localized
+            non_na_deviations = deviations[~pd.isna(deviations)]
+            deviations_to_interpolate = non_na_deviations
+        else:  # allow adjustment of a condition-meeting point (i.e. one where deviation is zero) to happen as consequence of nearby adjustments
+            non_na_non_zero_deviations = deviations[~pd.isna(deviations) & (deviations != 0)]
+            deviations_to_interpolate = non_na_non_zero_deviations
+
         # interpolate in xyz coords, not latlon, so it won't think points near poles are far apart
-        adjustment = get_interpolated_adjustment_for_condition_values(non_na_deviations, df)
+        adjustment = get_interpolated_adjustment_for_condition_values(deviations_to_interpolate, df)
         # adjustment = get_trivial_adjustment_for_condition_values(non_na_deviations, df)  # debug
         assert np.isfinite(adjustment).all(), "adjustment not all finite"
         if (adjustment == 0).all():
@@ -242,6 +264,42 @@ def control_for_condition_ranges(df, key_str, control_rate=1):
 
     print(f"done adjusting deviations in {key_str}")
     return df
+
+
+def get_has_condition_mask(df, key_str):
+    min_val_colname = f"min_{key_str}"
+    max_val_colname = f"max_{key_str}"
+    mins = df[min_val_colname]
+    maxs = df[max_val_colname]
+    has_condition = ~pd.isna(mins) | ~pd.isna(maxs)  # if has either min or max, or both, then it has a condition
+    return has_condition
+
+
+def add_inferred_condition_to_df(df, key_str, kdtree, k_neighbors):
+    min_val_colname = f"min_{key_str}"
+    max_val_colname = f"max_{key_str}"
+    xyz = df["xyz"]
+    mins = df[min_val_colname]
+    maxs = df[max_val_colname]
+    has_condition = get_has_condition_mask(df, key_str)
+
+    xyzs_to_query = np.array([np.array(list(tup)) for tup in xyz]) # just do them all for now, and only set in the df where there's not already a condition
+    distances, nn_indices = kdtree.query(xyzs_to_query, k=k_neighbors)
+
+    # now choose one neighbor randomly among the k for each point
+    min_at_nn = pd.Series(index=df.index)
+    max_at_nn = pd.Series(index=df.index)
+    for pi in range(len(nn_indices)):
+        indices = nn_indices[pi]
+        chosen_neighbor_index_in_kdtree = random.choice(indices)
+        chosen_neighbor_point_number = df.index[chosen_neighbor_index_in_kdtree]
+        point_number_being_inferred_at = df.index[pi]
+        min_at_nn[point_number_being_inferred_at] = mins[chosen_neighbor_point_number]
+        max_at_nn[point_number_being_inferred_at] = maxs[chosen_neighbor_point_number]
+
+    df.loc[~has_condition, min_val_colname] = min_at_nn
+    df.loc[~has_condition, max_val_colname] = max_at_nn
+    return df    
 
 
 def show_text_values_at_latlons_debug(deviations, df, title):
@@ -313,28 +371,34 @@ def get_interpolated_adjustment_for_condition_values(deviations, df):
     assert data_xyzs.shape == (len(deviations.index), 3), data_xyzs.shape
 
     target_point_index = [x for x in df.index if x not in deviations.index]  # let the points with deviation values be adjusted by exactly those values, interpolate adjustment for everything else
-    target_xyzs = np.array([np.array(tup) for tup in df.loc[target_point_index, "xyz"]])
-    data_values = deviations.array
 
-    # despite the name, scipy.griddata can interpolate from arbitrary unstructured data points to arbitrary unstructured target points
-    # cubic spline doesn't work for more than 2D space
-    # about doing this kind of interpolation on unstructured data in higher dimensions, see https://stackoverflow.com/questions/32753449/what-to-do-if-i-want-3d-spline-smooth-interpolation-of-random-unstructured-data
-    xs = data_xyzs[:,0]
-    ys = data_xyzs[:,1]
-    zs = data_xyzs[:,2]
-    values = data_values
-    interp = scipy.interpolate.Rbf(xs, ys, zs, data_values, function='thin_plate')
-    target_xs = target_xyzs[:,0]
-    target_ys = target_xyzs[:,1]
-    target_zs = target_xyzs[:,2]
-    interpolated = interp(target_xs, target_ys, target_zs)
-
-    # interpolated = scipy.interpolate.griddata(points=data_xyzs, values=data_values, xi=target_xyzs, method="linear", fill_value=0)
-
-    interpolated = pd.Series(data=interpolated, index=target_point_index)
-    interpolated = pd.concat([interpolated, deviations])  # add back the actual deviation values for points that have them
-    adjustment = -1 * interpolated
-    return adjustment
+    if len(target_point_index) == 0:
+        # every point has a deviation value, no interpolation needed
+        return -1 * deviations
+    else:
+        target_xyzs = np.array([np.array(tup) for tup in df.loc[target_point_index, "xyz"]])
+        assert target_xyzs.shape == (len(target_point_index), 3), target_xyzs.shape
+        data_values = deviations.array
+    
+        # despite the name, scipy.griddata can interpolate from arbitrary unstructured data points to arbitrary unstructured target points
+        # cubic spline doesn't work for more than 2D space
+        # about doing this kind of interpolation on unstructured data in higher dimensions, see https://stackoverflow.com/questions/32753449/what-to-do-if-i-want-3d-spline-smooth-interpolation-of-random-unstructured-data
+        xs = data_xyzs[:,0]
+        ys = data_xyzs[:,1]
+        zs = data_xyzs[:,2]
+        values = data_values
+        interp = scipy.interpolate.Rbf(xs, ys, zs, data_values, function='thin_plate')
+        target_xs = target_xyzs[:,0]
+        target_ys = target_xyzs[:,1]
+        target_zs = target_xyzs[:,2]
+        interpolated = interp(target_xs, target_ys, target_zs)
+    
+        # interpolated = scipy.interpolate.griddata(points=data_xyzs, values=data_values, xi=target_xyzs, method="linear", fill_value=0)
+    
+        interpolated = pd.Series(data=interpolated, index=target_point_index)
+        interpolated = pd.concat([interpolated, deviations])  # add back the actual deviation values for points that have them
+        adjustment = -1 * interpolated
+        return adjustment
 
 
 def add_random_data_sigmoid_decay_hills(df, key_str, n_hills, h_stretch_parameters=None, mu_colname=None, sigma_colname=None):

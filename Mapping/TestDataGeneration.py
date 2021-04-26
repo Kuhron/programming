@@ -34,15 +34,21 @@ def test_generate_whole_planet():
 def test_generate_on_section_of_condition_data():
     min_lat, max_lat = -30, 30
     min_lon, max_lon = -60, 60
-
     condition_iterations = 4
+    data_iterations = 6
+    n_patches = 1000
+    control_conditions_every_n_steps = 100
+    control_rate = 0.1  # how much of the adjustment to do in intermediate condition-controlling, lower value should hopefully be more "nudgy" rather than being overly forceful in enforcing conditions
+    infer_condition = True
+    n_lats_to_plot = 500
+    n_lons_to_plot = 1000
+
     icosa_usps_with_conditions = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, condition_iterations, IcosahedronMath.STARTING_POINTS)
     condition_index = pd.Index([p.point_number for p in icosa_usps_with_conditions])
     condition_latlons = [p.latlondeg() for p in icosa_usps_with_conditions]
     condition_lats = [ll[0] for ll in condition_latlons]
     condition_lons = [ll[1] for ll in condition_latlons]
 
-    data_iterations = 6
     icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations, IcosahedronMath.STARTING_POINTS)
     data_index = pd.Index([p.point_number for p in icosa_usps_with_data])
 
@@ -56,7 +62,8 @@ def test_generate_on_section_of_condition_data():
     condition_colors_lst = []
     for p in icosa_usps_with_conditions:
         pi = p.point_number
-        condition = random.choice(list(color_by_condition.keys()))
+        # condition = random.choice(list(color_by_condition.keys()))
+        condition = "land" if p.latlondeg()[1] > 0 else "sea"
         elevation_conditions[pi] = condition
         condition_colors_lst.append(color_by_condition[condition])
 
@@ -82,10 +89,7 @@ def test_generate_on_section_of_condition_data():
     # print("df min and max condition values (debug)")
     # print(df.loc[condition_index, ["min_elevation", "max_elevation"]])
 
-    n_patches = 2000
-    control_conditions_every_n_steps = 100
-    control_rate = 0.1  # how much of the adjustment to do in intermediate condition-controlling, lower value should hopefully be more "nudgy" rather than being overly forceful in enforcing conditions
-    df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches, control_conditions_every_n_steps=control_conditions_every_n_steps, control_rate=control_rate)
+    df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches, control_conditions_every_n_steps=control_conditions_every_n_steps, control_rate=control_rate, infer_condition=infer_condition)
     elevations = {p: df.loc[p.point_number, "elevation"] for p in data_points}
 
     # now get the data and interpolate to plot
@@ -93,9 +97,7 @@ def test_generate_on_section_of_condition_data():
     values = [elevations[p] for p in data_points]
     lat_range = [min_lat, max_lat]
     lon_range = [min_lon, max_lon]
-    n_lats = 500
-    n_lons = 1000
-    pu.plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons, with_axis=True)
+    pu.plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats_to_plot, n_lons_to_plot, with_axis=True)
     plt.scatter(condition_lons, condition_lats, facecolors="none", edgecolors=condition_colors_lst)  # facecolors "none" and edgecolors defined is how you make open circle markers (so it's easier to see what value is at that point)
     plt.show()
 
