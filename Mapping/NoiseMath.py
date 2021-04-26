@@ -163,7 +163,7 @@ def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude):
     return df
 
 
-def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None):
+def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None, control_conditions_every_n_steps=None):
     print("adding {} circles of variable {}".format(n_patches, key_str))
     if area_proportions is None:
         area_proportions = get_area_proportions_power_law(n_patches)
@@ -194,8 +194,11 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
         mu += -1 * expectation_omega * discrepancy_from_expectation
         d_val = np.random.normal(mu, sigma)
         df.loc[in_region_mask_index, key_str] += d_val
+
+        if control_conditions_every_n_steps is not None and i != 0 and i % control_conditions_every_n_steps == 0:
+            df = control_for_condition_ranges(df, key_str)
     
-    df = control_for_condition_ranges(df, key_str)
+    df = control_for_condition_ranges(df, key_str)  # do it at end no matter what
     return df
 
 
@@ -205,28 +208,78 @@ def control_for_condition_ranges(df, key_str):
     max_val_colname = f"max_{key_str}"
     if min_val_colname not in df.columns:
         print(f"control_for_condition_ranges found no min for {key_str}")
-        df[min_val_colname] = np.array([np.nan for i in range(len(df.index))])
+        df[min_val_colname] = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
     else:
         df[min_val_colname] = df[min_val_colname].fillna(np.nan)  # make sure it's a datatype we can work with, not None
     if max_val_colname not in df.columns:
         print(f"control_for_condition_ranges found no max for {key_str}")
-        df[max_val_colname] = np.array([np.nan for i in range(len(df.index))])
+        df[max_val_colname] = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
     else:
         df[max_val_colname] = df[max_val_colname].fillna(np.nan)  # make sure it's a datatype we can work with, not None
 
     # do some kind of smooth surface addition (e.g. cubic spline over the whole map) to match the conditions
-    deviation_from_min = df[key_str] - df[min_val_colname]
-    deviation_from_max = df[key_str] - df[max_val_colname]
-    has_min = ~pd.isna(df[min_val_colname])
-    has_max = ~pd.isna(df[max_val_colname])
+    deviations = get_deviations_from_condition_values(values=df[key_str], min_values=df[min_val_colname], max_values=df[max_val_colname])
+
+    # show_text_values_at_latlons_debug(df[min_val_colname], df, "min")
+    # show_text_values_at_latlons_debug(df[max_val_colname], df, "max")
+
+    if pd.isna(deviations).all():
+        # no change to be made
+        pass
+    else:
+        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, before adjustment"
+        non_na_deviations = deviations[~pd.isna(deviations)]
+        # interpolate in xyz coords, not latlon, so it won't think points near poles are far apart
+        adjustment = get_interpolated_adjustment_for_condition_values(non_na_deviations, df)
+        # adjustment = get_trivial_adjustment_for_condition_values(non_na_deviations, df)  # debug
+        assert np.isfinite(adjustment).all(), "adjustment not all finite"
+        if (adjustment == 0).all():
+            print("Warning: adjustment is all zero")
+            input("press enter to continue")
+        df[key_str] += adjustment
+        
+        # debug
+        # for pi in df.index:
+        #     if adjustment.loc[pi] != 0:
+        #         print(f"adjusted {df.loc[pi, 'latlondeg']} by {adjustment.loc[pi]}, value is now {df.loc[pi, key_str]}")
+        # show_text_values_at_latlons_debug(deviations, df, "dev")
+        # show_text_values_at_latlons_debug(adjustment, df, "adjustment")
+
+        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, after adjustment"
+
+    assert meets_conditions(df, key_str), "failed to adjust df correctly"
+    # print("meets conditions?", meets_conditions(df, key_str))  # debug, let it keep going
+
+    print(f"done adjusting deviations in {key_str}")
+    return df
+
+
+def show_text_values_at_latlons_debug(deviations, df, title):
+    lats = df["latlondeg"].apply(lambda x: x[0])
+    lons = df["latlondeg"].apply(lambda x: x[1])
+    for pi in df.index:
+        lat = lats.loc[pi]
+        lon = lons.loc[pi]
+        plt.text(lon, lat, f"{deviations.loc[pi]:.2f}".replace("nan","n"))
+    plt.xlim(min(lons), max(lons))
+    plt.ylim(min(lats), max(lats))
+    plt.title(title)
+    plt.show()
+
+
+def get_deviations_from_condition_values(values, min_values, max_values):
+    deviation_from_min = values - min_values
+    deviation_from_max = values - max_values
+    has_min = ~pd.isna(min_values)
+    has_max = ~pd.isna(max_values)
     has_min_and_max = has_min & has_max
     has_min_only = has_min & ~has_max
     has_max_only = has_max & ~has_min
     has_neither_min_nor_max = ~has_min & ~has_max
-    assert has_min_only.sum() + has_max_only.sum() + has_min_and_max.sum() + has_neither_min_nor_max.sum() == len(df.index)
+    assert has_min_only.sum() + has_max_only.sum() + has_min_and_max.sum() + has_neither_min_nor_max.sum() == len(values.index)
     # print(f"{has_min_only.sum()} min only, {has_max_only.sum()} max only, {has_min_and_max.sum()} both min and max, {has_neither_min_nor_max.sum()} neither min nor max")
 
-    deviations = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
+    deviations = pd.Series(data=[np.nan for i in range(len(values.index))], index=values.index)
     # if has min only, the deviation is negative if below it and 0 otherwise
     deviations[has_min_only] = np.minimum(0, deviation_from_min)
     # if has max only, the deviation is positive if above it and 0 otherwise
@@ -236,33 +289,24 @@ def control_for_condition_ranges(df, key_str):
     deviations[has_min_and_max & (deviation_from_max >= 0)] = deviation_from_max
     deviations[has_min_and_max & (deviation_from_min >= 0) & (deviation_from_max <= 0)] = 0
 
-    if pd.isna(deviations).all():
-        # no change to be made
-        pass
-    else:
-        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, before adjustment"
-        non_na_deviations = deviations[~pd.isna(deviations)]
-        # interpolate in xyz coords, not latlon, so it won't think points near poles are far apart
-        # adjustment = get_interpolated_adjustment_for_condition_values(non_na_deviations, df)
-        adjustment = get_trivial_adjustment_for_condition_values(non_na_deviations, df)  # debug
-        assert np.isfinite(adjustment).all(), "adjustment not all finite"
-        df[key_str] += adjustment
-        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, after adjustment"
-
-    assert meets_conditions(df, key_str), "failed to adjust df correctly"
-    print(f"done adjusting deviations in {key_str}")
-    return df
+    return deviations
 
 
 def meets_conditions(df, key_str):
     min_val_colname = f"min_{key_str}"
     max_val_colname = f"max_{key_str}"
+    mins = df[min_val_colname]
+    maxs = df[max_val_colname]
     x = df[key_str]
-    min_is_na = pd.isna(df[min_val_colname])
-    meets_min = min_is_na | (x >= df[min_val_colname])
-    max_is_na = pd.isna(df[max_val_colname])
-    meets_max = max_is_na | (x <= df[max_val_colname])
+    min_is_na = pd.isna(mins)
+    meets_min = min_is_na | (x > mins) | np.isclose(x, mins)  # stupid float <=
+    max_is_na = pd.isna(maxs)
+    meets_max = max_is_na | (x < maxs) | np.isclose(x, maxs)
     meets_both = meets_min & meets_max
+    if not meets_both.all():  # debug
+        print("some points failed to meet conditions:")
+        mask = ~meets_both
+        print(df.loc[mask, "latlondeg"])
     return meets_both.all()
 
 
@@ -273,7 +317,7 @@ def get_trivial_adjustment_for_condition_values(deviations, df):
     return adjustment
 
 
-def get_adjustment_for_condition_values(deviations, df):
+def get_interpolated_adjustment_for_condition_values(deviations, df):
     data_xyzs = df.loc[deviations.index, "xyz"]
     data_xyzs = np.array([np.array(tup) for tup in data_xyzs])
     assert data_xyzs.shape == (len(deviations.index), 3), data_xyzs.shape
