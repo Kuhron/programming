@@ -61,8 +61,8 @@ def test_generate_on_section_of_condition_data():
         condition_colors_lst.append(color_by_condition[condition])
 
     elevation_condition_ranges = {
-        "sea": (None, 0),
-        "land": (0, None),
+        "sea": (None, -1),
+        "land": (1, None),
         "coast": (-15, 15),
         "shallow": (-5, 0),
     }
@@ -82,9 +82,10 @@ def test_generate_on_section_of_condition_data():
     # print("df min and max condition values (debug)")
     # print(df.loc[condition_index, ["min_elevation", "max_elevation"]])
 
-    n_patches = 10000
-    control_conditions_every_n_steps=100
-    df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches, control_conditions_every_n_steps=control_conditions_every_n_steps)
+    n_patches = 2000
+    control_conditions_every_n_steps = 100
+    control_rate = 0.1  # how much of the adjustment to do in intermediate condition-controlling, lower value should hopefully be more "nudgy" rather than being overly forceful in enforcing conditions
+    df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches, control_conditions_every_n_steps=control_conditions_every_n_steps, control_rate=control_rate)
     elevations = {p: df.loc[p.point_number, "elevation"] for p in data_points}
 
     # now get the data and interpolate to plot

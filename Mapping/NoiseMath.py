@@ -163,7 +163,7 @@ def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude):
     return df
 
 
-def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None, control_conditions_every_n_steps=None):
+def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None, control_conditions_every_n_steps=None, control_rate=1):
     print("adding {} circles of variable {}".format(n_patches, key_str))
     if area_proportions is None:
         area_proportions = get_area_proportions_power_law(n_patches)
@@ -196,13 +196,14 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
         df.loc[in_region_mask_index, key_str] += d_val
 
         if control_conditions_every_n_steps is not None and i != 0 and i % control_conditions_every_n_steps == 0:
-            df = control_for_condition_ranges(df, key_str)
+            df = control_for_condition_ranges(df, key_str, control_rate=control_rate)
     
-    df = control_for_condition_ranges(df, key_str)  # do it at end no matter what
+    df = control_for_condition_ranges(df, key_str, control_rate=1)  # do it at end no matter what, with full control rate to ensure conditions are met
+    assert meets_conditions(df, key_str), "failed to adjust df correctly"
     return df
 
 
-def control_for_condition_ranges(df, key_str):
+def control_for_condition_ranges(df, key_str, control_rate=1):
     print(f"adjusting deviations in {key_str}")
     min_val_colname = f"min_{key_str}"
     max_val_colname = f"max_{key_str}"
@@ -235,20 +236,9 @@ def control_for_condition_ranges(df, key_str):
         assert np.isfinite(adjustment).all(), "adjustment not all finite"
         if (adjustment == 0).all():
             print("Warning: adjustment is all zero")
-            # input("press enter to continue")
-        df[key_str] += adjustment
+        df[key_str] += adjustment * control_rate
         
-        # debug
-        # for pi in df.index:
-        #     if adjustment.loc[pi] != 0:
-        #         print(f"adjusted {df.loc[pi, 'latlondeg']} by {adjustment.loc[pi]}, value is now {df.loc[pi, key_str]}")
-        # show_text_values_at_latlons_debug(deviations, df, "dev")
-        # show_text_values_at_latlons_debug(adjustment, df, "adjustment")
-
         assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, after adjustment"
-
-    assert meets_conditions(df, key_str), "failed to adjust df correctly"
-    # print("meets conditions?", meets_conditions(df, key_str))  # debug, let it keep going
 
     print(f"done adjusting deviations in {key_str}")
     return df
