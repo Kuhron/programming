@@ -235,7 +235,7 @@ def control_for_condition_ranges(df, key_str):
         assert np.isfinite(adjustment).all(), "adjustment not all finite"
         if (adjustment == 0).all():
             print("Warning: adjustment is all zero")
-            input("press enter to continue")
+            # input("press enter to continue")
         df[key_str] += adjustment
         
         # debug
@@ -325,9 +325,21 @@ def get_interpolated_adjustment_for_condition_values(deviations, df):
     target_point_index = [x for x in df.index if x not in deviations.index]  # let the points with deviation values be adjusted by exactly those values, interpolate adjustment for everything else
     target_xyzs = np.array([np.array(tup) for tup in df.loc[target_point_index, "xyz"]])
     data_values = deviations.array
+
     # despite the name, scipy.griddata can interpolate from arbitrary unstructured data points to arbitrary unstructured target points
     # cubic spline doesn't work for more than 2D space
-    interpolated = scipy.interpolate.griddata(points=data_xyzs, values=data_values, xi=target_xyzs, method="linear", fill_value=0)
+    # about doing this kind of interpolation on unstructured data in higher dimensions, see https://stackoverflow.com/questions/32753449/what-to-do-if-i-want-3d-spline-smooth-interpolation-of-random-unstructured-data
+    xs = data_xyzs[:,0]
+    ys = data_xyzs[:,1]
+    zs = data_xyzs[:,2]
+    values = data_values
+    interp = scipy.interpolate.Rbf(xs, ys, zs, data_values, function='thin_plate')
+    target_xs = target_xyzs[:,0]
+    target_ys = target_xyzs[:,1]
+    target_zs = target_xyzs[:,2]
+    interpolated = interp(target_xs, target_ys, target_zs)
+
+    # interpolated = scipy.interpolate.griddata(points=data_xyzs, values=data_values, xi=target_xyzs, method="linear", fill_value=0)
 
     interpolated = pd.Series(data=interpolated, index=target_point_index)
     interpolated = pd.concat([interpolated, deviations])  # add back the actual deviation values for points that have them

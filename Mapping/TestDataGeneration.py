@@ -32,17 +32,17 @@ def test_generate_whole_planet():
 
 
 def test_generate_on_section_of_condition_data():
-    min_lat, max_lat = -15, 15
-    min_lon, max_lon = -30, 30
+    min_lat, max_lat = -30, 30
+    min_lon, max_lon = -60, 60
 
-    condition_iterations = 3
+    condition_iterations = 4
     icosa_usps_with_conditions = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, condition_iterations, IcosahedronMath.STARTING_POINTS)
     condition_index = pd.Index([p.point_number for p in icosa_usps_with_conditions])
     condition_latlons = [p.latlondeg() for p in icosa_usps_with_conditions]
     condition_lats = [ll[0] for ll in condition_latlons]
     condition_lons = [ll[1] for ll in condition_latlons]
 
-    data_iterations = 4
+    data_iterations = 6
     icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations, IcosahedronMath.STARTING_POINTS)
     data_index = pd.Index([p.point_number for p in icosa_usps_with_data])
 
@@ -61,8 +61,8 @@ def test_generate_on_section_of_condition_data():
         condition_colors_lst.append(color_by_condition[condition])
 
     elevation_condition_ranges = {
-        "sea": (None, -100),
-        "land": (100, None),
+        "sea": (None, 0),
+        "land": (0, None),
         "coast": (-15, 15),
         "shallow": (-5, 0),
     }
@@ -82,8 +82,9 @@ def test_generate_on_section_of_condition_data():
     # print("df min and max condition values (debug)")
     # print(df.loc[condition_index, ["min_elevation", "max_elevation"]])
 
-    n_patches = 1000
-    df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches, control_conditions_every_n_steps=100)
+    n_patches = 10000
+    control_conditions_every_n_steps=100
+    df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches, control_conditions_every_n_steps=control_conditions_every_n_steps)
     elevations = {p: df.loc[p.point_number, "elevation"] for p in data_points}
 
     # now get the data and interpolate to plot
@@ -91,8 +92,8 @@ def test_generate_on_section_of_condition_data():
     values = [elevations[p] for p in data_points]
     lat_range = [min_lat, max_lat]
     lon_range = [min_lon, max_lon]
-    n_lats = 100
-    n_lons = 200
+    n_lats = 500
+    n_lons = 1000
     pu.plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons, with_axis=True)
     plt.scatter(condition_lons, condition_lats, facecolors="none", edgecolors=condition_colors_lst)  # facecolors "none" and edgecolors defined is how you make open circle markers (so it's easier to see what value is at that point)
     plt.show()
