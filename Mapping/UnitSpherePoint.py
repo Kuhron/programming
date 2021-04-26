@@ -97,9 +97,15 @@ class UnitSpherePoint:
         return mcm.angle_between_vectors(xyz0, xyz1)
 
     def get_immutable(self):
-        return tuple(self.tuples)
+        tuple_keys = sorted(self.tuples.keys())
+        lst = []
+        for k in tuple_keys:
+            tup_piece = (k, self.tuples[k])
+            lst.append(tup_piece)
+        return tuple(lst)
 
     def __hash__(self):
+        # raise Exception("Warning: USP hashing is not yet reliable, still get different immutable objects with same coordinates, possibly due to rounding errors. Please revise code to use point index or something else that can reliably point to the same USP object.")
         return hash(self.get_immutable())
 
     @staticmethod

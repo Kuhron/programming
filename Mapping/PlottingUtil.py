@@ -155,9 +155,14 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
         ax.set_axis_off()
         fig.add_axes(ax)
 
-    im = ax.imshow(Z, extent=[min_lon, max_lon, max_lat, min_lat])  # need y axis backwards since imshow reads rows from top down
+    min_value = Z[np.isfinite(Z)].min()
+    max_value = Z[np.isfinite(Z)].max()
+    contourf_levels = get_contour_levels(min_value, max_value, prefer_positive=False, n_sea_contours=20, n_land_contours=100)
+    cmap = get_land_and_sea_colormap()
+    im = ax.contourf(Z, extent=[min_lon, max_lon, max_lat, min_lat], levels=contourf_levels, cmap=cmap)  # need y axis backwards since imshow reads rows from top down
     plt.xlim(min_lon, max_lon)
     plt.ylim(min_lat, max_lat)
     if with_axis:
         plt.colorbar(im)
+
 

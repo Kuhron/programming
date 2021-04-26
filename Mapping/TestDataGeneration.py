@@ -4,12 +4,13 @@ import NoiseMath as nm
 import PlottingUtil as pu
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import random
 
 
 def test_generate_whole_planet():
     edge_length_km = None
-    iterations = 4
+    iterations = 6
     test_lattice = IcosahedralGeodesicLattice(edge_length_km=edge_length_km, iterations=iterations)
 
     # making example images and data for each type of noise generation function
@@ -31,36 +32,52 @@ def test_generate_whole_planet():
 
 
 def test_generate_on_section_of_condition_data():
-    min_lat, max_lat = -5, 5
-    min_lon, max_lon = -10, 10
+    min_lat, max_lat = -15, 15
+    min_lon, max_lon = -30, 30
 
-    condition_iterations = 5
+    condition_iterations = 3
     icosa_usps_with_conditions = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, condition_iterations, IcosahedronMath.STARTING_POINTS)
+    condition_latlons = [p.latlondeg() for p in icosa_usps_with_conditions]
+    condition_lats = [ll[0] for ll in condition_latlons]
+    condition_lons = [ll[1] for ll in condition_latlons]
 
-    data_iterations = 6
+    data_iterations = 4
     icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations, IcosahedronMath.STARTING_POINTS)
 
-    elevation_conditions = {p: random.choice(["sea", "land", "coast", "shallow"]) for p in icosa_usps_with_conditions}
-    elevation_condition_functions = {
-        "sea": lambda x: x < 0,
-        "land": lambda x: x > 0,
-        "coast": lambda x: abs(x) < 15,
-        "shallow": lambda x: -5 <= x < 0,
+    elevation_conditions = {}
+    color_by_condition = {
+        "sea": (0,1,1,1), 
+        # "coast": (0,38/255,1,1), 
+        "land": (1,0.5,0,1), 
+        # "shallow": (0,148/255,1,1)
+    }
+    condition_colors_lst = []
+    for pi, p in enumerate(icosa_usps_with_conditions):
+        condition = random.choice(list(color_by_condition.keys()))
+        elevation_conditions[pi] = condition
+        condition_colors_lst.append(color_by_condition[condition])
+
+    elevation_condition_ranges = {
+        "sea": (None, -100),
+        "land": (100, None),
+        "coast": (-15, 15),
+        "shallow": (-5, 0),
     }
     data_points = icosa_usps_with_data  # can try doing even more points inside this, e.g. get conditions for only 6 iterations but generate data on 7
 
     # noise generation subject to the condition functions
-    elevations = {p: 0 for p in data_points}
-    is_frozen = {p: False for p in data_points}  # just hacking something up, random walk each point until it meets its criteria
-    for i in range(10000):
-        p = random.choice(data_points)
-        if is_frozen[p]:
-            continue
-        elevations[p] += random.random()
-        if p in elevation_conditions:
-            condition_function = elevation_condition_functions[elevation_conditions[p]]
-            if condition_function(elevations[p]):
-                is_frozen[p] = True
+    df = pd.DataFrame(index=[p.point_number for p in data_points])
+    df["elevation"] = [0 for p in data_points]
+    df["xyz"] = [p.xyz() for p in data_points]
+    elevation_conditions_by_point = [elevation_conditions.get(p.point_number) for p in data_points]
+    elevation_ranges_by_point = [elevation_condition_ranges.get(condition) for condition in elevation_conditions_by_point]
+
+    df["min_elevation"] = pd.Series(data=[r[0] if r is not None else None for r in elevation_ranges_by_point], index=df.index)
+    df["max_elevation"] = pd.Series(data=[r[1] if r is not None else None for r in elevation_ranges_by_point], index=df.index)
+
+    n_patches = 100
+    df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches)
+    elevations = {p: df.loc[p.point_number, "elevation"] for p in data_points}
 
     # now get the data and interpolate to plot
     data_coords = [p.latlondeg() for p in data_points]
@@ -70,7 +87,7 @@ def test_generate_on_section_of_condition_data():
     n_lats = 100
     n_lons = 200
     pu.plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons, with_axis=True)
-    # plt.scatter(icosa_lons, icosa_lats)
+    plt.scatter(condition_lons, condition_lats, facecolors="none", edgecolors=condition_colors_lst)  # facecolors "none" and edgecolors defined is how you make open circle markers (so it's easier to see what value is at that point)
     plt.show()
 
 

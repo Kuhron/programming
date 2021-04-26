@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import pandas as pd
+import scipy
 import matplotlib.pyplot as plt
 import MapCoordinateMath as mcm
 
@@ -169,6 +170,7 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
     assert len(area_proportions) == n_patches
     if key_str not in df.columns:
         df[key_str] = np.zeros((len(df.index),))
+
     for i in range(n_patches):
         area_proportion = area_proportions[i]
         radius_3d = mcm.get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_sphere(area_proportion)
@@ -181,6 +183,8 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
         dxyzs = (xyzs - starting_xyz_array) ** 2
         distances = np.sqrt(dxyzs.sum(axis=1))
         in_region_mask = pd.Series(distances <= radius_3d)
+        in_region_mask_index = df.index[in_region_mask]  # translate from enumerated terms to df's index terms (e.g. have a bunch of random point numbers that aren't just 1..n)
+
         mu = 0 if mu_colname is None else df.loc[starting_p_i, mu_colname]
         sigma = 100 if sigma_colname is None else df.loc[starting_p_i, sigma_colname]
         expectation = 0 if expectation_colname is None else df.loc[starting_p_i, expectation_colname]  # what value should it tend toward at this point
@@ -189,8 +193,102 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
         discrepancy_from_expectation = df.loc[starting_p_i, key_str] - expectation
         mu += -1 * expectation_omega * discrepancy_from_expectation
         d_val = np.random.normal(mu, sigma)
-        df.loc[in_region_mask, key_str] += d_val
+        df.loc[in_region_mask_index, key_str] += d_val
+    
+    df = control_for_condition_ranges(df, key_str)
     return df
+
+
+def control_for_condition_ranges(df, key_str):
+    print(f"adjusting deviations in {key_str}")
+    min_val_colname = f"min_{key_str}"
+    max_val_colname = f"max_{key_str}"
+    if min_val_colname not in df.columns:
+        print(f"control_for_condition_ranges found no min for {key_str}")
+        df[min_val_colname] = np.array([np.nan for i in range(len(df.index))])
+    else:
+        df[min_val_colname] = df[min_val_colname].fillna(np.nan)  # make sure it's a datatype we can work with, not None
+    if max_val_colname not in df.columns:
+        print(f"control_for_condition_ranges found no max for {key_str}")
+        df[max_val_colname] = np.array([np.nan for i in range(len(df.index))])
+    else:
+        df[max_val_colname] = df[max_val_colname].fillna(np.nan)  # make sure it's a datatype we can work with, not None
+
+    # do some kind of smooth surface addition (e.g. cubic spline over the whole map) to match the conditions
+    deviation_from_min = df[key_str] - df[min_val_colname]
+    deviation_from_max = df[key_str] - df[max_val_colname]
+    has_min = ~pd.isna(df[min_val_colname])
+    has_max = ~pd.isna(df[max_val_colname])
+    has_min_and_max = has_min & has_max
+    has_min_only = has_min & ~has_max
+    has_max_only = has_max & ~has_min
+    has_neither_min_nor_max = ~has_min & ~has_max
+    assert has_min_only.sum() + has_max_only.sum() + has_min_and_max.sum() + has_neither_min_nor_max.sum() == len(df.index)
+    # print(f"{has_min_only.sum()} min only, {has_max_only.sum()} max only, {has_min_and_max.sum()} both min and max, {has_neither_min_nor_max.sum()} neither min nor max")
+
+    deviations = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
+    # if has min only, the deviation is negative if below it and 0 otherwise
+    deviations[has_min_only] = np.minimum(0, deviation_from_min)
+    # if has max only, the deviation is positive if above it and 0 otherwise
+    deviations[has_max_only] = np.maximum(0, deviation_from_max)
+    # if has both max and min, deviation is 0 if between them, otherwise the deviation from the closer one
+    deviations[has_min_and_max & (deviation_from_min <= 0)] = deviation_from_min
+    deviations[has_min_and_max & (deviation_from_max >= 0)] = deviation_from_max
+    deviations[has_min_and_max & (deviation_from_min >= 0) & (deviation_from_max <= 0)] = 0
+
+    if pd.isna(deviations).all():
+        # no change to be made
+        pass
+    else:
+        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, before adjustment"
+        non_na_deviations = deviations[~pd.isna(deviations)]
+        # interpolate in xyz coords, not latlon, so it won't think points near poles are far apart
+        # adjustment = get_interpolated_adjustment_for_condition_values(non_na_deviations, df)
+        adjustment = get_trivial_adjustment_for_condition_values(non_na_deviations, df)  # debug
+        assert np.isfinite(adjustment).all(), "adjustment not all finite"
+        df[key_str] += adjustment
+        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, after adjustment"
+
+    assert meets_conditions(df, key_str), "failed to adjust df correctly"
+    print(f"done adjusting deviations in {key_str}")
+    return df
+
+
+def meets_conditions(df, key_str):
+    min_val_colname = f"min_{key_str}"
+    max_val_colname = f"max_{key_str}"
+    x = df[key_str]
+    min_is_na = pd.isna(df[min_val_colname])
+    meets_min = min_is_na | (x >= df[min_val_colname])
+    max_is_na = pd.isna(df[max_val_colname])
+    meets_max = max_is_na | (x <= df[max_val_colname])
+    meets_both = meets_min & meets_max
+    return meets_both.all()
+
+
+def get_trivial_adjustment_for_condition_values(deviations, df):
+    # just adjust any point with a deviation by the negative of that value, and leave all others alone
+    adjustment = pd.Series(data=np.zeros((len(df.index),)), index=df.index)
+    adjustment[deviations.index] = -1 * deviations
+    return adjustment
+
+
+def get_adjustment_for_condition_values(deviations, df):
+    data_xyzs = df.loc[deviations.index, "xyz"]
+    data_xyzs = np.array([np.array(tup) for tup in data_xyzs])
+    assert data_xyzs.shape == (len(deviations.index), 3), data_xyzs.shape
+
+    target_point_index = [x for x in df.index if x not in deviations.index]  # let the points with deviation values be adjusted by exactly those values, interpolate adjustment for everything else
+    target_xyzs = np.array([np.array(tup) for tup in df.loc[target_point_index, "xyz"]])
+    data_values = deviations.array
+    # despite the name, scipy.griddata can interpolate from arbitrary unstructured data points to arbitrary unstructured target points
+    # cubic spline doesn't work for more than 2D space
+    interpolated = scipy.interpolate.griddata(points=data_xyzs, values=data_values, xi=target_xyzs, method="linear", fill_value=0)
+
+    interpolated = pd.Series(data=interpolated, index=target_point_index)
+    interpolated = pd.concat([interpolated, deviations])  # add back the actual deviation values for points that have them
+    adjustment = -1 * interpolated
+    return adjustment
 
 
 def add_random_data_sigmoid_decay_hills(df, key_str, n_hills, h_stretch_parameters=None, mu_colname=None, sigma_colname=None):
