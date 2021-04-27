@@ -231,7 +231,7 @@ if __name__ == "__main__":
 
     # homebrew so it will look at samples without padding, do each length as a separate batch or set of batches
     batches_by_length = get_batches_by_length(x_train, y_train)
-    for epoch in range(20):
+    for epoch in range(200):
         print("homebrew epoch", epoch)
         random.shuffle(batches_by_length)  # look at them in different order every time
         for sample_length, x_train_subset, y_train_subset in batches_by_length:
