@@ -90,6 +90,29 @@ def pad_word_vectors(word_vectors):
     return res
 
 
+def get_batches_by_length(x_train, y_train):
+    # for variable-length data
+    # return them in random order
+    print("getting batches by length")
+    res = []
+    indices_not_used = list(range(len(x_train)))
+    while len(indices_not_used) > 0:
+        chosen_sample_i = random.choice(indices_not_used)
+        chosen_x_len = len(x_train[chosen_sample_i])
+        x_train_subset_with_indices = [(i,x) for i, x in enumerate(x_train) if len(x) == chosen_x_len]
+        subset_indices = [i for i,x in x_train_subset_with_indices]
+        x_train_subset = [x for i,x in x_train_subset_with_indices]
+        y_train_subset = [y_train[i] for i in subset_indices]
+        indices_not_used = [i for i in indices_not_used if i not in subset_indices]
+        try:
+            arr = np.array(x_train_subset)
+        except:
+            raise  # I wrote it this way to indicate that I expect errors may occur but don't yet know what
+        res.append([chosen_x_len, x_train_subset, y_train_subset])
+    print("done getting batches by length")
+    return res
+
+
 def get_vector_from_syllable(cv):
     # I don't understand Keras Embedding and other stuff so I'm just gonna do this part myself
     c, v = cv
@@ -138,13 +161,15 @@ def get_binary_vector_from_int(n, is_vowel):
 
 
 def split_into_training_and_testing(X, Y, test_proportion):
+    print("splitting into training and testing data")
     n_test = round(test_proportion * len(X))
     test_indices = random.sample(list(range(len(X))), n_test)
     train_indices = [i for i in range(len(X)) if i not in test_indices]
-    x_train = np.array([X[i] for i in train_indices])
-    x_test = np.array([X[i] for i in test_indices])
-    y_train = np.array([Y[i] for i in train_indices])
-    y_test = np.array([Y[i] for i in test_indices])
+    x_train = [X[i] for i in train_indices]
+    x_test = [X[i] for i in test_indices]
+    y_train = [Y[i] for i in train_indices]
+    y_test = [Y[i] for i in test_indices]
+    print("done splitting into training and testing data")
     return x_train, x_test, y_train, y_test
 
 
@@ -161,10 +186,16 @@ def show_example_predictions(model, n_samples):
     word_vectors, class_vectors = convert_words_and_classes_to_training_data(words, classes)
     predictions = model.predict(word_vectors)
 
+    n_correct = 0
     for w, c, w_vec, c_vec, prediction in zip(words, classes, word_vectors, class_vectors, predictions):
         prediction_class = convert_class_vector_to_class(prediction)
-        correct = "correct" if prediction_class == c else "wrong"
+        if prediction_class == c:
+            correct = "correct"
+            n_correct += 1
+        else:
+            correct = "wrong"
         print(f"input word: {w} of class {c}; model predicted class {prediction_class}, which is {correct}")
+    print(f"model got {n_correct}/{n_samples} correct ({100*n_correct/n_samples}%)")
 
 
 if __name__ == "__main__":
@@ -189,15 +220,24 @@ if __name__ == "__main__":
     x_train, x_test, y_train, y_test = split_into_training_and_testing(X, Y, test_proportion=0.1)
 
     # reserve some training data as validation data during training epochs, to check for overfit (not the same as testing data)
-    n_validation_samples = round(len(x_train) * 0.1)
-    x_val = x_train[-n_validation_samples:]
-    y_val = y_train[-n_validation_samples:]
-    x_train = x_train[:-n_validation_samples]
-    y_train = y_train[:-n_validation_samples]
+    # n_validation_samples = round(len(x_train) * 0.1)
+    # x_val = x_train[-n_validation_samples:]
+    # y_val = y_train[-n_validation_samples:]
+    # x_train = x_train[:-n_validation_samples]
+    # y_train = y_train[:-n_validation_samples]
 
     # for when the data is padded to same length per sample (but I fear this is skewing the results because the reported accuracy on the test data does not match the accuracy measured on randomly generated new data)
     # model.fit(x_train, y_train, epochs=20, batch_size=50, shuffle=True, validation_data=(x_val, y_val))
+
+    # homebrew so it will look at samples without padding, do each length as a separate batch or set of batches
+    batches_by_length = get_batches_by_length(x_train, y_train)
+    for epoch in range(20):
+        print("homebrew epoch", epoch)
+        random.shuffle(batches_by_length)  # look at them in different order every time
+        for sample_length, x_train_subset, y_train_subset in batches_by_length:
+            model.fit(x_train_subset, y_train_subset, batch_size=50, shuffle=True)
+    print("done training homebrew")
     
-    report_accuracy(model, x_test, y_test)
+    # report_accuracy(model, x_test, y_test)  # better for when data is padded for constant sample length
 
     show_example_predictions(model, n_samples=1000)
