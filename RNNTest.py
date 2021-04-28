@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import scipy
+from scipy import stats
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
@@ -240,6 +243,8 @@ def show_example_predictions(model, n_samples, padding=None, show_raw_output_vec
 
     n_correct = 0
     predicted_classes = []
+    confidences_when_correct = []
+    confidences_when_wrong = []
     for w, c, w_vec, c_vec, prediction in zip(words, classes, word_vectors, class_vectors, predictions):
         prediction_class, confidence = convert_class_vector_to_class(prediction)
         predicted_classes.append(prediction_class)
@@ -247,12 +252,16 @@ def show_example_predictions(model, n_samples, padding=None, show_raw_output_vec
         correct_str = "correct" if correct else "wrong"
         if correct:
             n_correct += 1
+            confidences_when_correct.append(confidence)
+        else:
+            confidences_when_wrong.append(confidence)
         s = f"input word: {w} of class {c}; model predicted class {prediction_class} ({100*confidence:.2f}% confident), which is {correct_str}"
         if show_raw_output_vector:
             s += f"; raw output vector: {prediction}"
         print(s)
     print(f"model got {n_correct}/{n_samples} correct ({100*n_correct/n_samples}%)")
     show_confusion_matrix(predicted_classes, classes)
+    show_confidence_plot(confidences_when_correct, confidences_when_wrong)
 
 
 def show_confusion_matrix(predicted, observed):
@@ -271,6 +280,20 @@ def show_confusion_matrix(predicted, observed):
         df[colname] = series
     print("\nconfusion matrix:")
     print(df)
+
+
+def show_confidence_plot(conf_correct, conf_wrong):
+    all_confidence_xs = np.linspace(0, 1, 1000)
+    add_kde_to_plot(conf_correct, all_confidence_xs, c="b", label="correct prediction")
+    add_kde_to_plot(conf_wrong, all_confidence_xs, c="r", label="incorrect prediction")
+    plt.title("confidence levels")
+    plt.show()
+
+
+def add_kde_to_plot(x, all_xs, **kwargs):
+    kde = stats.gaussian_kde(x)
+    # plt.hist(x, density=True, bins=100, alpha=0.3)
+    plt.plot(all_xs, kde(all_xs), **kwargs)
     
 
 
@@ -281,7 +304,7 @@ if __name__ == "__main__":
     timesteps_per_input = None  # variable length input sequences
     input_shape = (timesteps_per_input, input_dim)
 
-    X, Y, n_classes_possible = get_training_data(10000, padding="max")
+    X, Y, n_classes_possible = get_training_data(40000, padding="max")
     output_len = n_classes_possible
 
     input_layer = layers.Input(input_shape)
@@ -308,12 +331,12 @@ if __name__ == "__main__":
     y_train = y_train[:-n_validation_samples]
 
     # for when the data is padded to same length per sample (but I fear this is skewing the results because the reported accuracy on the test data does not match the accuracy measured on randomly generated new data)
-    epochs = 10
+    epochs = 3
     batch_size = 50
     model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=True, validation_data=(x_val, y_val))
     
     report_accuracy(model, x_test, y_test)
 
     show_raw_output_vector = False
-    show_example_predictions(model, n_samples=100, padding=padded_length, show_raw_output_vector=show_raw_output_vector)
+    show_example_predictions(model, n_samples=1000, padding=padded_length, show_raw_output_vector=show_raw_output_vector)
 
