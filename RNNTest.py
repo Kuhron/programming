@@ -184,7 +184,7 @@ if __name__ == "__main__":
     model.add(output_layer)
     model.compile(optimizer="adam", loss="mean_squared_error")
 
-    X, Y = get_training_data(100000, pad=False)
+    X, Y = get_training_data(10000, pad=True)
 
     x_train, x_test, y_train, y_test = split_into_training_and_testing(X, Y, test_proportion=0.1)
 
@@ -196,8 +196,8 @@ if __name__ == "__main__":
     y_train = y_train[:-n_validation_samples]
 
     # for when the data is padded to same length per sample (but I fear this is skewing the results because the reported accuracy on the test data does not match the accuracy measured on randomly generated new data)
-    # model.fit(x_train, y_train, epochs=20, batch_size=50, shuffle=True, validation_data=(x_val, y_val))
+    model.fit(x_train, y_train, epochs=20, batch_size=50, shuffle=True, validation_data=(x_val, y_val))
     
     report_accuracy(model, x_test, y_test)
 
-    show_example_predictions(model, n_samples=1000)
+    show_example_predictions(model, n_samples=100)
