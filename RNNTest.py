@@ -132,8 +132,8 @@ def get_word_vector(w):
 def get_classification(word):
     # return get_classification_unique_vowel_count(word)  # learnable 100%
     # return get_classification_custom_segments_count(word, {"a", "m", "k"})  # learnable 98%
-    # return get_classification_first_and_last_consonant_are_same(word)
-    return get_classification_number_of_places_of_articulation(word)
+    return get_classification_first_and_last_consonant_are_same(word)
+    # return get_classification_number_of_places_of_articulation(word)
 
 
 def get_class_vector(c, n_classes):
@@ -284,8 +284,10 @@ def show_confusion_matrix(predicted, observed):
 
 def show_confidence_plot(conf_correct, conf_wrong):
     all_confidence_xs = np.linspace(0, 1, 1000)
-    add_kde_to_plot(conf_correct, all_confidence_xs, c="b", label="correct prediction")
-    add_kde_to_plot(conf_wrong, all_confidence_xs, c="r", label="incorrect prediction")
+    if len(conf_correct) > 1:
+        add_kde_to_plot(conf_correct, all_confidence_xs, c="b", label="correct prediction")
+    if len(conf_wrong) > 1:
+        add_kde_to_plot(conf_wrong, all_confidence_xs, c="r", label="incorrect prediction")
     plt.title("confidence levels")
     plt.show()
 
@@ -331,12 +333,12 @@ if __name__ == "__main__":
     y_train = y_train[:-n_validation_samples]
 
     # for when the data is padded to same length per sample (but I fear this is skewing the results because the reported accuracy on the test data does not match the accuracy measured on randomly generated new data)
-    epochs = 3
+    epochs = 4
     batch_size = 50
     model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=True, validation_data=(x_val, y_val))
     
     report_accuracy(model, x_test, y_test)
 
-    show_raw_output_vector = False
-    show_example_predictions(model, n_samples=1000, padding=padded_length, show_raw_output_vector=show_raw_output_vector)
+    show_raw_output_vector = True
+    show_example_predictions(model, n_samples=100, padding=padded_length, show_raw_output_vector=show_raw_output_vector)
 
