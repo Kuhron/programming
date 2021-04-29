@@ -198,6 +198,17 @@ def show_example_predictions(model, n_samples):
     print(f"model got {n_correct}/{n_samples} correct ({100*n_correct/n_samples}%)")
 
 
+def fit_model_homebrew_length_batching(x_train, y_train, model):
+    # homebrew so it will look at samples without padding, do each length as a separate batch or set of batches
+    batches_by_length = get_batches_by_length(x_train, y_train)
+    for epoch in range(200):
+        print("homebrew epoch", epoch)
+        random.shuffle(batches_by_length)  # look at them in different order every time
+        for sample_length, x_train_subset, y_train_subset in batches_by_length:
+            model.fit(x_train_subset, y_train_subset, batch_size=50, shuffle=True)
+    print("done training homebrew")
+
+
 if __name__ == "__main__":
     input_dim = CONSONANT_BITS + VOWEL_BITS  # length of vector at each time step
     timesteps_per_input = None  # variable length input sequences
@@ -229,14 +240,8 @@ if __name__ == "__main__":
     # for when the data is padded to same length per sample (but I fear this is skewing the results because the reported accuracy on the test data does not match the accuracy measured on randomly generated new data)
     # model.fit(x_train, y_train, epochs=20, batch_size=50, shuffle=True, validation_data=(x_val, y_val))
 
-    # homebrew so it will look at samples without padding, do each length as a separate batch or set of batches
-    batches_by_length = get_batches_by_length(x_train, y_train)
-    for epoch in range(200):
-        print("homebrew epoch", epoch)
-        random.shuffle(batches_by_length)  # look at them in different order every time
-        for sample_length, x_train_subset, y_train_subset in batches_by_length:
-            model.fit(x_train_subset, y_train_subset, batch_size=50, shuffle=True)
-    print("done training homebrew")
+
+    fit_model_homebrew_length_batching(x_train, y_train, model)
     
     # report_accuracy(model, x_test, y_test)  # better for when data is padded for constant sample length
 
