@@ -101,6 +101,29 @@ def pad_word_vectors(word_vectors, padding):
     return res
 
 
+def get_batches_by_length(x_train, y_train):
+    # for variable-length data
+    # return them in random order
+    print("getting batches by length")
+    res = []
+    indices_not_used = list(range(len(x_train)))
+    while len(indices_not_used) > 0:
+        chosen_sample_i = random.choice(indices_not_used)
+        chosen_x_len = len(x_train[chosen_sample_i])
+        x_train_subset_with_indices = [(i,x) for i, x in enumerate(x_train) if len(x) == chosen_x_len]
+        subset_indices = [i for i,x in x_train_subset_with_indices]
+        x_train_subset = [x for i,x in x_train_subset_with_indices]
+        y_train_subset = [y_train[i] for i in subset_indices]
+        indices_not_used = [i for i in indices_not_used if i not in subset_indices]
+        try:
+            arr = np.array(x_train_subset)
+        except:
+            raise  # I wrote it this way to indicate that I expect errors may occur but don't yet know what
+        res.append([chosen_x_len, x_train_subset, y_train_subset])
+    print("done getting batches by length")
+    return res
+
+
 def get_vector_from_syllable(cv):
     # I don't understand Keras Embedding and other stuff so I'm just gonna do this part myself
     c, v = cv
@@ -208,13 +231,15 @@ def get_binary_vector_from_int(n, is_vowel):
 
 
 def split_into_training_and_testing(X, Y, test_proportion):
+    print("splitting into training and testing data")
     n_test = round(test_proportion * len(X))
     test_indices = random.sample(list(range(len(X))), n_test)
     train_indices = [i for i in range(len(X)) if i not in test_indices]
-    x_train = np.array([X[i] for i in train_indices])
-    x_test = np.array([X[i] for i in test_indices])
-    y_train = np.array([Y[i] for i in train_indices])
-    y_test = np.array([Y[i] for i in test_indices])
+    x_train = [X[i] for i in train_indices]
+    x_test = [X[i] for i in test_indices]
+    y_train = [Y[i] for i in train_indices]
+    y_test = [Y[i] for i in test_indices]
+    print("done splitting into training and testing data")
     return x_train, x_test, y_train, y_test
 
 
@@ -298,6 +323,16 @@ def add_kde_to_plot(x, all_xs, **kwargs):
     plt.plot(all_xs, kde(all_xs), **kwargs)
     
 
+def fit_model_homebrew_length_batching(x_train, y_train, model):
+    # homebrew so it will look at samples without padding, do each length as a separate batch or set of batches
+    batches_by_length = get_batches_by_length(x_train, y_train)
+    for epoch in range(200):
+        print("homebrew epoch", epoch)
+        random.shuffle(batches_by_length)  # look at them in different order every time
+        for sample_length, x_train_subset, y_train_subset in batches_by_length:
+            model.fit(x_train_subset, y_train_subset, batch_size=50, shuffle=True)
+    print("done training homebrew")
+
 
 if __name__ == "__main__":
     show_example_words_and_classes(n_samples=100)
@@ -336,8 +371,10 @@ if __name__ == "__main__":
     epochs = 4
     batch_size = 50
     model.fit(x_train, y_train, epochs=epochs, batch_size=batch_size, shuffle=True, validation_data=(x_val, y_val))
+
+    # fit_model_homebrew_length_batching(x_train, y_train, model)
     
-    report_accuracy(model, x_test, y_test)
+    # report_accuracy(model, x_test, y_test)  # better for when data is padded for constant sample length
 
     show_raw_output_vector = True
     show_example_predictions(model, n_samples=100, padding=padded_length, show_raw_output_vector=show_raw_output_vector)

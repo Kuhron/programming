@@ -124,6 +124,9 @@ alias sbrc="source ~/.bashrc"
 function gbrc() { 
   grep -i "$1" ~/.bashrc 
 }
+function pygrep() {
+  grep --include \*.py $@
+}
 # alias python2="/usr/bin/python"
 alias python="python3.8"
 # alias pip2="pip"
