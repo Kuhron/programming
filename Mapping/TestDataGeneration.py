@@ -34,11 +34,11 @@ def test_generate_whole_planet():
 def test_generate_on_section_of_condition_data():
     min_lat, max_lat = -30, 30
     min_lon, max_lon = -60, 60
-    condition_iterations = 4
+    condition_iterations = 3
     data_iterations = 6
     n_patches = 1000
     control_conditions_every_n_steps = 100
-    control_rate = 0.1  # how much of the adjustment to do in intermediate condition-controlling, lower value should hopefully be more "nudgy" rather than being overly forceful in enforcing conditions
+    control_rate = 0.2  # how much of the adjustment to do in intermediate condition-controlling, lower value should hopefully be more "nudgy" rather than being overly forceful in enforcing conditions
     infer_condition = True
     n_lats_to_plot = 500
     n_lons_to_plot = 1000

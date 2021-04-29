@@ -157,7 +157,7 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
 
     min_value = Z[np.isfinite(Z)].min()
     max_value = Z[np.isfinite(Z)].max()
-    contourf_levels = get_contour_levels(min_value, max_value, prefer_positive=False, n_sea_contours=20, n_land_contours=100)
+    contourf_levels = get_contour_levels(min_value, max_value, prefer_positive=True, n_sea_contours=20, n_land_contours=100)
     cmap = get_land_and_sea_colormap()
     im = ax.contourf(Z, origin="lower", extent=[min_lon, max_lon, min_lat, max_lat], levels=contourf_levels, cmap=cmap)  # imshow extent is left,right,bottom,top
     plt.xlim(min_lon, max_lon)
