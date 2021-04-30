@@ -188,28 +188,32 @@ def create_combined_gan(generator_model, discriminator_model):
 
 def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size):
     n_samples = batch_size  # for the various generation functions
+    n_batches = len(names) // batch_size
     for epoch_i in range(n_epochs):
-        # just one "batch" per epoch (I'm not actually partitioning the whole dataset, just grabbing random sample every time)
         print(f"GAN epoch {epoch_i}/{n_epochs}")
-        X_real, Y_real = generate_real_samples(n_samples, names, chars)
-        # print(f"XYreal {X_real.shape}, {Y_real.shape}")
-        name_timesteps = X_real.shape[1]
-        X_fake, Y_fake = generate_fake_samples_from_latent_points(generator_model, n_samples, chars)
-        # print(f"XYfake {X_fake.shape}, {Y_fake.shape}")
-        X = np.concatenate([X_real, X_fake])
-        Y = np.concatenate([Y_real, Y_fake])
-        X, Y = shuffle_iterables_same_order([X, Y])
+        for batch_i in range(n_batches):
+            X_real, Y_real = generate_real_samples(n_samples, names, chars)
+            # print(f"XYreal {X_real.shape}, {Y_real.shape}")
+            name_timesteps = X_real.shape[1]
+            X_fake, Y_fake = generate_fake_samples_from_latent_points(generator_model, n_samples, chars)
+            # print(f"XYfake {X_fake.shape}, {Y_fake.shape}")
+            # X = np.concatenate([X_real, X_fake])
+            # Y = np.concatenate([Y_real, Y_fake])
+            # X, Y = shuffle_iterables_same_order([X, Y])
 
-        discriminator_loss = discriminator_model.train_on_batch(X, Y)
+            # try training discriminator on real and fake separately; somehow it seems that combining them into a batch can cause failure to converge: https://machinelearningmastery.com/practical-guide-to-gan-failure-modes/
+            discriminator_loss_real = discriminator_model.train_on_batch(X_real, Y_real)
+            discriminator_loss_fake = discriminator_model.train_on_batch(X_fake, Y_fake)
 
-        X_gan = generate_latent_points(generator_model, n_samples, chars)
-        # print(f"X_gan {X_gan.shape}")
-        Y_gan = np.array([1 for i in range(n_samples)])
-        # tutorial says: "update the generator via the discriminator's error"  # oh, I see. You want the generator to take random noise inputs and try to create outputs of 1 in the discriminator (i.e., fool it)
-        generator_loss = gan_model.train_on_batch(X_gan, Y_gan)
+            X_gan = generate_latent_points(generator_model, n_samples, chars)
+            # print(f"X_gan {X_gan.shape}")
+            Y_gan = np.array([1 for i in range(n_samples)])
+            # tutorial says: "update the generator via the discriminator's error"  # oh, I see. You want the generator to take random noise inputs and try to create outputs of 1 in the discriminator (i.e., fool it)
+            generator_loss = gan_model.train_on_batch(X_gan, Y_gan)
 
-        print(f"discriminator loss = {discriminator_loss}; generator loss = {generator_loss}")
-        if epoch_i % 10 == 0:
+            print(f"discriminator loss real = {discriminator_loss_real:.4f}; fake = {discriminator_loss_fake:.4f}; generator loss = {generator_loss:.4f}", end="\r")
+        print()  # so the next line doesn't overwrite the last loss line which ends with \r
+        if discriminator_loss_fake > 0.5 or epoch_i % 5 == 0:
             show_novel_names(generator_model, n_novel_names=10)
 
 
@@ -241,7 +245,7 @@ if __name__ == "__main__":
     generator_model.add(generator_input_layer)  # add one-by-one for debugging purposes
     generator_model.add(generator_simple_rnn)
     generator_model.add(generator_output_layer)
-    generator_optimizer = keras.optimizers.Adam(learning_rate=1e-5)
+    generator_optimizer = keras.optimizers.Adam(learning_rate=1e-4)
     generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
 
     # discriminator
@@ -257,13 +261,13 @@ if __name__ == "__main__":
     discriminator_model.add(discriminator_input_layer)  # add one-by-one for debugging purposes
     discriminator_model.add(discriminator_simple_rnn)
     discriminator_model.add(discriminator_output_layer)
-    discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-5)
+    discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-4)
     discriminator_model.compile(optimizer=discriminator_optimizer, loss="mean_squared_error")
 
     # train_discriminator_initial(discriminator_model, names, chars)
     gan_model = create_combined_gan(generator_model, discriminator_model)
     n_epochs = 10000
-    batch_size = 1000
+    batch_size = 100
     train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size)
 
     # show some novel generated data from the generator model
