@@ -1,5 +1,9 @@
 # try making GAN architecture with RNNs on the names that I've generated with NameMaker Flask app
 
+from silence_tensorflow import silence_tensorflow
+silence_tensorflow()  # these warnings are super annoying and useless
+import tensorflow as tf
+
 import keras
 from keras import layers
 import numpy as np
@@ -9,10 +13,13 @@ import random
 
 
 
-def get_names(names_fp):
-    with open(names_fp) as f:
-        lines = f.readlines()
-    names = [line.split(" : ")[1] for line in lines]
+def get_names(names_fps):
+    names = []
+    for names_fp in names_fps:
+        with open(names_fp) as f:
+            lines = f.readlines()
+        this_file_names = [line.split(" : ")[1] for line in lines]
+        names += this_file_names
     return names
 
 
@@ -23,9 +30,10 @@ def get_chars_from_names(names):
     return sorted(chars)
 
 
-def pad_name(name, desired_len):
-    # pad with trailing spaces
-    return name.ljust(desired_len, " ")
+def pad_name(name, desired_len, pad_char):
+    # pad with trailing chars that aren't in the input
+    assert pad_char not in name
+    return name.ljust(desired_len, pad_char)
 
 
 def encode_name(name, chars):
@@ -37,7 +45,10 @@ def encode_name(name, chars):
 
 
 def encode_char(c, chars):
-    return [int(c2 == c) for c2 in chars]
+    res = [int(c2 == c) for c2 in chars]
+    if c not in chars:
+        assert all(x == 0 for x in res)  # for padding char, want to give arr of all zero so Masking layer can recognize it as invalid
+    return res
 
 
 def get_real_names(n, names, chars):
@@ -62,19 +73,19 @@ def get_random_fake_names(n, name_len, chars):
     return np.array(res), res_strs
 
 
-def get_single_random_fake_name(name_len, chars):
+def get_single_random_fake_name(max_name_len, chars):
     # using random char selection, NOT using the generator network
     res = []
     res_str = ""
-    this_name_len = random.randint(name_len//4, name_len)
-    for i in range(name_len):
-        char_i = random.randrange(len(chars)) if i < this_name_len else chars.index(" ")  # make it look more real by padding trailing spaces
+    this_name_len = random.randint(max_name_len//4, max_name_len)
+    for i in range(this_name_len):
+        char_i = random.randrange(len(chars))
         char_vec = [int(j == char_i) for j in range(len(chars))]
         res.append(char_vec)
         res_str += chars[char_i]
     # print("got random fake name: {} (len {})".format(res_str, len(res_str)))
-    assert len(res_str) == name_len
-    assert len(res) == name_len
+    assert len(res_str) == this_name_len
+    assert len(res) == this_name_len
     return np.array(res), res_str
 
 
@@ -186,17 +197,25 @@ def create_combined_gan(generator_model, discriminator_model):
     return model
 
 
-def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size):
+def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, plot_loss=False):
     n_samples = batch_size  # for the various generation functions
     n_batches = len(names) // batch_size
+
+    if plot_loss:
+        discriminator_loss_real_history = []
+        discriminator_loss_fake_history = []
+        generator_loss_history = []
+        plt.ion()
+        window_length = 1000  # for plotting losses
+
     for epoch_i in range(n_epochs):
         print(f"GAN epoch {epoch_i}/{n_epochs}")
         for batch_i in range(n_batches):
             X_real, Y_real = generate_real_samples(n_samples, names, chars)
-            # print(f"XYreal {X_real.shape}, {Y_real.shape}")
+            print(f"XYreal {X_real.shape}, {Y_real.shape}")
             name_timesteps = X_real.shape[1]
             X_fake, Y_fake = generate_fake_samples_from_latent_points(generator_model, n_samples, chars)
-            # print(f"XYfake {X_fake.shape}, {Y_fake.shape}")
+            print(f"XYfake {X_fake.shape}, {Y_fake.shape}")
             # X = np.concatenate([X_real, X_fake])
             # Y = np.concatenate([Y_real, Y_fake])
             # X, Y = shuffle_iterables_same_order([X, Y])
@@ -206,15 +225,33 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             discriminator_loss_fake = discriminator_model.train_on_batch(X_fake, Y_fake)
 
             X_gan = generate_latent_points(generator_model, n_samples, chars)
-            # print(f"X_gan {X_gan.shape}")
+            print(f"X_gan {X_gan.shape}")
             Y_gan = np.array([1 for i in range(n_samples)])
             # tutorial says: "update the generator via the discriminator's error"  # oh, I see. You want the generator to take random noise inputs and try to create outputs of 1 in the discriminator (i.e., fool it)
             generator_loss = gan_model.train_on_batch(X_gan, Y_gan)
 
             print(f"discriminator loss real = {discriminator_loss_real:.4f}; fake = {discriminator_loss_fake:.4f}; generator loss = {generator_loss:.4f}", end="\r")
+            if plot_loss:
+                discriminator_loss_real_history.append(discriminator_loss_real)
+                discriminator_loss_fake_history.append(discriminator_loss_fake)
+                generator_loss_history.append(generator_loss)
+
+        if plot_loss:
+            discriminator_loss_real_history = discriminator_loss_real_history[-window_length:]
+            discriminator_loss_fake_history = discriminator_loss_fake_history[-window_length:]
+            generator_loss_history = generator_loss_history[-window_length:]
+    
+            plt.gcf().clear()
+            plt.plot(discriminator_loss_real_history, c="b")
+            plt.plot(discriminator_loss_fake_history, c="r")
+            plt.plot(generator_loss_history, c="y")
+            plt.draw()
+            plt.pause(0.01)
+
         print()  # so the next line doesn't overwrite the last loss line which ends with \r
         if True: # discriminator_loss_fake > 0.5 or epoch_i % 5 == 0:
             show_novel_names(generator_model, n_novel_names=10)
+    plt.ioff()
 
 
 def show_novel_names(generator_model, n_novel_names):
@@ -225,50 +262,61 @@ def show_novel_names(generator_model, n_novel_names):
 
 
 if __name__ == "__main__":
-    names_fp = "/home/wesley/Desktop/Construction/NameMakerRatings-2.txt"
-    names = get_names(names_fp)
+    names_fps = [
+        # "/home/wesley/Desktop/Construction/NameMakerRatings.txt",
+        "/home/wesley/Desktop/Construction/NameMakerRatings-2.txt",
+    ]
+    names = get_names(names_fps)
     chars = get_chars_from_names(names)
+    n_chars = len(chars)
+    pad_char = "_"
+    assert pad_char not in chars
 
     padded_name_len = max(len(name) for name in names)
-    names = [pad_name(name, padded_name_len) for name in names]
+    n_timesteps = padded_name_len
+    names = [pad_name(name, padded_name_len, pad_char) for name in names]
 
     # generator
     generator_input_vector_len = 100  # idk, something random
-    generator_input_shape = (padded_name_len, generator_input_vector_len)
+    generator_input_shape = (n_timesteps, generator_input_vector_len)
     generator_output_vector_len = len(chars)
 
     generator_input_layer = layers.Input(generator_input_shape, name="generator_input")
-    generator_simple_rnn = layers.SimpleRNN(12, activation="relu", name="generator_rnn", return_sequences=True)
+    generator_recurrent = layers.LSTM(64, activation="relu", name="generator_rnn", return_sequences=True)
     generator_output_layer = layers.Dense(generator_output_vector_len, activation="sigmoid", name="generator_output")
 
     generator_model = keras.Sequential(name="generator")
     generator_model.add(generator_input_layer)  # add one-by-one for debugging purposes
-    generator_model.add(generator_simple_rnn)
+    generator_model.add(generator_recurrent)
     generator_model.add(generator_output_layer)
     generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
     generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
 
     # discriminator
-    discriminator_input_vector_len = len(chars)
-    discriminator_input_shape = (padded_name_len, discriminator_input_vector_len)
+    discriminator_input_vector_len = n_chars
+    discriminator_input_shape = (n_timesteps, discriminator_input_vector_len)
     discriminator_output_vector_len = 1  # real/fake
 
-    discriminator_input_layer = layers.Input(discriminator_input_shape, name="discriminator_input")
-    discriminator_simple_rnn = layers.SimpleRNN(12, activation="relu", name="discriminator_rnn", return_sequences=True)
+    # discriminator_input_layer = layers.Input(shape=discriminator_input_shape, name="discriminator_input")
+    discriminator_input_layer = layers.Masking(mask_value=0, input_shape=discriminator_input_shape, name="discriminator_input_with_masking")
+    # Masking should block it from paying attention to trailing chars after variable length input; if all cells in the input at a certain time step are equal to the mask value, then it will be ignored for that timestep (so make them all 0, in contrast to normal timesteps which have one-hot character encoding)
+    discriminator_recurrent = layers.LSTM(64, activation="relu", name="discriminator_rnn", return_sequences=True)
     discriminator_output_layer = layers.Dense(discriminator_output_vector_len, activation="sigmoid", name="discriminator_output")
 
     discriminator_model = keras.Sequential(name="discriminator")
     discriminator_model.add(discriminator_input_layer)  # add one-by-one for debugging purposes
-    discriminator_model.add(discriminator_simple_rnn)
+    # discriminator_model.add(discriminator_masking)
+    discriminator_model.add(discriminator_recurrent)
     discriminator_model.add(discriminator_output_layer)
-    discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-4)
+    discriminator_optimizer = keras.optimizers.Adam(learning_rate=3e-4)
     discriminator_model.compile(optimizer=discriminator_optimizer, loss="mean_squared_error")
 
     # train_discriminator_initial(discriminator_model, names, chars)
     gan_model = create_combined_gan(generator_model, discriminator_model)
     n_epochs = 10000
     batch_size = 100
-    train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size)
+    plot_loss = False
+    train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, plot_loss=plot_loss)
 
     # show some novel generated data from the generator model
     show_novel_names(generator_model, 1000)
