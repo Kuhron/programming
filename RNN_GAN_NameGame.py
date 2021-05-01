@@ -213,7 +213,7 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
 
             print(f"discriminator loss real = {discriminator_loss_real:.4f}; fake = {discriminator_loss_fake:.4f}; generator loss = {generator_loss:.4f}", end="\r")
         print()  # so the next line doesn't overwrite the last loss line which ends with \r
-        if discriminator_loss_fake > 0.5 or epoch_i % 5 == 0:
+        if True: # discriminator_loss_fake > 0.5 or epoch_i % 5 == 0:
             show_novel_names(generator_model, n_novel_names=10)
 
 
@@ -238,14 +238,14 @@ if __name__ == "__main__":
     generator_output_vector_len = len(chars)
 
     generator_input_layer = layers.Input(generator_input_shape, name="generator_input")
-    generator_simple_rnn = layers.SimpleRNN(128, activation="relu", name="generator_rnn", return_sequences=True)
+    generator_simple_rnn = layers.SimpleRNN(12, activation="relu", name="generator_rnn", return_sequences=True)
     generator_output_layer = layers.Dense(generator_output_vector_len, activation="sigmoid", name="generator_output")
 
     generator_model = keras.Sequential(name="generator")
     generator_model.add(generator_input_layer)  # add one-by-one for debugging purposes
     generator_model.add(generator_simple_rnn)
     generator_model.add(generator_output_layer)
-    generator_optimizer = keras.optimizers.Adam(learning_rate=1e-4)
+    generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
     generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
 
     # discriminator
@@ -254,7 +254,7 @@ if __name__ == "__main__":
     discriminator_output_vector_len = 1  # real/fake
 
     discriminator_input_layer = layers.Input(discriminator_input_shape, name="discriminator_input")
-    discriminator_simple_rnn = layers.SimpleRNN(128, activation="relu", name="discriminator_rnn", return_sequences=True)
+    discriminator_simple_rnn = layers.SimpleRNN(12, activation="relu", name="discriminator_rnn", return_sequences=True)
     discriminator_output_layer = layers.Dense(discriminator_output_vector_len, activation="sigmoid", name="discriminator_output")
 
     discriminator_model = keras.Sequential(name="discriminator")
