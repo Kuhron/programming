@@ -203,7 +203,7 @@ def conjugate_number(n, CONSONANTS, VOWELS, CONSTRAINTS):
 
     for prefix in prefixes:
         for suffix in suffixes:
-            this_n = int(prefix + str(n) + suffix)
+            this_n = prefix + str(n) + suffix  # DON'T cast to int because will lose leading zeros
             this_n_display = f"{prefix}-{n}-{suffix}"
             print_pronunciation(this_n, this_n_display, CONSONANTS, VOWELS, CONSTRAINTS)
 
@@ -461,10 +461,11 @@ if __name__ == "__main__":
     ]
 
     # random.shuffle(CONSTRAINTS)
-    n = random.randint(0, 9999)
+    n = random.randrange(10, 10000)
+    n = str(n)[1:]  # so leading zeros may also be represented
     conjugate_number(n, CONSONANTS, VOWELS, CONSTRAINTS)
 
-    for n in range(1000):
-        print_pronunciation(n, str(n), CONSONANTS, VOWELS, CONSTRAINTS)
+    # for n in range(1000):
+    #     print_pronunciation(n, str(n), CONSONANTS, VOWELS, CONSTRAINTS)
 
 
