@@ -2,6 +2,7 @@ import numpy as np
 import math
 import random
 import matplotlib.pyplot as plt
+from scipy.spatial import KDTree
 
 
 class Exemplar:
@@ -81,17 +82,22 @@ class DistortionFunctionSeries:
 
 
 class Mouth:
-    def __init__(self, f1_distortion_func, f2_distortion_func, speech_error_stdev):
+    def __init__(self, f1_distortion_func, f2_distortion_func, speech_error_stdev, name=None):
+        self.name = name
         self.f1_distortion_func = f1_distortion_func
         self.f2_distortion_func = f2_distortion_func
         self.speech_error_stdev = speech_error_stdev  # this should be relatively small e.g. 0.1 or less
-        self.sound_to_exemplar_articulations = []
+        self.exemplars = []
+        self.kdtree = None
 
     @staticmethod
-    def random(anatomical_stdev, speech_error_stdev):
+    def random(anatomical_stdev, speech_error_stdev, **kwargs):
         f1_distortion_func = DistortionFunctionSeries.random(anatomical_stdev)
         f2_distortion_func = DistortionFunctionSeries.random(anatomical_stdev)
-        return Mouth(f1_distortion_func, f2_distortion_func, speech_error_stdev)
+        return Mouth(f1_distortion_func, f2_distortion_func, speech_error_stdev, **kwargs)
+
+    def __repr__(self):
+        return self.name
 
     def convert_articulation_to_formants(self, arts):
         f1_x, f2_x = arts
@@ -109,7 +115,7 @@ class Mouth:
         pronunciation = (produced_f1, produced_f2)
         if commit_to_memory:
             exemplar = Exemplar(pronunciation, arts, meaning=None)
-            self.add_sound_articulation_exemplar(exemplar)
+            self.add_exemplar(exemplar)
         return pronunciation
 
     def add_speech_error(self, x):
@@ -147,45 +153,89 @@ class Mouth:
 
     def babble(self):
         for i in range(100):
-            production_target = np.random.uniform(0, 1, (2,))
-            heard_formants = self.pronounce(production_target)
-            exemplar = Exemplar(heard_formants, production_target, meaning=None)
-            self.add_sound_articulation_exemplar(exemplar)
-            production_discrepancy = np.linalg.norm(heard_formants - production_target)
+            articulation_target = np.random.uniform(0, 1, (2,))
+            heard_formants = self.pronounce(articulation_target)
+            exemplar = Exemplar(heard_formants, articulation_target, meaning=None)
+            self.add_exemplar(exemplar)
+            production_discrepancy = np.linalg.norm(heard_formants - articulation_target)
             # print(f"tried to produce {production_target}, got {heard_formants}, distance {production_discrepancy}")
 
-    def add_sound_articulation_exemplar(self, exemplar):
-        self.sound_to_exemplar_articulations.append(exemplar)
+    def get_random_pronunciation(self):
+        articulation_target = np.random.uniform(0, 1, (2,))
+        heard_formants = self.pronounce(articulation_target)
+        return heard_formants
+
+    def add_exemplar(self, exemplar):
+        self.invalidate_kdtree()
+        self.exemplars.append(exemplar)
         max_exemplars = 100  # of anything whatsoever
-        self.sound_to_exemplar_articulations = self.sound_to_exemplar_articulations[-max_exemplars:]
+        self.exemplars = self.exemplars[-max_exemplars:]
 
     def estimate_articulation_for_sound(self, heard_formants):
-        # get nearest neighbors from self.sound_to_exemplar_articulations
+        # get nearest neighbors from self.exemplars
         k_neighbors = 5
         nearest_neighbors = self.get_nearest_articulations_to_sound(heard_formants, k_neighbors)
         average_articulation = sum(np.array(x) for x in nearest_neighbors) / k_neighbors
         assert average_articulation.shape == (2,)
         return average_articulation
 
+    def invalidate_kdtree(self):
+        self.kdtree = None
+
+    def create_kdtree(self):
+        positions_in_sound_space = [x.sound for x in self.exemplars]
+        self.kdtree = KDTree(positions_in_sound_space)
+
+    def get_nearest_exemplars_to_sound(self, heard_formants, k_neighbors):
+        if self.kdtree is None:  # need to rebuild it because it was invalidated due to adding or removing exemplars
+            self.create_kdtree()
+        neighbor_distances, neighbor_indices = self.kdtree.query(heard_formants, k_neighbors)
+        exemplars = [self.exemplars[i] for i in neighbor_indices]
+        return exemplars
+
     def get_nearest_articulations_to_sound(self, heard_formants, k_neighbors):
-        candidates = [x.sound for x in self.sound_to_exemplar_articulations]
-        distances = {}
-        for c in candidates:
-            d = np.linalg.norm(np.array(heard_formants) - np.array(c))
-            distances[c] = d
-        ranked = sorted(distances.items(), key=lambda kv: kv[1], reverse=False)  # homebrew, going to be inefficient, use kdtree later if necessary
-        top_k = ranked[:k_neighbors]
-        neighbors = [tup[0] for tup in top_k]
-        return neighbors
+        exemplars = self.get_nearest_exemplars_to_sound(heard_formants, k_neighbors)
+        return [x.articulation for x in exemplars]
+
+    def pronounce_meaning(self, meaning, window_length):
+        exemplars = [x for x in self.exemplars if x.meaning == meaning]
+        exemplars = exemplars[-window_length:]  # only look at the most recent n exemplars with this meaning
+        if len(exemplars) == 0:
+            return self.get_random_pronunciation()
+        # pronunciations = [x.sound for x in exemplars]
+        # suppose that the speaker uses articulation examples rather than sound examples to pronounce the word again
+        articulations = [x.articulation for x in exemplars]
+        articulation_target = sum(articulations) / len(articulations)
+        return self.pronounce(articulation_target, commit_to_memory=True)
+
+    def predict_meaning_from_sound(self, sound):
+        k_neighbors = 5
+        nearest_neighbors = self.get_nearest_exemplars_to_sound(sound, k_neighbors)
+        meanings = [x.meaning for x in nearest_neighbors]
+        mode_meaning = max(meanings, key=meanings.count)
+        return mode_meaning
+
+    def plot_color_meanings_in_sound_space(self):
+        f1s = np.linspace(0, 1, 26)
+        f2s = np.linspace(0, 1, 26)
+        # assumes the meaning is a color string
+        for f1 in f1s:
+            # print(f1)
+            for f2 in f2s:
+                color = self.predict_meaning_from_sound((f1, f2))
+                if color is not None:
+                    plt.scatter(f1, f2, c=color)
+        plt.title(f"color meanings for {self.name}")
+        plt.show()
 
 
 def play_repeat_after_me_game(mouths):
     for i in range(1000):
         speaker_index = random.randrange(len(mouths))
         speaker = mouths[speaker_index]
-        production_target = np.random.uniform(0, 1, (2,))
-        pronunciation = speaker.pronounce(production_target)
-        print(f"target {production_target}, produced {pronunciation}")
+        articulation_target = np.random.uniform(0, 1, (2,))
+        pronunciation = speaker.pronounce(articulation_target)
+        print(f"target {articulation_target}, produced {pronunciation}")
         for m in mouths:
             estimated_articulation = m.estimate_articulation_for_sound(pronunciation)
             repetition = m.pronounce(estimated_articulation)
@@ -270,23 +320,74 @@ def plot_how_mouths_say_articulation(mouths):
     plt.show()
 
 
-def play_classification_game(mouths, n_steps):
+def compare_meaning_agreement(mouths, possible_meanings):
+    n_meanings = len(possible_meanings) + 1  # since None is a possible meaning
+    dispersions = []
+    for i in range(1000):
+        sound = np.random.uniform(0, 1, (2,))
+        meanings = [m.predict_meaning_from_sound(sound) for m in mouths]
+        dispersion = len(set(meanings))
+        dispersions.append(dispersion)
+    dispersions = np.array(dispersions)
+    average_dispersion = np.mean(dispersions)
+    consensuses = 1/dispersions
+    average_consensus = np.mean(consensuses)
+    print(f"average dispersion {average_dispersion}, average consensus {average_consensus}")
+
+
+def play_classification_game(mouths, n_steps, window_length, colors):
+    accuracies = {m.name: [] for m in mouths}
     for i in range(n_steps):
-        card_color = random.choice(["red", "yellow", "blue"])
+        if i % 100 == 0:
+            print(f"classification game step {i}/{n_steps}")
+        color = random.choice(colors)
+        speaker = random.choice(mouths)
+        # speaker must describe the color
+        pronunciation = speaker.pronounce_meaning(color, window_length)
+        for m in mouths:
+            predicted_color = m.predict_meaning_from_sound(pronunciation)
+            # print(f"{m} predicted {predicted_color} for {color}")
+            correct = int(predicted_color == color)
+            accuracies[m.name].append(correct)
+
+            # if it was correct, change nothing (it will reinforce itself by being a new exemplar)
+            # if it was incorrect, do what? I think it should be a self-reinforcing mechanism, right? since the new exemplars will help move the boundaries of the categories
+
+            articulation = m.estimate_articulation_for_sound(pronunciation)
+            exemplar = Exemplar(pronunciation, articulation, meaning=color)
+            m.add_exemplar(exemplar)
+        # print(f"{color} was pronounced as {pronunciation}")
+    # need to add prediction/learning
+
+    for m in mouths:
+        correctness_array = accuracies[m.name]
+        # cumsum = np.cumsum(correctness_array)
+        moving_window_n = 100
+        accuracy_proportions = np.convolve(correctness_array, np.ones(moving_window_n)/moving_window_n, mode='valid')
+        # accuracy_proportions = cumsum / (1+ np.arange(len(cumsum)))
+        plt.plot(accuracy_proportions, label=m.name)
+    chance_accuracy = 1/len(colors)
+    plt.plot(range(len(accuracy_proportions)), [chance_accuracy]*len(accuracy_proportions), c="k", label="monkey")
+    plt.legend()
+    plt.show()
+
+    for m in mouths:
+        m.plot_color_meanings_in_sound_space()
+
 
 
 if __name__ == "__main__":
-    anatomical_stdev = 0.05
-    speech_error_stdev = 0.05
+    anatomical_stdev = 0.1
+    speech_error_stdev = 0.1
     # observations:
     # - higher speech error leads to collapse to stable points (the four corners) even in absence of anatomical variation
     # - with forgetting of exemplar pronunciations, drift can occur even with no anatomical OR speech-error variation (happens in discrete jumps)
     # - small anatomical stdev and small speech error stdev (e.g. both 0.01) leads to slow drift, which can either converge or persist throughout
 
     n_mouths = 4
-    n_steps = 10000
-    window_length = 4
-    mouths = [Mouth.random(anatomical_stdev, speech_error_stdev) for i in range(n_mouths)]
+    n_steps = 1000
+    window_length = 10
+    mouths = [Mouth.random(anatomical_stdev, speech_error_stdev, name=f"M{i}") for i in range(n_mouths)]
     # m1.plot_distortions()
     # m1.plot_target_grid()
 
@@ -295,4 +396,8 @@ if __name__ == "__main__":
 
     # plot_how_mouths_say_articulation()
     # play_repeat_after_me_game(mouths)
-    play_iterated_repeat_after_me_game(mouths, n_steps, window_length, plot_ion=False)
+    # play_iterated_repeat_after_me_game(mouths, n_steps, window_length, plot_ion=False)
+    
+    colors = ["red", "orange", "yellow", "green", "blue"] #, "purple", "brown", "black", "white"]
+    play_classification_game(mouths, n_steps, window_length, colors)
+    compare_meaning_agreement(mouths, colors)
