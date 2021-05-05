@@ -337,13 +337,15 @@ def compare_meaning_agreement(mouths, possible_meanings):
 
 def play_classification_game(mouths, n_steps, window_length, colors):
     accuracies = {m.name: [] for m in mouths}
-    for i in range(n_steps):
-        if i % 100 == 0:
-            print(f"classification game step {i}/{n_steps}")
+    color_pronunciation_histories = {color: [] for color in colors}
+    for time_i in range(n_steps):
+        if time_i % 100 == 0:
+            print(f"classification game step {time_i}/{n_steps}")
         color = random.choice(colors)
         speaker = random.choice(mouths)
         # speaker must describe the color
         pronunciation = speaker.pronounce_meaning(color, window_length)
+        color_pronunciation_histories[color].append([time_i, pronunciation])
         for m in mouths:
             predicted_color = m.predict_meaning_from_sound(pronunciation)
             # print(f"{m} predicted {predicted_color} for {color}")
@@ -365,10 +367,23 @@ def play_classification_game(mouths, n_steps, window_length, colors):
         moving_window_n = 100
         accuracy_proportions = np.convolve(correctness_array, np.ones(moving_window_n)/moving_window_n, mode='valid')
         # accuracy_proportions = cumsum / (1+ np.arange(len(cumsum)))
-        plt.plot(accuracy_proportions, label=m.name)
+        plt.plot(accuracy_proportions, label=m.name, alpha=0.5)
     chance_accuracy = 1/len(colors)
     plt.plot(range(len(accuracy_proportions)), [chance_accuracy]*len(accuracy_proportions), c="k", label="monkey")
     plt.legend()
+    plt.title("accuracies in color guessing")
+    plt.show()
+
+    for color_i, color in enumerate(colors):
+        plt.subplot(len(colors), 1, color_i+1)
+        history = color_pronunciation_histories[color]
+        xs = [a[0] for a in history]
+        f1s = [a[1][0] for a in history]
+        f2s = [a[1][1] for a in history]
+        plt.plot(xs, f1s, c="r", label=f"{color} f1", alpha=0.7)
+        plt.plot(xs, f2s, c="b", label=f"{color} f2", alpha=0.7)
+        plt.legend()
+        plt.ylim(0,1)
     plt.show()
 
     for m in mouths:
@@ -377,16 +392,16 @@ def play_classification_game(mouths, n_steps, window_length, colors):
 
 
 if __name__ == "__main__":
-    anatomical_stdev = 0.1
-    speech_error_stdev = 0.1
+    anatomical_stdev = 0.05
+    speech_error_stdev = 0.05
     # observations:
     # - higher speech error leads to collapse to stable points (the four corners) even in absence of anatomical variation
     # - with forgetting of exemplar pronunciations, drift can occur even with no anatomical OR speech-error variation (happens in discrete jumps)
     # - small anatomical stdev and small speech error stdev (e.g. both 0.01) leads to slow drift, which can either converge or persist throughout
 
     n_mouths = 4
-    n_steps = 1000
-    window_length = 10
+    n_steps = 2000
+    window_length = 4
     mouths = [Mouth.random(anatomical_stdev, speech_error_stdev, name=f"M{i}") for i in range(n_mouths)]
     # m1.plot_distortions()
     # m1.plot_target_grid()

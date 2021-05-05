@@ -212,10 +212,10 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
         print(f"GAN epoch {epoch_i}/{n_epochs}")
         for batch_i in range(n_batches):
             X_real, Y_real = generate_real_samples(n_samples, names, chars)
-            print(f"XYreal {X_real.shape}, {Y_real.shape}")
+            # print(f"XYreal {X_real.shape}, {Y_real.shape}")
             name_timesteps = X_real.shape[1]
             X_fake, Y_fake = generate_fake_samples_from_latent_points(generator_model, n_samples, chars)
-            print(f"XYfake {X_fake.shape}, {Y_fake.shape}")
+            # print(f"XYfake {X_fake.shape}, {Y_fake.shape}")
             # X = np.concatenate([X_real, X_fake])
             # Y = np.concatenate([Y_real, Y_fake])
             # X, Y = shuffle_iterables_same_order([X, Y])
@@ -225,7 +225,7 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             discriminator_loss_fake = discriminator_model.train_on_batch(X_fake, Y_fake)
 
             X_gan = generate_latent_points(generator_model, n_samples, chars)
-            print(f"X_gan {X_gan.shape}")
+            # print(f"X_gan {X_gan.shape}")
             Y_gan = np.array([1 for i in range(n_samples)])
             # tutorial says: "update the generator via the discriminator's error"  # oh, I see. You want the generator to take random noise inputs and try to create outputs of 1 in the discriminator (i.e., fool it)
             generator_loss = gan_model.train_on_batch(X_gan, Y_gan)
@@ -297,15 +297,17 @@ if __name__ == "__main__":
     discriminator_input_shape = (n_timesteps, discriminator_input_vector_len)
     discriminator_output_vector_len = 1  # real/fake
 
-    # discriminator_input_layer = layers.Input(shape=discriminator_input_shape, name="discriminator_input")
-    discriminator_input_layer = layers.Masking(mask_value=0, input_shape=discriminator_input_shape, name="discriminator_input_with_masking")
+    discriminator_input_layer = layers.Input(shape=discriminator_input_shape, name="discriminator_input")
+    # discriminator_input_layer = layers.Masking(mask_value=0, input_shape=discriminator_input_shape, name="discriminator_input_with_masking")
+    batch_shape = (None, n_timesteps, discriminator_input_vector_len)
+    masking = layers.Masking(mask_value=0, batch_input_shape=batch_shape)
     # Masking should block it from paying attention to trailing chars after variable length input; if all cells in the input at a certain time step are equal to the mask value, then it will be ignored for that timestep (so make them all 0, in contrast to normal timesteps which have one-hot character encoding)
     discriminator_recurrent = layers.LSTM(64, activation="relu", name="discriminator_rnn", return_sequences=True)
     discriminator_output_layer = layers.Dense(discriminator_output_vector_len, activation="sigmoid", name="discriminator_output")
 
     discriminator_model = keras.Sequential(name="discriminator")
     discriminator_model.add(discriminator_input_layer)  # add one-by-one for debugging purposes
-    # discriminator_model.add(discriminator_masking)
+    discriminator_model.add(masking)
     discriminator_model.add(discriminator_recurrent)
     discriminator_model.add(discriminator_output_layer)
     discriminator_optimizer = keras.optimizers.Adam(learning_rate=3e-4)
