@@ -72,7 +72,9 @@ class MorseCodeTerminal(Terminal.Terminal):
 
         self.update_wpm(35)
 
-        self.tone_hz = 2**(np.log2(440) +3/12 -12/12)
+        middle_c = 2**(np.log2(440) +3/12 -12/12)
+        # self.tone_hz = middle_c
+        self.tone_hz = 65  # this one sounds really good, low tone with harmonics
 
         self.initialize_commands()
         self.save_status = False

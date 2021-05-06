@@ -179,7 +179,7 @@ function bright () { xrandr --output $(xrandr | grep " connected" | cut -f1 -d "
 function nox() {
     : # nop
     clear
-    echo "bm"
+    echo "Choose Nox mode: b,m"
     read mode
     case "$mode" in
         "b")
