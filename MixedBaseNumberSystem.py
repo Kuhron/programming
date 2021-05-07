@@ -47,7 +47,18 @@ def get_bases():
         else:
             next_base = bases[-1] * get_small_int()
         bases.append(next_base)
+
+    bases = add_large_powers(bases)
     return bases
+
+
+def add_large_powers(bases):
+    ratios = get_ratios(bases)
+    r = main_ratio_for_large_numbers = random.choice([x for x in ratios if x != 1])
+    b = bases[-1]
+    n_large_powers = random.randint(1, 5)
+    large_powers = [b * (r ** (i+1)) for i in range(n_large_powers)]
+    return bases + large_powers
 
 
 def express_number_in_bases(n, bases):
@@ -97,11 +108,16 @@ def get_morphemes_for_number_system(bases):
     max_counting_number = bases[1] - 1
     counting_numbers = list(range(0, max_counting_number+1))
     base_numbers = bases[1:]
+
     numbers_to_name = counting_numbers + base_numbers
     morphemes = get_unique_morphemes(len(numbers_to_name))
     d = {n: m for n, m in zip(numbers_to_name, morphemes)}
-    and_morpheme = get_morpheme(n_syllables=1, exclusion_list=morphemes)
-    d["and"] = and_morpheme
+
+    if random.random() < 0.5:
+        and_morpheme = get_morpheme(n_syllables=1, exclusion_list=morphemes)
+        d["and"] = and_morpheme
+    else:
+        d["and"] = None
     return d
 
 
@@ -122,19 +138,22 @@ def convert_number_to_language(n, bases, morphemes):
                 monomial = f"{a_str} {b_str}"
             monomial_lst.append(monomial)
     and_word = morphemes["and"]
-    return (" " + and_word + " ").join(monomial_lst[::-1])
+    delim = (" " + and_word + " ") if and_word is not None else " "
+    return delim.join(monomial_lst[::-1])
 
 
 
 if __name__ == "__main__":
     bases = get_bases()
-    n = 100
     print("bases:", bases, "of ratios", get_ratios(bases))
-    print(f"{n} =", express_number_in_bases(n, bases))
-    print(f"{n} =", report_arithmetic_for_number_in_bases(n, bases))
     morphemes = get_morphemes_for_number_system(bases)
     print(morphemes)
-    print(f"{n} =", convert_number_to_language(n, bases, morphemes))
+
+    for n in [100, 1729, 43560, 131072]:
+        print(f"{n} =", express_number_in_bases(n, bases))
+        print(f"{n} =", report_arithmetic_for_number_in_bases(n, bases))
+        print(f"{n} =", convert_number_to_language(n, bases, morphemes))
+    print("----")
 
     for n in range(0, 100):
         print(f"{n} =", convert_number_to_language(n, bases, morphemes))

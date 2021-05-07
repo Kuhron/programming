@@ -60,6 +60,18 @@ def get_populous_us_cities(n_cities):
     return random.sample(cities, n_cities)
 
 
+def get_world_city_located_by_population():
+    input_fp = "/home/wesley/GithubGists/world_cities_data/worldcities_clean.csv"
+    df = pd.read_csv(input_fp)
+    columns_i_care_about = ["city", "country", "population"]
+    df = df[columns_i_care_about]
+    population_probability_vector = df["population"] / df["population"].sum()
+    choice_index = np.random.choice(df.index, p=population_probability_vector)
+    row = df.loc[choice_index, :]
+    s = f"{row['city']}, {row['country']}"
+    return s
+
+
 def get_us_location_weighted_by_population():
     # level = "state"
     # level = "county"
@@ -142,7 +154,8 @@ if __name__ == "__main__":
             "1. World\n"
             "2. Continental US (approx.)\n"
             "3. US cities over 100,000 people\n"
-            "4. US location weighted by population\n")
+            "4. US location weighted by population\n"
+            "5. World city weighted by population\n")
     if mode == "1":
         loc = get_random_latitude_and_longitude(degrees=True)
         print(loc)
@@ -159,6 +172,9 @@ if __name__ == "__main__":
             print(city)
     elif mode == "4":
         loc = get_us_location_weighted_by_population()
+        print(loc)
+    elif mode == "5":
+        loc = get_world_city_located_by_population()
         print(loc)
 
 # TODO: rang road trip, between cities and/or points
