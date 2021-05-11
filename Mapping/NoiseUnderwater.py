@@ -2,28 +2,39 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 import random
+from datetime import datetime
 
 import sys
 sys.path.insert(0,'..')  # cause I can't be bothered to make packages for all these separate things
 from Distortion01 import DistortionFunction01, DistortionFunctionSeries01
+from CubicXYFunction import CubicXYFunction
+from ImshowContentOnly import imshow_content_only
 
 
-def add_straight_line(arr, xy_mesh, add_at_nodes=False, warp=False, warp_stdev=0.5):
-    x0,y0,x1,y1 = np.random.uniform(0, 1, (4,))
-    p0 = np.array([x0, y0])
-    p1 = np.array([x1, y1])
 
-    # get distance of each point from this line, apply a bump-like function to make a ridge
+def add_line(arr, xy_mesh, add_at_nodes=False, warp=False, warp_stdev=0.5):
     if warp:
         xy_mesh = warp_xy_mesh(xy_mesh, warp_stdev)
         # print("new xy_mesh:")
         # print(xy_mesh)
         # input("press enter")
-    distances = distance_to_line_two_point_form(p0, p1, xy_mesh)
 
-    bump_width = np.random.lognormal(np.log(0.05), np.log(2))
-    bump_func = lambda distance: 1/bump_width * np.maximum(0, bump_width - distance)  # height of 1
-    bumped_arr = bump_func(distances)
+    # style = random.choice(["line", "cubic_curve"])
+    style = "cubic_curve"
+    if style == "line":
+        func_vals = get_distances_from_line(xy_mesh)
+    elif style == "cubic_curve":
+        # center it on (0.5, 0.5), center of the 01 box
+        f = CubicXYFunction.random(stdev=1)
+        x,y = xy_mesh
+        func_vals = f(x-0.5,y-0.5)
+        # center the z value on 0
+        func_vals -= np.mean(func_vals)
+    else:
+        raise ValueError(f"unknown style {style}")
+
+    bump_func = get_bump_func()  # raise around areas where the function is zero
+    bumped_arr = bump_func(func_vals)
 
     if add_at_nodes:
         # lines will add together where they overlap
@@ -31,6 +42,21 @@ def add_straight_line(arr, xy_mesh, add_at_nodes=False, warp=False, warp_stdev=0
     else:
         arr = np.maximum(arr, bumped_arr)
     return arr
+
+
+def get_distances_from_line(xy_mesh):
+    x0,y0,x1,y1 = np.random.uniform(0, 1, (4,))
+    p0 = np.array([x0, y0])
+    p1 = np.array([x1, y1])
+    # get distance of each point from this line, apply a bump-like function to make a ridge
+    distances = distance_to_line_two_point_form(p0, p1, xy_mesh)
+    return distances
+
+
+def get_bump_func():
+    bump_width = np.random.lognormal(np.log(0.05), np.log(2))
+    bump_func = lambda x: 1/bump_width * np.maximum(0, bump_width - abs(x))  # height of 1
+    return bump_func
 
 
 def get_xy_mesh(arr):
@@ -81,16 +107,21 @@ def get_interesting_array():
     xy_mesh = get_xy_mesh(arr)  # just pass this around since it won't ever change
 
     for i in range(30):
-        arr = add_straight_line(arr, xy_mesh, 
+        arr = add_line(arr, xy_mesh, 
             add_at_nodes=True, 
-            warp=True, warp_stdev=0.6,
+            warp=False, warp_stdev=0.6,
         )
 
     return arr
 
 
+def generate_images(n_images):
+    for im_i in range(n_images):
+        a = get_interesting_array()
+        now_str = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        out_fp = f"NoiseImages/{now_str}-{im_i}.png"
+        imshow_content_only(a, save_fp=out_fp)
+
+
 if __name__ == "__main__":
-    a = get_interesting_array()
-    plt.imshow(a)
-    plt.colorbar()
-    plt.show()
+    generate_images(10)
