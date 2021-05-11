@@ -4,81 +4,14 @@ import random
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 
+from Distortion01 import DistortionFunction01, DistortionFunctionSeries01
+
 
 class Exemplar:
     def __init__(self, sound, articulation, meaning):
         self.sound = sound
         self.articulation = articulation
         self.meaning = meaning
-
-
-class DistortionFunction01:
-    def __init__(self, frequency, amplitude):
-        assert frequency > 0
-        assert frequency % 1 == 0
-        assert -1 <= amplitude <= 1
-        self.frequency = frequency
-        self.amplitude = amplitude
-
-    def __call__(self, x):
-        a = self.amplitude
-        n = self.frequency
-        n_pi = n * np.pi
-        return x + a * 1/n_pi * np.sin(n_pi * x)
-        # maps [0,1] interval to itself with some bending, still monotonic
-        # so iterating different functions of this form can give you wiggly shape that is still 1-to-1 in [0,1] and monotonically increasing
-
-    @staticmethod
-    def random(stdev):
-        i = 0
-        while True:
-            a = np.random.normal(0, stdev)
-            if -1 <= a <= 1:
-                break
-            i += 1
-            if i > 10000:
-                raise RuntimeError(f"stdev {stdev} led to too many iterations when trying to roll scale parameter; please reduce stdev")
-        n = random.randint(1, 10)
-        return DistortionFunction01(frequency=n, amplitude=a)
-
-    @staticmethod
-    def regression_to_mean(stdev):
-        # a should be between 0 and 1 so that more things map toward the middle and away from the edges
-        while True:
-            a = abs(np.random.normal(0, stdev))
-            if 0 <= a <= 1:
-                break
-        n = 2  # only one period inside the box
-        return DistortionFunction01(frequency=n, amplitude=a)
-
-    def plot(self):
-        xs = np.linspace(0, 1, 101)
-        ys = self(xs)
-        plt.plot(xs, ys)
-        plt.show()
-
-    def plot_image_distribution(self):
-        # image as in the image of the function
-        xs = np.linspace(0, 1, 10001)
-        ys = self(xs)
-        plt.hist(ys, bins=100)
-        plt.show()
-
-
-class DistortionFunctionSeries:
-    def __init__(self, funcs):
-        self.funcs = funcs
-
-    def __call__(self, x):
-        for f in self.funcs:
-            x = f(x)
-        return x
-
-    @staticmethod
-    def random(stdev):
-        n_funcs = random.randint(3, 8)
-        funcs = [DistortionFunction01.random(stdev) for i in range(n_funcs)]
-        return DistortionFunctionSeries(funcs)
 
 
 class Mouth:
@@ -92,8 +25,8 @@ class Mouth:
 
     @staticmethod
     def random(anatomical_stdev, speech_error_stdev, **kwargs):
-        f1_distortion_func = DistortionFunctionSeries.random(anatomical_stdev)
-        f2_distortion_func = DistortionFunctionSeries.random(anatomical_stdev)
+        f1_distortion_func = DistortionFunctionSeries01.random(anatomical_stdev)
+        f2_distortion_func = DistortionFunctionSeries01.random(anatomical_stdev)
         return Mouth(f1_distortion_func, f2_distortion_func, speech_error_stdev, **kwargs)
 
     def __repr__(self):
@@ -119,7 +52,7 @@ class Mouth:
         return pronunciation
 
     def add_speech_error(self, x):
-        f_error = DistortionFunctionSeries.random(self.speech_error_stdev)
+        f_error = DistortionFunctionSeries01.random(self.speech_error_stdev)
         f_regression = DistortionFunction01.regression_to_mean(self.speech_error_stdev)
         output = f_error(x)  # produce error first
         output = f_regression(output)  # add slight regression to the mean of *articulatory* displacement

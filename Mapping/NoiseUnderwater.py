@@ -3,20 +3,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
+import sys
+sys.path.insert(0,'..')  # cause I can't be bothered to make packages for all these separate things
+from Distortion01 import DistortionFunction01, DistortionFunctionSeries01
 
-def add_straight_line(arr, xy_mesh, add_at_nodes=False):
-    x_size, y_size = arr.shape
-    x0 = random.uniform(0, x_size-1)
-    y0 = random.uniform(0, y_size-1)
-    x1 = random.uniform(0, x_size-1)
-    y1 = random.uniform(0, y_size-1)
+
+def add_straight_line(arr, xy_mesh, add_at_nodes=False, warp=False, warp_stdev=0.5):
+    x0,y0,x1,y1 = np.random.uniform(0, 1, (4,))
     p0 = np.array([x0, y0])
     p1 = np.array([x1, y1])
 
     # get distance of each point from this line, apply a bump-like function to make a ridge
+    if warp:
+        xy_mesh = warp_xy_mesh(xy_mesh, warp_stdev)
+        # print("new xy_mesh:")
+        # print(xy_mesh)
+        # input("press enter")
     distances = distance_to_line_two_point_form(p0, p1, xy_mesh)
 
-    bump_width = (x_size + y_size)/2 * 0.05
+    bump_width = np.random.lognormal(np.log(0.05), np.log(2))
     bump_func = lambda distance: 1/bump_width * np.maximum(0, bump_width - distance)  # height of 1
     bumped_arr = bump_func(distances)
 
@@ -29,9 +34,10 @@ def add_straight_line(arr, xy_mesh, add_at_nodes=False):
 
 
 def get_xy_mesh(arr):
+    # assumes 01 box
     x_size, y_size = arr.shape
-    xs = list(range(x_size))
-    ys = list(range(y_size))
+    xs = np.linspace(0,1,x_size)
+    ys = np.linspace(0,1,y_size)
     return np.meshgrid(xs, ys)
 
 
@@ -61,20 +67,24 @@ def distance_to_line_two_point_form(line_point_0, line_point_1, query_point):
     return abs(xa_after_transformations)
 
 
-def warp(arr, xy_mesh):
-    # need to add nonlinear somehow, in ways that won't make points overlap, like add a cubic-curve-looking distortion
-    # matrix = np.random.uniform(-2, 2, (2,2))
-    # raise
-    return arr
+def warp_xy_mesh(xy_mesh, stdev):
+    fx = DistortionFunctionSeries01.random(stdev)
+    fy = DistortionFunctionSeries01.random(stdev)
+    x, y = xy_mesh
+    x = fx(x)
+    y = fy(y)
+    return x,y
 
 
 def get_interesting_array():
     arr = np.zeros((1000, 1000))
     xy_mesh = get_xy_mesh(arr)  # just pass this around since it won't ever change
 
-    for i in range(20):
-        arr = add_straight_line(arr, xy_mesh)
-        arr = warp(arr, xy_mesh)
+    for i in range(30):
+        arr = add_straight_line(arr, xy_mesh, 
+            add_at_nodes=True, 
+            warp=True, warp_stdev=0.6,
+        )
 
     return arr
 
