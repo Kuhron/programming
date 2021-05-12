@@ -209,9 +209,20 @@ def conjugate_number(n, CONSONANTS, VOWELS, CONSTRAINTS):
 
 
 def print_pronunciation(n_int, n_display_str, CONSONANTS, VOWELS, CONSTRAINTS):
+    pronunciation = get_pronunciation_str(n_int, CONSONANTS, VOWELS, CONSTRAINTS)
+    print(f"pronunciation of {n_display_str}: {s}")
+
+
+def get_pronunciation_str(n_int, CONSONANTS, VOWELS, CONSTRAINTS):
     pronunciation = get_pronunciation(n_int, CONSONANTS, VOWELS, CONSTRAINTS)
     s = " ".join(x.symbol for x in pronunciation)  # join with space because some IPA symbols are wider than monospace
-    print(f"pronunciation of {n_display_str}: {s}")
+    return s
+
+
+def print_pronunciations_of_numbers(ints, CONSONANTS, VOWELS, CONSTRAINTS):
+    pronunciations = [get_pronunciation_str(n, CONSONANTS, VOWELS, CONSTRAINTS) for n in ints]
+    s = " ; ".join(pronunciations)
+    print(f"{ints} -> {s}")
 
 
 if __name__ == "__main__":
@@ -461,11 +472,19 @@ if __name__ == "__main__":
     ]
 
     # random.shuffle(CONSTRAINTS)
-    n = random.randrange(10, 10000)
-    n = str(n)[1:]  # so leading zeros may also be represented
-    conjugate_number(n, CONSONANTS, VOWELS, CONSTRAINTS)
+
+    mode = input("Select mode:\n1. conjugate random number to observe stem changes\n2. pronounce number(s) from input\n")
+    if mode == "1":
+        n = random.randrange(10, 10000)
+        n = str(n)[1:]  # so leading zeros may also be represented
+        conjugate_number(n, CONSONANTS, VOWELS, CONSTRAINTS)
+    elif mode == "2":
+        num_str = input("Enter number(s) (separated by spaces): ")
+        nums = [int(x) for x in num_str.split()]
+        print_pronunciations_of_numbers(nums, CONSONANTS, VOWELS, CONSTRAINTS)
+    else:
+        print("unknown mode")
 
     # for n in range(1000):
     #     print_pronunciation(n, str(n), CONSONANTS, VOWELS, CONSTRAINTS)
-
 

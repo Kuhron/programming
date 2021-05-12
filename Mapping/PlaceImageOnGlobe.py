@@ -12,6 +12,12 @@ from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from TransformImageIntoMapData import get_image_fp_to_latlon, shrink_resolution
 
 
+import sys
+sys.path.insert(0,'..')  # cause I can't be bothered to make packages for all these separate things
+from PltContentOnly import add_opaque_background
+
+
+
 def get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=True):
     im = Image.open(image_fp)
     if shrink:
@@ -62,15 +68,6 @@ def get_xyrgba_array(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=Tr
         lst.append(tup)
     print("- done getting xyrgba array for {}".format(image_fp))
     return lst
-
-
-def add_opaque_background(image_fp):
-    # https://stackoverflow.com/questions/50898034/how-replace-transparent-with-a-color-in-pillow
-    im = Image.open(image_fp)
-    color = "BLACK"
-    image = Image.new("RGB", im.size, color)
-    image.paste(im, (0, 0), im) 
-    image.save(image_fp)
 
 
 def plot_images_on_globe_scatter(image_fp_to_latlon, save_fp=None, show=True, shrink=True):
