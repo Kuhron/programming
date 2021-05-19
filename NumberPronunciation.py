@@ -210,7 +210,7 @@ def conjugate_number(n, CONSONANTS, VOWELS, CONSTRAINTS):
 
 def print_pronunciation(n_int, n_display_str, CONSONANTS, VOWELS, CONSTRAINTS):
     pronunciation = get_pronunciation_str(n_int, CONSONANTS, VOWELS, CONSTRAINTS)
-    print(f"pronunciation of {n_display_str}: {s}")
+    print(f"pronunciation of {n_display_str}: {pronunciation}")
 
 
 def get_pronunciation_str(n_int, CONSONANTS, VOWELS, CONSTRAINTS):
@@ -479,9 +479,10 @@ if __name__ == "__main__":
         n = str(n)[1:]  # so leading zeros may also be represented
         conjugate_number(n, CONSONANTS, VOWELS, CONSTRAINTS)
     elif mode == "2":
-        num_str = input("Enter number(s) (separated by spaces): ")
-        nums = [int(x) for x in num_str.split()]
-        print_pronunciations_of_numbers(nums, CONSONANTS, VOWELS, CONSTRAINTS)
+        while True:
+            num_str = input("Enter number(s) (separated by spaces): ")
+            nums = num_str.split()
+            print_pronunciations_of_numbers(nums, CONSONANTS, VOWELS, CONSTRAINTS)
     else:
         print("unknown mode")
 
