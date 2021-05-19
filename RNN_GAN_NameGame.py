@@ -276,6 +276,8 @@ if __name__ == "__main__":
     n_timesteps = padded_name_len
     names = [pad_name(name, padded_name_len, pad_char) for name in names]
 
+    mask = False  # should discriminator ignore spaces?
+
     # generator
     generator_input_vector_len = 100  # idk, something random
     generator_input_shape = (n_timesteps, generator_input_vector_len)
@@ -289,8 +291,10 @@ if __name__ == "__main__":
     generator_model.add(generator_input_layer)  # add one-by-one for debugging purposes
     generator_model.add(generator_recurrent)
     generator_model.add(generator_output_layer)
-    generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
-    generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
+
+    # NOTE: generator is never trained by itself! it's always based on the discriminator output in combined GAN
+    # generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+    # generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
 
     # discriminator
     discriminator_input_vector_len = n_chars
@@ -299,19 +303,22 @@ if __name__ == "__main__":
 
     discriminator_input_layer = layers.Input(shape=discriminator_input_shape, name="discriminator_input")
     batch_shape = (None, n_timesteps, discriminator_input_vector_len)
-    masking = layers.Masking(mask_value=0.0, batch_input_shape=batch_shape)
-    # Masking should block it from paying attention to trailing chars after variable length input; if all cells in the input at a certain time step are equal to the mask value, then it will be ignored for that timestep (so make them all 0, in contrast to normal timesteps which have one-hot character encoding)
     discriminator_recurrent = layers.LSTM(64, activation="relu", name="discriminator_rnn", return_sequences=False)
     # don't return sequences from the discriminator's recurrent layer because the loss function needs to compare the true value (0 or 1) with a SINGLE value from the RNN, NOT a sequence of values; the "can not squeeze" error is due to this mismatch where the loss is trying to compare a sequence of outputs to a single-timestep output
     discriminator_output_layer = layers.Dense(discriminator_output_vector_len, activation="sigmoid", name="discriminator_output")
 
     discriminator_model = keras.Sequential(name="discriminator")
     discriminator_model.add(discriminator_input_layer)  # add one-by-one for debugging purposes
-    discriminator_model.add(masking)
+
+    if mask:
+        masking = layers.Masking(mask_value=0.0, batch_input_shape=batch_shape)
+        # Masking should block it from paying attention to trailing chars after variable length input; if all cells in the input at a certain time step are equal to the mask value, then it will be ignored for that timestep (so make them all 0, in contrast to normal timesteps which have one-hot character encoding)
+        discriminator_model.add(masking)
+
     discriminator_model.add(discriminator_recurrent)
     discriminator_model.add(discriminator_output_layer)
-    discriminator_optimizer = keras.optimizers.Adam(learning_rate=3e-4)
-    discriminator_model.compile(optimizer=discriminator_optimizer, loss="mean_squared_error")
+    discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-4)
+    discriminator_model.compile(optimizer=discriminator_optimizer, loss="binary_crossentropy")
 
     # train_discriminator_initial(discriminator_model, names, chars)
     gan_model = create_combined_gan(generator_model, discriminator_model)
@@ -322,4 +329,6 @@ if __name__ == "__main__":
 
     # show some novel generated data from the generator model
     show_novel_names(generator_model, 1000)
+
+    # TODO idea: train generator some by itself using random latent space points paired with actual sample names, so it can learn that it should put those structures in its latent space, more or less; could do some of this each round, or just at the beginning? (I kind of want to do it each round, increase the diversity of the space that the generator knows about by forcing it to keep accommodating new real samples at random latent-space points)
 
