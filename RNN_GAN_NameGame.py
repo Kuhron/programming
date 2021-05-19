@@ -298,11 +298,11 @@ if __name__ == "__main__":
     discriminator_output_vector_len = 1  # real/fake
 
     discriminator_input_layer = layers.Input(shape=discriminator_input_shape, name="discriminator_input")
-    # discriminator_input_layer = layers.Masking(mask_value=0, input_shape=discriminator_input_shape, name="discriminator_input_with_masking")
     batch_shape = (None, n_timesteps, discriminator_input_vector_len)
-    masking = layers.Masking(mask_value=0, batch_input_shape=batch_shape)
+    masking = layers.Masking(mask_value=0.0, batch_input_shape=batch_shape)
     # Masking should block it from paying attention to trailing chars after variable length input; if all cells in the input at a certain time step are equal to the mask value, then it will be ignored for that timestep (so make them all 0, in contrast to normal timesteps which have one-hot character encoding)
-    discriminator_recurrent = layers.LSTM(64, activation="relu", name="discriminator_rnn", return_sequences=True)
+    discriminator_recurrent = layers.LSTM(64, activation="relu", name="discriminator_rnn", return_sequences=False)
+    # don't return sequences from the discriminator's recurrent layer because the loss function needs to compare the true value (0 or 1) with a SINGLE value from the RNN, NOT a sequence of values; the "can not squeeze" error is due to this mismatch where the loss is trying to compare a sequence of outputs to a single-timestep output
     discriminator_output_layer = layers.Dense(discriminator_output_vector_len, activation="sigmoid", name="discriminator_output")
 
     discriminator_model = keras.Sequential(name="discriminator")
