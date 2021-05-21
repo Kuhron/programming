@@ -8,12 +8,25 @@ RATE = 44100
 MAX_AMPLITUDE = 32767
 
 
-def get_signal_from_freq(freq, seconds, initial_click=False, truncate=True, spectrum=None):
+def get_signal_from_freq(freq, seconds, initial_click=False, truncate="backward", spectrum=None):
     n_frames = RATE * seconds
 
-    if truncate:
-        n_frames_truncated_at_phase_zero = n_frames - (n_frames % (RATE / freq))
+    frames_per_sec = RATE
+    cycles_per_sec = freq
+    frames_per_cycle = RATE / freq
+    if truncate == "backward":
+        n_frames_truncated_at_phase_zero = n_frames - (n_frames % frames_per_cycle)
         xs = np.arange(n_frames_truncated_at_phase_zero)
+    elif truncate == "forward":
+        # go forward to the next phase-zero point instead of truncating backward
+        remainder_hanging_off_right_edge = n_frames % frames_per_cycle
+        if remainder_hanging_off_right_edge > 0:
+            remaining_frames_in_this_cycle = frames_per_cycle - remainder_hanging_off_right_edge
+            n_frames_truncated_at_phase_zero = n_frames + remaining_frames_in_this_cycle
+            xs = np.arange(n_frames_truncated_at_phase_zero)
+        else:
+            # don't add another cycle if we're already ending at phase zero
+            xs = np.arange(n_frames)
     else:
         xs = np.arange(n_frames)
         
@@ -72,9 +85,10 @@ def send_signal_to_audio_out(signal):
     audio_out.terminate()
 
 
-def write_signal_to_wav(signal, filepath, rate=RATE):
+def write_signal_to_wav(signal, filepath, rate=RATE, amplitude_fraction=0.8):
+    assert 0 < amplitude_fraction <= 1, amplitude_fraction
     signal = np.array(signal)
-    desired_amplitude = 0.8 * MAX_AMPLITUDE
+    desired_amplitude = amplitude_fraction * MAX_AMPLITUDE
     max_abs = abs(signal).max()
     if max_abs > 0:
         signal *= desired_amplitude / max_abs
