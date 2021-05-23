@@ -18,7 +18,7 @@ def get_names(names_fps):
     for names_fp in names_fps:
         with open(names_fp) as f:
             lines = f.readlines()
-        this_file_names = [line.split(" : ")[1] for line in lines]
+        this_file_names = [line.split(" : ")[1].strip() for line in lines]
         names += this_file_names
     return names
 
@@ -192,6 +192,17 @@ def train_discriminator_initial(discriminator_model, names, chars):
         discriminator_model.fit(batch_names, batch_outputs)
 
 
+def train_generator_on_real_samples(generator_model, n_samples, names, chars):
+    # idea I had where the generator can be forced to incorporate real samples into the latent space (trying to avoid mode collapse)
+    # do this by generating random latent points and training the generator to match those to the samples
+    X_real, Y_real = generate_real_samples(n_samples, names, chars)
+    check_n_samples, n_timesteps, n_features = X_real.shape
+    assert check_n_samples == n_samples
+    assert n_features == len(chars)  # one-hot
+    latent_points = generate_latent_points(generator_model, n_samples, chars)
+    generator_model.train_on_batch(latent_points, X_real)
+
+
 def create_combined_gan(generator_model, discriminator_model):
     # from tutorial at https://machinelearningmastery.com/how-to-develop-a-generative-adversarial-network-for-an-mnist-handwritten-digits-from-scratch-in-keras/
     discriminator_model.trainable=False
@@ -224,6 +235,9 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             # X = np.concatenate([X_real, X_fake])
             # Y = np.concatenate([Y_real, Y_fake])
             # X, Y = shuffle_iterables_same_order([X, Y])
+
+            n_generator_samples = round(len(names) * random.uniform(0.01, 0.05))
+            train_generator_on_real_samples(generator_model, n_generator_samples, names, chars)  # experimental idea I had
 
             # try training discriminator on real and fake separately; somehow it seems that combining them into a batch can cause failure to converge: https://machinelearningmastery.com/practical-guide-to-gan-failure-modes/
             discriminator_loss_real = discriminator_model.train_on_batch(X_real, Y_real)
@@ -277,8 +291,11 @@ if __name__ == "__main__":
     ]
     names = get_names(names_fps)
     chars = get_chars_from_names(names)
+    names_with_newlines = [x for x in names if "\n" in x]
+    assert "\n" not in chars, f"names cannot contain newline, but these do: {names_with_newlines}"
     n_chars = len(chars)
-    padding_char = "#"
+    padding_char = "_"
+    assert padding_char != " "  # IMPORTANT! since spaces are part of names
     assert " " in chars  # we DO want space to be considered part of a name
     assert padding_char not in chars
 
@@ -286,7 +303,7 @@ if __name__ == "__main__":
     n_timesteps = padded_name_len
     names = [pad_name(name, padded_name_len, padding_char) for name in names]
 
-    mask = False  # should discriminator ignore spaces?
+    mask = True  # should discriminator ignore the padding_char? (note that the padding char is NOT a space)
 
     # generator
     generator_input_vector_len = 100  # idk, something random
@@ -302,9 +319,10 @@ if __name__ == "__main__":
     generator_model.add(generator_recurrent)
     generator_model.add(generator_output_layer)
 
-    # NOTE: generator is never trained by itself! it's always based on the discriminator output in combined GAN
-    # generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
-    # generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
+    # NOTE: in normal GAN, generator is never trained by itself! it's always based on the discriminator output in combined GAN
+    # however, for my experimental idea of training the generator to match random latent points with real samples, we WILL train it
+    generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+    generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
 
     # discriminator
     discriminator_input_vector_len = n_chars
@@ -327,8 +345,8 @@ if __name__ == "__main__":
 
     discriminator_model.add(discriminator_recurrent)
     discriminator_model.add(discriminator_output_layer)
-    discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-4)
-    discriminator_model.compile(optimizer=discriminator_optimizer, loss="binary_crossentropy")
+    discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+    discriminator_model.compile(optimizer=discriminator_optimizer, loss="mean_squared_error")
 
     # train_discriminator_initial(discriminator_model, names, chars)
     gan_model = create_combined_gan(generator_model, discriminator_model)
