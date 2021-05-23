@@ -224,6 +224,7 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
         plt.ion()
         window_length = 1000  # for plotting losses
 
+    last_generator_loss = 0
     for epoch_i in range(n_epochs):
         print(f"GAN epoch {epoch_i}/{n_epochs}")
         for batch_i in range(n_batches):
@@ -236,7 +237,9 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             # Y = np.concatenate([Y_real, Y_fake])
             # X, Y = shuffle_iterables_same_order([X, Y])
 
-            n_generator_samples = round(len(names) * random.uniform(0.01, 0.05))
+            # generator_samples_proportion = random.uniform(0.1, 0.5)
+            generator_samples_proportion = last_generator_loss / 5  # try making it adaptive, look at more training data if you're failing to convince the discriminator
+            n_generator_samples = max(1, round(len(names) * generator_samples_proportion))
             train_generator_on_real_samples(generator_model, n_generator_samples, names, chars)  # experimental idea I had
 
             # try training discriminator on real and fake separately; somehow it seems that combining them into a batch can cause failure to converge: https://machinelearningmastery.com/practical-guide-to-gan-failure-modes/
@@ -248,20 +251,22 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             Y_gan = np.array([1 for i in range(n_samples)])
             # tutorial says: "update the generator via the discriminator's error"  # oh, I see. You want the generator to take random noise inputs and try to create outputs of 1 in the discriminator (i.e., fool it)
             generator_loss = gan_model.train_on_batch(X_gan, Y_gan)
+            last_generator_loss = generator_loss
 
             print(f"discriminator loss real = {discriminator_loss_real:.4f}; fake = {discriminator_loss_fake:.4f}; generator loss = {generator_loss:.4f}", end="\r")
 
             # every batch:
+            # if discriminator_loss_fake > 0.25 or batch_i % 10 == 0:
+            if batch_i % 10 == 0:
+                print()  # so the next line doesn't overwrite the last loss line which ends with \r
+                show_novel_names(generator_model, n_novel_names=10, padding_char=padding_char)
+
             if plot_loss:
                 discriminator_loss_real_history.append(discriminator_loss_real)
                 discriminator_loss_fake_history.append(discriminator_loss_fake)
                 generator_loss_history.append(generator_loss)
 
         # every epoch:
-        print()  # so the next line doesn't overwrite the last loss line which ends with \r
-        if True: # discriminator_loss_fake > 0.5 or epoch_i % 5 == 0:
-            show_novel_names(generator_model, n_novel_names=10, padding_char=padding_char)
-
         if plot_loss:
             discriminator_loss_real_history = discriminator_loss_real_history[-window_length:]
             discriminator_loss_fake_history = discriminator_loss_fake_history[-window_length:]
