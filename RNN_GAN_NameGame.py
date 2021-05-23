@@ -109,29 +109,34 @@ def generate_fake_samples_from_latent_points(generator_model, n_samples, chars):
     return fake_input_for_discriminator, fake_class_labels
 
 
-def generate_fake_names_from_latent_points(generator_model, n_samples, chars):
+def generate_fake_names_from_latent_points(generator_model, n_samples, chars, padding_char):
     vec = generate_latent_points(generator_model, n_samples, chars)
     output = generator_model.predict(vec)
 
     res = []
     for output_sample in output:
-        name = convert_char_vector_sequence_to_name(output_sample, chars)
+        name = convert_char_vector_sequence_to_name(output_sample, chars, padding_char)
         res.append(name)
     return res
 
 
-def convert_char_vector_sequence_to_name(char_vecs, chars):
+def convert_char_vector_sequence_to_name(char_vecs, chars, padding_char):
     res = ""
     for char_vec in char_vecs:
-        c = convert_char_vector_to_char(char_vec, chars)
+        c = convert_char_vector_to_char(char_vec, chars, padding_char)
         res += c
         # print(f"char_vec {char_vec} yielded char {c}")
     return res
 
 
-def convert_char_vector_to_char(char_vec, chars):
-    return chars[np.argmax(char_vec)]  # argmax is position of the max
- 
+def convert_char_vector_to_char(char_vec, chars, padding_char):
+    if (char_vec == 0).all():
+        return padding_char
+    else:
+        max_val = char_vec.max()
+        options = np.array(chars)[char_vec == max_val]  # the str chars at indices where the float vector has max value
+        return np.random.choice(options)
+
 
 def generate_random_fake_samples(n_samples, name_len, chars):
     name_arr, name_strs = get_random_fake_names(n_samples, name_len, chars)
@@ -197,7 +202,7 @@ def create_combined_gan(generator_model, discriminator_model):
     return model
 
 
-def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, plot_loss=False):
+def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, padding_char, plot_loss=False):
     n_samples = batch_size  # for the various generation functions
     n_batches = len(names) // batch_size
 
@@ -231,10 +236,17 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             generator_loss = gan_model.train_on_batch(X_gan, Y_gan)
 
             print(f"discriminator loss real = {discriminator_loss_real:.4f}; fake = {discriminator_loss_fake:.4f}; generator loss = {generator_loss:.4f}", end="\r")
+
+            # every batch:
             if plot_loss:
                 discriminator_loss_real_history.append(discriminator_loss_real)
                 discriminator_loss_fake_history.append(discriminator_loss_fake)
                 generator_loss_history.append(generator_loss)
+
+        # every epoch:
+        print()  # so the next line doesn't overwrite the last loss line which ends with \r
+        if True: # discriminator_loss_fake > 0.5 or epoch_i % 5 == 0:
+            show_novel_names(generator_model, n_novel_names=10, padding_char=padding_char)
 
         if plot_loss:
             discriminator_loss_real_history = discriminator_loss_real_history[-window_length:]
@@ -248,14 +260,11 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             plt.draw()
             plt.pause(0.01)
 
-        print()  # so the next line doesn't overwrite the last loss line which ends with \r
-        if True: # discriminator_loss_fake > 0.5 or epoch_i % 5 == 0:
-            show_novel_names(generator_model, n_novel_names=10)
     plt.ioff()
 
 
-def show_novel_names(generator_model, n_novel_names):
-    novel_names = generate_fake_names_from_latent_points(generator_model, n_novel_names, chars)
+def show_novel_names(generator_model, n_novel_names, padding_char):
+    novel_names = generate_fake_names_from_latent_points(generator_model, n_novel_names, chars, padding_char)
     for x in novel_names:
         print(f"novel name generated: {x}")       
 
@@ -269,12 +278,13 @@ if __name__ == "__main__":
     names = get_names(names_fps)
     chars = get_chars_from_names(names)
     n_chars = len(chars)
-    pad_char = "_"
-    assert pad_char not in chars
+    padding_char = "#"
+    assert " " in chars  # we DO want space to be considered part of a name
+    assert padding_char not in chars
 
     padded_name_len = max(len(name) for name in names)
     n_timesteps = padded_name_len
-    names = [pad_name(name, padded_name_len, pad_char) for name in names]
+    names = [pad_name(name, padded_name_len, padding_char) for name in names]
 
     mask = False  # should discriminator ignore spaces?
 
@@ -325,10 +335,10 @@ if __name__ == "__main__":
     n_epochs = 10000
     batch_size = 100
     plot_loss = False
-    train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, plot_loss=plot_loss)
+    train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, padding_char, plot_loss=plot_loss)
 
     # show some novel generated data from the generator model
-    show_novel_names(generator_model, 1000)
+    show_novel_names(generator_model, 1000, padding_char)
 
     # TODO idea: train generator some by itself using random latent space points paired with actual sample names, so it can learn that it should put those structures in its latent space, more or less; could do some of this each round, or just at the beginning? (I kind of want to do it each round, increase the diversity of the space that the generator knows about by forcing it to keep accommodating new real samples at random latent-space points)
 
