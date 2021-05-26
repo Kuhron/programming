@@ -13,12 +13,24 @@ import random
 
 
 
-def get_names(names_fps):
+def get_names(names_fps, repeat_by_rating=False):
     names = []
     for names_fp in names_fps:
         with open(names_fp) as f:
             lines = f.readlines()
-        this_file_names = [line.split(" : ")[1].strip() for line in lines]
+        this_file_names = []
+        for line in lines:
+            rating, name, *_ = line.split(" : ")
+            name = name.strip()
+            if repeat_by_rating:
+                exponent = 2  # (7/2)**2 = 12.25, so 7 ratings will appear 12 times as often as 2 ratings for exponent of 2
+                lowest_rating = 2
+                rating = int(rating)
+                factor = (rating/lowest_rating) ** exponent
+                n_repetitions = round(factor)
+                this_file_names += [name] * n_repetitions
+            else:
+                this_file_names.append(name)
         names += this_file_names
     return names
 
@@ -51,16 +63,19 @@ def encode_char(c, chars):
     return res
 
 
-def get_real_names(n, names, chars):
+def get_real_names(n, names, chars, latent_points_of_samples):
     res = []
     res_strs = []
+    res_latent_points = []
     for i in range(n):
         name = random.choice(names)  # allow repetition
         encoding = encode_name(name, chars)
+        latent_representation = latent_points_of_samples[name]
         res.append(encoding)
         res_strs.append(name)
+        res_latent_points.append(latent_representation)
         # print(f"got real name: {name} (len {len(name)})")
-    return np.array(res), res_strs
+    return np.array(res), res_strs, np.array(res_latent_points)
 
 
 def get_random_fake_names(n, name_len, chars):
@@ -100,6 +115,18 @@ def generate_latent_points(generator_model, n_samples, chars):
     return vec
 
 
+def get_assigned_latent_points_by_name(generator_model, names, chars):
+    input_shape = generator_model.layers[0].input_shape
+    assert input_shape[0] is None, input_shape
+    _, timesteps, input_vec_len = input_shape
+    array_shape_to_create_per_name = (timesteps, input_vec_len)
+
+    d = {}
+    for n in names:
+        d[n] = np.random.normal(0, 1, array_shape_to_create_per_name)
+    return d
+
+
 def generate_fake_samples_from_latent_points(generator_model, n_samples, chars):
     vec = generate_latent_points(generator_model, n_samples, chars)
     output = generator_model.predict(vec)
@@ -112,7 +139,10 @@ def generate_fake_samples_from_latent_points(generator_model, n_samples, chars):
 def generate_fake_names_from_latent_points(generator_model, n_samples, chars, padding_char):
     vec = generate_latent_points(generator_model, n_samples, chars)
     output = generator_model.predict(vec)
+    return convert_generator_output_to_name_list(output, chars, padding_char)
 
+
+def convert_generator_output_to_name_list(output, chars, padding_char):
     res = []
     for output_sample in output:
         name = convert_char_vector_sequence_to_name(output_sample, chars, padding_char)
@@ -144,10 +174,10 @@ def generate_random_fake_samples(n_samples, name_len, chars):
     return name_arr, y
 
 
-def generate_real_samples(n_samples, names, chars):
-    name_arr, name_strs = get_real_names(n_samples, names, chars)
+def generate_real_samples(n_samples, names, chars, latent_points_of_samples):
+    name_arr, name_strs, name_latent_points = get_real_names(n_samples, names, chars, latent_points_of_samples)
     y = np.array([1 for x in range(n_samples)])  # class labels that these are real, for the discriminator to learn
-    return name_arr, y
+    return name_arr, y, name_latent_points
 
 
 def shuffle_iterables_same_order(iterables):
@@ -192,14 +222,13 @@ def train_discriminator_initial(discriminator_model, names, chars):
         discriminator_model.fit(batch_names, batch_outputs)
 
 
-def train_generator_on_real_samples(generator_model, n_samples, names, chars):
+def train_generator_on_real_samples(generator_model, n_samples, names, chars, latent_points_of_samples):
     # idea I had where the generator can be forced to incorporate real samples into the latent space (trying to avoid mode collapse)
     # do this by generating random latent points and training the generator to match those to the samples
-    X_real, Y_real = generate_real_samples(n_samples, names, chars)
+    X_real, Y_real, latent_points = generate_real_samples(n_samples, names, chars, latent_points_of_samples)
     check_n_samples, n_timesteps, n_features = X_real.shape
     assert check_n_samples == n_samples
     assert n_features == len(chars)  # one-hot
-    latent_points = generate_latent_points(generator_model, n_samples, chars)
     generator_model.train_on_batch(latent_points, X_real)
 
 
@@ -213,7 +242,9 @@ def create_combined_gan(generator_model, discriminator_model):
     return model
 
 
-def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, padding_char, plot_loss=False):
+def train_gan(generator_model, discriminator_model, gan_model, names, chars, latent_points_of_samples, 
+        n_epochs, batch_size, padding_char, plot_loss=False):
+
     n_samples = batch_size  # for the various generation functions
     n_batches = len(names) // batch_size
 
@@ -228,7 +259,7 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
     for epoch_i in range(n_epochs):
         print(f"GAN epoch {epoch_i}/{n_epochs}")
         for batch_i in range(n_batches):
-            X_real, Y_real = generate_real_samples(n_samples, names, chars)
+            X_real, Y_real, _latent_points_dont_use = generate_real_samples(n_samples, names, chars, latent_points_of_samples)
             # print(f"XYreal {X_real.shape}, {Y_real.shape}")
             name_timesteps = X_real.shape[1]
             X_fake, Y_fake = generate_fake_samples_from_latent_points(generator_model, n_samples, chars)
@@ -238,9 +269,9 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             # X, Y = shuffle_iterables_same_order([X, Y])
 
             # generator_samples_proportion = random.uniform(0.1, 0.5)
-            generator_samples_proportion = last_generator_loss / 5  # try making it adaptive, look at more training data if you're failing to convince the discriminator
-            n_generator_samples = max(1, round(len(names) * generator_samples_proportion))
-            train_generator_on_real_samples(generator_model, n_generator_samples, names, chars)  # experimental idea I had
+            generator_samples_proportion = (0.5 + last_generator_loss)  # try making it adaptive, look at more training data if you're failing to convince the discriminator
+            n_generator_samples = max(1, min(len(names), round(n_samples * generator_samples_proportion)))
+            train_generator_on_real_samples(generator_model, n_generator_samples, names, chars, latent_points_of_samples)  # experimental idea I had
 
             # try training discriminator on real and fake separately; somehow it seems that combining them into a batch can cause failure to converge: https://machinelearningmastery.com/practical-guide-to-gan-failure-modes/
             discriminator_loss_real = discriminator_model.train_on_batch(X_real, Y_real)
@@ -259,7 +290,8 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
             # if discriminator_loss_fake > 0.25 or batch_i % 10 == 0:
             if batch_i % 10 == 0:
                 print()  # so the next line doesn't overwrite the last loss line which ends with \r
-                show_novel_names(generator_model, n_novel_names=10, padding_char=padding_char)
+                show_novel_names(generator_model, n_novel_names=10, chars=chars, padding_char=padding_char)
+                show_sample_morphing(generator_model, names, chars, latent_points_of_samples)
 
             if plot_loss:
                 discriminator_loss_real_history.append(discriminator_loss_real)
@@ -282,11 +314,44 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, n_e
     plt.ioff()
 
 
-def show_novel_names(generator_model, n_novel_names, padding_char):
+def show_novel_names(generator_model, n_novel_names, chars, padding_char):
     novel_names = generate_fake_names_from_latent_points(generator_model, n_novel_names, chars, padding_char)
     for x in novel_names:
         print(f"novel name generated: {x}")       
 
+
+def show_sample_morphing(generator_model, names, chars, latent_points_of_samples):
+    n0, n1 = random.sample(names, 2)
+    # walk between these names in latent space and show the output
+    print(f"traversing path between two samples in latent space")
+    n_points = 8
+    v0 = latent_points_of_samples[n0]
+    v1 = latent_points_of_samples[n1]
+    assert v0.shape == v1.shape
+    dv = v1 - v0
+    dv_per_step = dv / (n_points-1)  # fencepost: 3 points means p0, middle, p1, so there are 2 intervals
+
+    input_vecs = []
+    for i in range(n_points):
+        this_dv = dv_per_step * i
+        this_v = v0 + this_dv
+        if i == 0:
+            assert np.allclose(this_v, v0)
+        elif i == n_points-1:
+            assert np.allclose(this_v, v1)
+        assert this_v.shape == v0.shape
+        input_vecs.append(this_v)
+
+    generator_input = np.array(input_vecs)
+    timesteps, input_vec_len = v0.shape
+    assert generator_input.shape == (n_points, timesteps, input_vec_len)
+    output = generator_model.predict(generator_input)
+    names = convert_generator_output_to_name_list(output, chars, padding_char)
+
+    print(f"n0 = {n0}")
+    for i, name in enumerate(names):
+        print(f"{i}' = {name}" + (f" (~= n{i//(n_points-1)})" if i in [0, n_points-1] else ""))
+    print(f"n1 = {n1}")
 
 
 if __name__ == "__main__":
@@ -294,7 +359,8 @@ if __name__ == "__main__":
         # "/home/wesley/Desktop/Construction/NameMakerRatings.txt",
         "/home/wesley/Desktop/Construction/NameMakerRatings-2.txt",
     ]
-    names = get_names(names_fps)
+    names = get_names(names_fps, repeat_by_rating=False)
+    print(f"got {len(names)} names in dataset")
     chars = get_chars_from_names(names)
     names_with_newlines = [x for x in names if "\n" in x]
     assert "\n" not in chars, f"names cannot contain newline, but these do: {names_with_newlines}"
@@ -316,11 +382,13 @@ if __name__ == "__main__":
     generator_output_vector_len = len(chars)
 
     generator_input_layer = layers.Input(generator_input_shape, name="generator_input")
+    # generator_schema_layer = layers.Dense(128, name="generator_schema")
     generator_recurrent = layers.LSTM(64, activation="relu", name="generator_rnn", return_sequences=True)
     generator_output_layer = layers.Dense(generator_output_vector_len, activation="sigmoid", name="generator_output")
 
     generator_model = keras.Sequential(name="generator")
     generator_model.add(generator_input_layer)  # add one-by-one for debugging purposes
+    # generator_model.add(generator_schema_layer)  # try to get it to abstract more and get better variety, before the LSTM stage
     generator_model.add(generator_recurrent)
     generator_model.add(generator_output_layer)
 
@@ -353,15 +421,21 @@ if __name__ == "__main__":
     discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
     discriminator_model.compile(optimizer=discriminator_optimizer, loss="mean_squared_error")
 
+    # experiment: pre-assign each real sample to a latent point for the generator to be forced to keep them in its space
+    # trying to prevent mode collapse (yet again)
+    latent_points_of_samples = get_assigned_latent_points_by_name(generator_model, names, chars)
+
     # train_discriminator_initial(discriminator_model, names, chars)
     gan_model = create_combined_gan(generator_model, discriminator_model)
     n_epochs = 10000
     batch_size = 100
     plot_loss = False
-    train_gan(generator_model, discriminator_model, gan_model, names, chars, n_epochs, batch_size, padding_char, plot_loss=plot_loss)
+    train_gan(generator_model, discriminator_model, gan_model, names, chars, latent_points_of_samples,
+        n_epochs, batch_size, padding_char, plot_loss=plot_loss)
 
     # show some novel generated data from the generator model
-    show_novel_names(generator_model, 1000, padding_char)
+    show_novel_names(generator_model, 1000, chars, padding_char)
+    show_sample_morphing(generator_model, names, chars, latent_points_of_samples)
 
     # TODO idea: train generator some by itself using random latent space points paired with actual sample names, so it can learn that it should put those structures in its latent space, more or less; could do some of this each round, or just at the beginning? (I kind of want to do it each round, increase the diversity of the space that the generator knows about by forcing it to keep accommodating new real samples at random latent-space points)
 
