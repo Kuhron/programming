@@ -10,6 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy
 import random
+import os
+import pickle
 
 
 
@@ -229,12 +231,58 @@ def train_generator_on_real_samples(generator_model, n_samples, names, chars, la
     check_n_samples, n_timesteps, n_features = X_real.shape
     assert check_n_samples == n_samples
     assert n_features == len(chars)  # one-hot
-    generator_model.train_on_batch(latent_points, X_real)
+    generator_model.fit(latent_points, X_real, verbose=0)
+
+
+def train_generator_alone(generator_model, epochs, names, chars, latent_points_of_samples, generator_model_fp, save_every_n_epochs):
+    n_samples = len(names)
+    X_real, Y_real, latent_points = generate_real_samples(n_samples, names, chars, latent_points_of_samples)
+
+    for i in range(epochs):
+        print(f"generator alone epoch {i}/{epochs}")
+        generator_model.fit(latent_points, X_real, batch_size=250, shuffle=True)
+
+        if i % save_every_n_epochs == 0:
+            generator_model.save(generator_model_fp)
+            print("---- saved generator ----")
+
+            show_novel_names(generator_model, n_novel_names=10, chars=chars, padding_char=padding_char)
+            show_sample_morphing(generator_model, names, chars, latent_points_of_samples)
+
+
+def train_discriminator_alone(generator_model, discriminator_model, epochs, names, chars, latent_points_of_samples, discriminator_model_fp, save_every_n_epochs):
+    n_samples = len(names)
+    X_real, Y_real, latent_points = generate_real_samples(n_samples, names, chars, latent_points_of_samples)
+    X_fake, Y_fake = generate_fake_samples_from_latent_points(generator_model, n_samples, chars)
+    X_combined, Y_combined = combine_real_and_fake_samples(X_real, Y_real, X_fake, Y_fake, shuffle=True)
+    discriminator_model.trainable = True  # this is set to false when the GAN is created, so make sure it's True here
+
+    for i in range(epochs):
+        print(f"discriminator alone epoch {i}/{epochs}")
+        discriminator_model.fit(X_combined, Y_combined, batch_size=250, shuffle=True)
+
+        if i % save_every_n_epochs == 0:
+            discriminator_model.save(discriminator_model_fp)
+            print("---- saved discriminator ----")
+
+
+def combine_real_and_fake_samples(X_real, Y_real, X_fake, Y_fake, shuffle=True):
+    X = np.concatenate([X_real, X_fake])
+    Y = np.concatenate([Y_real, Y_fake])
+    assert X.shape[0] == Y.shape[0]
+    n_samples = X.shape[0]
+
+    if shuffle:
+        indices = random.sample(list(range(n_samples)), n_samples)
+        random.shuffle(indices)
+        X = X[indices]
+        Y = Y[indices]
+    return X, Y
 
 
 def create_combined_gan(generator_model, discriminator_model):
     # from tutorial at https://machinelearningmastery.com/how-to-develop-a-generative-adversarial-network-for-an-mnist-handwritten-digits-from-scratch-in-keras/
-    discriminator_model.trainable=False
+    discriminator_model.trainable = False
     model = keras.Sequential(name="gan_model")
     model.add(generator_model)
     model.add(discriminator_model)
@@ -243,7 +291,10 @@ def create_combined_gan(generator_model, discriminator_model):
 
 
 def train_gan(generator_model, discriminator_model, gan_model, names, chars, latent_points_of_samples, 
-        n_epochs, batch_size, padding_char, plot_loss=False):
+        n_epochs, batch_size, padding_char, plot_loss=False,
+        generator_model_fp=None, discriminator_model_fp=None,
+        generator_alone_training=True,
+    ):
 
     n_samples = batch_size  # for the various generation functions
     n_batches = len(names) // batch_size
@@ -268,15 +319,23 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, lat
             # Y = np.concatenate([Y_real, Y_fake])
             # X, Y = shuffle_iterables_same_order([X, Y])
 
-            # generator_samples_proportion = random.uniform(0.1, 0.5)
-            generator_samples_proportion = (0.5 + last_generator_loss)  # try making it adaptive, look at more training data if you're failing to convince the discriminator
-            n_generator_samples = max(1, min(len(names), round(n_samples * generator_samples_proportion)))
-            train_generator_on_real_samples(generator_model, n_generator_samples, names, chars, latent_points_of_samples)  # experimental idea I had
+            # option to force generator to learn where samples are in latent space
+            # if this is turned off, the generator will solely focus on fooling the discriminator, but not necessarily looking like real samples
+            if generator_alone_training:
+                # generator_samples_proportion = random.uniform(0.1, 0.5)
+                generator_samples_proportion = (0.5 + last_generator_loss)  # try making it adaptive, look at more training data if you're failing to convince the discriminator
+                # n_generator_samples = max(1, min(len(names), round(n_samples * generator_samples_proportion)))
+                n_generator_samples = min(len(names), max(1000, 5*n_samples))  # much more aggressive in terms of placing the samples in latent space
+                train_generator_on_real_samples(generator_model, n_generator_samples, names, chars, latent_points_of_samples)  # experimental idea I had
 
             # try training discriminator on real and fake separately; somehow it seems that combining them into a batch can cause failure to converge: https://machinelearningmastery.com/practical-guide-to-gan-failure-modes/
+            # when training the discriminator itself, it should be trainable
+            discriminator_model.trainable = True
             discriminator_loss_real = discriminator_model.train_on_batch(X_real, Y_real)
             discriminator_loss_fake = discriminator_model.train_on_batch(X_fake, Y_fake)
 
+            # when training GAN, the discriminator portion should not train
+            discriminator_model.trainable = False
             X_gan = generate_latent_points(generator_model, n_samples, chars)
             # print(f"X_gan {X_gan.shape}")
             Y_gan = np.array([1 for i in range(n_samples)])
@@ -299,6 +358,12 @@ def train_gan(generator_model, discriminator_model, gan_model, names, chars, lat
                 generator_loss_history.append(generator_loss)
 
         # every epoch:
+        if generator_model_fp is not None:
+            generator_model.save(generator_model_fp)
+            print("---- saved generator ----")
+        if discriminator_model_fp is not None:
+            discriminator_model.save(discriminator_model_fp)
+            print("---- saved discriminator ----")
         if plot_loss:
             discriminator_loss_real_history = discriminator_loss_real_history[-window_length:]
             discriminator_loss_fake_history = discriminator_loss_fake_history[-window_length:]
@@ -354,6 +419,65 @@ def show_sample_morphing(generator_model, names, chars, latent_points_of_samples
     print(f"n1 = {n1}")
 
 
+def get_generator_model(generator_model_fp, n_timesteps, names, chars):
+    if os.path.exists(generator_model_fp):
+        generator_model = keras.models.load_model(generator_model_fp)
+    else:
+        generator_input_vector_len = 100  # idk, something random
+        generator_input_shape = (n_timesteps, generator_input_vector_len)
+        generator_output_vector_len = len(chars)
+
+        generator_input_layer = layers.Input(generator_input_shape, name="generator_input")
+        # generator_schema_layer = layers.Dense(128, name="generator_schema")
+        generator_recurrent = layers.LSTM(64, activation="relu", name="generator_rnn", return_sequences=True)
+        generator_output_layer = layers.Dense(generator_output_vector_len, activation="sigmoid", name="generator_output")
+
+        generator_model = keras.Sequential(name="generator")
+        generator_model.add(generator_input_layer)  # add one-by-one for debugging purposes
+        # generator_model.add(generator_schema_layer)  # try to get it to abstract more and get better variety, before the LSTM stage
+        generator_model.add(generator_recurrent)
+        generator_model.add(generator_output_layer)
+
+        # NOTE: in normal GAN, generator is never trained by itself! it's always based on the discriminator output in combined GAN
+        # however, for my experimental idea of training the generator to match random latent points with real samples, we WILL train it
+        generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+        generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
+
+    return generator_model
+
+
+def get_discriminator_model(discriminator_model_fp, n_timesteps, names, chars):
+    if os.path.exists(discriminator_model_fp):
+        discriminator_model = keras.models.load_model(discriminator_model_fp)
+    else:
+        n_chars = len(chars)
+        discriminator_input_vector_len = n_chars
+        discriminator_input_shape = (n_timesteps, discriminator_input_vector_len)
+        discriminator_output_vector_len = 1  # real/fake
+
+        discriminator_input_layer = layers.Input(shape=discriminator_input_shape, name="discriminator_input")
+        batch_shape = (None, n_timesteps, discriminator_input_vector_len)
+        discriminator_recurrent = layers.LSTM(64, activation="relu", name="discriminator_rnn", return_sequences=False)
+        # don't return sequences from the discriminator's recurrent layer because the loss function needs to compare the true value (0 or 1) with a SINGLE value from the RNN, NOT a sequence of values; the "can not squeeze" error is due to this mismatch where the loss is trying to compare a sequence of outputs to a single-timestep output
+        discriminator_output_layer = layers.Dense(discriminator_output_vector_len, activation="sigmoid", name="discriminator_output")
+
+        discriminator_model = keras.Sequential(name="discriminator")
+        discriminator_model.add(discriminator_input_layer)  # add one-by-one for debugging purposes
+
+        mask = True  # should discriminator ignore the padding_char? (note that the padding char is NOT a space)
+        if mask:
+            masking = layers.Masking(mask_value=0.0, batch_input_shape=batch_shape)
+            # Masking should block it from paying attention to trailing chars after variable length input; if all cells in the input at a certain time step are equal to the mask value, then it will be ignored for that timestep (so make them all 0, in contrast to normal timesteps which have one-hot character encoding)
+            discriminator_model.add(masking)
+
+        discriminator_model.add(discriminator_recurrent)
+        discriminator_model.add(discriminator_output_layer)
+        discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
+        discriminator_model.compile(optimizer=discriminator_optimizer, loss="mean_squared_error")
+
+    return discriminator_model
+
+
 if __name__ == "__main__":
     names_fps = [
         # "/home/wesley/Desktop/Construction/NameMakerRatings.txt",
@@ -374,64 +498,37 @@ if __name__ == "__main__":
     n_timesteps = padded_name_len
     names = [pad_name(name, padded_name_len, padding_char) for name in names]
 
-    mask = True  # should discriminator ignore the padding_char? (note that the padding char is NOT a space)
-
-    # generator
-    generator_input_vector_len = 100  # idk, something random
-    generator_input_shape = (n_timesteps, generator_input_vector_len)
-    generator_output_vector_len = len(chars)
-
-    generator_input_layer = layers.Input(generator_input_shape, name="generator_input")
-    # generator_schema_layer = layers.Dense(128, name="generator_schema")
-    generator_recurrent = layers.LSTM(64, activation="relu", name="generator_rnn", return_sequences=True)
-    generator_output_layer = layers.Dense(generator_output_vector_len, activation="sigmoid", name="generator_output")
-
-    generator_model = keras.Sequential(name="generator")
-    generator_model.add(generator_input_layer)  # add one-by-one for debugging purposes
-    # generator_model.add(generator_schema_layer)  # try to get it to abstract more and get better variety, before the LSTM stage
-    generator_model.add(generator_recurrent)
-    generator_model.add(generator_output_layer)
-
-    # NOTE: in normal GAN, generator is never trained by itself! it's always based on the discriminator output in combined GAN
-    # however, for my experimental idea of training the generator to match random latent points with real samples, we WILL train it
-    generator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
-    generator_model.compile(optimizer=generator_optimizer, loss="mean_squared_error")
-
-    # discriminator
-    discriminator_input_vector_len = n_chars
-    discriminator_input_shape = (n_timesteps, discriminator_input_vector_len)
-    discriminator_output_vector_len = 1  # real/fake
-
-    discriminator_input_layer = layers.Input(shape=discriminator_input_shape, name="discriminator_input")
-    batch_shape = (None, n_timesteps, discriminator_input_vector_len)
-    discriminator_recurrent = layers.LSTM(64, activation="relu", name="discriminator_rnn", return_sequences=False)
-    # don't return sequences from the discriminator's recurrent layer because the loss function needs to compare the true value (0 or 1) with a SINGLE value from the RNN, NOT a sequence of values; the "can not squeeze" error is due to this mismatch where the loss is trying to compare a sequence of outputs to a single-timestep output
-    discriminator_output_layer = layers.Dense(discriminator_output_vector_len, activation="sigmoid", name="discriminator_output")
-
-    discriminator_model = keras.Sequential(name="discriminator")
-    discriminator_model.add(discriminator_input_layer)  # add one-by-one for debugging purposes
-
-    if mask:
-        masking = layers.Masking(mask_value=0.0, batch_input_shape=batch_shape)
-        # Masking should block it from paying attention to trailing chars after variable length input; if all cells in the input at a certain time step are equal to the mask value, then it will be ignored for that timestep (so make them all 0, in contrast to normal timesteps which have one-hot character encoding)
-        discriminator_model.add(masking)
-
-    discriminator_model.add(discriminator_recurrent)
-    discriminator_model.add(discriminator_output_layer)
-    discriminator_optimizer = keras.optimizers.Adam(learning_rate=1e-3)
-    discriminator_model.compile(optimizer=discriminator_optimizer, loss="mean_squared_error")
+    generator_model_fp = "/home/wesley/programming/GANs/RNN_GAN_NameGame_Generator"
+    discriminator_model_fp = "/home/wesley/programming/GANs/RNN_GAN_NameGame_Discriminator"
+    generator_model = get_generator_model(generator_model_fp, n_timesteps, names, chars)
+    discriminator_model = get_discriminator_model(discriminator_model_fp, n_timesteps, names, chars)
 
     # experiment: pre-assign each real sample to a latent point for the generator to be forced to keep them in its space
     # trying to prevent mode collapse (yet again)
-    latent_points_of_samples = get_assigned_latent_points_by_name(generator_model, names, chars)
+    latent_points_pickle_fp = "/home/wesley/programming/GANs/RNN_GAN_NameGame_LatentPoints.pickle"
+    if os.path.exists(latent_points_pickle_fp):
+        with open(latent_points_pickle_fp, "rb") as f:
+            latent_points_of_samples = pickle.load(f)
+    else:
+        latent_points_of_samples = get_assigned_latent_points_by_name(generator_model, names, chars)
+        with open(latent_points_pickle_fp, "wb") as f:
+            pickle.dump(latent_points_of_samples, f)
+
+    generator_alone_epochs = 100
+    # train_generator_alone(generator_model, generator_alone_epochs, names, chars, latent_points_of_samples, generator_model_fp, save_every_n_epochs=20)
+    discriminator_alone_epochs = 100
+    # train_discriminator_alone(generator_model, discriminator_model, discriminator_alone_epochs, names, chars, latent_points_of_samples, discriminator_model_fp, save_every_n_epochs=10)
 
     # train_discriminator_initial(discriminator_model, names, chars)
     gan_model = create_combined_gan(generator_model, discriminator_model)
     n_epochs = 10000
-    batch_size = 100
+    batch_size = 250
     plot_loss = False
     train_gan(generator_model, discriminator_model, gan_model, names, chars, latent_points_of_samples,
-        n_epochs, batch_size, padding_char, plot_loss=plot_loss)
+        n_epochs, batch_size, padding_char, plot_loss=plot_loss,
+        generator_model_fp=generator_model_fp, discriminator_model_fp=discriminator_model_fp,
+        generator_alone_training=True,
+    )
 
     # show some novel generated data from the generator model
     show_novel_names(generator_model, 1000, chars, padding_char)
