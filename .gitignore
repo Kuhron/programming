@@ -40,5 +40,4 @@ BasisSpectrumOutput/
 Mapping/NoiseImages/
 
 # saved GAN models
-GANs/
-
+NeuralNetFiles/

@@ -498,14 +498,14 @@ if __name__ == "__main__":
     n_timesteps = padded_name_len
     names = [pad_name(name, padded_name_len, padding_char) for name in names]
 
-    generator_model_fp = "/home/wesley/programming/GANs/RNN_GAN_NameGame_Generator"
-    discriminator_model_fp = "/home/wesley/programming/GANs/RNN_GAN_NameGame_Discriminator"
+    generator_model_fp = "/home/wesley/programming/NeuralNetFiles/RNN_GAN_NameGame_Generator"
+    discriminator_model_fp = "/home/wesley/programming/NeuralNetFiles/RNN_GAN_NameGame_Discriminator"
     generator_model = get_generator_model(generator_model_fp, n_timesteps, names, chars)
     discriminator_model = get_discriminator_model(discriminator_model_fp, n_timesteps, names, chars)
 
     # experiment: pre-assign each real sample to a latent point for the generator to be forced to keep them in its space
     # trying to prevent mode collapse (yet again)
-    latent_points_pickle_fp = "/home/wesley/programming/GANs/RNN_GAN_NameGame_LatentPoints.pickle"
+    latent_points_pickle_fp = "/home/wesley/programming/NeuralNetFiles/RNN_GAN_NameGame_LatentPoints.pickle"
     if os.path.exists(latent_points_pickle_fp):
         with open(latent_points_pickle_fp, "rb") as f:
             latent_points_of_samples = pickle.load(f)
