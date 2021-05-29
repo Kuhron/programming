@@ -139,8 +139,8 @@ class SimpleAgent:
         print(f"seeding {self.name}")
         meanings = np.random.random((n_samples, 1))
         pronunciations = np.random.random((n_samples, 5))
-        self.production_model.fit(meanings, pronunciations, epochs=epochs, batch_size=50)
-        self.perception_model.fit(pronunciations, meanings, epochs=epochs, batch_size=50)
+        self.production_model.fit(meanings, pronunciations, epochs=epochs, batch_size=50, verbose=0)
+        self.perception_model.fit(pronunciations, meanings, epochs=epochs, batch_size=50, verbose=0)
 
     def get_pronunciations_of_meanings(self, chars):
         meanings = np.linspace(0, 1, 26)
@@ -544,23 +544,53 @@ def show_articulations_and_spectra_for_image(agents, image, show=True, title=Tru
     plt.close()
 
 
-def play_game_simple(agents, n_rounds, n_samples_per_round, chars):
+def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, chars, learner_acceptance_threshold):
     agreement_proportions = []
     average_distances = []
-    for round_i in range(n_rounds):
-        print(f"\nround {round_i}/{n_rounds}")
-        for agent_i, describer in enumerate(agents):
-            print(f"current describer: {describer}")
-            inputs = np.random.random((n_samples_per_round,))  # each input is a "card" containing a number from 0 to 1
-            agent_production = describer.describe(inputs, chars)
-            listeners = [a for a in agents if a is not describer]
-            for listener in listeners:
-                listener.perceive(agent_production, inputs, chars)  # update perception and production models
-        print("\nconventions this round:")
-        agreement_proportion = report_form_meaning_correspondences(agents, chars)
-        agreement_proportions.append(agreement_proportion)
-        average_distance = report_agent_distances(agents, chars)
-        average_distances.append(average_distance)
+    phases = ["initial", "new_learner"]
+    for phase in phases:
+        if phase == "initial":
+            n_rounds = n_rounds_initial
+            agents = initial_agents
+        elif phase == "new_learner":
+            n_rounds = n_rounds_with_new_learner
+            agents = initial_agents + [new_agent]
+        else:
+            raise Exception(f"invalid phase {phase}")
+
+        for round_i in range(n_rounds):
+            print(f"\nround {round_i}/{n_rounds}")
+            for agent_i, describer in enumerate(agents):
+                print(f"current describer: {describer}")
+                inputs = np.random.random((n_samples_per_round,))  # each input is a "card" containing a number from 0 to 1
+                agent_production = describer.describe(inputs, chars)
+
+                if describer is new_agent:
+                    if learner_acceptance_threshold is None:
+                        older_agents_will_listen = True
+                    else:
+                        # they ignore the learner when it hasn't yet achieved some accuracy in learning the language
+                        distance_items = get_agent_distances(agents, chars)
+                        distances_involving_learner = [d for a,b,d in distance_items if a is new_agent or b is new_agent]
+                        learner_distance = np.mean(distances_involving_learner)
+                        older_agents_will_listen = learner_distance < learner_acceptance_threshold
+                        # can go back and forth, e.g. if the learner gets farther away again for some reason then they will not listen to it
+                else:
+                    older_agents_will_listen = True
+
+                if older_agents_will_listen:
+                    listeners = [a for a in agents if a is not describer]
+                else:
+                    print(f"older agents are ignoring the learner because {learner_distance} does not meet threshold {learner_acceptance_threshold}")
+                    listeners = []
+
+                for listener in listeners:
+                    listener.perceive(agent_production, inputs, chars)  # update perception and production models
+            print("\nconventions this round:")
+            agreement_proportion = report_form_meaning_correspondences(agents, chars)
+            agreement_proportions.append(agreement_proportion)
+            average_distance = report_agent_distances(agents, chars)
+            average_distances.append(average_distance)
 
     plt.plot(agreement_proportions)
     plt.title("agreement proportion")
@@ -596,7 +626,7 @@ def report_form_meaning_correspondences(agents, chars):
     return agreement_proportion
 
 
-def report_agent_distances(agents, chars):
+def get_agent_distances(agents, chars):
     language_arrays = {a: a.get_language_vector(chars) for a in agents}
     combos = itertools.combinations(agents, 2)
     distances = []
@@ -604,8 +634,17 @@ def report_agent_distances(agents, chars):
         arr_a = language_arrays[a]
         arr_b = language_arrays[b]
         dist = np.linalg.norm(arr_a - arr_b)
-        distances.append(dist)
+        item = [a, b, dist]
+        distances.append(item)
+    return distances
+
+
+def report_agent_distances(agents, chars):
+    distance_items = get_agent_distances(agents, chars)
+    distances = []
+    for a, b, dist in distance_items:
         print(f"distance from {a} to {b} is {dist}")
+        distances.append(dist)
     average_distance = np.mean(distances)
     return average_distance
 
@@ -614,7 +653,7 @@ if __name__ == "__main__":
     # should call get_articulators() for each instance of Agent, so it's not pointing to the same objects among different agents (you can't have the same tongue as someone else)
     # mnist_vector_len = 28**2
     # (mnist_x_train, mnist_y_train), (mnist_x_test, mnist_y_test) = mnist.load_data()
-    n_agents = 2
+    n_initial_agents = 2
     # n_articulation_positions_per_sequence = 3
     # noise_average_amplitude = 0
     # n_babble_samples = 100000
@@ -624,13 +663,15 @@ if __name__ == "__main__":
     # n_eye_seed_epochs = 1
     # n_interpreter_seed_samples = 1
     # n_interpreter_seed_epochs = 1
-    n_rounds = 500
+    n_rounds_initial = 250
+    n_rounds_with_new_learner = 250
     # images_per_turn = 10
     # n_images_to_save = 100
     n_samples_per_round = 100
+    learner_acceptance_threshold = 0.10
 
-    agents = []
-    for i in range(n_agents):
+    initial_agents = []
+    for i in range(n_initial_agents):
         print("creating agent #{}".format(i))
         name = "Agent{}".format(i)
         # arts = bs.get_articulators()
@@ -647,11 +688,14 @@ if __name__ == "__main__":
         # a.seed_interpreter(get_subsample(mnist_x_train, n_interpreter_seed_samples), epochs=n_interpreter_seed_epochs)
 
         a.seed(n_samples=10, epochs=1000)  # start them with some association so they don't just sit at the middle of the space the whole time
-        agents.append(a)
+        initial_agents.append(a)
+
+    new_agent = SimpleAgent.random("NewLearner", bias_stdev=0.00, noise_stdev=0.00)
+    # DON'T seed the new agent, they will learn from the others
 
     # play_game(agents, mnist_x_train, n_rounds=n_rounds, images_per_turn=images_per_turn)
     chars = string.ascii_uppercase
     print("agents' starting state:")
-    report_form_meaning_correspondences(agents, chars)
-    play_game_simple(agents, n_rounds, n_samples_per_round, chars)
+    report_form_meaning_correspondences(initial_agents, chars)
+    play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, chars, learner_acceptance_threshold)
     # show_articulations_and_spectra_for_images(agents, mnist_x_train, n_images=n_images_to_save, save_sound=True, save_plot=True, show=False)
