@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import math
 import random
 import itertools
+import string
 # import Music.WavUtil as wav
 
 
@@ -31,23 +32,21 @@ import itertools
 
 
 class SimpleAgent:
-    def __init__(self, name, thresholds, production_model, perception_model):
+    def __init__(self, name, bias_vector, noise_stdev, production_model, perception_model):
         self.name = name
-        self.thresholds = thresholds
+        self.bias_vector = bias_vector
+        self.noise_stdev = noise_stdev
         self.production_model = production_model
         self.perception_model = perception_model
 
     @staticmethod
-    def random(name, threshold_stdev):
+    def random(name, bias_stdev, noise_stdev):
         print("getting random SimpleAgent")
-        threshold_vector_len = 5
-        while True:
-            thresholds = np.random.normal(0.5, threshold_stdev, (threshold_vector_len,))
-            if (0 <= thresholds).all() and (thresholds <= 1).all():
-                break
+        output_vector_len = 5
+        bias_vector = np.random.normal(0, bias_stdev, (output_vector_len,))
         production_model = SimpleAgent.get_production_model()
         perception_model = SimpleAgent.get_perception_model()
-        a = SimpleAgent(name, thresholds, production_model, perception_model)
+        a = SimpleAgent(name, bias_vector, noise_stdev, production_model, perception_model)
         print("done getting SimpleAgent")
         return a
 
@@ -59,13 +58,15 @@ class SimpleAgent:
 
         input_layer = layers.InputLayer(input_layer_len)
         hidden_layer = layers.Dense(hidden_layer_len, activation="relu")
+        hidden_layer2 = layers.Dense(hidden_layer_len, activation="relu")
         output_layer = layers.Dense(output_layer_len, activation="sigmoid")
 
         model = keras.Sequential()
         model.add(input_layer)
         model.add(hidden_layer)
+        model.add(hidden_layer2)
         model.add(output_layer)
-        opt = keras.optimizers.Adam(learning_rate=1e-4)
+        opt = keras.optimizers.Adam(learning_rate=1e-3)
         model.compile(opt, loss="mean_squared_error")
 
         return model
@@ -78,28 +79,44 @@ class SimpleAgent:
 
         input_layer = layers.InputLayer(input_layer_len)
         hidden_layer = layers.Dense(hidden_layer_len, activation="relu")
+        hidden_layer2 = layers.Dense(hidden_layer_len, activation="relu")
         output_layer = layers.Dense(output_layer_len, activation="sigmoid")
 
         model = keras.Sequential()
         model.add(input_layer)
         model.add(hidden_layer)
+        model.add(hidden_layer2)
         model.add(output_layer)
-        opt = keras.optimizers.Adam(learning_rate=1e-4)
+        opt = keras.optimizers.Adam(learning_rate=1e-3)
         model.compile(opt, loss="mean_squared_error")
 
         return model
 
-    def convert_output_to_pronunciation(self, output):
-        # bools = output >= self.thresholds  # elementwise comparison, will be 1/True if the threshold is met for a given cell
-        # return bools.astype(int)
-        return output
+    def convert_output_to_pronunciation(self, output, chars):
+        n_chars = len(chars)
+        bias = self.bias_vector
+        noise = np.random.normal(0, self.noise_stdev, (5,))
+        res = output + bias + noise
+        res = np.maximum(0, np.minimum(1, res))
+        res = round_array(res, precision=1/(n_chars-1))
+        assert (0 <= res).all() and (res <= 1).all()  # don't want to train on output that's outside this range
+        return res
 
-    def describe(self, inp):
+    def describe(self, inp, chars):
         outp = self.production_model.predict(inp)
-        pronunciation = self.convert_output_to_pronunciation(outp)
-        print(f"Agent {self.name} described\n{inp}\nas\n{outp}\npronounced as\n{pronunciation}")
+        pronunciation_01 = self.convert_output_to_pronunciation(outp, chars)
+        assert (0 <= pronunciation_01).all() and (pronunciation_01 <= 1).all()
+        # print(f"Agent {self.name} described\n{inp}\nas\n{outp}\npronounced as\n{pronunciation}")
         # print(f"{inp} -> {self.name} -> {pronunciation}")
-        return pronunciation
+        return pronunciation_01
+
+    def describe_as_string(self, meaning, chars):
+        n_chars = len(chars)
+        pronunciation_01 = self.describe(meaning, chars)
+        pronunciation_indices = (pronunciation_01 * (n_chars-1)).astype(int)
+        lst = list(pronunciation_indices.reshape(pronunciation_indices.size))
+        s = "".join(chars[i] for i in lst)
+        return s
 
     def perceive(self, pronunciation, meaning):
         predicted_meaning = self.perception_model.predict(pronunciation)
@@ -108,15 +125,29 @@ class SimpleAgent:
         # print(f"Agent {self.name} heard\n{pronunciation}\nand interpreted it as meaning\n{predicted_meaning}")
         # print(f"{pronunciation} -> {self.name} -> {predicted_meaning} (diff {predicted_meaning-meaning})")
         print(f"{self.name} understood with mean squared error {avg_error}")
-        self.perception_model.fit(pronunciation, meaning, verbose=0, epochs=20)
-        self.production_model.fit(meaning, pronunciation, verbose=0, epochs=20)
+        self.perception_model.fit(pronunciation, meaning, verbose=0, epochs=50)
+        self.production_model.fit(meaning, pronunciation, verbose=0, epochs=50)
 
-    def report_pronunciations_of_meanings(self):
+    def seed(self, n_samples, epochs):
+        print(f"seeding {self.name}")
+        meanings = np.random.random((n_samples, 1))
+        pronunciations = np.random.random((n_samples, 5))
+        self.production_model.fit(meanings, pronunciations, epochs=epochs, batch_size=50)
+        self.perception_model.fit(pronunciations, meanings, epochs=epochs, batch_size=50)
+
+    def get_pronunciations_of_meanings(self, chars):
         meanings = np.linspace(0, 1, 26)
+        res = []
         for m in meanings:
             inp = np.array([m]).reshape(1,1)
-            pronunciation = self.describe(inp)
-            print(f"{self.name} describes {m} as {pronunciation}")
+            s = self.describe_as_string(inp, chars)
+            res.append((m,s))
+        return res
+
+    def report_pronunciations_of_meanings(self, chars):
+        tups = self.get_pronunciations_of_meanings(chars)
+        for m, s in tups:
+            print(f"{self.name} describes {m} as {s}")
 
     def report_meanings_of_pronunciations(self):
         vector_len = 5
@@ -387,6 +418,10 @@ class Mouth:
         return spectrum_vector
 
 
+def round_array(arr, precision):
+    return precision * np.round(arr / precision)
+
+
 def play_game(agents, images, n_rounds, images_per_turn):
     print("\n-- playing game with {} for {} rounds".format(agents, n_rounds))
     for round_i in range(n_rounds):
@@ -496,25 +531,41 @@ def show_articulations_and_spectra_for_image(agents, image, show=True, title=Tru
     plt.close()
 
 
-def play_game_simple(agents, n_rounds, n_samples_per_round):
+def play_game_simple(agents, n_rounds, n_samples_per_round, chars):
     for round_i in range(n_rounds):
-        print(f"round {round_i}/{n_rounds}")
+        print(f"\nround {round_i}/{n_rounds}")
         for agent_i, describer in enumerate(agents):
             inputs = np.random.random((n_samples_per_round,))  # each input is a "card" containing a number from 0 to 1
-            agent_production = describer.describe(inputs)
+            agent_production = describer.describe(inputs, chars)
             listeners = [a for a in agents if a is not describer]
             for listener in listeners:
                 listener.perceive(agent_production, inputs)  # update perception and production models
+        print("\nconventions this round:")
+        report_form_meaning_correspondences(agents, chars)
+
+
+def report_form_meaning_correspondences(agents, chars):
+    arr = []
     for agent in agents:
-        agent.report_pronunciations_of_meanings()  # this one is more important, how would they label the space when they see it
-        # agent.report_meanings_of_pronunciations()
+        ms_ps = agent.get_pronunciations_of_meanings(chars)
+        meanings = [tup[0] for tup in ms_ps]
+        pronunciations = [tup[1] for tup in ms_ps]
+        arr.append(pronunciations)
+    for meaning_i in range(len(arr[0])):
+        s = f"{meanings[meaning_i]:5} "
+        pronunciations = [arr[i][meaning_i] for i in range(len(agents))]
+        pronunciations_all_same = len(set(pronunciations)) == 1
+        pronunciations_str = " ".join(pronunciations)
+        all_same_str = "conventionalized!" if pronunciations_all_same else "***"
+        s += f"{pronunciations_str} {all_same_str}"
+        print(s)
 
 
 if __name__ == "__main__":
     # should call get_articulators() for each instance of Agent, so it's not pointing to the same objects among different agents (you can't have the same tongue as someone else)
     # mnist_vector_len = 28**2
     # (mnist_x_train, mnist_y_train), (mnist_x_test, mnist_y_test) = mnist.load_data()
-    n_agents = 3
+    n_agents = 2
     # n_articulation_positions_per_sequence = 3
     # noise_average_amplitude = 0
     # n_babble_samples = 100000
@@ -536,7 +587,7 @@ if __name__ == "__main__":
         # arts = bs.get_articulators()
         # input("got {} arts".format(len(arts)))
         # a = Agent(name, arts, mnist_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude)
-        a = SimpleAgent.random(name, threshold_stdev=0.00)
+        a = SimpleAgent.random(name, bias_stdev=0.00, noise_stdev=0.00)
         
         # babbling is true feedback, the real auditory spectrum made by articulation
         # a.babble(n_samples=n_babble_samples, epochs=n_babble_epochs, batch_size=babble_batch_size)
@@ -546,8 +597,12 @@ if __name__ == "__main__":
         # a.seed_eye(get_subsample(mnist_x_train, n_eye_seed_samples), epochs=n_eye_seed_epochs)
         # a.seed_interpreter(get_subsample(mnist_x_train, n_interpreter_seed_samples), epochs=n_interpreter_seed_epochs)
 
+        a.seed(n_samples=10, epochs=1000)  # start them with some association so they don't just sit at the middle of the space the whole time
         agents.append(a)
 
     # play_game(agents, mnist_x_train, n_rounds=n_rounds, images_per_turn=images_per_turn)
-    play_game_simple(agents, n_rounds, n_samples_per_round)
+    chars = string.ascii_uppercase
+    print("agents' starting state:")
+    report_form_meaning_correspondences(agents, chars)
+    play_game_simple(agents, n_rounds, n_samples_per_round, chars)
     # show_articulations_and_spectra_for_images(agents, mnist_x_train, n_images=n_images_to_save, save_sound=True, save_plot=True, show=False)
