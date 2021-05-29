@@ -39,6 +39,9 @@ class SimpleAgent:
         self.production_model = production_model
         self.perception_model = perception_model
 
+    def __repr__(self):
+        return f"<SimpleAgent {self.name}>"
+
     @staticmethod
     def random(name, bias_stdev, noise_stdev):
         print("getting random SimpleAgent")
@@ -118,13 +121,17 @@ class SimpleAgent:
         s = "".join(chars[i] for i in lst)
         return s
 
-    def perceive(self, pronunciation, meaning):
+    def perceive(self, pronunciation, meaning, chars):
         predicted_meaning = self.perception_model.predict(pronunciation)
-        diff = predicted_meaning - meaning
-        avg_error = (diff**2).mean()
+        self_pronunciation_of_predicted_meaning = self.describe(predicted_meaning, chars)
+        pronunciations_are_same = pronunciation == self_pronunciation_of_predicted_meaning
+        category_similarity = pronunciations_are_same.mean()
+        print(f"{self.name} has category similarity of {category_similarity} to the describer")
+        # diff = predicted_meaning - meaning
+        # avg_error = (diff**2).mean()
         # print(f"Agent {self.name} heard\n{pronunciation}\nand interpreted it as meaning\n{predicted_meaning}")
         # print(f"{pronunciation} -> {self.name} -> {predicted_meaning} (diff {predicted_meaning-meaning})")
-        print(f"{self.name} understood with mean squared error {avg_error}")
+        # print(f"{self.name} understood with mean squared error {avg_error}")
         self.perception_model.fit(pronunciation, meaning, verbose=0, epochs=50)
         self.production_model.fit(meaning, pronunciation, verbose=0, epochs=50)
 
@@ -143,6 +150,12 @@ class SimpleAgent:
             s = self.describe_as_string(inp, chars)
             res.append((m,s))
         return res
+
+    def get_language_vector(self, chars):
+        # a numerical array which will allow for direct comparison of the languages of different agents
+        meanings = np.linspace(0, 1, 26)
+        pronunciations_01 = self.describe(meanings, chars)
+        return pronunciations_01
 
     def report_pronunciations_of_meanings(self, chars):
         tups = self.get_pronunciations_of_meanings(chars)
@@ -532,20 +545,39 @@ def show_articulations_and_spectra_for_image(agents, image, show=True, title=Tru
 
 
 def play_game_simple(agents, n_rounds, n_samples_per_round, chars):
+    agreement_proportions = []
+    average_distances = []
     for round_i in range(n_rounds):
         print(f"\nround {round_i}/{n_rounds}")
         for agent_i, describer in enumerate(agents):
+            print(f"current describer: {describer}")
             inputs = np.random.random((n_samples_per_round,))  # each input is a "card" containing a number from 0 to 1
             agent_production = describer.describe(inputs, chars)
             listeners = [a for a in agents if a is not describer]
             for listener in listeners:
-                listener.perceive(agent_production, inputs)  # update perception and production models
+                listener.perceive(agent_production, inputs, chars)  # update perception and production models
         print("\nconventions this round:")
-        report_form_meaning_correspondences(agents, chars)
+        agreement_proportion = report_form_meaning_correspondences(agents, chars)
+        agreement_proportions.append(agreement_proportion)
+        average_distance = report_agent_distances(agents, chars)
+        average_distances.append(average_distance)
+
+    plt.plot(agreement_proportions)
+    plt.title("agreement proportion")
+    plt.xlabel("round number")
+    plt.savefig("/home/wesley/programming/BasisSpectrumOutput/agreement_proportion.png")
+    plt.gcf().clear()
+
+    plt.plot(average_distances)
+    plt.title("average distance between agents")
+    plt.xlabel("round number")
+    plt.savefig("/home/wesley/programming/BasisSpectrumOutput/average_distance.png")
+    plt.gcf().clear()
 
 
 def report_form_meaning_correspondences(agents, chars):
     arr = []
+    agreements = []
     for agent in agents:
         ms_ps = agent.get_pronunciations_of_meanings(chars)
         meanings = [tup[0] for tup in ms_ps]
@@ -555,10 +587,27 @@ def report_form_meaning_correspondences(agents, chars):
         s = f"{meanings[meaning_i]:5} "
         pronunciations = [arr[i][meaning_i] for i in range(len(agents))]
         pronunciations_all_same = len(set(pronunciations)) == 1
+        agreements.append(pronunciations_all_same)
         pronunciations_str = " ".join(pronunciations)
-        all_same_str = "conventionalized!" if pronunciations_all_same else "***"
+        all_same_str = "same!" if pronunciations_all_same else "***"
         s += f"{pronunciations_str} {all_same_str}"
         print(s)
+    agreement_proportion = np.mean(agreements)
+    return agreement_proportion
+
+
+def report_agent_distances(agents, chars):
+    language_arrays = {a: a.get_language_vector(chars) for a in agents}
+    combos = itertools.combinations(agents, 2)
+    distances = []
+    for a, b in combos:
+        arr_a = language_arrays[a]
+        arr_b = language_arrays[b]
+        dist = np.linalg.norm(arr_a - arr_b)
+        distances.append(dist)
+        print(f"distance from {a} to {b} is {dist}")
+    average_distance = np.mean(distances)
+    return average_distance
 
 
 if __name__ == "__main__":
@@ -575,7 +624,7 @@ if __name__ == "__main__":
     # n_eye_seed_epochs = 1
     # n_interpreter_seed_samples = 1
     # n_interpreter_seed_epochs = 1
-    n_rounds = 100
+    n_rounds = 500
     # images_per_turn = 10
     # n_images_to_save = 100
     n_samples_per_round = 100
