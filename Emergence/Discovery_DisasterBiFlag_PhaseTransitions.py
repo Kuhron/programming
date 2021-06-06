@@ -46,7 +46,7 @@ def get_3state_evolved(n_rows, n_cols, plot=True):
     # convolution_arr = np.array([[1,1,1], [1,0,1], [1,1,1]])  # D8 neighbors
 
     # weighted D8 family of behaviors:
-    c = 5.1
+    c = 5.0001
     # convolution_arr = 1/4 * np.array([[1,1,1], [1,0,1], [1,1,1]])  # THIS IS GOOD!
     convolution_arr = 1/c * np.array([[1,1,1], [1,0,1], [1,1,1]])
     # this constant multiplier has a critical point below which the system will die out because it can't reach 3 and cycle back
@@ -125,7 +125,7 @@ def plot_design(arr):
 
 
 if __name__ == "__main__":
-    n_rows = 720
+    n_rows = 480
     n_cols = int(3/2 * n_rows)
     arr = get_design(n_rows, n_cols)
     plot_design(arr)

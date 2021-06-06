@@ -225,6 +225,22 @@ def print_pronunciations_of_numbers(ints, CONSONANTS, VOWELS, CONSTRAINTS):
     print(f"{ints} -> {s}")
 
 
+def add_pronunciations_to_roots_file(roots_fp, CONSONANTS, VOWELS, CONSTRAINTTS):
+    with open(roots_fp) as f:
+        lines = f.readlines()
+    new_lines = []
+    for l in lines:
+        form, meaning = l.strip().split(" = ")
+        pronunciation = get_pronunciation_str(form, CONSONANTS, VOWELS, CONSTRAINTS)
+        new_line = f"{form} = {pronunciation} = {meaning}\n"
+        new_lines.append(new_line)
+    output_fp = roots_fp.replace(".txt", "_pronunciations.txt")
+    assert output_fp != roots_fp
+    with open(output_fp, "w") as f:
+        for new_line in new_lines:
+            f.write(new_line)
+
+
 if __name__ == "__main__":
     c_sh = Consonant("ʃ", voicing="voiceless", place="postalveolar", manner="fricative")
     c_zh = Consonant("ʒ", voicing="voiced", place="postalveolar", manner="fricative")
@@ -473,7 +489,7 @@ if __name__ == "__main__":
 
     # random.shuffle(CONSTRAINTS)
 
-    mode = input("Select mode:\n1. conjugate random number to observe stem changes\n2. pronounce number(s) from input\n")
+    mode = input("Select mode:\n1. conjugate random number to observe stem changes\n2. pronounce number(s) from input\ns. add pronunciations to Proto-Sertorisunic roots\n")
     if mode == "1":
         n = random.randrange(10, 10000)
         n = str(n)[1:]  # so leading zeros may also be represented
@@ -483,6 +499,9 @@ if __name__ == "__main__":
             num_str = input("Enter number(s) (separated by spaces): ")
             nums = num_str.split()
             print_pronunciations_of_numbers(nums, CONSONANTS, VOWELS, CONSTRAINTS)
+    elif mode == "s":
+        roots_fp = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Sertorisunic/ProtoSertorisunicRootsGenerated.txt"
+        add_pronunciations_to_roots_file(roots_fp, CONSONANTS, VOWELS, CONSTRAINTS)
     else:
         print("unknown mode")
 
