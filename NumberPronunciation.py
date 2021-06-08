@@ -374,6 +374,7 @@ if __name__ == "__main__":
     stop_seg = [stop_features]
     v_seg = [v_features]
     voiced_fricative_seg = [voiced_fricative_features]
+    voiced_fricative_or_affricate_seg = [voiced_fricative_features, voiced_affricate_features]
     voiced_seg = [voiced_features]
     voiced_stop_or_affricate_seg = [voiced_stop_features, voiced_affricate_features]
     voiceless_seg = [voiceless_features]
@@ -420,6 +421,7 @@ if __name__ == "__main__":
     v_stop_v_seq = [v_seg, stop_seg, v_seg]
     v_voiceless_v_seq = [v_seg, voiceless_seg, v_seg]
     voiced_fricative_seq = [voiced_fricative_seg]
+    voiced_fricative_or_affricate_seq = [voiced_fricative_or_affricate_seg]
     voiced_seq = [voiced_seg]
     voiced_stop_or_affricate_seq = [voiced_stop_or_affricate_seg]
     voiced_voiceless_seq = [voiced_seg, voiceless_seg]
@@ -441,13 +443,13 @@ if __name__ == "__main__":
 
         AnywhereMarkednessConstraint(non_canonical_vowel_seq),
         BeginningMarkednessConstraint(optional_nasal_seq),
-        BeginningMarkednessConstraint(voiceless_stop_or_affricate_seq),
-        BeginningMarkednessConstraint(voiced_fricative_seq),
+        BeginningMarkednessConstraint(voiceless_stop_seq),
+        BeginningMarkednessConstraint(voiced_fricative_or_affricate_seq),
         BeginningMarkednessConstraint(R_seq),
         AnywhereMarkednessConstraint(v_voiceless_v_seq),
         AnywhereMarkednessConstraint(v_nasal_v_seq),
         AnywhereMarkednessConstraint(v_stop_v_seq),
-        EndMarkednessConstraint(dental_fricative_seq),
+        AnywhereMarkednessConstraint(dental_fricative_seq),
         AnywhereMarkednessConstraint(W_seq),
         AnywhereMarkednessConstraint(H_seq),
         EndMarkednessConstraint(stop_seq),

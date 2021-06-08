@@ -2,6 +2,7 @@
 
 import keras
 from keras import layers
+from keras.utils.np_utils import to_categorical
 # from keras.datasets import mnist
 # import BasisSpectra as bs
 import numpy as np
@@ -32,42 +33,47 @@ import string
 
 
 class SimpleAgent:
-    def __init__(self, name, bias_vector, noise_stdev, production_model, perception_model):
+    def __init__(self, name, bias_vector=None, noise_stdev=None):
+        if bias_vector is not None or noise_stdev is not None:
+            raise Exception("bias and noise have been deprecated for the purposes of projects in Spring 2021")
         self.name = name
         self.bias_vector = bias_vector
         self.noise_stdev = noise_stdev
-        self.production_model = production_model
-        self.perception_model = perception_model
+
+        self.receptors_per_articulator = 8
+        self.production_model = SimpleAgent.get_production_model()  # just have one output per articulator in production
+        self.perception_model = SimpleAgent.get_perception_model(self.receptors_per_articulator)
 
     def __repr__(self):
         return f"<SimpleAgent {self.name}>"
 
     @staticmethod
-    def random(name, bias_stdev, noise_stdev):
+    def random(name, bias_stdev=None, noise_stdev=None):
+        if bias_stdev is not None or noise_stdev is not None:
+            raise Exception("bias and noise have been deprecated for the purposes of projects in Spring 2021")
         print("getting random SimpleAgent")
-        output_vector_len = 5
-        bias_vector = np.random.normal(0, bias_stdev, (output_vector_len,))
-        production_model = SimpleAgent.get_production_model()
-        perception_model = SimpleAgent.get_perception_model()
-        a = SimpleAgent(name, bias_vector, noise_stdev, production_model, perception_model)
+        # output_vector_len = 5
+        # bias_vector = np.random.normal(0, bias_stdev, (output_vector_len,))
+        a = SimpleAgent(name)
         print("done getting SimpleAgent")
         return a
 
     @staticmethod
     def get_production_model():
-        output_layer_len = 5
+        n_articulators = 5
+        output_layer_len = n_articulators
         hidden_layer_len = 50
         input_layer_len = 1
 
         input_layer = layers.InputLayer(input_layer_len)
         hidden_layer = layers.Dense(hidden_layer_len, activation="relu")
-        hidden_layer2 = layers.Dense(hidden_layer_len, activation="relu")
+        # hidden_layer2 = layers.Dense(hidden_layer_len, activation="relu")
         output_layer = layers.Dense(output_layer_len, activation="sigmoid")
 
         model = keras.Sequential()
         model.add(input_layer)
         model.add(hidden_layer)
-        model.add(hidden_layer2)
+        # model.add(hidden_layer2)
         model.add(output_layer)
         opt = keras.optimizers.Adam(learning_rate=1e-3)
         model.compile(opt, loss="mean_squared_error")
@@ -75,20 +81,21 @@ class SimpleAgent:
         return model
 
     @staticmethod
-    def get_perception_model():
-        input_layer_len = 5
+    def get_perception_model(receptors_per_articulator):
+        n_articulators = 5
+        input_layer_len = n_articulators * receptors_per_articulator
         hidden_layer_len = 50
         output_layer_len = 1
 
         input_layer = layers.InputLayer(input_layer_len)
         hidden_layer = layers.Dense(hidden_layer_len, activation="relu")
-        hidden_layer2 = layers.Dense(hidden_layer_len, activation="relu")
+        # hidden_layer2 = layers.Dense(hidden_layer_len, activation="relu")
         output_layer = layers.Dense(output_layer_len, activation="sigmoid")
 
         model = keras.Sequential()
         model.add(input_layer)
         model.add(hidden_layer)
-        model.add(hidden_layer2)
+        # model.add(hidden_layer2)
         model.add(output_layer)
         opt = keras.optimizers.Adam(learning_rate=1e-3)
         model.compile(opt, loss="mean_squared_error")
@@ -97,11 +104,11 @@ class SimpleAgent:
 
     def convert_output_to_pronunciation(self, output, chars):
         n_chars = len(chars)
-        bias = self.bias_vector
-        noise = np.random.normal(0, self.noise_stdev, (5,))
-        res = output + bias + noise
+        # bias = self.bias_vector
+        # noise = np.random.normal(0, self.noise_stdev, (5,))
+        res = output  #+ bias + noise
         res = np.maximum(0, np.minimum(1, res))
-        res = round_array(res, precision=1/(n_chars-1))
+        res = round_array_to_n_ticks_01(res, n_ticks=n_chars)
         assert (0 <= res).all() and (res <= 1).all()  # don't want to train on output that's outside this range
         return res
 
@@ -121,26 +128,29 @@ class SimpleAgent:
         s = "".join(chars[i] for i in lst)
         return s
 
-    def perceive(self, pronunciation, meaning, chars):
-        predicted_meaning = self.perception_model.predict(pronunciation)
-        self_pronunciation_of_predicted_meaning = self.describe(predicted_meaning, chars)
-        pronunciations_are_same = pronunciation == self_pronunciation_of_predicted_meaning
-        category_similarity = pronunciations_are_same.mean()
-        print(f"{self.name} has category similarity of {category_similarity} to the describer")
+    def perceive(self, pronunciation, meaning, epochs=50):
+        n_receptors = self.receptors_per_articulator
+        pronunciation_input_vector = get_receptor_category_one_hot_stacked(pronunciation, n_receptors)
+
+        # predicted_meaning = self.perception_model.predict(pronunciation_input_vector)
+        # self_pronunciation_of_predicted_meaning = self.describe(predicted_meaning, chars)
+        # pronunciations_are_same = pronunciation == self_pronunciation_of_predicted_meaning
+        # category_similarity = pronunciations_are_same.mean()
+        # print(f"{self.name} has category similarity of {category_similarity} to the describer")
         # diff = predicted_meaning - meaning
         # avg_error = (diff**2).mean()
         # print(f"Agent {self.name} heard\n{pronunciation}\nand interpreted it as meaning\n{predicted_meaning}")
         # print(f"{pronunciation} -> {self.name} -> {predicted_meaning} (diff {predicted_meaning-meaning})")
         # print(f"{self.name} understood with mean squared error {avg_error}")
-        self.perception_model.fit(pronunciation, meaning, verbose=0, epochs=50)
-        self.production_model.fit(meaning, pronunciation, verbose=0, epochs=50)
+
+        self.perception_model.fit(pronunciation_input_vector, meaning, verbose=0, epochs=epochs)
+        self.production_model.fit(meaning, pronunciation, verbose=0, epochs=epochs)  # production is fit to the pronunciation itself, not the one-hot vector version
 
     def seed(self, n_samples, epochs):
         print(f"seeding {self.name}")
         meanings = np.random.random((n_samples, 1))
         pronunciations = np.random.random((n_samples, 5))
-        self.production_model.fit(meanings, pronunciations, epochs=epochs, batch_size=50, verbose=0)
-        self.perception_model.fit(pronunciations, meanings, epochs=epochs, batch_size=50, verbose=0)
+        self.perceive(pronunciations, meanings, epochs)
 
     def get_pronunciations_of_meanings(self, chars):
         meanings = np.linspace(0, 1, 26)
@@ -431,8 +441,40 @@ class Mouth:
         return spectrum_vector
 
 
-def round_array(arr, precision):
+def round_array_to_precision(arr, precision):
     return precision * np.round(arr / precision)
+
+
+def round_array_to_n_ticks_01(arr, n_ticks):
+    # one tick at 0, one at 1, rest evenly spaced between those
+    assert (0 <= arr).all() and (arr <= 1).all(), "arr not in 01"
+    assert type(n_ticks) is int
+    assert n_ticks >= 2
+    precision = 1/(n_ticks-1)  # fencepost
+    return round_array_to_precision(arr, precision)
+
+
+def get_receptor_category_ints(arr, n_receptors):
+    # e.g. receptors at values [0, 0.2, 0.2, 0.6] with 6 receptors will give you [0, 1, 1, 3]
+    return np.round(arr * (n_receptors-1)).astype(int)
+
+
+def get_receptor_category_one_hot_stacked(arr, n_receptors):
+    n_words, n_articulators = arr.shape
+    receptor_category_ints = get_receptor_category_ints(arr, n_receptors)
+    unstacked = to_categorical(receptor_category_ints, num_classes=n_receptors)
+
+    n_words2, n_articulators2, n_receptors2 = unstacked.shape
+    assert n_words2 == n_words
+    assert n_articulators2 == n_articulators
+    assert n_receptors2 == n_receptors
+    
+    new_shape = (unstacked.shape[0], np.prod(unstacked.shape[1:]))
+    stacked = unstacked.reshape(new_shape)
+    n_words3, vec_len = stacked.shape
+    assert n_words3 == n_words
+    assert vec_len == n_articulators * n_receptors
+    return stacked
 
 
 def play_game(agents, images, n_rounds, images_per_turn):
@@ -585,7 +627,7 @@ def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_
                     listeners = []
 
                 for listener in listeners:
-                    listener.perceive(agent_production, inputs, chars)  # update perception and production models
+                    listener.perceive(agent_production, inputs)  # update perception and production models
             print("\nconventions this round:")
             agreement_proportion = report_form_meaning_correspondences(agents, chars)
             agreement_proportions.append(agreement_proportion)
@@ -677,7 +719,7 @@ if __name__ == "__main__":
         # arts = bs.get_articulators()
         # input("got {} arts".format(len(arts)))
         # a = Agent(name, arts, mnist_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude)
-        a = SimpleAgent.random(name, bias_stdev=0.00, noise_stdev=0.00)
+        a = SimpleAgent.random(name)
         
         # babbling is true feedback, the real auditory spectrum made by articulation
         # a.babble(n_samples=n_babble_samples, epochs=n_babble_epochs, batch_size=babble_batch_size)
@@ -690,7 +732,7 @@ if __name__ == "__main__":
         a.seed(n_samples=10, epochs=1000)  # start them with some association so they don't just sit at the middle of the space the whole time
         initial_agents.append(a)
 
-    new_agent = SimpleAgent.random("NewLearner", bias_stdev=0.00, noise_stdev=0.00)
+    new_agent = SimpleAgent.random("NewLearner")
     # DON'T seed the new agent, they will learn from the others
 
     # play_game(agents, mnist_x_train, n_rounds=n_rounds, images_per_turn=images_per_turn)
