@@ -33,35 +33,36 @@ import string
 
 
 class SimpleAgent:
-    def __init__(self, name, bias_vector=None, noise_stdev=None):
-        if bias_vector is not None or noise_stdev is not None:
-            raise Exception("bias and noise have been deprecated for the purposes of projects in Spring 2021")
+    def __init__(self, name, n_articulation_positions, bias_vector=None, noise_stdev=None):
+        if bias_vector is not None:
+            raise Exception("bias is deprecated for the purposes of projects in Spring 2021")
         self.name = name
         self.bias_vector = bias_vector
         self.noise_stdev = noise_stdev
 
-        self.receptors_per_articulator = 8
-        self.production_model = SimpleAgent.get_production_model()  # just have one output per articulator in production
+        self.n_articulation_positions = n_articulation_positions
+        self.receptors_per_articulator = n_articulation_positions  # can change this to group some articulations together
+        self.production_model = SimpleAgent.get_production_model(self.receptors_per_articulator, self.n_articulation_positions)
         self.perception_model = SimpleAgent.get_perception_model(self.receptors_per_articulator)
 
     def __repr__(self):
         return f"<SimpleAgent {self.name}>"
 
     @staticmethod
-    def random(name, bias_stdev=None, noise_stdev=None):
-        if bias_stdev is not None or noise_stdev is not None:
-            raise Exception("bias and noise have been deprecated for the purposes of projects in Spring 2021")
+    def random(name, n_articulation_positions, bias_stdev=None, noise_stdev=None):
+        if bias_stdev is not None:
+            raise Exception("bias is deprecated for the purposes of projects in Spring 2021")
         print("getting random SimpleAgent")
         # output_vector_len = 5
         # bias_vector = np.random.normal(0, bias_stdev, (output_vector_len,))
-        a = SimpleAgent(name)
+        a = SimpleAgent(name, n_articulation_positions, noise_stdev=noise_stdev)
         print("done getting SimpleAgent")
         return a
 
     @staticmethod
-    def get_production_model():
+    def get_production_model(receptors_per_articulator, n_articulation_positions):
         n_articulators = 5
-        output_layer_len = n_articulators
+        output_layer_len = n_articulators * n_articulation_positions  # do this for simplicity to try to get rid of the iconicity of gradability, the perception and production of different positions of an articulator are treated as different targets, not along a scale
         hidden_layer_len = 50
         input_layer_len = 1
 
@@ -102,35 +103,56 @@ class SimpleAgent:
 
         return model
 
-    def convert_output_to_pronunciation(self, output, chars):
-        n_chars = len(chars)
-        # bias = self.bias_vector
-        # noise = np.random.normal(0, self.noise_stdev, (5,))
-        res = output  #+ bias + noise
+    def convert_output_to_pronunciation(self, output):
+        bias = 0  #self.bias_vector
+        noise = np.random.normal(0, self.noise_stdev, (5 * self.n_articulation_positions,))
+        res = output + bias + noise
         res = np.maximum(0, np.minimum(1, res))
-        res = round_array_to_n_ticks_01(res, n_ticks=n_chars)
-        assert (0 <= res).all() and (res <= 1).all()  # don't want to train on output that's outside this range
-        return res
+        # res = round_array_to_n_ticks_01(res, n_ticks=n_chars)
+        # assert (0 <= res).all() and (res <= 1).all()  # don't want to train on output that's outside this range
+        pronunciation_one_hot = get_receptor_category_one_hot_stacked_from_01(res, self.receptors_per_articulator)
+        return pronunciation_one_hot
 
-    def describe(self, inp, chars):
+    def describe(self, inp):
+        if len(inp.shape) == 1:
+            n_words, = inp.shape
+        elif len(inp.shape) == 2:
+            n_words, one = inp.shape
+            assert one == 1
+        else:
+            raise Exception("bad shape {inp.shape}")
+
         outp = self.production_model.predict(inp)
-        pronunciation_01 = self.convert_output_to_pronunciation(outp, chars)
+        assert outp.shape == (n_words, 5 * self.n_articulation_positions)
+        pronunciation_01 = outp
+
+        # old way
+        # pronunciation_01 = self.convert_output_to_pronunciation(outp)
         assert (0 <= pronunciation_01).all() and (pronunciation_01 <= 1).all()
         # print(f"Agent {self.name} described\n{inp}\nas\n{outp}\npronounced as\n{pronunciation}")
         # print(f"{inp} -> {self.name} -> {pronunciation}")
         return pronunciation_01
 
-    def describe_as_string(self, meaning, chars):
-        n_chars = len(chars)
-        pronunciation_01 = self.describe(meaning, chars)
-        pronunciation_indices = (pronunciation_01 * (n_chars-1)).astype(int)
-        lst = list(pronunciation_indices.reshape(pronunciation_indices.size))
-        s = "".join(chars[i] for i in lst)
+    def describe_as_string(self, meaning):
+        n_chars = self.n_articulation_positions
+        pronunciation_one_hot = self.describe(meaning)
+        chars = string.ascii_uppercase
+        one, pronunciation_one_hot_len = pronunciation_one_hot.shape
+        assert one == 1
+        assert pronunciation_one_hot_len == 5 * n_chars
+        arr = pronunciation_one_hot.reshape(5, n_chars)
+        char_indices = np.argmax(arr, axis=-1)
+        s = "".join(chars[i] for i in char_indices)
         return s
 
     def perceive(self, pronunciation, meaning, epochs=50):
         n_receptors = self.receptors_per_articulator
-        pronunciation_input_vector = get_receptor_category_one_hot_stacked(pronunciation, n_receptors)
+
+        # old way
+        # pronunciation_input_vector = get_receptor_category_one_hot_stacked(pronunciation, n_receptors)
+
+        pronunciation_input_vector = pronunciation
+        assert pronunciation_input_vector.shape == (pronunciation.shape[0], 5 * self.n_articulation_positions), pronunciation_input_vector.shape
 
         # predicted_meaning = self.perception_model.predict(pronunciation_input_vector)
         # self_pronunciation_of_predicted_meaning = self.describe(predicted_meaning, chars)
@@ -144,31 +166,39 @@ class SimpleAgent:
         # print(f"{self.name} understood with mean squared error {avg_error}")
 
         self.perception_model.fit(pronunciation_input_vector, meaning, verbose=0, epochs=epochs)
-        self.production_model.fit(meaning, pronunciation, verbose=0, epochs=epochs)  # production is fit to the pronunciation itself, not the one-hot vector version
+        self.production_model.fit(meaning, pronunciation_input_vector, verbose=0, epochs=epochs)
 
     def seed(self, n_samples, epochs):
         print(f"seeding {self.name}")
         meanings = np.random.random((n_samples, 1))
-        pronunciations = np.random.random((n_samples, 5))
+        pronunciations = self.get_random_pronunciations(n_samples)
         self.perceive(pronunciations, meanings, epochs)
 
-    def get_pronunciations_of_meanings(self, chars):
-        meanings = np.linspace(0, 1, 26)
+    def get_random_pronunciations(self, n_samples):
+        # return them as already one-hot encoded
+        indices_arr = np.random.randint(0, self.n_articulation_positions, (n_samples, 5))
+        one_hot = get_receptor_category_one_hot_stacked_from_indices(indices_arr, n_receptors=self.receptors_per_articulator)
+        res = one_hot
+        assert res.shape == (n_samples, 5 * self.n_articulation_positions)
+        return res
+
+    def get_pronunciations_of_meanings(self):
+        meanings = np.linspace(0, 1, 26)  # this 26 is not about articulation positions, it's just so I have a nice list of decimal meanings
         res = []
         for m in meanings:
             inp = np.array([m]).reshape(1,1)
-            s = self.describe_as_string(inp, chars)
+            s = self.describe_as_string(inp)
             res.append((m,s))
         return res
 
-    def get_language_vector(self, chars):
+    def get_language_vector(self):
         # a numerical array which will allow for direct comparison of the languages of different agents
         meanings = np.linspace(0, 1, 26)
-        pronunciations_01 = self.describe(meanings, chars)
+        pronunciations_01 = self.describe(meanings)
         return pronunciations_01
 
-    def report_pronunciations_of_meanings(self, chars):
-        tups = self.get_pronunciations_of_meanings(chars)
+    def report_pronunciations_of_meanings(self):
+        tups = self.get_pronunciations_of_meanings()
         for m, s in tups:
             print(f"{self.name} describes {m} as {s}")
 
@@ -459,10 +489,14 @@ def get_receptor_category_ints(arr, n_receptors):
     return np.round(arr * (n_receptors-1)).astype(int)
 
 
-def get_receptor_category_one_hot_stacked(arr, n_receptors):
-    n_words, n_articulators = arr.shape
+def get_receptor_category_one_hot_stacked_from_01(arr, n_receptors):
     receptor_category_ints = get_receptor_category_ints(arr, n_receptors)
-    unstacked = to_categorical(receptor_category_ints, num_classes=n_receptors)
+    return get_receptor_category_one_hot_stacked_from_indices(receptor_category_ints, n_receptors)
+
+
+def get_receptor_category_one_hot_stacked_from_indices(arr, n_receptors):
+    n_words, n_articulators = arr.shape
+    unstacked = to_categorical(arr, num_classes=n_receptors)
 
     n_words2, n_articulators2, n_receptors2 = unstacked.shape
     assert n_words2 == n_words
@@ -586,7 +620,7 @@ def show_articulations_and_spectra_for_image(agents, image, show=True, title=Tru
     plt.close()
 
 
-def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, chars, learner_acceptance_threshold):
+def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, learner_acceptance_threshold):
     agreement_proportions = []
     average_distances = []
     phases = ["initial", "new_learner"]
@@ -605,14 +639,14 @@ def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_
             for agent_i, describer in enumerate(agents):
                 print(f"current describer: {describer}")
                 inputs = np.random.random((n_samples_per_round,))  # each input is a "card" containing a number from 0 to 1
-                agent_production = describer.describe(inputs, chars)
+                agent_production = describer.describe(inputs)
 
                 if describer is new_agent:
                     if learner_acceptance_threshold is None:
                         older_agents_will_listen = True
                     else:
                         # they ignore the learner when it hasn't yet achieved some accuracy in learning the language
-                        distance_items = get_agent_distances(agents, chars)
+                        distance_items = get_agent_distances(agents)
                         distances_involving_learner = [d for a,b,d in distance_items if a is new_agent or b is new_agent]
                         learner_distance = np.mean(distances_involving_learner)
                         older_agents_will_listen = learner_distance < learner_acceptance_threshold
@@ -629,9 +663,9 @@ def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_
                 for listener in listeners:
                     listener.perceive(agent_production, inputs)  # update perception and production models
             print("\nconventions this round:")
-            agreement_proportion = report_form_meaning_correspondences(agents, chars)
+            agreement_proportion = report_form_meaning_correspondences(agents)
             agreement_proportions.append(agreement_proportion)
-            average_distance = report_agent_distances(agents, chars)
+            average_distance = report_agent_distances(agents)
             average_distances.append(average_distance)
 
     plt.plot(agreement_proportions)
@@ -647,11 +681,11 @@ def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_
     plt.gcf().clear()
 
 
-def report_form_meaning_correspondences(agents, chars):
+def report_form_meaning_correspondences(agents):
     arr = []
     agreements = []
     for agent in agents:
-        ms_ps = agent.get_pronunciations_of_meanings(chars)
+        ms_ps = agent.get_pronunciations_of_meanings()
         meanings = [tup[0] for tup in ms_ps]
         pronunciations = [tup[1] for tup in ms_ps]
         arr.append(pronunciations)
@@ -668,8 +702,8 @@ def report_form_meaning_correspondences(agents, chars):
     return agreement_proportion
 
 
-def get_agent_distances(agents, chars):
-    language_arrays = {a: a.get_language_vector(chars) for a in agents}
+def get_agent_distances(agents):
+    language_arrays = {a: a.get_language_vector() for a in agents}
     combos = itertools.combinations(agents, 2)
     distances = []
     for a, b in combos:
@@ -681,8 +715,8 @@ def get_agent_distances(agents, chars):
     return distances
 
 
-def report_agent_distances(agents, chars):
-    distance_items = get_agent_distances(agents, chars)
+def report_agent_distances(agents):
+    distance_items = get_agent_distances(agents)
     distances = []
     for a, b, dist in distance_items:
         print(f"distance from {a} to {b} is {dist}")
@@ -696,6 +730,7 @@ if __name__ == "__main__":
     # mnist_vector_len = 28**2
     # (mnist_x_train, mnist_y_train), (mnist_x_test, mnist_y_test) = mnist.load_data()
     n_initial_agents = 2
+    n_articulation_positions = 26
     # n_articulation_positions_per_sequence = 3
     # noise_average_amplitude = 0
     # n_babble_samples = 100000
@@ -711,6 +746,7 @@ if __name__ == "__main__":
     # n_images_to_save = 100
     n_samples_per_round = 100
     learner_acceptance_threshold = 0.10
+    agent_noise_stdev = 0 # 1/((n_articulation_positions-1)*3)
 
     initial_agents = []
     for i in range(n_initial_agents):
@@ -719,7 +755,7 @@ if __name__ == "__main__":
         # arts = bs.get_articulators()
         # input("got {} arts".format(len(arts)))
         # a = Agent(name, arts, mnist_vector_len, n_articulation_positions_per_sequence, noise_average_amplitude)
-        a = SimpleAgent.random(name)
+        a = SimpleAgent.random(name, n_articulation_positions, noise_stdev=agent_noise_stdev)
         
         # babbling is true feedback, the real auditory spectrum made by articulation
         # a.babble(n_samples=n_babble_samples, epochs=n_babble_epochs, batch_size=babble_batch_size)
@@ -732,12 +768,11 @@ if __name__ == "__main__":
         a.seed(n_samples=10, epochs=1000)  # start them with some association so they don't just sit at the middle of the space the whole time
         initial_agents.append(a)
 
-    new_agent = SimpleAgent.random("NewLearner")
+    new_agent = SimpleAgent.random("NewLearner", n_articulation_positions, noise_stdev=agent_noise_stdev)
     # DON'T seed the new agent, they will learn from the others
 
     # play_game(agents, mnist_x_train, n_rounds=n_rounds, images_per_turn=images_per_turn)
-    chars = string.ascii_uppercase
     print("agents' starting state:")
-    report_form_meaning_correspondences(initial_agents, chars)
-    play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, chars, learner_acceptance_threshold)
+    report_form_meaning_correspondences(initial_agents)
+    play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, learner_acceptance_threshold)
     # show_articulations_and_spectra_for_images(agents, mnist_x_train, n_images=n_images_to_save, save_sound=True, save_plot=True, show=False)
