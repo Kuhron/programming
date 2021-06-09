@@ -1,7 +1,14 @@
+# copied from ModularCA.py, with the wobbly_oscillator params, trying to get the abstract shapes out as stimuli for linguistic study based on Carr et al. 2017
+
 import random
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import convolve2d
+from scipy.ndimage.filters import generic_filter
+
+sys.path.insert(0, "/home/wesley/programming/")
+from PltContentOnly import imshow_content_only
 
 
 def get_noise(n_rows, n_cols, modulus):
@@ -47,7 +54,7 @@ def evolve_ca(initial_state, modulus, neighborhood_type, neighbor_sum_constant, 
     params_to_print = {k:v for k,v in locals().items() if k not in ["initial_state", "plot", "plot_every_n_steps"]}
     print(params_to_print)
 
-    n_steps = 100000
+    n_steps = 1000
     arr = initial_state
     
     if neighborhood_type == "D4":
@@ -89,7 +96,7 @@ def evolve_ca(initial_state, modulus, neighborhood_type, neighbor_sum_constant, 
 
         if plot and step_i % plot_every_n_steps == 0:
             if plot and not plt.fignum_exists(fignum):
-                print("user closed plot")
+                print(f"user closed plot at step {step_i}")
                 break
             plt.gcf().clear()
             plt.imshow(arr)
@@ -105,16 +112,34 @@ def evolve_ca(initial_state, modulus, neighborhood_type, neighbor_sum_constant, 
     return arr
 
 
+def extract_blob_shapes(arr):
+    # the yellow shapes are above 4.9, close to 5, since modulus is 4.982426272634422
+    # the blue shapes are below 4.6, around 4.5
+    yellow_arr = arr > 4.8
+    blue_arr = arr < 4.6
+
+    yellow_interior = generic_filter(yellow_arr, function=lambda a: a.all(), size=(3,3), mode="wrap")
+    blue_interior = generic_filter(blue_arr, function=lambda a: a.all(), size=(3,3), mode="wrap")
+
+    convolution = np.array([[1/4,1/2,1/4], [1/2,1,1/2], [1/4,1/2,1/4]])
+    c = lambda arr: convolve2d(arr, convolution, mode="same", boundary="wrap")
+    cn = lambda arr, n: arr if n <= 0 else c(cn(arr,n-1))
+    yellow_smoothed = cn(yellow_interior,2)
+    blue_smoothed = cn(blue_interior,2)
+    return yellow_smoothed, blue_smoothed
+
+
 if __name__ == "__main__":
-    n_rows = 120
-    n_cols = int(3/2 * n_rows)
+    n_rows = 240
+    # n_cols = int(3/2 * n_rows)
+    n_cols = n_rows
     modulus = 1 + abs(np.random.normal(0, 2))
     neighborhood_type = random.choice(["D8", "D4", "diagonal"])
     # neighborhood_type = "D8"
     neighbor_sum_constant = np.random.normal(0, 1)
     modification_function = random.choice(["id", "floor", "parabola", "triangle", "sigmoid2", "sigmoid5"])
-    plot = True
-    plot_every_n_steps = 1
+    plot = False
+    plot_every_n_steps = 8
 
     initial_state = get_noise(n_rows, n_cols, modulus)
     # initial_state = get_sparse_noise(n_rows, n_cols, modulus, freq=0.01)
@@ -125,7 +150,6 @@ if __name__ == "__main__":
     fuzzy_cells_and_prions = {'modulus': 3.6184508776628803, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1324512456707755, 'modification_function': 'id'}
     flashing_amoebas = {'modulus': 1.4229596110653309, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1495842896627948, 'modification_function': 'triangle'}
     devolution_to_braille = {'modulus': 1.7220424043870777, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': 0.7087672802040939, 'modification_function': 'floor'}
-    wobbly_oscillator = {'modulus': 4.982426272634422, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.13755029176642564, 'modification_function': 'triangle'}  # becomes overlapping positive/negative blobs, with intervening checkerboard space, and the blobs slowly collapse to circles and disappear; fine structure within a color is also visible, curves perpendicular to border lines
     flowers_in_the_sea = {'modulus': 3.036957539883622, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.30437791227925504, 'modification_function': 'floor'}
     flashing_growing_checkers = {'modulus': 3.9883087817089526, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -0.9821112017744941, 'modification_function': 'sigmoid2'}
     jumping_across_barrier = {'modulus': 3.2041633924528496, 'neighborhood_type': 'D4', 'neighbor_sum_constant': 0.26478347096386534, 'modification_function': 'id'}
@@ -135,10 +159,16 @@ if __name__ == "__main__":
     amoebic_rips = {'modulus': 1.135970110957478, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1542448467294696, 'modification_function': 'sigmoid2'}
     lake_blobs = {'modulus': 1.1694837210909337, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.22397420704433238, 'modification_function': 'parabola'}
     amoebas_and_worms = {'modulus': 3, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 1/5.01, 'modification_function': 'floor'}  # some initial states lead to decay to zero
+    wobbly_oscillator = {'modulus': 4.982426272634422, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.13755029176642564, 'modification_function': 'triangle'}  # becomes overlapping positive/negative blobs, with intervening checkerboard space, and the blobs slowly collapse to circles and disappear; fine structure within a color is also visible, curves perpendicular to border lines
 
     # for re-running a discovery
     params.update(wobbly_oscillator)
 
-    arr = evolve_ca(**params)
-    plt.imshow(arr)
-    plt.show()
+    n_stimuli = 200
+    for i in range(n_stimuli):
+        initial_state = get_noise(n_rows, n_cols, modulus)
+        params["initial_state"] = initial_state
+        arr = evolve_ca(**params)
+        yellow_arr, blue_arr = extract_blob_shapes(arr)
+        imshow_content_only(yellow_arr, save_fp=f"Stimuli/{random.randint(0,1000000000)}.png")
+        imshow_content_only(blue_arr, save_fp=f"Stimuli/{random.randint(0,1000000000)}.png")

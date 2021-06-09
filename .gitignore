@@ -38,6 +38,7 @@ ImageDatasets/
 
 BasisSpectrumOutput/
 Mapping/NoiseImages/
+Emergence/Images/
 
 # saved GAN models
 NeuralNetFiles/
