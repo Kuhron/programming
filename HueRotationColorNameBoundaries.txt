@@ -1,0 +1,8 @@
+red:96
+orange:4
+yellow:12
+green:23
+sky blue:44
+blue:56
+purple:74
+pink:81
