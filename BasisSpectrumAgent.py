@@ -145,7 +145,7 @@ class SimpleAgent:
         s = "".join(chars[i] for i in char_indices)
         return s
 
-    def perceive(self, pronunciation, meaning, epochs=50):
+    def perceive(self, pronunciation, meaning, epochs=50, verbose=0):
         n_receptors = self.receptors_per_articulator
 
         # old way
@@ -165,22 +165,13 @@ class SimpleAgent:
         # print(f"{pronunciation} -> {self.name} -> {predicted_meaning} (diff {predicted_meaning-meaning})")
         # print(f"{self.name} understood with mean squared error {avg_error}")
 
-        self.perception_model.fit(pronunciation_input_vector, meaning, verbose=0, epochs=epochs)
-        self.production_model.fit(meaning, pronunciation_input_vector, verbose=0, epochs=epochs)
+        self.perception_model.fit(pronunciation_input_vector, meaning, verbose=verbose, epochs=epochs)
+        self.production_model.fit(meaning, pronunciation_input_vector, verbose=verbose, epochs=epochs)
 
-    def seed(self, n_samples, epochs):
+    def seed(self, n_samples, epochs, condition):
         print(f"seeding {self.name}")
-        meanings = np.random.random((n_samples, 1))
-        pronunciations = self.get_random_pronunciations(n_samples)
+        pronunciations, meanings = get_predetermined_categorization_seeding_data(n_samples, condition, self.n_articulation_positions, self.receptors_per_articulator)
         self.perceive(pronunciations, meanings, epochs)
-
-    def get_random_pronunciations(self, n_samples):
-        # return them as already one-hot encoded
-        indices_arr = np.random.randint(0, self.n_articulation_positions, (n_samples, 5))
-        one_hot = get_receptor_category_one_hot_stacked_from_indices(indices_arr, n_receptors=self.receptors_per_articulator)
-        res = one_hot
-        assert res.shape == (n_samples, 5 * self.n_articulation_positions)
-        return res
 
     def get_pronunciations_of_meanings(self):
         meanings = np.linspace(0, 1, 26)  # this 26 is not about articulation positions, it's just so I have a nice list of decimal meanings
@@ -511,6 +502,15 @@ def get_receptor_category_one_hot_stacked_from_indices(arr, n_receptors):
     return stacked
 
 
+def get_random_pronunciations(n_samples, n_articulation_positions, receptors_per_articulator):
+    # return them as already one-hot encoded
+    indices_arr = np.random.randint(0, n_articulation_positions, (n_samples, 5))
+    one_hot = get_receptor_category_one_hot_stacked_from_indices(indices_arr, n_receptors=receptors_per_articulator)
+    res = one_hot
+    assert res.shape == (n_samples, 5 * n_articulation_positions)
+    return res
+
+
 def play_game(agents, images, n_rounds, images_per_turn):
     print("\n-- playing game with {} for {} rounds".format(agents, n_rounds))
     for round_i in range(n_rounds):
@@ -620,7 +620,7 @@ def show_articulations_and_spectra_for_image(agents, image, show=True, title=Tru
     plt.close()
 
 
-def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, learner_acceptance_threshold):
+def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, epochs_per_round, learner_acceptance_threshold):
     agreement_proportions = []
     average_distances = []
     phases = ["initial", "new_learner"]
@@ -661,7 +661,7 @@ def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_
                     listeners = []
 
                 for listener in listeners:
-                    listener.perceive(agent_production, inputs)  # update perception and production models
+                    listener.perceive(agent_production, inputs, epochs=epochs_per_round)  # update perception and production models
             print("\nconventions this round:")
             agreement_proportion = report_form_meaning_correspondences(agents)
             agreement_proportions.append(agreement_proportion)
@@ -684,6 +684,7 @@ def play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_
 def report_form_meaning_correspondences(agents):
     arr = []
     agreements = []
+    print("value " + " ".join(f"agt{i}" for i in range(len(agents))) + " same?")  # header
     for agent in agents:
         ms_ps = agent.get_pronunciations_of_meanings()
         meanings = [tup[0] for tup in ms_ps]
@@ -725,6 +726,53 @@ def report_agent_distances(agents):
     return average_distance
 
 
+def get_predetermined_categorization_seeding_data(n_samples, condition, n_articulation_positions, receptors_per_articulator):
+    if condition == "green-blue":
+        # 0 - 0.25 is A
+        # 0.25 - 0.5 is B
+        # 0.5 - 0.75 is C
+        # 0.75 - 1 is D
+        pronunciations_unassigned = get_random_pronunciations(4, n_articulation_positions, receptors_per_articulator)
+        meanings = np.random.random((n_samples, 1))
+        pronunciations = []
+        for meaning in meanings:
+            if 0 <= meaning < 0.25:
+                pi = 0
+            elif 0.25 <= meaning < 0.5:
+                pi = 1
+            elif 0.5 <= meaning < 0.75:
+                pi = 2
+            else:
+                pi = 3
+            pronunciations.append(pronunciations_unassigned[pi])
+        pronunciations = np.array(pronunciations)
+
+    elif condition == "grue":
+        # 0 - 0.25 is E
+        # 0.25 - 0.75 is F
+        # 0.75 - 1 is G
+        pronunciations_unassigned = get_random_pronunciations(3, n_articulation_positions, receptors_per_articulator)
+        meanings = np.random.random((n_samples, 1))
+        pronunciations = []
+        for meaning in meanings:
+            if 0 <= meaning < 0.25:
+                pi = 0
+            elif 0.25 <= meaning < 0.75:
+                pi = 1
+            else:
+                pi = 2
+            pronunciations.append(pronunciations_unassigned[pi])
+        pronunciations = np.array(pronunciations)
+
+    elif condition == "random":
+        # different term for each of the seed meanings
+        pronunciations = get_random_pronunciations(n_samples, n_articulation_positions, receptors_per_articulator)
+        meanings = np.random.random((n_samples, 1))
+    else:
+        raise ValueError(f"invalid condition {condition}")
+    return pronunciations, meanings
+
+
 if __name__ == "__main__":
     # should call get_articulators() for each instance of Agent, so it's not pointing to the same objects among different agents (you can't have the same tongue as someone else)
     # mnist_vector_len = 28**2
@@ -740,11 +788,15 @@ if __name__ == "__main__":
     # n_eye_seed_epochs = 1
     # n_interpreter_seed_samples = 1
     # n_interpreter_seed_epochs = 1
+    class_simulating_for = "langcog"
     n_rounds_initial = 250
-    n_rounds_with_new_learner = 250
+    n_rounds_with_new_learner = 0 if class_simulating_for == "langcog" else 250
+    n_seeding_samples = 250
+    n_seeding_epochs = 1000
     # images_per_turn = 10
     # n_images_to_save = 100
     n_samples_per_round = 100
+    epochs_per_round = 250
     learner_acceptance_threshold = 0.10
     agent_noise_stdev = 0 # 1/((n_articulation_positions-1)*3)
 
@@ -765,7 +817,14 @@ if __name__ == "__main__":
         # a.seed_eye(get_subsample(mnist_x_train, n_eye_seed_samples), epochs=n_eye_seed_epochs)
         # a.seed_interpreter(get_subsample(mnist_x_train, n_interpreter_seed_samples), epochs=n_interpreter_seed_epochs)
 
-        a.seed(n_samples=10, epochs=1000)  # start them with some association so they don't just sit at the middle of the space the whole time
+        if class_simulating_for == "theophon":
+            seeding_condition = "random"  # "random" for theory of phonology
+        elif class_simulating_for == "langcog":
+            seeding_condition = "green-blue" if i % 2 == 0 else "grue"
+        else:
+            raise ValueError(f"unknown course {class_simulating_for}")
+
+        a.seed(n_samples=n_seeding_samples, epochs=n_seeding_epochs, condition=seeding_condition)  # start them with some association so they don't just sit at the middle of the space the whole time
         initial_agents.append(a)
 
     new_agent = SimpleAgent.random("NewLearner", n_articulation_positions, noise_stdev=agent_noise_stdev)
@@ -774,5 +833,5 @@ if __name__ == "__main__":
     # play_game(agents, mnist_x_train, n_rounds=n_rounds, images_per_turn=images_per_turn)
     print("agents' starting state:")
     report_form_meaning_correspondences(initial_agents)
-    play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, learner_acceptance_threshold)
+    play_game_simple(initial_agents, new_agent, n_rounds_initial, n_rounds_with_new_learner, n_samples_per_round, epochs_per_round, learner_acceptance_threshold)
     # show_articulations_and_spectra_for_images(agents, mnist_x_train, n_images=n_images_to_save, save_sound=True, save_plot=True, show=False)

@@ -114,7 +114,7 @@ if __name__ == "__main__":
     neighbor_sum_constant = np.random.normal(0, 1)
     modification_function = random.choice(["id", "floor", "parabola", "triangle", "sigmoid2", "sigmoid5"])
     plot = True
-    plot_every_n_steps = 1
+    plot_every_n_steps = 2
 
     initial_state = get_noise(n_rows, n_cols, modulus)
     # initial_state = get_sparse_noise(n_rows, n_cols, modulus, freq=0.01)
@@ -135,9 +135,14 @@ if __name__ == "__main__":
     amoebic_rips = {'modulus': 1.135970110957478, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1542448467294696, 'modification_function': 'sigmoid2'}
     lake_blobs = {'modulus': 1.1694837210909337, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.22397420704433238, 'modification_function': 'parabola'}
     amoebas_and_worms = {'modulus': 3, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 1/5.01, 'modification_function': 'floor'}  # some initial states lead to decay to zero
+    pulsating_grid_blobs = {'modulus': 1.1120031224082496, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -0.14000033221259264, 'modification_function': 'triangle'}
+    bubbling_plasmodium = {'modulus': 1.8183835950061158, 'neighborhood_type': 'D4', 'neighbor_sum_constant': 0.4451919694797531, 'modification_function': 'parabola'}
+    pulses_on_torn_fabric = {'modulus': 1.9612420876381274, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 0.23361251099580402, 'modification_function': 'id'}
+    slowly_shrinking_blobs = {'modulus': 1.623625859769556, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.37532641019424623, 'modification_function': 'sigmoid2'}
+    stable_flower_holes = {'modulus': 4.350355617958833, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.12326451605302458, 'modification_function': 'floor'}  # some initial conditions die quickly, others stabilize
 
     # for re-running a discovery
-    params.update(wobbly_oscillator)
+    # params.update(stable_flower_holes)
 
     arr = evolve_ca(**params)
     plt.imshow(arr)
