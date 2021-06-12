@@ -788,7 +788,7 @@ if __name__ == "__main__":
     # n_eye_seed_epochs = 1
     # n_interpreter_seed_samples = 1
     # n_interpreter_seed_epochs = 1
-    class_simulating_for = "langcog"
+    class_simulating_for = "theophon"
     n_rounds_initial = 250
     n_rounds_with_new_learner = 0 if class_simulating_for == "langcog" else 250
     n_seeding_samples = 250
@@ -796,7 +796,7 @@ if __name__ == "__main__":
     # images_per_turn = 10
     # n_images_to_save = 100
     n_samples_per_round = 100
-    epochs_per_round = 250
+    epochs_per_round = 25
     learner_acceptance_threshold = 0.10
     agent_noise_stdev = 0 # 1/((n_articulation_positions-1)*3)
 
@@ -820,7 +820,8 @@ if __name__ == "__main__":
         if class_simulating_for == "theophon":
             seeding_condition = "random"  # "random" for theory of phonology
         elif class_simulating_for == "langcog":
-            seeding_condition = "green-blue" if i % 2 == 0 else "grue"
+            # seeding_condition = "green-blue" if i % 2 == 1 else "grue"
+            seeding_condition = "grue"
         else:
             raise ValueError(f"unknown course {class_simulating_for}")
 
