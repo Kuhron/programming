@@ -105,12 +105,34 @@ def plot_path_from_dna(s, modification_matrix=None):
     plt.show()
 
 
+def plot_paths_from_dnas(dnas, modification_matrix=None):
+    alpha = 0.5
+    for s in dnas:
+        angles = get_angles_from_dna(s)
+        xs, ys = get_path_points_from_angles(angles)
+        plt.plot(xs, ys, c="b", alpha=alpha)
+        if modification_matrix is not None:
+            mod_xs, mod_ys = matrix_transform(xs, ys, modification_matrix)
+            plt.plot(mod_xs, mod_ys, c="r", alpha=alpha)
+    plt.show()
+
+
 def get_fitness(s, m):
     angles = get_angles_from_dna(s)
     xs, ys = get_path_points_from_angles(angles)
     mod_xs, mod_ys = matrix_transform(xs, ys, m)
-    avg_d = get_average_difference_from_path_to_modified_path(xs, ys, mod_xs, mod_ys)
-    return avg_d  # minimizing the distance will lead to very short dna
+
+    # avg_d = get_average_difference_from_path_to_modified_path(xs, ys, mod_xs, mod_ys)
+    # return avg_d  # minimizing the distance will lead to very short dna
+
+    res = 0
+    for i in range(len(xs)):
+        sign = 1 if i % 2 == 0 else -1  # try making every other point pair close/far, to get more interesting outcomes
+        dx = mod_xs[i] - xs[i]
+        dy = mod_ys[i] - ys[i]
+        d = (dx**2 + dy**2) ** 0.5
+        res += sign * d
+    return res
 
 
 def get_average_difference_from_path_to_modified_path(xs, ys, mod_xs, mod_ys):
@@ -123,23 +145,24 @@ def get_average_difference_from_path_to_modified_path(xs, ys, mod_xs, mod_ys):
     return res
 
 
-def get_environment(point_array_shape):
+def get_environment(point_array_shape, n_steps=100, dz_stdev=0.1, plot=True):
     # 2d array of points, at each of which there is a 2d modification matrix
     # point-array-first form so can index it like m = environment[x,y]
-    a_field = get_noise(point_array_shape)
-    b_field = get_noise(point_array_shape)
-    c_field = get_noise(point_array_shape)
-    d_field = get_noise(point_array_shape)
-    
-    plt.subplot(2,2,1)
-    plt.imshow(a_field)
-    plt.subplot(2,2,2)
-    plt.imshow(b_field)
-    plt.subplot(2,2,3)
-    plt.imshow(c_field)
-    plt.subplot(2,2,4)
-    plt.imshow(d_field)
-    plt.show()
+    a_field = get_noise(point_array_shape, n_steps, dz_stdev)
+    b_field = get_noise(point_array_shape, n_steps, dz_stdev)
+    c_field = get_noise(point_array_shape, n_steps, dz_stdev)
+    d_field = get_noise(point_array_shape, n_steps, dz_stdev)
+
+    if plot:    
+        plt.subplot(2,2,1)
+        plt.imshow(a_field)
+        plt.subplot(2,2,2)
+        plt.imshow(b_field)
+        plt.subplot(2,2,3)
+        plt.imshow(c_field)
+        plt.subplot(2,2,4)
+        plt.imshow(d_field)
+        plt.show()
 
     # putting it into the right shape, probably a better way to do this
     res = np.zeros(point_array_shape + (2,2))
@@ -154,7 +177,7 @@ def get_environment(point_array_shape):
     return res
 
 
-def get_noise(shape):
+def get_noise(shape, n_steps=100, dz_stdev=0.1):
     arr = np.zeros(shape)
     nx, ny = shape
     xs = range(nx)
@@ -168,17 +191,23 @@ def get_noise(shape):
     X = X.T  # idk why np does this
     Y = Y.T
     
-    for i in range(100):
+    for i in range(n_steps):
         px = random.uniform(min_x, max_x)
         py = random.uniform(min_y, max_y)
         DX = X - px
         DY = Y - py
         D = (DX**2 + DY**2) ** 0.5
         in_region = D < random.uniform(1, avg_dim/2)
-        dz = np.random.normal(0, 0.1)
+        dz = np.random.normal(0, dz_stdev)
         arr[in_region] += dz
 
     return arr
+
+
+def change_environment(environment):
+    nx, ny, *_ = environment.shape
+    d_environment = get_environment((nx, ny), n_steps=1, dz_stdev=0.01, plot=False)
+    return environment + d_environment
 
 
 def reproduce(s0, s1):
@@ -230,38 +259,90 @@ def initialize_populations(point_array_shape):
     # eventually the different starting populations will meet and mix, and adapt to their environments
     # so this is like plants, they can't move, but their offspring can go to a slightly different place
     n_starter_points = 5
+    n_individuals_per_point = 20
     starting_dna_len = 20
     d = {}
     for i in range(n_starter_points):
         px, py = get_random_point_in_shape(point_array_shape)
-        individuals = [get_random_dna(starting_dna_len) for j in range(20)]
+        individuals = [get_random_dna(starting_dna_len) for j in range(n_individuals_per_point)]
         d[(px, py)] = individuals
     return d
 
 
 def reproduce_across_environment(location_dict, environment):
+    nx, ny, *_ = environment.shape
+    new_location_dict = {}
     for px, py in location_dict.keys():
         individuals = location_dict[(px, py)]
         m = environment[px, py]
         fitnesses = [get_fitness(dna, m) for dna in individuals]
-        print(fitnesses)
-        # TODO they choose mates somehow, reproduce, and then die, offspring may stay in same place or go to a neighboring point
+        fitnesses_dnas = sorted(list(zip(fitnesses, individuals)), reverse=True)
+
+        # kill lowest portion of them, randomly mate the others that same number of times
+        max_population = random.randint(2, 20)  # random culling events
+        fitnesses_dnas = fitnesses_dnas[:max_population]  # kill the worse-off half
+
+        # print(fitnesses_dnas)
+        reproducing_individuals = [dna for fit,dna in fitnesses_dnas]
+        r0 = 2
+        n_offspring_to_make = round(r0 * len(reproducing_individuals))
+
+        for offspring_i in range(n_offspring_to_make):
+            s0 = random.choice(reproducing_individuals)
+            s1 = random.choice(reproducing_individuals)  # possible to breed with self
+            offspring = reproduce(s0, s1)
+            dx = random.choice([-1, 0, 1])
+            dy = random.choice([-1, 0, 1])
+            new_px = max(0, min(px + dx, nx-1))
+            new_py = max(0, min(py + dy, ny-1))
+            if (new_px, new_py) not in new_location_dict:
+                new_location_dict[(new_px, new_py)] = []
+            new_location_dict[(new_px, new_py)].append(offspring)
+    return new_location_dict
+
+
 
 if __name__ == "__main__":
-    point_array_shape = (75,100)
-    environment = get_environment(point_array_shape)  # 2d array of points at each of which there is a 2d modification matrix
+    point_array_shape = (10,10)
+    environment = get_environment(point_array_shape, plot=False)  # 2d array of points at each of which there is a 2d modification matrix
     assert environment.shape == point_array_shape + (2,2), environment.shape
 
-    s0 = get_random_dna(10)
-    s1 = get_random_dna(10)
-    px, py = get_random_point_in_shape(point_array_shape)
-    m = environment[px, py]
-    assert m.shape == (2,2), m.shape
-
-    plot_path_from_dna(s0, modification_matrix=m)
-    print(get_fitness(s0, m))
-    print(get_fitness(s1, m))
-
     location_dict = initialize_populations(point_array_shape)
-    reproduce_across_environment(location_dict, environment)
+
+    for generation_i in range(500):
+        location_dict = reproduce_across_environment(location_dict, environment)
+        population = sum(len(dnas) for dnas in location_dict.values())
+        print(f"generation {generation_i}: population {population}")
+        if population == 0:
+            break
+        environment = change_environment(environment)
+
+    if population > 0:
+        lines_to_write = []
+        for px in range(point_array_shape[0]):
+            for py in range(point_array_shape[1]):
+                lines_to_write.append(f"point {px},{py}\n")
+                dnas = location_dict.get((px, py))
+                if dnas is not None and len(dnas) > 0:
+                    dna_lines = []
+                    for dna in dnas:
+                        dna_lines.append("".join(str(x) for x in dna) + "\n")
+                    dna_lines = sorted(dna_lines)
+                    lines_to_write += dna_lines
+                else:
+                    lines_to_write.append("uninhabited\n")
+                lines_to_write.append("\n")
+        with open("GeneticPathOutput.txt", "w") as f:
+            for line in lines_to_write:
+                f.write(line)
+
+        while True:
+            px, py = get_random_point_in_shape(point_array_shape)
+            dnas = location_dict.get((px, py))
+            if dnas is not None and len(dnas) > 0:
+                print(f"point {px},{py} has {len(dnas)} individuals")
+                m = environment[px, py]
+                plot_paths_from_dnas(dnas, modification_matrix=m)
+            else:
+                print(f"point {px},{py} is uninhabited")
 
