@@ -7,9 +7,10 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.signal import convolve2d
+import networkx as nx
 
 
-def get_noise(shape, neighbor_method):
+def get_noise_using_pseudo_neighbor_values(shape, neighbor_method):
     arr = np.zeros(shape)
     has_value = np.zeros(shape).astype(bool)
     coords = get_coords(shape, shuffle=True)
@@ -83,7 +84,7 @@ def get_d8_neighbors_toroidal(i, j, shape):
 def get_random_graph_neighbor_dict(shape, expected_size):
     print("getting graph neighbor dict")
     # for each point, get a contiguous region around it by doing random walks, and make the point adjacent to all of those points (except itself)
-    coords = get_coords(shape, shuffle=True)
+    coords = get_coords(shape, shuffle=True)  # shuffle True is only necessary for when debug-plotting the regions just to see what they look like (so they're not all at the top of the graph); the algorithm doesn't care what order these coords are in
     neighbors_d8 = get_d8_neighbor_dict_toroidal(shape)
     # use d8 as the way to walk around through the space when finding the region to be neighbors with
     adjacency = {coord: set() for coord in coords}
@@ -150,9 +151,66 @@ def get_contiguous_region(i, j, random_walk_neighbors, expected_size, exclude_so
     return res
 
 
+def get_nx_graph(adjacency_dict):
+    g = nx.Graph()
+    g.add_nodes_from(adjacency_dict.keys())
+    for node, neighbors in adjacency_dict.items():
+        edges_lst = [(node, neighbor) for neighbor in neighbors]
+        g.add_edges_from(edges_lst)
+    return g
+
+
+def plot_distance_from_point(i, j, graph, shape, coords):
+    arr = get_array_of_distances_from_point(i, j, graph, shape, coords)
+    plt.imshow(arr)
+    plt.colorbar()
+    plt.title("distances to a point in a random-regionalized neighbor graph")
+    plt.show()
+
+
+def get_array_of_distances_from_point(i, j, graph, shape, coords):
+    #  distance_matrix = nx.algorithms.shortest_paths.dense.floyd_warshall_numpy(graph, nodelist=coords)
+    # node_index = coords.index((i,j))
+    # distances = distance_matrix[node_index]
+
+    distances = nx.single_source_shortest_path_length(graph, (i,j))  # no need to compute entire matrix for only one point
+
+    # now create array where the Z value is the distance from (i,j)
+    arr = np.zeros(shape)
+    for coord_i, coord in enumerate(coords):
+        y,z = coord
+        arr[y,z] = distances[(y,z)]  # since distance matrix's nodelist is in same order as coords (passing nodelist=coords when making it)
+
+    return arr
+
+
+def get_noise_using_circles_in_graph(n_circles, graph, shape, coords):
+    print("adding circle noise")
+    # simple circle addition algorithm but using arbitrary adjacency
+    arr = np.zeros(shape)
+    for circle_i in range(n_circles):
+        if circle_i % 10 == 0:
+            print(f"circle {circle_i}/{n_circles}")
+        i,j = random.choice(coords)
+        distances = get_array_of_distances_from_point(i, j, graph, shape, coords)  # alternative here is to get the whole distance matrix; computation/memory tradeoff
+        radius = np.exp(np.random.normal()) * 3
+        circle = distances <= radius
+        dz = np.random.normal()
+        arr[circle] += dz
+    print("done adding circle noise")
+    return arr
+
+
 if __name__ == "__main__":
-    shape = (200,200)
-    arr = get_noise(shape, neighbor_method="random_graph")
+    shape = (100, 100)
+    coords = get_coords(shape, shuffle=False)
+
+    random_region_adjacency_dict = get_random_graph_neighbor_dict(shape, expected_size=10)
+    graph = get_nx_graph(random_region_adjacency_dict)
+    # plot_distance_from_point(50,50, graph, shape, coords)
+
+    # arr = get_noise_using_pseudo_neighbor_values(shape, neighbor_method="random_graph")
+    arr = get_noise_using_circles_in_graph(100, graph, shape, coords)
 
     # plt.subplot(1,2,1)
     # plt.imshow(arr, origin="lower")
@@ -160,7 +218,8 @@ if __name__ == "__main__":
 
     # plt.subplot(1,2,2)
     arr2 = convolve2d(arr, np.array([[1,1,1],[1,0,1],[1,1,1]]), mode="same", boundary="wrap")
-    plt.contourf(arr2)
+    cf = plt.contourf(arr2)
     plt.contour(arr2, colors="k")
+    plt.colorbar(cf)
     plt.axis("equal")
     plt.show()
