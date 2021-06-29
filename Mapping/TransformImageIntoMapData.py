@@ -212,12 +212,13 @@ def get_max_r_and_c(rcs):
 
 def write_image_pixel_to_icosa_point_number(image_name):
     print(f"writing image pixel to icosa point number correspondence for image_name {image_name}")
-    rc_to_point_number = get_image_pixel_to_icosa_point_number_dict(image_name)
-    max_r, max_c = get_max_r_and_c(rc_to_point_number.keys())
     pixel_to_icosa_fp = get_image_metadata_dict()[image_name]["pixel_to_icosa_fp"]
     if os.path.exists(pixel_to_icosa_fp):
         print(f"Warning: file exists: {pixel_to_icosa_fp}\nskipping")
         return
+
+    rc_to_point_number = get_image_pixel_to_icosa_point_number_dict(image_name)
+    max_r, max_c = get_max_r_and_c(rc_to_point_number.keys())
 
     lines = []
     for r in range(max_r):

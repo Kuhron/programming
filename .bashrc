@@ -163,6 +163,7 @@ alias synctime="sudo tlsdate -s -H mail.google.com"
 alias gs="git status"
 alias gitsize="git status --porcelain | sed 's/^...//g;s/\"//g' | xargs -d '\n' -I {} du -h {} | sort -h"
 alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
+alias tmux="TERM=screen-256color-bce tmux"
 
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}

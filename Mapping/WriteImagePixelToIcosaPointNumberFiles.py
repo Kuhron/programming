@@ -10,6 +10,8 @@ if __name__ == "__main__":
     metadata = get_image_metadata_dict()
     # image_names_to_use = ["Legron"]
     image_names_to_use = sorted(metadata.keys())
-    image_names_to_use.remove("Sertorisun Islands")
+    image_names_already_done = ["Sertorisun Islands", "Legron", "Imis Tolin", "Mienta"]
+    for name in image_names_already_done:
+        image_names_to_use.remove(name)
     for image_name in image_names_to_use:
         write_image_pixel_to_icosa_point_number(image_name)
