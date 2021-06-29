@@ -49,8 +49,8 @@ class LatitudeLongitudeLattice(Lattice):
     def get_rc_generator(self):
         print("- getting rc tuples for {}".format(type(self)))
         for r in range(self.r_size):
-            if r % 10 == 0:
-                print("row {}/{}".format(r, self.r_size))
+            # if r % 10 == 0:
+            #     print("row {}/{}".format(r, self.r_size))
             for c in range(self.c_size):
                 yield (r, c)
         print("- done getting rc tuples for {}".format(type(self)))
@@ -168,17 +168,19 @@ class LatitudeLongitudeLattice(Lattice):
         xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon, deg=True)
         return UnitSpherePoint({"latlondeg": (lat, lon), "xyz": xyz})
 
-    def get_all_points_by_lattice_position(self):
-        print(f"getting all points by lattice position")
+    def get_points_by_lattice_position(self, pixels=None):
+        # if pixels is specified, only do those, else do all
+        print(f"getting points by lattice position")
         d_usp = {}
         for r in range(self.r_size):
             if r % 10 == 0:
                 print(f"row {r}/{self.r_size}")
             for c in range(self.c_size):
                 tup = (r, c)
-                usp = self.get_point_from_lattice_position(r, c)
-                d_usp[tup] = usp
-        print(f"done getting all points by lattice position")
+                if pixels is None or tup in pixels:
+                    usp = self.get_point_from_lattice_position(r, c)
+                    d_usp[tup] = usp
+        print(f"done getting points by lattice position")
         return d_usp
     
     def create_point_dicts(self):

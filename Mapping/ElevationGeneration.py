@@ -81,8 +81,6 @@ def get_key_strs_in_data_dir(data_dir, project_name, project_version):
 
 
 def get_map_and_version_from_images(map_lattice, projects_dir, project_name, image_names, image_latlons, image_variables, color_conditions, condition_ranges):
-    # cada_image_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/"
-
     # DANGER OF MEMORY LEAKS if use big maps! Watch top!
     # image_fp_no_dir = "TestMap_Mako.png"
     project_dir = os.path.join(projects_dir, project_name)

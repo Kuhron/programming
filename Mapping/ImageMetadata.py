@@ -39,6 +39,16 @@ def get_latlon_dict():
     return d
 
 
+def get_icosa_distance_tolerance_normalized(image_name):
+    # scaling the distance as though planet radius is 1
+    metadata = get_image_metadata_dict()[image_name]
+    icosa_point_tolerance_km = float(metadata["icosa_point_tolerance_km"])
+    world_name = metadata["world_name"]
+    planet_radius_km = float(get_world_metadata_dict()[world_name]["planet_radius_km"])
+    icosa_distance_tolerance_normalized = icosa_point_tolerance_km / planet_radius_km
+    return icosa_distance_tolerance_normalized
+
+
 if __name__ == "__main__":
     d = get_image_metadata_dict()
     print(d)

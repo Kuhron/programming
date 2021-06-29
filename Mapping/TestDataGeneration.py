@@ -67,12 +67,13 @@ def test_generate_on_section_of_condition_data():
         elevation_conditions[pi] = condition
         condition_colors_lst.append(color_by_condition[condition])
 
-    elevation_condition_ranges = {
-        "sea": (None, -1),
-        "land": (1, None),
-        "coast": (-15, 15),
-        "shallow": (-5, 0),
-    }
+    elevation_condition_ranges = get_condition_ranges_dict("elevation")
+    # TODO get these from ImageKey_elevation_condition.csv
+    #     "sea": (None, -1),
+    #     "land": (1, None),
+    #     "coast": (-15, 15),
+    #     "shallow": (-5, 0),
+    # }
     data_points = icosa_usps_with_data  # can try doing even more points inside this, e.g. get conditions for only 6 iterations but generate data on 7
 
     # noise generation subject to the condition functions

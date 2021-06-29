@@ -9,7 +9,8 @@ import scipy
 import MapCoordinateMath as mcm
 import PlottingUtil as pu
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
-from TransformImageIntoMapData import get_image_fp_to_latlon, shrink_resolution
+from TransformImageIntoMapData import shrink_resolution
+from ImageMetadata import get_image_metadata_dict, get_latlon_dict
 
 
 import sys
@@ -31,7 +32,11 @@ def get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, lat
     return image_lattice, arr
 
 
-def get_latlon_to_color_dict(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=True):
+def get_latlon_to_color_dict(image_name, shrink=True):
+    latlon_dict = get_latlon_dict()
+    latlon00, latlon01, latlon10, latlon11 = latlon_dict[image_name]
+    image_fp = get_image_metadata_dict()[image_name]["image_fp"]
+
     lattice, image_arr = get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=shrink)
     r_size, c_size, rgba_len = image_arr.shape
     assert r_size == lattice.r_size
@@ -57,24 +62,23 @@ def get_latlon_to_color_dict(image_fp, latlon00, latlon01, latlon10, latlon11, s
     return d
 
 
-def get_xyrgba_array(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=True):
-    print("- getting xyrgba array for {}".format(image_fp))
-    latlon_to_color_dict = get_latlon_to_color_dict(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=shrink)
+def get_xyrgba_array(image_name, shrink=True):
+    print("- getting xyrgba array for {}".format(image_name))
+    latlon_to_color_dict = get_latlon_to_color_dict(image_name, shrink=shrink)
     lst = []
     for latlon, color_tup in latlon_to_color_dict.items():
         lat, lon = latlon
         r, g, b, a = color_tup
         tup = (lat, lon, r, g, b, a)
         lst.append(tup)
-    print("- done getting xyrgba array for {}".format(image_fp))
+    print("- done getting xyrgba array for {}".format(image_name))
     return lst
 
 
-def plot_images_on_globe_scatter(image_fp_to_latlon, save_fp=None, show=True, shrink=True):
+def plot_images_on_globe_scatter(image_names, save_fp=None, show=True, shrink=True):
     full_xyrgba_array = []
-    for image_fp, latlons in image_fp_to_latlon.items():
-        latlon00, latlon01, latlon10, latlon11 = latlons
-        xyrgba_array = get_xyrgba_array(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=shrink)
+    for image_name in image_names:
+        xyrgba_array = get_xyrgba_array(image_name, shrink=shrink)
         full_xyrgba_array.extend(xyrgba_array)
     arr = np.array(full_xyrgba_array)
     n_points, six = arr.shape
@@ -102,11 +106,10 @@ def plot_images_on_globe_scatter(image_fp_to_latlon, save_fp=None, show=True, sh
         plt.show()
 
 
-def plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=None, show=True, shrink=True, lat_range=None, lon_range=None):
+def plot_images_on_globe_imshow(image_names, save_fp=None, show=True, shrink=True, lat_range=None, lon_range=None):
     full_xyrgba_array = []
-    for image_fp, latlons in image_fp_to_latlon.items():
-        latlon00, latlon01, latlon10, latlon11 = latlons
-        xyrgba_array = get_xyrgba_array(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=shrink)
+    for image_name in image_names:
+        xyrgba_array = get_xyrgba_array(image_name, shrink=shrink)
         full_xyrgba_array.extend(xyrgba_array)
     arr = np.array(full_xyrgba_array)
     n_points, six = arr.shape
@@ -131,12 +134,12 @@ def plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=None, show=True, shr
 
 
 if __name__ == "__main__":
-    image_location_data_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImageToLocationDict.csv"
-    image_fp_to_latlon = get_image_fp_to_latlon(image_location_data_fp)
-    # save_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ContinentsPlacedOutput.png"
+    metadata = get_image_metadata_dict()
+    image_names = sorted(metadata.keys())
+    # save_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/ContinentsPlacedOutput.png"
     save_fp = None
     if save_fp is not None and os.path.exists(save_fp):
         input("Warning, file exists and will be overwritten by plot: {}\npress enter to continue".format(save_fp))
 
-    # plot_images_on_globe_scatter(image_fp_to_latlon, save_fp=save_fp, show=True, shrink=True)
-    plot_images_on_globe_imshow(image_fp_to_latlon, save_fp=save_fp, show=True, shrink=True, lat_range=[-30,30], lon_range=[-150,-90])
+    plot_images_on_globe_scatter(image_names, save_fp=save_fp, show=True, shrink=True)
+    # plot_images_on_globe_imshow(image_names, save_fp=save_fp, show=True, shrink=True, lat_range=[-30,30], lon_range=[-150,-90])
