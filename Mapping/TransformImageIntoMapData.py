@@ -28,12 +28,14 @@ import time
 import random
 import csv
 import pandas as pd
+import os
 
 from Lattice import Lattice
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 import IcosahedronMath
 import MapCoordinateMath as mcm
+from ImageMetadata import get_image_metadata_dict, get_latlon_dict, get_world_metadata_dict
 
 
 def get_rgba_color_array_from_image_array(arr):
@@ -72,19 +74,30 @@ def get_condition_string_array_from_image_array(arr, color_to_str):
     return str_arr
 
 
-def get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, with_coords=False):
+def get_lattice_from_image(image_name):
+    metadata = get_image_metadata_dict()[image_name]
+    image_fp = metadata["image_fp"]
+    latlon00, latlon01, latlon10, latlon11 = get_latlon_dict()[image_name]
     im = Image.open(image_fp)
+
     shrink_debug = False
     if shrink_debug:
         im = shrink_resolution(im)
     else:
-        input("opened image with PIL; check memory usage")
+        print("opened image with PIL; check memory usage")
+
     width, height = im.size
+    print(f"image {image_name} has shape ({width}, {height}), total of {width*height} pixels")
 
     image_lattice = LatitudeLongitudeLattice(
         height, width,  # rows, columns
         latlon00, latlon01, latlon10, latlon11
     )
+    return image_lattice
+
+
+def get_lattice_and_df_from_image(image_name, color_to_str, key_str, with_coords=False):
+    image_lattice = get_lattice_from_image(image_name)
 
     arr = np.array(im)
     assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
@@ -134,22 +147,6 @@ def shrink_resolution(im):
     return im
 
 
-def get_image_fp_to_latlon(image_location_data_fp):
-    d = {}
-    with open(image_location_data_fp) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            # print(row)
-            image_fp = row["filepath"]
-            latlon00 = (float(row["lat00"]), float(row["lon00"]))
-            latlon01 = (float(row["lat01"]), float(row["lon01"]))
-            latlon10 = (float(row["lat10"]), float(row["lon10"]))
-            latlon11 = (float(row["lat11"]), float(row["lon11"]))
-            latlons = [latlon00, latlon01, latlon10, latlon11]
-            d[image_fp] = latlons
-    return d
-
-
 def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance, planet_radius):
     STARTING_POINTS = IcosahedronMath.STARTING_POINTS
 
@@ -168,18 +165,89 @@ def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_toler
     return d
 
 
-def write_image_conditions_lattice_agnostic(image_fp, output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, icosa_distance_normalized):
-    print("writing image conditions df to {}".format(output_fp))
-    image_lattice, df = get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, with_coords=False)
-    print("getting approx icosa points for image pixels")
+def get_approx_icosa_point_numbers(usps, icosa_distance_tolerance_normalized):
+    print("getting approx icosa points for USPs")
     approx_icosa_point_numbers = []
-    for pi, p in enumerate(image_lattice.get_points()):
+    for pi, p in enumerate(usps):
         if pi % 1000 == 0 and pi != 0:
-            print(f"point {pi}/{image_lattice.n_points} ({100*pi/image_lattice.n_points :.2f}%)")
-        approx_p, d_norm, d_units = IcosahedronMath.get_nearest_icosa_point_to_latlon(p.latlondeg(), icosa_distance_normalized, planet_radius=1, STARTING_POINTS=IcosahedronMath.STARTING_POINTS)
+            print(f"point {pi}/{len(usps)} ({100*pi/len(usps) :.2f}%)")
+        approx_p, d_norm, d_units = IcosahedronMath.get_nearest_icosa_point_to_latlon(p.latlondeg(), icosa_distance_tolerance_normalized, planet_radius=1, STARTING_POINTS=IcosahedronMath.STARTING_POINTS)
         approx_p_i = approx_p.point_number
         approx_icosa_point_numbers.append(approx_p_i)
-    print("done getting approx icosa points for image pixels, adding them to the df")
+    print("done getting approx icosa points for USPs")
+    return approx_icosa_point_numbers
+
+
+def get_image_pixel_to_icosa_point_number_dict(image_name):
+    print(f"getting image pixel to icosa point number dict for {image_name}")
+    metadata = get_image_metadata_dict()[image_name]
+    image_fp = metadata["image_fp"]
+    icosa_point_tolerance_km = float(metadata["icosa_point_tolerance_km"])
+    world_name = metadata["world_name"]
+    planet_radius_km = float(get_world_metadata_dict()[world_name]["planet_radius_km"])
+    icosa_distance_tolerance_normalized = icosa_point_tolerance_km / planet_radius_km
+
+    image_lattice = get_lattice_from_image(image_name)
+    print(f"image lattice has {image_lattice.n_points} points")
+
+    rc_to_usp = image_lattice.get_all_points_by_lattice_position()
+    rcs = sorted(rc_to_usp.keys())
+    usps = [rc_to_usp[rc] for rc in rcs]
+
+    point_numbers = get_approx_icosa_point_numbers(usps, icosa_distance_tolerance_normalized)
+    rc_to_point_number = {rc: p_i for rc, p_i in zip(rcs, point_numbers)}  # assumes the orders match, which they should if you get usps in the same order as rcs they correspond to
+    print(f"done getting image pixel to icosa point number dict for {image_name}")
+    return rc_to_point_number
+
+
+def get_max_r_and_c(rcs):
+    max_r = -1
+    max_c = -1
+    assert all(r >= 0 and c >= 0 for r,c in rcs), "row/column number may not have negative value"
+    for r,c in rcs:
+        max_r = max(r, max_r)
+        max_c = max(c, max_c)
+    return max_r, max_c
+
+
+def write_image_pixel_to_icosa_point_number(image_name):
+    print(f"writing image pixel to icosa point number correspondence for image_name {image_name}")
+    rc_to_point_number = get_image_pixel_to_icosa_point_number_dict(image_name)
+    max_r, max_c = get_max_r_and_c(rc_to_point_number.keys())
+    pixel_to_icosa_fp = get_image_metadata_dict()[image_name]["pixel_to_icosa_fp"]
+    if os.path.exists(pixel_to_icosa_fp):
+        print(f"Warning: file exists: {pixel_to_icosa_fp}\nskipping")
+        return
+
+    lines = []
+    for r in range(max_r):
+        row_points = []
+        for c in range(max_c):
+            rc = (r, c)
+            p_i = rc_to_point_number[rc]
+            row_points.append(p_i)
+        row_str = ",".join(str(x) for x in row_points) + "\n"
+        lines.append(row_str)
+    with open(pixel_to_icosa_fp, "w") as f:
+        for line in lines:
+            f.write(line)
+
+    print(f"done writing image pixel to icosa point number correspondence for image_name {image_name}")
+
+
+# def read_image_pixel_to_icosa_point_number(?):
+#     ?
+
+
+def write_image_conditions_lattice_agnostic(image_name, output_fp, color_to_str, key_str, icosa_distance_tolerance_normalized):
+    print("writing image conditions df to {}".format(output_fp))
+    image_lattice, df = get_lattice_and_df_from_image(image_name, color_to_str, key_str, with_coords=False)
+    print("getting approx icosa points for image pixels")
+
+    raise NotImplementedError
+    usps = NotImplemented
+    approx_icosa_point_numbers = get_approx_icosa_point_numbers(usps, icosa_distance_tolerance_normalized)
+
     unique_icosa_point_numbers = np.unique(approx_icosa_point_numbers)
     all_unique = len(unique_icosa_point_numbers) == len(approx_icosa_point_numbers)
     if not all_unique:
@@ -191,10 +259,8 @@ def write_image_conditions_lattice_agnostic(image_fp, output_fp, latlon00, latlo
 
 
 if __name__ == "__main__":
-    image_location_data_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/WorldMapScanPNGs/ImageToLocationDict.csv"
-    image_fp_to_latlon = get_image_fp_to_latlon(image_location_data_fp)
-    search_substr = "Sertor"
-    image_fp, latlons = random.choice([x for x in image_fp_to_latlon.items() if search_substr in x[0]])
+    image_name = "Sertorisun Islands"
+    latlons = get_latlon_dict()[image_name]
     latlon00, latlon01, latlon10, latlon11 = latlons
     print("reading image {}".format(image_fp))
 
@@ -210,20 +276,16 @@ if __name__ == "__main__":
 
     key_str = "elevation"
 
-    icosa_point_tolerance_km = 1
-    planet_radius_km = IcosahedronMath.CADA_II_RADIUS_KM
-    icosa_distance_normalized = icosa_point_tolerance_km / planet_radius_km
-
     latlon_to_corner_coord_str = lambda latlon: "{},{}".format(*latlon)
     corner_coords_str = ";".join(latlon_to_corner_coord_str(latlon) for latlon in [latlon00, latlon01, latlon10, latlon11])
     resolution_str = "cada{}km".format(icosa_point_tolerance_km)
     test_output_fp_info_str = f"_{key_str}_{corner_coords_str}_{resolution_str}.csv"
     test_output_fp = image_fp.replace(".png", test_output_fp_info_str)
     assert test_output_fp != image_fp, "input_fp didn't contain .png"
-    write_image_conditions_lattice_agnostic(image_fp, test_output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, icosa_distance_normalized)
+    write_image_conditions_lattice_agnostic(image_fp, test_output_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str, icosa_distance_tolerance_normalized)
     input("got here")
 
-    # image_lattice, df = get_lattice_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
+    # image_lattice, df = get_lattice_and_df_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, key_str)
     # icosa_points = find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance_km, planet_radius_km)
 
     icosa_iterations_of_precision = IcosahedronMath.get_iterations_needed_for_edge_length(icosa_point_tolerance_km, planet_radius_km)

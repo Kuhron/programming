@@ -103,6 +103,6 @@ def test_generate_on_section_of_condition_data():
 
 
 if __name__ == "__main__":
-    # test_generate_whole_planet()
-    test_generate_on_section_of_condition_data()
+    test_generate_whole_planet()
+    # test_generate_on_section_of_condition_data()
     print("done")

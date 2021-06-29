@@ -95,10 +95,8 @@ def plot_images_on_globe_scatter(image_fp_to_latlon, save_fp=None, show=True, sh
     ax.scatter(lons, lats, c=colors)
     plt.xlim(-180,180)
     plt.ylim(-90,90)
-    plt.rcParams['figure.facecolor'] = "black"
-    plt.rcParams['savefig.facecolor'] = "black"
     if save_fp is not None:
-        plt.savefig(save_fp, facecolor="black")
+        plt.savefig(save_fp)
         add_opaque_background(save_fp)  # because matplotlib facecolor is being a huge pain and never works
     if show:
         plt.show()

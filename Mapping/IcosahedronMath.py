@@ -1075,7 +1075,7 @@ def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius, STARTIN
         if iteration > 30:
             break
         nearest_candidate_neighbor_point_numbers = get_adjacency_recursive(nearest_candidate_usp.point_number, iteration, STARTING_POINTS)
-        nearest_candidate_neighbors_usp = [get_usp_from_point_number(pi) for pi in nearest_candidate_neighbor_point_numbers]
+        nearest_candidate_neighbors_usp = [get_usp_from_point_number(pi, STARTING_POINTS) for pi in nearest_candidate_neighbor_point_numbers]
         candidate_usps = nearest_candidate_neighbors_usp + [nearest_candidate_usp]
 
     raise RuntimeError("while loop ran too many times")

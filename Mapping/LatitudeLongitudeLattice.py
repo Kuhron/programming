@@ -161,9 +161,25 @@ class LatitudeLongitudeLattice(Lattice):
 
     def get_point_from_point_number(self, p_i):
         r, c = self.get_lattice_position_from_point_number(p_i)
+        return self.get_point_from_lattice_position(r, c)
+
+    def get_point_from_lattice_position(self, r, c):
         lat, lon = self.single_rc_to_latlon(r, c)
         xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon, deg=True)
         return UnitSpherePoint({"latlondeg": (lat, lon), "xyz": xyz})
+
+    def get_all_points_by_lattice_position(self):
+        print(f"getting all points by lattice position")
+        d_usp = {}
+        for r in range(self.r_size):
+            if r % 10 == 0:
+                print(f"row {r}/{self.r_size}")
+            for c in range(self.c_size):
+                tup = (r, c)
+                usp = self.get_point_from_lattice_position(r, c)
+                d_usp[tup] = usp
+        print(f"done getting all points by lattice position")
+        return d_usp
     
     def create_point_dicts(self):
         raise Exception("do not use anymore; memory-intensive")
