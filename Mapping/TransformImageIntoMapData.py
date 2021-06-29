@@ -309,6 +309,7 @@ def get_point_numbers_in_order_from_memo(image_name):
 
 
 def write_image_conditions_lattice_agnostic(image_name, map_variable):
+    raise Exception("use write_image_conditions_as_image_shape_in_shorthand() instead; it makes smaller files")
     # flat list of rows, each row has (index, condition_str, icosa_point_number)
     metadata = get_image_metadata_dict()
     latlons = get_latlon_dict()[image_name]
@@ -430,7 +431,7 @@ if __name__ == "__main__":
     map_variable = "elevation"
 
     for image_name in get_image_metadata_dict().keys():
-        write_image_conditions_lattice_agnostic(image_name, map_variable)
+        # write_image_conditions_lattice_agnostic(image_name, map_variable)
         write_image_conditions_as_image_shape_in_shorthand(image_name, map_variable)
 
     # image_lattice, df = get_lattice_and_df_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, map_variable)
