@@ -68,8 +68,8 @@ if __name__ == "__main__":
         sigmas = [10, 15, 30, 100],
     )
     plot_multiple_trajectories(
-        n_trajectories = 100,
-        n_steps = 10000,
+        n_trajectories = 10,
+        n_steps = 1000,
         starting_value = 0, 
         control_points = [0, 25, 100, 1000],
         mus = [0, -1, 10, 0],

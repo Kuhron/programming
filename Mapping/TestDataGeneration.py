@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import random
+from UnitSpherePoint import UnitSpherePoint
 
 
 def test_generate_whole_planet():
@@ -34,8 +35,10 @@ def test_generate_whole_planet():
 def test_generate_on_section_of_condition_data():
     min_lat, max_lat = -30, 30
     min_lon, max_lon = -60, 60
-    condition_iterations = 3
-    data_iterations = 6
+    # condition_iterations = 3
+    # data_iterations = 4
+    n_condition_points = 100
+    n_data_points = 1000
     n_patches = 1000
     control_conditions_every_n_steps = 100
     control_rate = 0.2  # how much of the adjustment to do in intermediate condition-controlling, lower value should hopefully be more "nudgy" rather than being overly forceful in enforcing conditions
@@ -43,14 +46,17 @@ def test_generate_on_section_of_condition_data():
     n_lats_to_plot = 500
     n_lons_to_plot = 1000
 
-    icosa_usps_with_conditions = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, condition_iterations, IcosahedronMath.STARTING_POINTS)
-    condition_index = pd.Index([p.point_number for p in icosa_usps_with_conditions])
-    condition_latlons = [p.latlondeg() for p in icosa_usps_with_conditions]
+    # icosa_usps_with_conditions = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, condition_iterations, IcosahedronMath.STARTING_POINTS)
+    # condition_index = pd.Index([p.point_number for p in icosa_usps_with_conditions])
+    condition_usps = UnitSpherePoint.random_within_latlon_box(n_condition_points, min_lat, max_lat, min_lon, max_lon)
+    condition_latlons = [p.latlondeg() for p in condition_usps]
     condition_lats = [ll[0] for ll in condition_latlons]
     condition_lons = [ll[1] for ll in condition_latlons]
 
-    icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations, IcosahedronMath.STARTING_POINTS)
-    data_index = pd.Index([p.point_number for p in icosa_usps_with_data])
+    # icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations, IcosahedronMath.STARTING_POINTS)
+    # data_index = pd.Index([p.point_number for p in icosa_usps_with_data])
+    data_usps = UnitSpherePoint.random_within_latlon_box(n_data_points, min_lat, max_lat, min_lon, max_lon)
+    data_index = pd.Index([p.latlondeg() for p in data_usps])
 
     elevation_conditions = {}
     color_by_condition = {
@@ -60,29 +66,29 @@ def test_generate_on_section_of_condition_data():
         # "shallow": (0,148/255,1,1)
     }
     condition_colors_lst = []
-    for p in icosa_usps_with_conditions:
-        pi = p.point_number
-        # condition = random.choice(list(color_by_condition.keys()))
-        condition = "land" if p.latlondeg()[1] > 0 else "sea"
-        elevation_conditions[pi] = condition
+    for p in condition_usps:
+        condition = random.choice(list(color_by_condition.keys()))
+        # condition = "land" if p.latlondeg()[1] > 0 else "sea"
+        elevation_conditions[p.latlondeg()] = condition
         condition_colors_lst.append(color_by_condition[condition])
 
-    elevation_condition_ranges = get_condition_ranges_dict("elevation")
-    # TODO get these from ImageKey_elevation_condition.csv
-    #     "sea": (None, -1),
-    #     "land": (1, None),
-    #     "coast": (-15, 15),
-    #     "shallow": (-5, 0),
-    # }
-    data_points = icosa_usps_with_data  # can try doing even more points inside this, e.g. get conditions for only 6 iterations but generate data on 7
+    elevation_condition_ranges = {
+        "sea": (None, -1),
+        "land": (1, None),
+        "coast": (-15, 15),
+        "shallow": (-5, 0),
+    }
+    # data_points = icosa_usps_with_data  # can try doing even more points inside this, e.g. get conditions for only 6 iterations but generate data on 7
 
     # noise generation subject to the condition functions
     df = pd.DataFrame(index=data_index)
-    df["elevation"] = [0 for p in data_points]
-    df["xyz"] = [p.xyz() for p in data_points]
-    df["latlondeg"] = [p.latlondeg() for p in data_points]
-    elevation_conditions_by_point = [elevation_conditions.get(p.point_number) for p in data_points]
+    df["elevation"] = [0 for p in data_usps]
+    df["xyz"] = [p.xyz() for p in data_usps]
+    df["latlondeg"] = [p.latlondeg() for p in data_usps]
+    elevation_conditions_by_point = [elevation_conditions.get(p.latlondeg()) for p in data_usps]
     elevation_ranges_by_point = [elevation_condition_ranges.get(condition) for condition in elevation_conditions_by_point]
+
+    print(df)
 
     df["min_elevation"] = pd.Series(data=[r[0] if r is not None else None for r in elevation_ranges_by_point], index=df.index)
     df["max_elevation"] = pd.Series(data=[r[1] if r is not None else None for r in elevation_ranges_by_point], index=df.index)
@@ -91,11 +97,11 @@ def test_generate_on_section_of_condition_data():
     # print(df.loc[condition_index, ["min_elevation", "max_elevation"]])
 
     df = nm.add_random_data_circles(df, "elevation", n_patches=n_patches, control_conditions_every_n_steps=control_conditions_every_n_steps, control_rate=control_rate, infer_condition=infer_condition)
-    elevations = {p: df.loc[p.point_number, "elevation"] for p in data_points}
+    elevations = {p: df.loc[p.latlondeg(), "elevation"] for p in data_usps}
 
     # now get the data and interpolate to plot
-    data_coords = [p.latlondeg() for p in data_points]
-    values = [elevations[p] for p in data_points]
+    data_coords = [p.latlondeg() for p in data_usps]
+    values = [elevations[p] for p in data_usps]
     lat_range = [min_lat, max_lat]
     lon_range = [min_lon, max_lon]
     pu.plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats_to_plot, n_lons_to_plot, with_axis=True)
@@ -104,6 +110,6 @@ def test_generate_on_section_of_condition_data():
 
 
 if __name__ == "__main__":
-    test_generate_whole_planet()
-    # test_generate_on_section_of_condition_data()
+    # test_generate_whole_planet()
+    test_generate_on_section_of_condition_data()
     print("done")

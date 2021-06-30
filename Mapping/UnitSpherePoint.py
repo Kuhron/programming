@@ -116,4 +116,17 @@ class UnitSpherePoint:
         latlondeg = mcm.unit_vector_cartesian_to_lat_lon(*xyz)
         return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg})
 
+    @staticmethod
+    def random():
+        return UnitSpherePoint.get_random_unit_sphere_point()  # alias
+
+    @staticmethod
+    def random_within_latlon_box(n_points, min_lat, max_lat, min_lon, max_lon):
+        res = []
+        while len(res) < n_points:
+            usp = UnitSpherePoint.random()
+            lat, lon = usp.latlondeg()
+            if min_lat <= lat <= max_lat and min_lon <= lon <= max_lon:
+                res.append(usp)
+        return res
 

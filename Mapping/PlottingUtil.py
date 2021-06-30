@@ -120,6 +120,10 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
     print(f"interpolation lats has shape {interpolation_lats.shape}")
     print(f"interpolation lons has shape {interpolation_lons.shape}")
     print(f"interpolation grid has shape {interpolation_grid_latlon.shape}")
+    data_coords = np.array(data_coords)
+    values = np.array(values)
+    print(f"data_coords has shape {data_coords.shape}")
+    print(f"values has shape {values.shape}")
 
     # interpolate
     interpolated = scipy.interpolate.griddata(data_coords, values, interpolation_grid_latlon, method="linear")

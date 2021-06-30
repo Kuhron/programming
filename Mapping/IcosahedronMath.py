@@ -24,9 +24,19 @@ def get_latlon_from_point_number(point_number, STARTING_POINTS):
     return pos["latlondeg"]
 
 
+def get_latlons_from_point_numbers(point_numbers, STARTING_POINTS):
+    poses = get_positions_recursive(point_numbers, STARTING_POINTS)
+    return [pos["latlondeg"] for pos in poses]
+
+
 def get_xyz_from_point_number(point_number):
     pos = get_position_recursive(point_number, STARTING_POINTS)
     return pos["xyz"]
+
+
+def get_xyzs_from_point_numbers(point_numbers, STARTING_POINTS):
+    poses = get_positions_recursive(point_numbers, STARTING_POINTS)
+    return [pos["xyz"] for pos in poses]
 
 
 def get_usp_from_point_number(point_number, STARTING_POINTS):
@@ -1011,6 +1021,21 @@ def get_position_from_parents(point_number, STARTING_POINTS):
 @functools.lru_cache(maxsize=10000)
 def get_position_recursive(point_number, STARTING_POINTS):
     return get_position_from_parents(point_number, STARTING_POINTS)
+
+
+def get_positions_recursive(point_numbers, STARTING_POINTS):
+    # somehow need to make it efficient to do this for multiple points
+    # e.g. they will probably run into same parents/grandparents/etc. at some point, those shouldn't be recalculated
+
+    # brute-force, just get each one individually
+    n_ps = len(point_numbers)
+    res = []
+    for i, pn in enumerate(point_numbers):
+        if i % 1000 == 0:
+            print(f"getting positions recursive; progress {i}/{n_ps}")
+        pos = get_position_recursive(pn, STARTING_POINTS)
+        res.append(pos)
+    return res
 
 
 def get_3adder_for_iteration(i):

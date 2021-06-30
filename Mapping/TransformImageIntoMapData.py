@@ -36,6 +36,8 @@ from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
 import IcosahedronMath
 import MapCoordinateMath as mcm
 from ImageMetadata import get_image_metadata_dict, get_latlon_dict, get_world_metadata_dict, get_icosa_distance_tolerance_normalized
+from LoadMapData import get_condition_shorthand_dict, get_rgba_to_condition_dict, parse_colors_rgba, get_image_pixel_to_icosa_point_number_from_calculation, get_image_pixel_to_icosa_point_number_from_memo, get_rc_size
+
 
 
 def get_rgba_color_array_from_image_array(arr):
@@ -193,64 +195,6 @@ def get_approx_icosa_point_numbers_from_usps(usps, icosa_distance_tolerance_norm
     return approx_icosa_point_numbers
 
 
-def get_image_pixel_to_icosa_point_number_from_calculation(image_name, pixels=None):
-    # if specify pixels, it will only do those
-    print(f"getting image pixel to icosa point number dict for {image_name}")
-    metadata = get_image_metadata_dict()[image_name]
-    image_fp = metadata["image_fp"]
-    icosa_distance_tolerance_normalized = get_icosa_distance_tolerance_normalized(image_name)
-
-    image_lattice = get_lattice_from_image(image_name)
-    print(f"image lattice has {image_lattice.n_points} points")
-
-    rc_to_usp = image_lattice.get_points_by_lattice_position(pixels)
-    rcs = sorted(rc_to_usp.keys())
-    usps = [rc_to_usp[rc] for rc in rcs]
-
-    point_numbers = get_approx_icosa_point_numbers_from_usps(usps, icosa_distance_tolerance_normalized)
-    rc_to_point_number = {rc: p_i for rc, p_i in zip(rcs, point_numbers)}  # assumes the orders match, which they should if you get usps in the same order as rcs they correspond to
-    print(f"done getting image pixel to icosa point number dict for {image_name}")
-    return rc_to_point_number
-
-
-def get_image_pixel_to_icosa_point_number_from_memo(image_name):
-    print(f"reading image pixel to icosa point number correspondence for image_name {image_name}")
-    pixel_to_icosa_fp = get_image_metadata_dict()[image_name]["pixel_to_icosa_fp"]
-    if not os.path.exists(pixel_to_icosa_fp):
-        raise FileNotFoundError(f"pixel to icosa point number file not found: {pixel_to_icosa_fp}")
-    with open(pixel_to_icosa_fp) as f:
-        lines = f.readlines()
-    strs = [l.strip().split(",") for l in lines]
-    ints = [[int(x) for x in s] for s in strs]
-    
-    # convert to dict with (r,c) keys
-    r_len = len(ints)
-    c_len = len(ints[0])
-    n_pixels = r_len * c_len
-    assert all(len(x) == c_len for x in ints), "inconsistent column number in the rows of icosa point number array"
-
-    d = {}
-    for r in range(r_len):
-        for c in range(c_len):
-            assert (r,c) not in d
-            d[(r,c)] = ints[r][c]
-    assert len(d) == n_pixels
-    print(f"done reading image pixel to icosa point number correspondence for image_name {image_name}")
-    return d
-
-
-def get_rc_size(rcs):
-    max_r = -1
-    max_c = -1
-    assert all(r >= 0 and c >= 0 for r,c in rcs), "row/column number may not have negative value"
-    for r,c in rcs:
-        max_r = max(r, max_r)
-        max_c = max(c, max_c)
-    r_size = max_r + 1
-    c_size = max_c + 1
-    return r_size, c_size
-
-
 def write_image_pixel_to_icosa_point_number(image_name, overwrite_existing=False):
     print(f"writing image pixel to icosa point number correspondence for image_name {image_name}")
     pixel_to_icosa_fp = get_image_metadata_dict()[image_name]["pixel_to_icosa_fp"]
@@ -375,55 +319,6 @@ def write_image_conditions_as_image_shape_in_shorthand(image_name, map_variable)
         for l in lines:
             f.write(l)
     print(f"success writing image conditions as image shape array in shorthand, for image_name {image_name} and variable {map_variable}\nfile is located at: {output_fp}")
-
-
-def get_condition_shorthand_dict(image_name, map_variable):
-    metadata = get_image_metadata_dict()
-    condition_array_dir = metadata[image_name]["condition_array_dir"]
-    shorthand_filename = f"ImageKey_{map_variable}_condition.csv"
-    shorthand_fp = os.path.join(condition_array_dir, shorthand_filename)
-
-    d = {}
-    dict_key_colname = "shorthand"
-    with open(shorthand_fp) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            row["colors_rgba"] = parse_colors_rgba(row["colors_rgba"])
-            row["min"] = float(row["min"]) if row["min"] != "" else None
-            row["max"] = float(row["max"]) if row["max"] != "" else None
-            assert (row["min"] is None or row["max"] is None) or (row["min"] <= row["max"])
-            dict_key = row[dict_key_colname]
-            assert dict_key not in d
-            d[dict_key] = row
-    return d
-
-
-def get_rgba_to_condition_dict(image_name, map_variable):
-    shorthand_dict = get_condition_shorthand_dict(image_name, map_variable)
-    d = {}
-    for sh, row in shorthand_dict.items():
-        colors_rgba = row["colors_rgba"]
-        for tup in colors_rgba:
-            r,g,b,a = tup  # just to check that they're 4-tuples
-            assert tup not in d, f"duplicate color {tup}"
-            d[tup] = row
-    return d
-
-
-def parse_colors_rgba(rgbas_str):
-    rgba_strs = rgbas_str.split(",")
-    res = []
-    for rgba_str in rgba_strs:
-        assert rgba_str[0] == "#"
-        rgba_str = rgba_str[1:]
-        assert len(rgba_str) == 4*3
-        r = int(rgba_str[0:3])
-        g = int(rgba_str[3:6])
-        b = int(rgba_str[6:9])
-        a = int(rgba_str[9:12])
-        rgba = (r,g,b,a)
-        res.append(rgba)
-    return res
 
 
 if __name__ == "__main__":
