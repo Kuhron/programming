@@ -106,6 +106,7 @@ class UnitSpherePoint:
 
     def __hash__(self):
         # raise Exception("Warning: USP hashing is not yet reliable, still get different immutable objects with same coordinates, possibly due to rounding errors. Please revise code to use point index or something else that can reliably point to the same USP object.")
+        raise Exception("this is slow; remove as many calls to indexing on USP as possible")
         return hash(self.get_immutable())
 
     @staticmethod

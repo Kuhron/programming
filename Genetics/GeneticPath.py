@@ -260,7 +260,7 @@ def initialize_populations(point_array_shape):
     # so this is like plants, they can't move, but their offspring can go to a slightly different place
     n_starter_points = 5
     n_individuals_per_point = 20
-    starting_dna_len = 20
+    starting_dna_len = 500
     d = {}
     for i in range(n_starter_points):
         px, py = get_random_point_in_shape(point_array_shape)
@@ -303,13 +303,17 @@ def reproduce_across_environment(location_dict, environment):
 
 
 if __name__ == "__main__":
+    random_dna = get_random_dna(500)
+    plot_path_from_dna(random_dna, modification_matrix=None)
+
+
     point_array_shape = (10,10)
     environment = get_environment(point_array_shape, plot=False)  # 2d array of points at each of which there is a 2d modification matrix
     assert environment.shape == point_array_shape + (2,2), environment.shape
 
     location_dict = initialize_populations(point_array_shape)
 
-    for generation_i in range(500):
+    for generation_i in range(1000):
         location_dict = reproduce_across_environment(location_dict, environment)
         population = sum(len(dnas) for dnas in location_dict.values())
         print(f"generation {generation_i}: population {population}")

@@ -37,8 +37,8 @@ def test_generate_on_section_of_condition_data():
     min_lon, max_lon = -60, 60
     # condition_iterations = 3
     # data_iterations = 4
-    n_condition_points = 100
-    n_data_points = 1000
+    n_condition_points = 50
+    n_excess_data_points = 10000
     n_patches = 1000
     control_conditions_every_n_steps = 100
     control_rate = 0.2  # how much of the adjustment to do in intermediate condition-controlling, lower value should hopefully be more "nudgy" rather than being overly forceful in enforcing conditions
@@ -55,7 +55,8 @@ def test_generate_on_section_of_condition_data():
 
     # icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations, IcosahedronMath.STARTING_POINTS)
     # data_index = pd.Index([p.point_number for p in icosa_usps_with_data])
-    data_usps = UnitSpherePoint.random_within_latlon_box(n_data_points, min_lat, max_lat, min_lon, max_lon)
+    excess_data_usps = UnitSpherePoint.random_within_latlon_box(n_excess_data_points, min_lat, max_lat, min_lon, max_lon)
+    data_usps = condition_usps + excess_data_usps  # the has_condition mask in NoiseMath expects some of the data points to also have conditions
     data_index = pd.Index([p.latlondeg() for p in data_usps])
 
     elevation_conditions = {}
@@ -88,7 +89,8 @@ def test_generate_on_section_of_condition_data():
     elevation_conditions_by_point = [elevation_conditions.get(p.latlondeg()) for p in data_usps]
     elevation_ranges_by_point = [elevation_condition_ranges.get(condition) for condition in elevation_conditions_by_point]
 
-    print(df)
+    # print("df\n", df)
+    # print("elevation_conditions_by_point\n", elevation_conditions_by_point)
 
     df["min_elevation"] = pd.Series(data=[r[0] if r is not None else None for r in elevation_ranges_by_point], index=df.index)
     df["max_elevation"] = pd.Series(data=[r[1] if r is not None else None for r in elevation_ranges_by_point], index=df.index)

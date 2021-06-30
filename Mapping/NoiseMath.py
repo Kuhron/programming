@@ -6,35 +6,35 @@ import matplotlib.pyplot as plt
 import MapCoordinateMath as mcm
 
 
-def change_globe(df, key_str):
+def change_globe(df, map_variable):
     n_steps = 5
     for i in range(n_steps):
         print("step {}/{}".format(i, n_steps))
-        df = change_globe_circles(df, key_str)
-        df = change_globe_waves(df, key_str)
-        df = change_globe_spikes(df, key_str)
+        df = change_globe_circles(df, map_variable)
+        df = change_globe_waves(df, map_variable)
+        df = change_globe_spikes(df, map_variable)
     return df
 
 
-def change_globe_spikes(df, key_str):
+def change_globe_spikes(df, map_variable):
     n_spikes = random.randint(100, 5000)
     sigma = 100
-    df = add_random_data_spikes(df, key_str, n_spikes=n_spikes, sigma=sigma)
+    df = add_random_data_spikes(df, map_variable, n_spikes=n_spikes, sigma=sigma)
     return df
 
 
-def change_globe_circles(df, key_str):
+def change_globe_circles(df, map_variable):
     n_patches = random.randint(50, 200)
     area_proportion_per_patch = 1/random.randint(50, 500)
-    df = add_random_data_circles(df, key_str, n_patches=n_patches, area_proportion_per_patch=area_proportion_per_patch)
+    df = add_random_data_circles(df, map_variable, n_patches=n_patches, area_proportion_per_patch=area_proportion_per_patch)
     return df
 
 
-def change_globe_waves(df, key_str):
+def change_globe_waves(df, map_variable):
     n_waves = random.randint(10, 50)
     expected_amplitude = random.uniform(50, 150)
     # freq_sigma = random.uniform(10, 100) # freq of wave drawn from abs of norm(0, sigma), recall that radius of sphere is 1 so freq of 1 will have 1 period over the whole sphere
-    df = add_random_data_radial_waves(df, key_str, n_waves=n_waves, expected_amplitude=expected_amplitude)
+    df = add_random_data_radial_waves(df, map_variable, n_waves=n_waves, expected_amplitude=expected_amplitude)
     return df
 
 
@@ -119,30 +119,30 @@ def get_area_proportions_power_law(n_samples):
     return np.random.power(a, size=(n_samples,))
 
 
-def add_random_data_independent_all_points(df, key_str, n_iterations, sigma):
+def add_random_data_independent_all_points(df, map_variable, n_iterations, sigma):
     n_points = len(df.index)
-    if key_str not in df.columns:
-        df[key_str] = np.zeros((n_points,))
+    if map_variable not in df.columns:
+        df[map_variable] = np.zeros((n_points,))
     for i in range(n_iterations):
         d_val_series = np.random.normal(0, sigma, n_points)
-        df[key_str] += d_val_series
+        df[map_variable] += d_val_series
     return df
 
 
-def add_random_data_spikes(df, key_str, n_spikes, sigma):
-    if key_str not in df.columns:
-        df[key_str] = np.zeros((len(df.index),))
+def add_random_data_spikes(df, map_variable, n_spikes, sigma):
+    if map_variable not in df.columns:
+        df[map_variable] = np.zeros((len(df.index),))
     for i in range(n_spikes):
         p_i = random.choice(df.index)
         d_val = np.random.normal(0, sigma)
-        df.loc[p_i, key_str] += d_val
+        df.loc[p_i, map_variable] += d_val
     return df
 
 
-def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude):
-    print("adding {} radial waves of variable {}".format(n_waves, key_str))
-    if key_str not in df.columns:
-        df[key_str] = np.zeros((len(df.index),))
+def add_random_data_radial_waves(df, map_variable, n_waves, expected_amplitude):
+    print("adding {} radial waves of variable {}".format(n_waves, map_variable))
+    if map_variable not in df.columns:
+        df[map_variable] = np.zeros((len(df.index),))
     for i in range(n_waves):
         if i % 100 == 0:
             print("i = {}/{}".format(i, n_waves))
@@ -159,22 +159,24 @@ def add_random_data_radial_waves(df, key_str, n_waves, expected_amplitude):
         dxyzs = (xyzs - starting_xyz_array) ** 2
         distances = np.sqrt(dxyzs.sum(axis=1))
         vals = f(distances) * multiplier
-        df[key_str] += vals
+        df[map_variable] += vals
     return df
 
 
-def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None, control_conditions_every_n_steps=None, control_rate=1, infer_condition=False):
-    print("adding {} circles of variable {}".format(n_patches, key_str))
+def add_random_data_circles(df, map_variable, n_patches, area_proportions=None, mu_colname=None, sigma_colname=None, expectation_colname=None, expectation_omega_colname=None, control_conditions_every_n_steps=None, control_rate=1, infer_condition=False):
+    print("adding {} circles of variable {}".format(n_patches, map_variable))
     if area_proportions is None:
         area_proportions = get_area_proportions_power_law(n_patches)
     assert len(area_proportions) == n_patches
-    if key_str not in df.columns:
-        df[key_str] = np.zeros((len(df.index),))
+    if map_variable not in df.columns:
+        df[map_variable] = np.zeros((len(df.index),))
 
     if infer_condition:
         # use this for nearest-neighbor condition finding
-        has_condition = get_has_condition_mask(df, key_str)
+        has_condition = get_has_condition_mask(df, map_variable)
+        # print("has_condition\n", has_condition)
         xyzs = np.array([np.array(list(tup)) for tup in df.loc[has_condition, "xyz"]])
+        # print(f"xyzs.shape = {xyzs.shape}")
         xyz_kdtree = scipy.spatial.KDTree(xyzs)
     else:
         xyz_kdtree = None
@@ -198,31 +200,31 @@ def add_random_data_circles(df, key_str, n_patches, area_proportions=None, mu_co
         expectation = 0 if expectation_colname is None else df.loc[starting_p_i, expectation_colname]  # what value should it tend toward at this point
         expectation_omega = 0 if expectation_omega_colname is None else df.loc[starting_p_i, expectation_omega_colname]  # how much of the discrepancy between the value and the expectation should go into the mu
         assert 0 <= expectation_omega <= 1
-        discrepancy_from_expectation = df.loc[starting_p_i, key_str] - expectation
+        discrepancy_from_expectation = df.loc[starting_p_i, map_variable] - expectation
         mu += -1 * expectation_omega * discrepancy_from_expectation
         d_val = np.random.normal(mu, sigma)
-        df.loc[in_region_mask_index, key_str] += d_val
+        df.loc[in_region_mask_index, map_variable] += d_val
 
         if control_conditions_every_n_steps is not None and i != 0 and i % control_conditions_every_n_steps == 0:
-            df = control_for_condition_ranges(df, key_str, control_rate=control_rate, pin_zero=False, infer_condition=infer_condition, xyz_kdtree=xyz_kdtree)
+            df = control_for_condition_ranges(df, map_variable, control_rate=control_rate, pin_zero=False, infer_condition=infer_condition, xyz_kdtree=xyz_kdtree)
     
-    df = control_for_condition_ranges(df, key_str, control_rate=1, pin_zero=True, infer_condition=infer_condition, xyz_kdtree=xyz_kdtree)  # do it at end no matter what, with full control rate to ensure conditions are met
-    assert meets_conditions(df, key_str), "failed to adjust df correctly"
+    df = control_for_condition_ranges(df, map_variable, control_rate=1, pin_zero=True, infer_condition=infer_condition, xyz_kdtree=xyz_kdtree)  # do it at end no matter what, with full control rate to ensure conditions are met
+    assert meets_conditions(df, map_variable), "failed to adjust df correctly"
     return df
 
 
-def control_for_condition_ranges(df, key_str, control_rate=1, pin_zero=False, infer_condition=False, xyz_kdtree=None):
-    print(f"adjusting deviations in {key_str}")
-    min_val_colname = f"min_{key_str}"
-    max_val_colname = f"max_{key_str}"
+def control_for_condition_ranges(df, map_variable, control_rate=1, pin_zero=False, infer_condition=False, xyz_kdtree=None):
+    print(f"adjusting deviations in {map_variable}")
+    min_val_colname = f"min_{map_variable}"
+    max_val_colname = f"max_{map_variable}"
 
     if min_val_colname not in df.columns:
-        print(f"control_for_condition_ranges found no min for {key_str}")
+        print(f"control_for_condition_ranges found no min for {map_variable}")
         df[min_val_colname] = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
     else:
         df[min_val_colname] = df[min_val_colname].fillna(np.nan)  # make sure it's a datatype we can work with, not None
     if max_val_colname not in df.columns:
-        print(f"control_for_condition_ranges found no max for {key_str}")
+        print(f"control_for_condition_ranges found no max for {map_variable}")
         df[max_val_colname] = pd.Series(data=[np.nan for i in range(len(df.index))], index=df.index)
     else:
         df[max_val_colname] = df[max_val_colname].fillna(np.nan)  # make sure it's a datatype we can work with, not None
@@ -231,10 +233,11 @@ def control_for_condition_ranges(df, key_str, control_rate=1, pin_zero=False, in
         # do some nearest-neighbors-weighted probabilistic choosing of condition for points with no condition specified, e.g. if its nearest neighbors with conditions are all land, it should probably also be land
         if xyz_kdtree is None:
             xyz_kdtree = scipy.spatial.KDTree(df["xyz"])
-        df = add_inferred_condition_to_df(df, key_str, xyz_kdtree, k_neighbors=6)
+        df = add_inferred_condition_to_df(df, map_variable, xyz_kdtree, k_neighbors=6)
 
     # do some kind of smooth surface addition (e.g. cubic spline over the whole map) to match the conditions
-    deviations = get_deviations_from_condition_values(values=df[key_str], min_values=df[min_val_colname], max_values=df[max_val_colname])
+    deviations = get_deviations_from_condition_values(values=df[map_variable], min_values=df[min_val_colname], max_values=df[max_val_colname])
+    # print("deviations\n", deviations)
 
     # show_text_values_at_latlons_debug(df[min_val_colname], df, "min")
     # show_text_values_at_latlons_debug(df[max_val_colname], df, "max")
@@ -243,7 +246,7 @@ def control_for_condition_ranges(df, key_str, control_rate=1, pin_zero=False, in
         # no change to be made
         pass
     else:
-        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, before adjustment"
+        assert np.isfinite(df[map_variable]).all(), f"df[{map_variable}] not all finite, before adjustment"
         
         if pin_zero:  # keep zero deviation points (things that meet their conditions) in the interpolation, which may mean that adjustment of nearby points which *don't* meet their conditions will be more localized
             non_na_deviations = deviations[~pd.isna(deviations)]
@@ -258,30 +261,32 @@ def control_for_condition_ranges(df, key_str, control_rate=1, pin_zero=False, in
         assert np.isfinite(adjustment).all(), "adjustment not all finite"
         if (adjustment == 0).all():
             print("Warning: adjustment is all zero")
-        df[key_str] += adjustment * control_rate
+        # print("df\n", df)
+        # print("adjustment\n", adjustment)
+        df[map_variable] += adjustment * control_rate
         
-        assert np.isfinite(df[key_str]).all(), f"df[{key_str}] not all finite, after adjustment"
+        assert np.isfinite(df[map_variable]).all(), f"df[{map_variable}] not all finite, after adjustment"
 
-    print(f"done adjusting deviations in {key_str}")
+    print(f"done adjusting deviations in {map_variable}")
     return df
 
 
-def get_has_condition_mask(df, key_str):
-    min_val_colname = f"min_{key_str}"
-    max_val_colname = f"max_{key_str}"
+def get_has_condition_mask(df, map_variable):
+    min_val_colname = f"min_{map_variable}"
+    max_val_colname = f"max_{map_variable}"
     mins = df[min_val_colname]
     maxs = df[max_val_colname]
     has_condition = ~pd.isna(mins) | ~pd.isna(maxs)  # if has either min or max, or both, then it has a condition
     return has_condition
 
 
-def add_inferred_condition_to_df(df, key_str, kdtree, k_neighbors):
-    min_val_colname = f"min_{key_str}"
-    max_val_colname = f"max_{key_str}"
+def add_inferred_condition_to_df(df, map_variable, kdtree, k_neighbors):
+    min_val_colname = f"min_{map_variable}"
+    max_val_colname = f"max_{map_variable}"
     xyz = df["xyz"]
     mins = df[min_val_colname]
     maxs = df[max_val_colname]
-    has_condition = get_has_condition_mask(df, key_str)
+    has_condition = get_has_condition_mask(df, map_variable)
 
     xyzs_to_query = np.array([np.array(list(tup)) for tup in xyz]) # just do them all for now, and only set in the df where there's not already a condition
     distances, nn_indices = kdtree.query(xyzs_to_query, k=k_neighbors)
@@ -340,12 +345,12 @@ def get_deviations_from_condition_values(values, min_values, max_values):
     return deviations
 
 
-def meets_conditions(df, key_str):
-    min_val_colname = f"min_{key_str}"
-    max_val_colname = f"max_{key_str}"
+def meets_conditions(df, map_variable):
+    min_val_colname = f"min_{map_variable}"
+    max_val_colname = f"max_{map_variable}"
     mins = df[min_val_colname]
     maxs = df[max_val_colname]
-    x = df[key_str]
+    x = df[map_variable]
     min_is_na = pd.isna(mins)
     meets_min = min_is_na | (x > mins) | np.isclose(x, mins)  # stupid float <=
     max_is_na = pd.isna(maxs)
@@ -370,7 +375,7 @@ def get_interpolated_adjustment_for_condition_values(deviations, df):
     data_xyzs = np.array([np.array(tup) for tup in data_xyzs])
     assert data_xyzs.shape == (len(deviations.index), 3), data_xyzs.shape
 
-    target_point_index = [x for x in df.index if x not in deviations.index]  # let the points with deviation values be adjusted by exactly those values, interpolate adjustment for everything else
+    target_point_index = pd.Index([x for x in df.index if x not in deviations.index])  # let the points with deviation values be adjusted by exactly those values, interpolate adjustment for everything else
 
     if len(target_point_index) == 0:
         # every point has a deviation value, no interpolation needed
@@ -450,14 +455,14 @@ def distance_to_line_two_point_form(line_point_0, line_point_1, query_point):
     return abs(xa_after_transformations)
 
 
-def add_random_data_sigmoid_decay_hills(df, key_str, n_hills, h_stretch_parameters=None, mu_colname=None, sigma_colname=None):
+def add_random_data_sigmoid_decay_hills(df, map_variable, n_hills, h_stretch_parameters=None, mu_colname=None, sigma_colname=None):
     # mu and sigma are used to roll the d_val_max
-    print("adding {} sigmoid decay hills of variable {}".format(n_hills, key_str))
+    print("adding {} sigmoid decay hills of variable {}".format(n_hills, map_variable))
     if h_stretch_parameters is None:
         h_stretch_parameters = np.random.uniform(-1, 1, n_hills)
     assert len(h_stretch_parameters) == n_hills
-    if key_str not in df.columns:
-        df[key_str] = np.zeros((len(df.index),))
+    if map_variable not in df.columns:
+        df[map_variable] = np.zeros((len(df.index),))
     for i in range(n_hills):
         if i % 100 == 0:
             print("i = {}/{}".format(i, n_hills))
@@ -477,17 +482,17 @@ def add_random_data_sigmoid_decay_hills(df, key_str, n_hills, h_stretch_paramete
         sigmoid_func = get_sigmoid_decay_function(d_val_max, r_max, h)
 
         d_vals = sigmoid_func(distances)
-        df[key_str] += d_vals
+        df[map_variable] += d_vals
     return df
 
 
-def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index_function, n_patches, area_proportions=None):
-    print("adding {} jagged patches of variable {}".format(n_patches, key_str))
+def add_random_data_jagged_patches(df, map_variable, adjacencies, usp_to_index_function, n_patches, area_proportions=None):
+    print("adding {} jagged patches of variable {}".format(n_patches, map_variable))
     if area_proportions is None:
         area_proportions = get_area_proportions_power_law(n_patches)
     assert len(area_proportions) == n_patches
-    if key_str not in df.columns:
-        df[key_str] = np.zeros((len(df.index),))
+    if map_variable not in df.columns:
+        df[map_variable] = np.zeros((len(df.index),))
     for i in range(n_patches):
         if i % 100 == 0:
             print("i = {}/{}".format(i, n_patches))
@@ -512,7 +517,7 @@ def add_random_data_jagged_patches(df, key_str, adjacencies, usp_to_index_functi
                 break
         # change values on the patch
         d_val = random.uniform(-100, 100)
-        df.loc[patch_indices, key_str] += d_val
+        df.loc[patch_indices, map_variable] += d_val
     return df
 
 

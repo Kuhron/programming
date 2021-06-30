@@ -176,9 +176,11 @@ def get_default_value_from_min_and_max(min_val, max_val):
 
 def create_cada_ii_default_value_dict(map_variable):
     # create dict of icosa point : default elevation value (or other map variable)
+    print(f"creating Cada II default value dict for {map_variable}")
     image_metadata = get_image_metadata_dict()
     d = {}
     for image_name in image_metadata.keys():
+    # for image_name in ["Sertorisun Islands"]:  # debug
         default_value_arr = get_default_values_of_conditions(image_name, map_variable)
         icosa_point_number_dict = get_image_pixel_to_icosa_point_number_from_memo(image_name)
         r_size, c_size = get_rc_size(icosa_point_number_dict.keys())
@@ -188,6 +190,7 @@ def create_cada_ii_default_value_dict(map_variable):
                 icosa_pn = icosa_point_number_dict[(r,c)]
                 assert icosa_pn not in d
                 d[icosa_pn] = default_value
+    print(f"done creating Cada II default value dict for {map_variable}")
     return d
 
 
@@ -201,8 +204,9 @@ def plot_default_values_by_image():
 
 
 def plot_icosa_point_number_to_value_dict(pn_to_val):
+    print("plotting icosa point number to value dict")
     pns = sorted(pn_to_val.keys())
-    pns = random.sample(pns, 100000)  # debug
+    pns = random.sample(pns, min(len(pns), 2000))  # debug
     latlons = im.get_latlons_from_point_numbers(pns, im.STARTING_POINTS)
     data_coords = latlons
     values = [pn_to_val[pn] for pn in pns]
@@ -212,6 +216,7 @@ def plot_icosa_point_number_to_value_dict(pn_to_val):
     n_lats = 1000
     n_lons = 2 * n_lats
     pu.plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons, with_axis=False)
+    print("plotting icosa point number to value dict")
     plt.show()
 
 

@@ -9,6 +9,8 @@ import os
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import networkx as nx
+
 import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
 
@@ -576,6 +578,93 @@ def get_parent_chain(point_number):
         return chain
 
 
+def get_ancestor_tree(point_number, STARTING_POINTS, existing_ancestry=None):
+    # dict of child: parents
+    if existing_ancestry is None:
+        existing_ancestry = {}
+    else:
+        # for combining ancestry trees of multiple points, if we see a point's parent>child tuple already there,
+        # then don't have to recalculate the rest of its ancestry which should also already be there
+        pass
+
+    ancestry = {}
+    # use sets of tuples to take advantage of constant-time lookup
+    farthest_back_generation = [point_number]
+    while len(farthest_back_generation) > 0:
+        new_farthest_back_generation = []
+        for child in farthest_back_generation:
+            if child in existing_ancestry or child in ancestry:
+                # already know its parent
+                continue
+            parents = get_parents(child, STARTING_POINTS)
+            parents = [x if x is not None else -1 for x in parents]  # convert to -1 for int sorting
+            ancestry[child] = parents
+            new_farthest_back_generation += parents
+        farthest_back_generation = [x for x in new_farthest_back_generation if x != -1]
+    return ancestry
+
+
+def get_ancestor_tree_for_multiple_points(point_numbers, STARTING_POINTS):
+    print(f"getting ancestor tree for {len(point_numbers)} points")
+    ancestry = {}
+    for i, p in enumerate(point_numbers):
+        if i % 100 == 0:
+            print(f"progress: {i}/{len(point_numbers)}")
+        if p in ancestry:
+            # don't need to call it
+            continue
+        else:
+            p_ancestry = get_ancestor_tree(p, STARTING_POINTS, existing_ancestry=ancestry)
+            ancestry.update(p_ancestry)
+            assert p in ancestry, "failed to update ancestry correctly, should be adding parents of current point"
+    print(f"done getting ancestor tree for {len(point_numbers)} points")
+    return ancestry
+
+
+def get_ancestor_graph(point_number, STARTING_POINTS):
+    ancestry = get_ancestor_tree(point_number, STARTING_POINTS)
+    return get_ancestor_graph_from_ancestor_tree(ancestry)
+
+
+def get_ancestor_graph_for_multiple_points(point_numbers, STARTING_POINTS):
+    ancestry = get_ancestor_tree_for_multiple_points(point_numbers, STARTING_POINTS)
+    return get_ancestor_graph_from_ancestor_tree(ancestry)
+
+
+def get_ancestor_graph_from_ancestor_tree(ancestry):
+    g = nx.DiGraph()
+    for child, (p0, p1) in ancestry.items():
+        if p0 != -1:
+            g.add_edge(p0, child)
+        if p1 != -1:
+            g.add_edge(p1, child)
+    return g
+
+
+def get_all_positions_in_ancestor_tree(ancestry, STARTING_POINTS):
+    # auxiliary function meant to help make it easier to get the positions of a large number of points
+    # by taking advantage of the fact that many of them share ancestry, so that position info can be reused without recalculation
+    child_to_parents = ancestry
+    pn_to_position = {}
+    for child in sorted(child_to_parents.keys()):
+        # do the lower-number points first because they are created earlier, and then later points can use position information from them
+        p0, p1 = child_to_parents[child]
+        # print(f"getting position from ancestry for child {child} of parents {p0}, {p1}")
+        if p0 == -1 and p1 == -1:
+            # print(f"getting position for parentless point {child}")
+            pos = get_position_recursive(child, STARTING_POINTS)
+            pn_to_position[child] = pos
+        else:
+            # print(f"getting position for point {child} with parents in the tree")
+            pos0 = pn_to_position[p0]
+            pos1 = pn_to_position[p1]
+            # print(f"p0 is at {pos0}\np1 is at {pos1}")
+            pos = get_position_of_child_from_parent_positions(pos0, pos1)
+            # print(f"child is at {pos}")
+            pn_to_position[child] = pos
+    return pn_to_position
+
+
 def is_parent_and_child(parent, child):
     return parent == get_parent(child)
 
@@ -1005,11 +1094,15 @@ def get_parent_positions(point_number, STARTING_POINTS):
     return pos0, pos1
 
 
-def get_position_from_parents(point_number, STARTING_POINTS):
+def get_position_of_point_number_using_parents(point_number, STARTING_POINTS):
     if point_number < 12:
         pos, adj = STARTING_POINTS
         return pos[point_number].tuples
     pos0, pos1 = get_parent_positions(point_number, STARTING_POINTS)
+    return get_position_of_child_from_parent_positions(pos0, pos1)
+
+
+def get_position_of_child_from_parent_positions(pos0, pos1):
     p0 = UnitSpherePoint(pos0)
     p1 = UnitSpherePoint(pos1)
     midpoint = UnitSpherePoint.get_midpoint(p0, p1)
@@ -1020,22 +1113,29 @@ def get_position_from_parents(point_number, STARTING_POINTS):
 
 @functools.lru_cache(maxsize=10000)
 def get_position_recursive(point_number, STARTING_POINTS):
-    return get_position_from_parents(point_number, STARTING_POINTS)
+    return get_position_of_point_number_using_parents(point_number, STARTING_POINTS)
 
 
 def get_positions_recursive(point_numbers, STARTING_POINTS):
     # somehow need to make it efficient to do this for multiple points
     # e.g. they will probably run into same parents/grandparents/etc. at some point, those shouldn't be recalculated
+    print(f"getting positions recursively for {len(point_numbers)} points")
+    tree = get_ancestor_tree_for_multiple_points(point_numbers, STARTING_POINTS)
+    print("got ancestor tree")
+    pn_to_position = get_all_positions_in_ancestor_tree(tree, STARTING_POINTS)
+    print(f"done getting positions recursively for {len(point_numbers)} points")
+    return [pn_to_position[p] for p in point_numbers]
 
+    # old, very slow
     # brute-force, just get each one individually
-    n_ps = len(point_numbers)
-    res = []
-    for i, pn in enumerate(point_numbers):
-        if i % 1000 == 0:
-            print(f"getting positions recursive; progress {i}/{n_ps}")
-        pos = get_position_recursive(pn, STARTING_POINTS)
-        res.append(pos)
-    return res
+    # n_ps = len(point_numbers)
+    # res = []
+    # for i, pn in enumerate(point_numbers):
+    #     if i % 1000 == 0:
+    #         print(f"getting positions recursive; progress {i}/{n_ps}")
+    #     pos = get_position_recursive(pn, STARTING_POINTS)
+    #     res.append(pos)
+    # return res
 
 
 def get_3adder_for_iteration(i):
@@ -1353,10 +1453,19 @@ if __name__ == "__main__":
     #     p0 = get_parent(point_number)
     #     p1 = get_directional_parent(point_number)
     #     print("{} {} -> {}".format(p0, p1, point_number))
-    # print(get_position_from_parents(point_number))
+    # print(get_position_of_point_number_using_parents(point_number))
 
-    # point_number = random.randint(1000, 100000)
-    # print(point_number)
+    point_numbers = [random.randint(10**3,10**6) for i in range(100)]
+    print(point_numbers)
+    tree = get_ancestor_tree_for_multiple_points(point_numbers, STARTING_POINTS)
+    for x in sorted(tree):
+        print(x)
+    pn_to_position = get_all_positions_in_ancestor_tree(tree, STARTING_POINTS)
+    print(pn_to_position)
+    # g = get_ancestor_graph_from_ancestor_tree(tree)
+    # nx.draw(g, with_labels=True)
+    # plt.show()
+
     # print(get_parent_chain(point_number))
     # print(get_adjacency_recursive(point_number, get_iteration_born(point_number)))
 
@@ -1364,6 +1473,6 @@ if __name__ == "__main__":
     # test_adjacency_when_born(STARTING_POINTS)
     # test_get_generic_point_neighbor(STARTING_POINTS)
     # test_adjacency_recursive(STARTING_POINTS, compare_memo=False)
-    test_report_cada_ii_iteration_requirements()
+    # test_report_cada_ii_iteration_requirements()
     # test_position_recursive(STARTING_POINTS, compare_memo=False)
     # test_get_nearest_point_to_latlon()
