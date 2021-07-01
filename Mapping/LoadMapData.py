@@ -206,8 +206,8 @@ def plot_default_values_by_image():
 def plot_icosa_point_number_to_value_dict(pn_to_val):
     print("plotting icosa point number to value dict")
     pns = sorted(pn_to_val.keys())
-    pns = random.sample(pns, min(len(pns), 2000))  # debug
-    latlons = im.get_latlons_from_point_numbers(pns, im.STARTING_POINTS)
+    pns = random.sample(pns, min(len(pns), 10000))  # debug
+    latlons = im.get_latlons_from_point_numbers(pns)
     data_coords = latlons
     values = [pn_to_val[pn] for pn in pns]
 

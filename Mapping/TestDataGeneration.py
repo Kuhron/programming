@@ -46,14 +46,14 @@ def test_generate_on_section_of_condition_data():
     n_lats_to_plot = 500
     n_lons_to_plot = 1000
 
-    # icosa_usps_with_conditions = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, condition_iterations, IcosahedronMath.STARTING_POINTS)
+    # icosa_usps_with_conditions = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, condition_iterations)
     # condition_index = pd.Index([p.point_number for p in icosa_usps_with_conditions])
     condition_usps = UnitSpherePoint.random_within_latlon_box(n_condition_points, min_lat, max_lat, min_lon, max_lon)
     condition_latlons = [p.latlondeg() for p in condition_usps]
     condition_lats = [ll[0] for ll in condition_latlons]
     condition_lons = [ll[1] for ll in condition_latlons]
 
-    # icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations, IcosahedronMath.STARTING_POINTS)
+    # icosa_usps_with_data = IcosahedronMath.get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, data_iterations)
     # data_index = pd.Index([p.point_number for p in icosa_usps_with_data])
     excess_data_usps = UnitSpherePoint.random_within_latlon_box(n_excess_data_points, min_lat, max_lat, min_lon, max_lon)
     data_usps = condition_usps + excess_data_usps  # the has_condition mask in NoiseMath expects some of the data points to also have conditions

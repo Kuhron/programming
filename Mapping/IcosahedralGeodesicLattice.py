@@ -34,7 +34,7 @@ class IcosahedralGeodesicLattice(Lattice):
         # self.graph = self.get_graph()
 
     def get_position_mathematical(self, point_number):
-        return IcosahedronMath.get_position_recursive(point_number, IcosahedronMath.STARTING_POINTS)
+        return IcosahedronMath.get_position_recursive(point_number)
 
     def get_adjacencies(self):
         cada_ii_radius_km = IcosahedronMath.CADA_II_RADIUS_KM

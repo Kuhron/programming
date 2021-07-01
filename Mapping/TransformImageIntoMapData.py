@@ -165,8 +165,6 @@ def shrink_resolution(im):
 
 
 def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance, planet_radius):
-    STARTING_POINTS = IcosahedronMath.STARTING_POINTS
-
     print("finding icosa points near image lattice points")
     d = {}
     for r in range(image_lattice.r_size):
@@ -175,7 +173,7 @@ def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_toler
             point_number = image_lattice.get_point_number_from_lattice_position(r,c)
             point = image_lattice.points[point_number]
             latlon = point.latlondeg()
-            nearest_icosa_point, distance_normalized, distance_km = IcosahedronMath.get_nearest_icosa_point_to_latlon(latlon, icosa_point_tolerance, planet_radius, STARTING_POINTS)
+            nearest_icosa_point, distance_normalized, distance_km = IcosahedronMath.get_nearest_icosa_point_to_latlon(latlon, icosa_point_tolerance, planet_radius)
             # print(f"\nimage ({r},{c}); point #{point_number}; point {point}; icosa point within {icosa_point_tolerance_km} km = {nearest_icosa_point} at distance of {distance_km} km away")
             d[point_number] = nearest_icosa_point
     print("done finding icosa points near image lattice points")
@@ -188,7 +186,7 @@ def get_approx_icosa_point_numbers_from_usps(usps, icosa_distance_tolerance_norm
     for pi, p in enumerate(usps):
         if pi % 1000 == 0 and pi != 0:
             print(f"point {pi}/{len(usps)} ({100*pi/len(usps) :.2f}%)")
-        approx_p, d_norm, d_units = IcosahedronMath.get_nearest_icosa_point_to_latlon(p.latlondeg(), icosa_distance_tolerance_normalized, planet_radius=1, STARTING_POINTS=IcosahedronMath.STARTING_POINTS)
+        approx_p, d_norm, d_units = IcosahedronMath.get_nearest_icosa_point_to_latlon(p.latlondeg(), icosa_distance_tolerance_normalized, planet_radius=1)
         approx_p_i = approx_p.point_number
         approx_icosa_point_numbers.append(approx_p_i)
     print("done getting approx icosa points for USPs")
