@@ -45,3 +45,7 @@ NeuralNetFiles/
 # textgenrnn keeps making this even though I tell it to put the config/vocab/weights in a certain location
 textgenrnn_weights.hdf5
 
+# CLICS database stuff (to re-download/rebuild, see README at https://github.com/clics/clics3)
+Language/clics.sqlite
+Language/clics.sqlite-journal
+Language/src/
