@@ -42,3 +42,6 @@ Emergence/Images/
 
 # saved GAN models
 NeuralNetFiles/
+# textgenrnn keeps making this even though I tell it to put the config/vocab/weights in a certain location
+textgenrnn_weights.hdf5
+
