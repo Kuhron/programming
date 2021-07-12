@@ -49,3 +49,5 @@ textgenrnn_weights.hdf5
 Language/clics.sqlite
 Language/clics.sqlite-journal
 Language/src/
+Language/CLICS_Concepts_Raw.txt
+Language/_test_allcoding.txt
