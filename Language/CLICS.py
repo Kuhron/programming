@@ -13,10 +13,11 @@
 import os
 import csv
 import random
-import networkx as nx
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
+import itertools
+# import networkx as nx
+# import numpy as np
+# import matplotlib.pyplot as plt
+# import pandas as pd
 
 
 class Concept:
@@ -28,7 +29,38 @@ class Concept:
     def __repr__(self):
         return f"<Concept id=\"{self.concept_id}\" gloss=\"{self.concept_gloss}\">"
 
+    def __hash__(self):
+        return hash(repr(self))
 
+    def __eq__(self, other):
+        if type(other) is not Concept:
+            return NotImplemented
+        if self.concept_id == other.concept_id:
+            assert self.concept_gloss == other.concept_gloss, f"two concepts with same id but different gloss:\n{self}\n{other}"
+            return True
+        else:
+            return False
+
+
+class ConceptEncoding:
+    def __init__(self, language, form, concept):
+        self.language = language
+        self.form = form
+        assert type(concept) is Concept
+        self.concept = concept
+
+    def __repr__(self):
+        return f"<ConceptEncoding: language \"{self.language}\" encodes {self.concept} as \"{self.form}\">"
+
+    def __hash__(self):
+        return hash(repr(self))
+
+    def __eq__(self, other):
+        if type(other) is not ConceptEncoding:
+            return NotImplemented
+        return self.language == other.language and self.form == other.form and self.concept == other.concept
+
+        
 def get_subdirs_with_data():
     directory = "/home/wesley/programming/Language/src/"
     subdirs = [f for f in os.scandir(directory) if f.is_dir()]
@@ -273,7 +305,7 @@ def construct_concept_objects(raw_concepts, id_to_gloss, gloss_to_id):
             orphan_ids.add(concept_id)
             if has_source_gloss(rc):
                 gloss = get_source_gloss(rc)
-                print(f"orphan id {concept_id} has source gloss {gloss}")
+                # print(f"orphan id {concept_id} has source gloss {gloss}")
                 id_to_gloss[concept_id] = gloss
                 gloss_to_id[gloss] = concept_id
             else:
@@ -297,7 +329,7 @@ def construct_concept_objects(raw_concepts, id_to_gloss, gloss_to_id):
     glosses_of_extra_concepts = sorted(glosses_of_extra_concepts)
     # print("glosses_of_extra_concepts:", glosses_of_extra_concepts)
     for i, g in enumerate(glosses_of_extra_concepts):
-        new_id = f"EXTRACONCEPT_{i+1}"
+        new_id = f"EC{i+1}"  # EC stands for EXTRACONCEPT
         assert new_id not in id_to_gloss, new_id
         assert g not in gloss_to_id, g
         id_to_gloss[new_id] = g
@@ -321,7 +353,7 @@ def construct_concept_objects(raw_concepts, id_to_gloss, gloss_to_id):
             try:
                 concept_id = gloss_to_id[concept_gloss]
             except KeyError:
-                # if it's an impostor, there is no such concepticon gloss in the real concepticon, so this is an EXTRACONCEPT
+                # if it's an impostor, there is no such concepticon gloss in the real concepticon, so this is an extra concept
                 # but its gloss should still already be in the extraconcepts list
                 raise Exception(f"impostor: {rc} should have been added to id-gloss correspondence but it wasn't")
             c = id_to_concept[concept_id]
@@ -429,14 +461,75 @@ def get_concept_from_row(row, id_to_concept, id_to_gloss, gloss_to_id, parameter
     return parameter_id_to_concept_by_database[db_name][parameter_id]
 
 
+def get_all_concept_encodings(rows, id_to_concept, id_to_gloss, gloss_to_id, language_id_to_glottocode_by_database, parameter_id_to_concept_by_database):
+    all_concept_encodings = []
+    for row in rows:
+        lang = get_language_from_row(row, language_id_to_glottocode_by_database)
+        form = get_form_from_row(row)
+        concept = get_concept_from_row(row, id_to_concept, id_to_gloss, gloss_to_id, parameter_id_to_concept_by_database)
+        # print(f"language {lang} codes {concept} as {form}")
+        concept_encoding = ConceptEncoding(lang, form, concept)
+        all_concept_encodings.append(concept_encoding)
+    return all_concept_encodings
+
+
+def get_random_colexification(colexification_sets_by_language):
+    for i in range(100):
+        lang, colexification_set_by_form = random.choice(list(colexification_sets_by_language.items()))
+        sets_with_colexifications = [s for s in colexification_set_by_form.values() if len(s) > 1]
+        if len(sets_with_colexifications) == 0:
+            print(f"language {lang} has no colexifications")
+            continue
+        chosen_set = random.choice(sets_with_colexifications)
+        pair = random.sample(chosen_set, 2)
+        return pair
+    print("failed to find a colexification")
+
+
+def get_colexification_sets_by_language(concept_encodings):
+    d = {}
+    for ce in concept_encodings:
+        lang = ce.language
+        if lang not in d:
+            d[lang] = {}
+        form = ce.form
+        if ce.form not in d[lang]:
+            d[lang][ce.form] = set()
+        d[lang][ce.form].add(ce)
+    return d
+
+
+def get_concept_closeness_matrix(colexification_sets_by_language):
+    d = {}
+    for language, colexifications_by_form in colexification_sets_by_language.items():
+        for form, concept_encodings in colexifications_by_form.items():
+            concepts = [ce.concept for ce in concept_encodings]
+            pairs = itertools.combinations(concepts, 2)
+            for c0, c1 in pairs:
+                if c0 not in d:
+                    d[c0] = {c1: 0}
+                if c1 not in d:
+                    d[c1] = {c0: 0}
+                if c1 not in d[c0]:
+                    d[c0][c1] = 0
+                if c0 not in d[c1]:
+                    d[c1][c0] = 0
+                # must be symmetric
+                d[c0][c1] += 1
+                d[c1][c0] += 1
+
+    # validate
+    for c0 in d.keys():
+        for c1 in d[c0].keys():
+            v = d[c0][c1]
+            assert v > 0  # only store non-zero since it will be very sparse
+            assert d[c1][c0] == v  # must be symmetric
+    return d
+
+
 if __name__ == "__main__":
     fps, db_names = get_forms_filepaths()
     rows, all_keys, keys_in_all_fps = get_rows_from_fps(fps, db_names)
-
-    # sample_rows = random.sample(rows, 10)
-    # print_keys_of_rows(sample_rows, all_keys)
-    # print_keys_of_rows(sample_rows, keys_in_all_fps)
-    # show_key_statistics(rows, all_keys)
 
     raw_concepts = get_raw_concepts()
     id_to_gloss, gloss_to_id = construct_concepticon_id_gloss_correspondence(raw_concepts)
@@ -444,8 +537,12 @@ if __name__ == "__main__":
 
     language_id_to_glottocode_by_database = get_language_id_to_glottocode_dict_by_database()
     parameter_id_to_concept_by_database = get_parameter_id_to_concept_by_database(id_to_concept, id_to_gloss, gloss_to_id)
-    for row in rows:
-        lang = get_language_from_row(row, language_id_to_glottocode_by_database)
-        form = get_form_from_row(row)
-        concept = get_concept_from_row(row, id_to_concept, id_to_gloss, gloss_to_id, parameter_id_to_concept_by_database)
-        print(f"language {lang} codes {concept} as {form}")
+    all_concept_encodings = get_all_concept_encodings(rows, id_to_concept, id_to_gloss, gloss_to_id, language_id_to_glottocode_by_database, parameter_id_to_concept_by_database)
+    colexification_sets_by_language = get_colexification_sets_by_language(all_concept_encodings)
+
+    concept_closeness_matrix = get_concept_closeness_matrix(colexification_sets_by_language)
+    print(concept_closeness_matrix)
+    # TODO: also keep track of how often a pair of concepts even exists in a language
+    # combining that with the number of times it's colexified, can get Wilson confidence interval for binomial probability
+    # when rolling whether to colexify something in the random walk, can use the simple binomial estimator,
+    # but would be better to use a pdf derived from the Wilson intervals somehow (e.g. get non-zero probability of colexifying something whose colexification has never been seen)
