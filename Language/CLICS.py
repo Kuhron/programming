@@ -14,9 +14,11 @@ import os
 import csv
 import random
 import itertools
+import math
+import scipy.stats
 # import networkx as nx
-# import numpy as np
-# import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.pyplot as plt
 # import pandas as pd
 
 
@@ -59,6 +61,50 @@ class ConceptEncoding:
         if type(other) is not ConceptEncoding:
             return NotImplemented
         return self.language == other.language and self.form == other.form and self.concept == other.concept
+
+
+class BinomialObservation:
+    def __init__(self, successes=0, trials=0):
+        self.successes = successes
+        self.trials = trials
+
+    def get_probability_estimator(self):
+        return self.successes / self.trials
+
+    def get_normal_approximation_ci(self, confidence_level):
+        z = BinomialObservation.get_z(confidence_level)
+        s = self.successes
+        n = self.trials
+        p_hat = s/n
+        error = z * math.sqrt((p_hat * (1-p_hat))/n)
+        return (p_hat - error, p_hat + error)
+
+    @staticmethod
+    def get_z(confidence_level):
+        # z is the 1 - alpha/2 quantile of N(0,1)
+        alpha = 1 - confidence_level
+        quantile = 1 - alpha/2
+        z = scipy.stats.norm.ppf(quantile)
+        return z
+
+    def get_wilson_ci(self, confidence_level):
+        z = BinomialObservation.get_z(confidence_level)
+        s = self.successes
+        n = self.trials
+        p_hat = s/n
+        first_term = (1/(1+z**2/n)) * (p_hat + z**2/(2*n))
+        second_term = (z/(1+z**2/n)) * math.sqrt((p_hat * (1-p_hat) / n) + (z**2/(4*n**2)))
+        return (first_term - second_term, first_term + second_term)
+
+    def choose_random_possible_probability(self):
+        # the real way to do this fairly would be invert the Wilson CI as function of confidence, normalize that integral to 1,
+        # and choose a binomial p from that (i.e., weighted choice of probability by how much it shows up in confidence intervals)
+        # but I'm not gonna do that math right now
+        # doing it by choosing random confidence uniformly and then uniform p within that, overweights the p near the estimator, but I'm fine with that for now
+        confidence = random.random()
+        wci = self.get_wilson_ci(confidence)
+        return random.uniform(*wci)
+
 
         
 def get_subdirs_with_data():
@@ -499,32 +545,92 @@ def get_colexification_sets_by_language(concept_encodings):
     return d
 
 
+def add_pair_to_symmetric_sparse_matrix(d, pair, value_change=1):
+    c0, c1 = pair
+    if c0 not in d:
+        d[c0] = {c1: 0}
+    if c1 not in d:
+        d[c1] = {c0: 0}
+    if c1 not in d[c0]:
+        d[c0][c1] = 0
+    if c0 not in d[c1]:
+        d[c1][c0] = 0
+    # must be symmetric
+    d[c0][c1] += 1
+    d[c1][c0] += 1
+    return d
+
+
+def validate_symmetric_sparse_matrix(d):
+    for c0 in d.keys():
+        for c1 in d[c0].keys():
+            v = d[c0][c1]
+            assert v > 0  # only store non-zero since it will be very sparse
+            assert d[c1][c0] == v  # must be symmetric
+
+
 def get_concept_closeness_matrix(colexification_sets_by_language):
     d = {}
     for language, colexifications_by_form in colexification_sets_by_language.items():
         for form, concept_encodings in colexifications_by_form.items():
             concepts = [ce.concept for ce in concept_encodings]
             pairs = itertools.combinations(concepts, 2)
-            for c0, c1 in pairs:
-                if c0 not in d:
-                    d[c0] = {c1: 0}
-                if c1 not in d:
-                    d[c1] = {c0: 0}
-                if c1 not in d[c0]:
-                    d[c0][c1] = 0
-                if c0 not in d[c1]:
-                    d[c1][c0] = 0
-                # must be symmetric
-                d[c0][c1] += 1
-                d[c1][c0] += 1
+            for pair in pairs:
+                d = add_pair_to_symmetric_sparse_matrix(d, pair)
 
-    # validate
-    for c0 in d.keys():
-        for c1 in d[c0].keys():
-            v = d[c0][c1]
-            assert v > 0  # only store non-zero since it will be very sparse
-            assert d[c1][c0] == v  # must be symmetric
+    validate_symmetric_sparse_matrix(d)
     return d
+
+
+def get_concept_cooccurrence_count_matrix(colexification_sets_by_language):
+    # for each pair of concepts, count how many times they are both in the same language's dataset
+    # (used as number of trials for binomial estimation of colexification probability)
+    # only include non-zero values, sparse matrix
+    # this is really slow, possibly due to the large number of pairs (combinations(n,2) approaches n**2/2)
+    d = {}
+    for language, colexifications_by_form in colexification_sets_by_language.items():
+        all_concepts = set()
+        for form, concept_encodings in colexifications_by_form.items():
+            concepts_encoded = [ce.concept for ce in concept_encodings]
+            all_concepts |= set(concepts_encoded)
+            # use set because some concepts may be encoded by more than one form
+        for pair in itertools.combinations(all_concepts, 2):
+            d = add_pair_to_symmetric_sparse_matrix(d, pair)
+        print(f"after language {language}, cooccurrence count now has length {len(d)}")
+
+    validate_symmetric_sparse_matrix(d)
+    return d
+
+
+def summarize_confidence_intervals(binomial_observation):
+    b = binomial_observation
+    p_hat = b.get_probability_estimator()
+    print(f"binomial observation of {b.successes}/{b.trials}, p_hat = {p_hat}")
+    confidences = np.arange(0.001, 1.000, 0.001)  # arange is right-excl, confidence of 1 gives wilson of nan
+    nci_lows = []
+    nci_highs = []
+    wci_lows = []
+    wci_highs = []
+    p_hats = []
+    for confidence_level in confidences:
+        nci = b.get_normal_approximation_ci(confidence_level)
+        wci = b.get_wilson_ci(confidence_level)
+        nci_lows.append(nci[0])
+        nci_highs.append(nci[1])
+        wci_lows.append(wci[0])
+        wci_highs.append(wci[1])
+        # print(confidence_level, nci, wci)
+    plt.plot(confidences, nci_lows, c="g", label="Normal")
+    plt.plot(confidences, nci_highs, c="g")
+    plt.plot(confidences, wci_lows, c="r")
+    plt.plot(confidences, wci_highs, c="r", label="Wilson")
+    plt.legend()
+    plt.show()
+
+    random_ps = [b.choose_random_possible_probability() for i in range(100)]
+    plt.hist(random_ps, bins=25)
+    plt.show()
+
 
 
 if __name__ == "__main__":
@@ -541,8 +647,20 @@ if __name__ == "__main__":
     colexification_sets_by_language = get_colexification_sets_by_language(all_concept_encodings)
 
     concept_closeness_matrix = get_concept_closeness_matrix(colexification_sets_by_language)
-    print(concept_closeness_matrix)
+    smaller_colexification_sets_by_language = dict(random.sample(colexification_sets_by_language.items(), 25))  # debug, the cooccurrence counting takes forever
+    concept_cooccurrence_matrix = get_concept_cooccurrence_count_matrix(smaller_colexification_sets_by_language)
+
+    for i in range(10):
+        c0 = random.choice(list(concept_cooccurrence_matrix.keys()))
+        c1 = random.choice(list(concept_cooccurrence_matrix[c0].keys()))
+        successes = concept_closeness_matrix[c0][c1] if c0 in concept_closeness_matrix and c1 in concept_closeness_matrix[c0] else 0
+        trials = concept_cooccurrence_matrix[c0][c1]
+        b = BinomialObservation(successes, trials)
+        print(c0, c1)
+        summarize_confidence_intervals(b)
+
     # TODO: also keep track of how often a pair of concepts even exists in a language
     # combining that with the number of times it's colexified, can get Wilson confidence interval for binomial probability
     # when rolling whether to colexify something in the random walk, can use the simple binomial estimator,
     # but would be better to use a pdf derived from the Wilson intervals somehow (e.g. get non-zero probability of colexifying something whose colexification has never been seen)
+

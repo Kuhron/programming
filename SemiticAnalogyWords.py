@@ -3,8 +3,8 @@ import random
 
 semitic_pronunciation = "S AH0 M IH1 T IH0 K"
 semitic_segments = semitic_pronunciation.split()
-regex_itic = "IH[1-9] T IH0 K$"
-regex_etic = "EH[1-9] T IH0 K$"
+regex_itic = "IH[1-9] [TD] IH0 K$"
+regex_etic = "EH[1-9] [TD] IH0 K$"
 regex_three_vowels = "^[^\d]*\d[^\d]*\d[^\d]*\d[^\d]*\d[^\d]*$"  # note that there is always a number for pronunciation designation of homographs
 
 with open("cmudict.txt") as f:
