@@ -4,6 +4,7 @@
 # the ternary numbers encode the change in angle for each step
 
 import random
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -118,9 +119,14 @@ def plot_paths_from_dnas(dnas, modification_matrix=None):
     plt.show()
 
 
-def get_fitness(s, m):
+def get_path_points_from_dna(s):
     angles = get_angles_from_dna(s)
     xs, ys = get_path_points_from_angles(angles)
+    return xs, ys
+
+
+def get_fitness_old(s, m):
+    xs, ys = get_path_points_from_dna(s)
     mod_xs, mod_ys = matrix_transform(xs, ys, m)
 
     # avg_d = get_average_difference_from_path_to_modified_path(xs, ys, mod_xs, mod_ys)
@@ -301,6 +307,42 @@ def reproduce_across_environment(location_dict, environment):
             new_location_dict[(new_px, new_py)].append(offspring)
     return new_location_dict
 
+        
+def add_offspring_to_population(dnas, n_offspring_to_make):
+    new_dnas = []
+    for offspring_i in range(n_offspring_to_make):
+        s0 = random.choice(dnas)
+        s1 = random.choice(dnas)  # possible to breed with self
+        offspring = reproduce(s0, s1)
+        new_dnas.append(offspring)
+    return dnas + new_dnas
+
+
+def cull_population(dnas, max_population, fitness_func):
+    fitnesses = [fitness_func(dna) for dna in dnas]
+    sorted_fitnesses = sorted(fitnesses, reverse=True)
+    top_fitnesses = sorted_fitnesses[:max_population]
+    # the lowest one in this list is the lowest acceptable fitness
+    bound = min(top_fitnesses)
+    return [dna for dna, fitness in zip(dnas, fitnesses) if fitness >= bound]
+
+
+def simulate_evolution_in_static_environment(fitness_func):
+    n_starting_individuals = 200
+    max_population = 100
+    dna_len = 1000
+    dnas = [get_random_dna(dna_len) for i in range(n_starting_individuals)]
+    n_steps = 100
+    for step_i in range(n_steps):
+        if step_i % 10 == 0:
+            print(f"step {step_i}/{n_steps}")
+
+        n_offspring_to_make = n_starting_individuals
+        dnas = add_offspring_to_population(dnas, n_offspring_to_make)
+        dnas = cull_population(dnas, max_population, fitness_func)
+
+    return dnas
+
 
 def simulate_evolution_in_varying_environments():
     point_array_shape = (10,10)
@@ -347,11 +389,25 @@ def simulate_evolution_in_varying_environments():
                 print(f"point {px},{py} is uninhabited")
 
 
+def get_offset_distance_variance(dna, offset):
+    # the variance in distance between pairs of points that are {offset} time steps apart
+    xs, ys = get_path_points_from_dna(dna)
+    xs = np.array(xs)
+    ys = np.array(ys)
+    xs_diff = abs(xs[:-offset] - xs[offset:])
+    ys_diff = abs(ys[:-offset] - ys[offset:])
+    distances = np.sqrt(xs_diff**2 + ys_diff**2)
+    return np.std(distances)
 
 
 if __name__ == "__main__":
+    # ideally dnas are not competing with each other, but just with their environment (i.e. they survive or they don't, and any survivor creates the same number of offspring as any other survivor)
     while True:
         random_dna = get_random_dna(100000)
-        plot_path_from_dna(random_dna, modification_matrix=None)
+        plot_path_from_dna(random_dna)
+
+    # fitness_func = lambda dna: get_offset_distance_variance(dna, 12) - get_offset_distance_variance(dna, 6) - get_offset_distance_variance(dna, 9)
+    # dnas = simulate_evolution_in_static_environment(fitness_func)
+    # plot_paths_from_dnas(dnas)
 
     # simulate_evolution_in_varying_environments()
