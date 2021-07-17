@@ -102,6 +102,7 @@ def plot_path_from_dna(s, modification_matrix=None):
     if modification_matrix is not None:
         mod_xs, mod_ys = matrix_transform(xs, ys, modification_matrix)
         plt.plot(mod_xs, mod_ys, c="r")
+    plt.axis("equal")  # aspect ratio
     plt.show()
 
 
@@ -301,12 +302,7 @@ def reproduce_across_environment(location_dict, environment):
     return new_location_dict
 
 
-
-if __name__ == "__main__":
-    random_dna = get_random_dna(500)
-    plot_path_from_dna(random_dna, modification_matrix=None)
-
-
+def simulate_evolution_in_varying_environments():
     point_array_shape = (10,10)
     environment = get_environment(point_array_shape, plot=False)  # 2d array of points at each of which there is a 2d modification matrix
     assert environment.shape == point_array_shape + (2,2), environment.shape
@@ -350,3 +346,12 @@ if __name__ == "__main__":
             else:
                 print(f"point {px},{py} is uninhabited")
 
+
+
+
+if __name__ == "__main__":
+    while True:
+        random_dna = get_random_dna(100000)
+        plot_path_from_dna(random_dna, modification_matrix=None)
+
+    # simulate_evolution_in_varying_environments()

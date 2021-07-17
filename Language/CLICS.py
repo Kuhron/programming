@@ -588,6 +588,8 @@ def get_concept_cooccurrence_count_matrix(colexification_sets_by_language):
     # only include non-zero values, sparse matrix
     # this is really slow, possibly due to the large number of pairs (combinations(n,2) approaches n**2/2)
     d = {}
+    lang_i = 0
+    n_langs = len(colexification_sets_by_language.keys())
     for language, colexifications_by_form in colexification_sets_by_language.items():
         all_concepts = set()
         for form, concept_encodings in colexifications_by_form.items():
@@ -596,7 +598,7 @@ def get_concept_cooccurrence_count_matrix(colexification_sets_by_language):
             # use set because some concepts may be encoded by more than one form
         for pair in itertools.combinations(all_concepts, 2):
             d = add_pair_to_symmetric_sparse_matrix(d, pair)
-        print(f"after language {language}, cooccurrence count now has length {len(d)}")
+        print(f"after language {language} (progress {lang_i}/{n_langs}), cooccurrence count now has length {len(d)}")
 
     validate_symmetric_sparse_matrix(d)
     return d
@@ -647,17 +649,20 @@ if __name__ == "__main__":
     colexification_sets_by_language = get_colexification_sets_by_language(all_concept_encodings)
 
     concept_closeness_matrix = get_concept_closeness_matrix(colexification_sets_by_language)
-    smaller_colexification_sets_by_language = dict(random.sample(colexification_sets_by_language.items(), 25))  # debug, the cooccurrence counting takes forever
+    smaller_colexification_sets_by_language = dict(random.sample(colexification_sets_by_language.items(), 5))  # debug, the cooccurrence counting takes forever
     concept_cooccurrence_matrix = get_concept_cooccurrence_count_matrix(smaller_colexification_sets_by_language)
 
-    for i in range(10):
-        c0 = random.choice(list(concept_cooccurrence_matrix.keys()))
-        c1 = random.choice(list(concept_cooccurrence_matrix[c0].keys()))
-        successes = concept_closeness_matrix[c0][c1] if c0 in concept_closeness_matrix and c1 in concept_closeness_matrix[c0] else 0
+    for i in range(100):
+        while True:
+            c0 = random.choice(list(concept_cooccurrence_matrix.keys()))
+            c1 = random.choice(list(concept_cooccurrence_matrix[c0].keys()))
+            successes = concept_closeness_matrix[c0][c1] if c0 in concept_closeness_matrix and c1 in concept_closeness_matrix[c0] else 0
+            if successes > 0:
+                break
         trials = concept_cooccurrence_matrix[c0][c1]
         b = BinomialObservation(successes, trials)
         print(c0, c1)
-        summarize_confidence_intervals(b)
+        # summarize_confidence_intervals(b)
 
     # TODO: also keep track of how often a pair of concepts even exists in a language
     # combining that with the number of times it's colexified, can get Wilson confidence interval for binomial probability
