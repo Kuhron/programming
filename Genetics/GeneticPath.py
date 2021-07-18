@@ -323,16 +323,13 @@ def cull_population(dnas, max_population, fitness_func):
     sorted_fitnesses = sorted(fitnesses, reverse=True)
     top_fitnesses = sorted_fitnesses[:max_population]
     # the lowest one in this list is the lowest acceptable fitness
-    bound = min(top_fitnesses)
-    return [dna for dna, fitness in zip(dnas, fitnesses) if fitness >= bound]
+    min_allowed_fitness = min(top_fitnesses)
+    print(f"keeping fitnesses from {min_allowed_fitness:.2f} to {max(top_fitnesses):.2f}")
+    return [dna for dna, fitness in zip(dnas, fitnesses) if fitness >= min_allowed_fitness]
 
 
-def simulate_evolution_in_static_environment(fitness_func):
-    n_starting_individuals = 200
-    max_population = 100
-    dna_len = 1000
+def simulate_evolution_in_static_environment(fitness_func, n_steps, dna_len, n_starting_individuals, max_population):
     dnas = [get_random_dna(dna_len) for i in range(n_starting_individuals)]
-    n_steps = 100
     for step_i in range(n_steps):
         if step_i % 10 == 0:
             print(f"step {step_i}/{n_steps}")
@@ -389,7 +386,7 @@ def simulate_evolution_in_varying_environments():
                 print(f"point {px},{py} is uninhabited")
 
 
-def get_offset_distance_variance(dna, offset):
+def get_offset_distance_mean(dna, offset):
     # the variance in distance between pairs of points that are {offset} time steps apart
     xs, ys = get_path_points_from_dna(dna)
     xs = np.array(xs)
@@ -397,17 +394,43 @@ def get_offset_distance_variance(dna, offset):
     xs_diff = abs(xs[:-offset] - xs[offset:])
     ys_diff = abs(ys[:-offset] - ys[offset:])
     distances = np.sqrt(xs_diff**2 + ys_diff**2)
-    return np.std(distances)
+    if len(distances) == 0:
+        return None
+    return np.mean(distances)
+
+
+def get_weighted_offset_distance_mean_sum(dna, offset_to_weight):
+    # if this is used as a fitness function,
+    # then each weight is basically saying how much we WANT MORE DISTANCE at that offset (higher weight * higher distance --> higher fitness)
+    res = 0
+    for offset, weight in offset_to_weight.items():
+        distance_mean = get_offset_distance_mean(dna, offset)
+        if distance_mean is not None:
+            res += weight * distance_mean
+    return res
+
+
+def get_random_offset_to_weight():
+    d = {}
+    for offset in range(1, 13):
+        d[offset] = random.uniform(-1, 1)
+    return d
 
 
 if __name__ == "__main__":
     # ideally dnas are not competing with each other, but just with their environment (i.e. they survive or they don't, and any survivor creates the same number of offspring as any other survivor)
-    while True:
+    while False:# True:
         random_dna = get_random_dna(100000)
         plot_path_from_dna(random_dna)
 
-    # fitness_func = lambda dna: get_offset_distance_variance(dna, 12) - get_offset_distance_variance(dna, 6) - get_offset_distance_variance(dna, 9)
-    # dnas = simulate_evolution_in_static_environment(fitness_func)
-    # plot_paths_from_dnas(dnas)
+    offset_to_weight = get_random_offset_to_weight()
+    print(offset_to_weight)
+    fitness_func = lambda dna: get_weighted_offset_distance_mean_sum(dna, offset_to_weight)
+    dnas = simulate_evolution_in_static_environment(
+        fitness_func, n_steps=25, dna_len=10000,
+        n_starting_individuals = 5, max_population = 20,
+    )
+    for dna in dnas:
+        plot_path_from_dna(dna)
 
     # simulate_evolution_in_varying_environments()
