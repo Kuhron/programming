@@ -85,7 +85,47 @@ def get_hash_wave_function(seed_object):
     # so you get big fluctuations over longer timescales, and smaller amounts of noise on smaller timescales around that long-term trend
     # but the "spectrum" can be changed probably, e.g. you don't even have to reduce the noise on small timescales (completely white noise), and it would result in a function that in the limit is not continuous (could jump to any value anywhere)
     # or could just change the exponent of decay of the amplitude of waves by their frequency, to get smoother/rougher noise (corresponding to spectra with less/more energy at higher frequencies)
+
+    # let f(0) be 0, otherwise 0 as a fencepost will have infinite contributions from ever-higher powers, giving it infinite variance (when do you stop adding waves from higher powers? the amount they shift the whole function gets bigger and bigger so you can never ignore any of them, so the function can never converge)
+
+    cache = {}  # for the fenceposts at multiples of powers of 2
+    def f(x):
+        binary_search = get_binary_search_sequence(x)
+        
+
     raise NotImplementedError
+
+
+def get_test_wave_function_at_fenceposts():
+    d = {}
+    d[0] = 0 # random.uniform(-1, 1)
+    d[100] = 0 # random.uniform(-1, 1)
+
+    # seed_obj = "testingtesting123abcdefg"
+    seed_obj = str(time.time())
+    iterations = 10
+    exponent = 0.5
+    for i in range(iterations):
+        ks = sorted(d.keys())
+        for k0, k1 in zip(ks[:-1], ks[1:]):
+            new_k = (k0 + k1) / 2
+            mean = (d[k0] + d[k1]) / 2
+            amplitude = ((k1 - k0) / 2) ** exponent  # e.g. with keys 0 and 1, we are getting value at 0.5, and want the amplitude to be proportional to that wavelength
+            r = hash_random_uniform(seed_obj + str(new_k), -1, 1)  # deterministic random value between -1 and 1, and it's also not dependent on a sequence of random values (where accessing different number of them beforehand can change the result)
+            deviation = r * amplitude
+            new_val = mean + deviation
+            d[new_k] = new_val
+
+    # check evenly spaced (debug)
+    ks = sorted(d.keys())
+    diff = None
+    for k0, k1 in zip(ks[:-1], ks[1:]):
+        if diff is None:
+            diff = k1 - k0
+        else:
+            assert k1 - k0 == diff
+
+    return d
 
 
 def get_binary_search_sequence(number):
@@ -154,6 +194,23 @@ def get_binary_search_sequence(number):
         power -= 1
 
 
+def get_binary_search_sequence_list(number, min_power=None, n_terms=None):
+    assert (min_power is not None) + (n_terms is not None) == 1, "need min_power or n_terms but not both"
+    g = get_binary_search_sequence(number)
+    if n_terms is not None:
+        return [next(g) for i in range(n_terms)]
+    elif min_power is not None:
+        res = []
+        for tup in g:
+            power, left, right = tup
+            if power >= min_power:
+                res.append(tup)
+            else:
+                return res  # effectively break
+    else:
+        raise Exception("shouldn't have gotten here because of the assert")
+
+
 def unit_test_binary_search():
     binary_search_test_cases = [0, 2, 4096, 64*3, -256*7, -2, -16384, 7777.7777] + [random.uniform(-10**9, 10**9) for i in range(100)]
     for x in binary_search_test_cases:
@@ -203,6 +260,13 @@ if __name__ == "__main__":
 
     # want to get a deterministic function with good autocorrelation like long-term variations, and smaller variations around that trend, etc. to fractal precision
 
+    d = get_test_wave_function_at_fenceposts()
+    xs = sorted(d.keys())
+    ys = [d[x] for x in xs]
+    plt.plot(xs, ys)
+    plt.show()
+
+    raise
     seed = random.uniform(0, 100)
     print(f"seed is {seed}")
 
@@ -210,3 +274,4 @@ if __name__ == "__main__":
 
     xs = np.arange(0, 100, 0.01)
     ys = hash_wave_function(xs)
+
