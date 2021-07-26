@@ -13,6 +13,7 @@ import random
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import functools
 
 
 MAX_HASH = 2**256
@@ -211,6 +212,39 @@ def get_binary_search_sequence_list(number, min_power=None, n_terms=None):
         raise Exception("shouldn't have gotten here because of the assert")
 
 
+def get_binary_search_fenceposts(number):
+    # the list of values whose hash-r11-deviations will be summed to get f(x)
+    # note that it's impossible to get fenceposts like A, B, A (e.g. it's closer to 1 than to 0, then it's closer to 1/2 than to 1, but then it's closer to 1 than to 3/4; this can't happen because after it's closer to 1/2 than to 1, the new left/right will be 1/2 and 3/4, and 1 is never again considered as a close number)
+    # - as a result of this, we can just check if the number was in the last tuple to determine if it's a duplicate; if it wasn't, then it can't have been in a tuple before that either
+    last_val = None
+    for tup in get_binary_search_sequence(number):
+        power, left_number, right_number = tup
+        dleft = number - left_number
+        dright = right_number - number
+        assert dleft >= 0 and dright >= 0
+        if dleft == dright:
+            if dleft == dright == 0:
+                assert number == left_number == right_number
+                assert last_val == number  # it should yield the number itself as the last one
+                # don't yield it again
+                break  # don't run through the infinite repetitions anymore
+            else:
+                closer = number
+        elif dleft < dright:
+            closer = left_number
+        elif dright < dleft:
+            closer = right_number
+        else:
+            raise Exception("impossible")
+        # if it was yielded in last iteration, it's a duplicate, else, it must be new
+        if last_val is not None and closer == last_val:
+            # duplicate, don't yield it
+            pass
+        else:
+            yield closer
+            last_val = closer
+
+
 def unit_test_binary_search():
     binary_search_test_cases = [0, 2, 4096, 64*3, -256*7, -2, -16384, 7777.7777] + [random.uniform(-10**9, 10**9) for i in range(100)]
     for x in binary_search_test_cases:
@@ -227,6 +261,44 @@ def unit_test_binary_search():
                 assert x == 0
             if tup[0] < -5:
                 break
+
+
+def r11(x, seed):
+    return hash_random_uniform(seed + str(x), -1, 1)
+
+
+def amp(x, exponent):
+    power_of_2 = get_power_of_2_that_number_is_multiple_of(x)
+    return power_of_2 ** exponent
+
+
+def get_power_of_2_that_number_is_multiple_of(x):
+    # e.g. for 1/8 and 3/8 return 1/8, for 11/2 return 1/2, for 32*(something coprime to 2) return 32, etc.
+    if x == 0 or not np.isfinite(x):
+        return 0
+    log2 = np.log2(x)
+    # x can be at most 2**log2
+    p = math.ceil(log2)
+    lowest_power = -32
+    while p >= lowest_power:
+        mod = x % (2**p)
+        if mod == 0:
+            return (2**p)
+        p -= 1
+    return 0  # x is (approximately) not expressible as q/2**p
+
+
+@functools.lru_cache(maxsize=100000)
+def get_deviation_at_value(x, seed, exponent):
+    return r11(x, seed) * amp(x, exponent)
+
+
+def get_fencepost_deviation_sum(x, seed, exponent):
+    res = 0
+    for y in get_binary_search_fenceposts(x):
+        dev = get_deviation_at_value(y, seed, exponent)
+        res += dev
+    return res
 
 
 def run_simple_simulation():
@@ -260,13 +332,21 @@ if __name__ == "__main__":
 
     # want to get a deterministic function with good autocorrelation like long-term variations, and smaller variations around that trend, etc. to fractal precision
 
+    seed = str(time.time())
+    spectrum_exponent = 0.5
+    xs = np.linspace(0, 100, 1000)
+    ys = [get_fencepost_deviation_sum(x, seed, spectrum_exponent) for x in xs]
+    plt.plot(xs, ys)
+    plt.show()
+    raise
+
     d = get_test_wave_function_at_fenceposts()
     xs = sorted(d.keys())
     ys = [d[x] for x in xs]
     plt.plot(xs, ys)
     plt.show()
-
     raise
+
     seed = random.uniform(0, 100)
     print(f"seed is {seed}")
 
