@@ -11,9 +11,14 @@ from datetime import datetime
 import time
 import random
 import math
-import numpy as np
-import matplotlib.pyplot as plt
 import functools
+import os
+
+# portability to PyDroid for working on this on planes
+android = "ANDROID_BOOTLOGO" in os.environ
+if not android:
+    import numpy as np
+    import matplotlib.pyplot as plt
 
 
 MAX_HASH = 2**256
@@ -144,10 +149,10 @@ def get_binary_search_sequence(number):
             power -= 1
     # rest should be unreachable for 0 because of while loop
 
-    sign = np.sign(x)
-    x /= sign
-    flog2 = math.floor(np.log2(x))
-    clog2 = math.ceil(np.log2(x))
+    sgn = sign(x)
+    x /= sgn
+    flog2 = math.floor(math.log(x,2))
+    clog2 = math.ceil(math.log(x,2))
     starting_left_number = 2 ** flog2
     starting_right_number = 2 ** clog2
     starting_power = flog2  # the power is the exponent, not 2**exponent
@@ -157,7 +162,7 @@ def get_binary_search_sequence(number):
         assert 2**flog2 == x and 2**clog2 == x
         power = starting_power
         while True:
-            tup = (power, sign*x, sign*x)
+            tup = (power, sgn*x, sgn*x)
             yield tup
             power -= 1
     # rest should be unreachable for powers of 2
@@ -171,7 +176,7 @@ def get_binary_search_sequence(number):
     right_number = starting_right_number
     power = starting_power
     while True:
-        tup = (power, sign*left_number, sign*right_number)
+        tup = (power, sgn*left_number, sgn*right_number)
         yield tup
 
         average_number = (left_number + right_number)/2
@@ -219,14 +224,19 @@ def get_binary_search_fenceposts(number):
     last_val = None
     for tup in get_binary_search_sequence(number):
         power, left_number, right_number = tup
+        if number < 0:
+            left_number, right_number = right_number, left_number  # they are in the tuple in magnitude order
         dleft = number - left_number
         dright = right_number - number
         assert dleft >= 0 and dright >= 0
         if dleft == dright:
             if dleft == dright == 0:
-                assert number == left_number == right_number
-                assert last_val == number  # it should yield the number itself as the last one
-                # don't yield it again
+                assert number == left_number == right_number, f"n={number}\nleft={left_number}\nright={right_number}" 
+                if last_val is None:
+                    yield number
+                else:
+                    assert last_val == number, f"last={last_val}\nn={number}"  # it should yield the number itself as the last one
+                    # don't yield it again
                 break  # don't run through the infinite repetitions anymore
             else:
                 closer = number
@@ -274,9 +284,9 @@ def amp(x, exponent):
 
 def get_power_of_2_that_number_is_multiple_of(x):
     # e.g. for 1/8 and 3/8 return 1/8, for 11/2 return 1/2, for 32*(something coprime to 2) return 32, etc.
-    if x == 0 or not np.isfinite(x):
+    if x == 0:
         return 0
-    log2 = np.log2(x)
+    log2 = math.log(x,2)
     # x can be at most 2**log2
     p = math.ceil(log2)
     lowest_power = -32
@@ -290,7 +300,7 @@ def get_power_of_2_that_number_is_multiple_of(x):
 
 @functools.lru_cache(maxsize=100000)
 def get_deviation_at_value(x, seed, exponent):
-    return r11(x, seed) * amp(x, exponent)
+    return r11(x, seed) * amp(abs(x), exponent)
 
 
 def get_fencepost_deviation_sum(x, seed, exponent):
@@ -331,6 +341,57 @@ def run_simple_simulation():
         time.sleep(1)
 
 
+def summarize_xs_ys(xs, ys):
+    assert len(xs) == len(ys)
+    for i in range(len(xs)-1):
+        x0 = xs[i]
+        x1 = xs[i+1]
+        y0 = ys[i]
+        y1 = ys[i+1]
+        dx = x1-x0
+        dy = y1-y0
+        dydx = dy/dx
+        print(f"x={x0}\nf(x)={y0}\ndy/dx={dydx}\n")
+    x = xs[-1]
+    y = ys[-1]
+    print(f"x={x}\nf(x)={y}\n")
+
+
+def print_graph(xs, ys, n_ticks=100):
+    f_dict = dict(zip(xs,ys))
+    min_x = min(xs)
+    min_y = min(ys)
+    max_x = max(xs)
+    max_y = max(ys)
+    print(f"{min_x} <= x <= {max_x}")
+    print(f"{min_y} <= f(x) <= {max_y}")
+    screen_width = 60
+    x_tick = (max_x - min_x) / (n_ticks-1)
+    y_tick = (max_y - min_y) / (screen_width)  # no extra fencepost here, tick is a bin of y vals corresponding to the char width
+    print_xs = linspace(min_x, max_x, n_ticks)
+    for x in print_xs:
+        lows = [xx for xx in xs if xx <= x]
+        highs = [xx for xx in xs if xx >= x]
+        a = max(lows)
+        b = min(highs)
+        c = f_dict[a]
+        d = f_dict[b]
+        alpha = (x-a)/(b-a) if b > a else 0
+        y = c + alpha * (d-c)
+        which_y_tick = int((y-min_y) // y_tick)
+        n_y_ticks_before = which_y_tick
+        n_y_ticks_after = screen_width - which_y_tick - 1
+        s = "." * n_y_ticks_before + "|" + "." * n_y_ticks_after
+        print(s)
+    
+
+if android:
+    linspace = lambda a,b,n: [a+i*(b-a)/(n-1) for i in range(n)]
+    sign = lambda x: 1 if x > 0 else -1 if x < 0 else 0
+else:
+    linspace = np.linspace
+    sign = np.sign
+
 
 if __name__ == "__main__":
     # todo: introduce seasonal variation and variation by place
@@ -340,25 +401,28 @@ if __name__ == "__main__":
     # want to get a deterministic function with good autocorrelation like long-term variations, and smaller variations around that trend, etc. to fractal precision
 
     seed = str(time.time())
-    spectrum_exponent = 0.5
-    xs = np.linspace(0, 100, 10000)
+    spectrum_exponent = 0.4
+    offset = random.uniform(-100000, 100000)
+    xs = linspace(0+offset, 1000+offset, 1001)
     ys = [get_fencepost_deviation_sum(x, seed, spectrum_exponent) for x in xs]
-    plt.plot(xs, ys)
-    plt.show()
-    raise
+    # summarize_xs_ys(xs, ys)
+    print_graph(xs, ys, n_ticks=250)
+    if not android:
+        plt.plot(xs, ys)
+        plt.show()
 
-    d = get_test_wave_function_at_fenceposts()
-    xs = sorted(d.keys())
-    ys = [d[x] for x in xs]
-    plt.plot(xs, ys)
-    plt.show()
-    raise
+    #d = get_test_wave_function_at_fenceposts()
+    #xs = sorted(d.keys())
+    #ys = [d[x] for x in xs]
 
-    seed = random.uniform(0, 100)
-    print(f"seed is {seed}")
+    #seed = random.uniform(0, 100)
+    #print(f"seed is {seed}")
 
-    hash_wave_function = get_hash_wave_function(seed_object=seed)
+    #hash_wave_function = get_hash_wave_function(seed_object=seed)
 
-    xs = np.arange(0, 100, 0.01)
-    ys = hash_wave_function(xs)
-
+    #xs = np.arange(0, 100, 0.01)
+    #ys = hash_wave_function(xs)
+    
+    if android:
+        print("done")
+        input()

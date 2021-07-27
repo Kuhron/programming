@@ -175,7 +175,10 @@ function aco() {  # play acoma audio files matching string
         find . | grep -i $a | grep -v mp3);
     echo $b | sed -e "s/ /\n/g"; echo "$b" | xargs -I % sh -c '{ aplay %; sleep 1; }';
 }
-function bright () { xrandr --output $(xrandr | grep " connected" | cut -f1 -d " ") --brightness $1 ;}
+function bright() { xrandr --output $(xrandr | grep " connected" | cut -f1 -d " ") --brightness $1 ;}
+
+function cdiff() { /usr/bin/diff -u $1 $2 | colordiff | less -R ;}  # https://stackoverflow.com/a/20288437/7376935
+alias diff="cdiff"  # this way it's unambiguous what I want when I type "diff", it goes to the custom function
 
 # nox, for obscuring entire terminal into a font unreadable by others, usually for use with lynx browser
 function nox() {
