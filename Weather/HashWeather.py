@@ -297,8 +297,15 @@ def get_fencepost_deviation_sum(x, seed, exponent):
     res = 0
     for y in get_binary_search_fenceposts(x):
         dev = get_deviation_at_value(y, seed, exponent)
+        # TODO: maybe could get rid of discontinuities by making the contribution of a fencepost continuous within its sphere of influence from 0 (at edge of window) to max (at the fencepost itself), but this is adding some complication that I would rather not have
         res += dev
     return res
+
+
+def is_in_window_of_influence(x, fencepost):
+    # fencepost shows up in the binary search of x
+    # this happens if 3/4 * fencepost <= x <= 3/2 * fencepost
+    return 3/4 * fencepost <= x <= 3/2 * fencepost
 
 
 def run_simple_simulation():
@@ -334,7 +341,7 @@ if __name__ == "__main__":
 
     seed = str(time.time())
     spectrum_exponent = 0.5
-    xs = np.linspace(0, 100, 1000)
+    xs = np.linspace(0, 100, 10000)
     ys = [get_fencepost_deviation_sum(x, seed, spectrum_exponent) for x in xs]
     plt.plot(xs, ys)
     plt.show()
