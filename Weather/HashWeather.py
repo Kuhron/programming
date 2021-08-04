@@ -365,10 +365,9 @@ def print_graph(xs, ys, n_ticks=100):
     max_y = max(ys)
     print(f"{min_x} <= x <= {max_x}")
     print(f"{min_y} <= f(x) <= {max_y}")
-    screen_width = 60
     x_tick = (max_x - min_x) / (n_ticks-1)
-    y_tick = (max_y - min_y) / (screen_width)  # no extra fencepost here, tick is a bin of y vals corresponding to the char width
     print_xs = linspace(min_x, max_x, n_ticks)
+    print_ys = []
     for x in print_xs:
         lows = [xx for xx in xs if xx <= x]
         highs = [xx for xx in xs if xx >= x]
@@ -378,12 +377,59 @@ def print_graph(xs, ys, n_ticks=100):
         d = f_dict[b]
         alpha = (x-a)/(b-a) if b > a else 0
         y = c + alpha * (d-c)
+        print_ys.append(y)
+    print_y_ticks(print_ys)
+
+
+def print_y_ticks(ys, min_y=None, max_y=None, print_lines_together=True):
+    # min and max default to the min and max of the given ys
+    min_y = min_y if min_y is not None else min(ys)
+    max_y = max_y if max_y is not None else max(ys)
+    if min_y == max_y:
+        # will give div/0, so just artificially move them
+        min_y -= 1
+        max_y += 1
+
+    screen_width = 60
+    y_tick = (max_y - min_y) / (screen_width)  # no extra fencepost here, tick is a bin of y vals corresponding to the char width
+    assert y_tick > 0, y_tick
+    print(f"latest: {ys[-1]}")
+    print(f"range: {min_y} - {max_y}")
+    s_together = ""
+    for y in ys:
         which_y_tick = int((y-min_y) // y_tick)
-        n_y_ticks_before = which_y_tick
-        n_y_ticks_after = screen_width - which_y_tick - 1
-        s = "." * n_y_ticks_before + "|" + "." * n_y_ticks_after
-        print(s)
-    
+        if 0 <= which_y_tick <= screen_width:
+            # normal case: print default char as the axis and marked char as the approximate y position
+            n_y_ticks_before = which_y_tick
+            n_y_ticks_after = screen_width - which_y_tick - 1
+            s = "." * n_y_ticks_before + "|" + "." * n_y_ticks_after
+        elif which_y_tick < 0:
+            # out of bounds case
+            s = "<<<" + "." * (screen_width-3)
+        elif which_y_tick > screen_width:
+            s = "." * (screen_width-3) + ">>>"
+        else:
+            raise Exception("impossible")
+        if print_lines_together:
+            s_together += "\n" + s
+        else:
+            print(s)
+    if print_lines_together:
+        print(s_together)
+
+
+def print_graph_live(seed, spectrum_exponent, x0, x_step):
+    max_rows = (442-414)+1  # measured using Vim line numbers lol
+    x = x0
+    ys = []
+    while True:
+        y = get_fencepost_deviation_sum(x, seed, spectrum_exponent)
+        ys.append(y)
+        ys = ys[-max_rows:]
+        os.system("clear")
+        print_y_ticks(ys, print_lines_together=True)
+        time.sleep(0.01)
+        x += x_step
 
 if android:
     linspace = lambda a,b,n: [a+i*(b-a)/(n-1) for i in range(n)]
@@ -407,6 +453,7 @@ if __name__ == "__main__":
     ys = [get_fencepost_deviation_sum(x, seed, spectrum_exponent) for x in xs]
     # summarize_xs_ys(xs, ys)
     print_graph(xs, ys, n_ticks=250)
+    print_graph_live(seed, spectrum_exponent, x0=xs[0], x_step=xs[1]-xs[0])
     if not android:
         plt.plot(xs, ys)
         plt.show()
