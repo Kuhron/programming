@@ -32,7 +32,7 @@ def signed_log(x):
 
 
 def run_evaluation_series_test(eval_func):
-    dna = get_dna(100)
+    dna = get_dna(400)
     xs = []
     while len(dna) > 0:
         x = eval_func(dna)
@@ -45,12 +45,12 @@ def run_evaluation_series_test(eval_func):
 
 
 def show_effect_of_bases_test(eval_func):
-    dna = get_dna(100)
+    dna = get_dna(400)
     # evolve/mutate it a bit so it's not just p=0.5 random choice, want some nontrivial structure
-    for i in range(100):
+    for i in range(20):
         dna = transcribe_dna(dna)
         if len(dna) == 0:
-            dna = get_dna(100)
+            dna = get_dna(400)
 
     xs = []
     dna_val = eval_func(dna)
@@ -70,7 +70,6 @@ def show_effect_of_bases_test(eval_func):
 
 if __name__ == "__main__":
     coefficients = np.random.normal(0,1,4)
-    
    
     def eval_func(dna):
         xs = linear_choice_series(dna, coefficients, modification_function=signed_log)
@@ -81,8 +80,10 @@ if __name__ == "__main__":
         xmax = xs.max()
         xmin = xs.min()
         xmean = xs.mean()
-        alpha_min_mean_max = (xmean - xmin) / (xmax - xmin)
-        return alpha_min_mean_max
+        # alpha_min_mean_max = (xmean - xmin) / (xmax - xmin)
+        # return alpha_min_mean_max
+        top_half_minus_bottom_half = (xmax - xmean) - (xmean - xmin)
+        return top_half_minus_bottom_half
 
     run_evaluation_series_test(eval_func)
     show_effect_of_bases_test(eval_func)
