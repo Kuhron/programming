@@ -25,10 +25,7 @@ def linear_choice_series(dna, coefficients=None, modification_function=None):
 
 
 def signed_log(x):
-    if x == 0:
-        return 0
-    sign = -1 if x < 0 else 1
-    return sign * np.log(1+abs(x))
+    return np.sign(x) * np.log(1+abs(x))
 
 
 def run_evaluation_series_test(eval_func):
