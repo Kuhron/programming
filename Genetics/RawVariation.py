@@ -67,11 +67,16 @@ def flip_bit(dna, index):
     return dna
 
 
-def plot_dna_as_path(dna, save=True, alpha=1):
+def plus_minus_cumsum(dna):
     # +1 for 1, -1 for 0
     xs = np.array([1 if x == 1 else -1 for x in dna])
     cumsum = xs.cumsum()
     cumsum = cumsum - cumsum.mean()  # stupid np -= casting crap
+    return cumsum
+
+
+def plot_dna_as_path(dna, save=True, alpha=1):
+    cumsum = plus_minus_cumsum(dna)
     plt.plot(cumsum, alpha=alpha, c="b")
     if save:
         plt.savefig("DnaCumsum.png")
