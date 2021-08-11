@@ -150,7 +150,7 @@ if __name__ == "__main__":
         assert -1 <= weighted_autocorr_normalized <= 1, (weighted_autocorr_normalized, weighted_autocorr, params, max_weighted_autocorr)
         # reward length, punish lots of weighted autocorrelation (which will be higher for positive autocorr coefficients (autocorrelation at those lags adds to the cost) and lower for negative autocorr coefficients (so those coefficients will end up encouraging survival of dnas with cumsum autocorrelation at those lags))
         autocorr_penalty_factor = 1 - weighted_autocorr_normalized
-        return len(dna)**(1/2) * autocorr_penalty_factor
+        return len(dna)**(0.8) * autocorr_penalty_factor**0.5
 
     def eval_func_1_2(dna, params):
         # this should induce competing goals because f1 likes long straight lines (i.e. most of the dna is either 1 or 0)

@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import itertools
 import scipy
+from scipy import interpolate  # it seems on WSL I have to do this, importing the submodule, while on my Ubuntu laptop this is not necessary
 
 
 def get_land_and_sea_colormap():
@@ -168,5 +169,6 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
     plt.ylim(min_lat, max_lat)
     if with_axis:
         plt.colorbar(im)
+    return im
 
 
