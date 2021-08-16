@@ -376,6 +376,19 @@ cultural_principles = [
     "A person's internal characteristics drive their actions.",
     "No one is in control of their own actions.",
     "People are in control of their own actions.",
+    "Everyone is responsible for maintaining public spaces.",
+    "No one is responsible for maintaining public spaces.",
+    "The leaders are responsible for maintaining public spaces.",
+    "There should be a single leader.",
+    "There should be a group of leaders.",
+    "There should not be any leaders.",
+    "People should take turns being the leader.",
+    "There should be different leaders for different issues based on who knows the most about the issue.",
+    "One should be loyal to one's kin first.",
+    "One should not show any loyalty to one group over another.",
+    "Things in nature do not belong to anyone and must be shared.",
+    "Nothing belongs to anyone; private property does not exist.",
+    "Anything, including things in nature, can be owned privately.",
 
 ]
 

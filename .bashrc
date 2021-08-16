@@ -227,9 +227,6 @@ export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stack
 export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH
 # export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
 
-# WSL X11 forwarding
-export DISPLAY=$(awk '/nameserver / {print $2; exit}' /etc/resolv.conf 2>/dev/null):0
-export LIBGL_ALWAYS_INDIRECT=1
 
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
