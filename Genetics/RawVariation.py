@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 from copy import deepcopy
+from FunctionOfBits import plus_minus_cumsum
 
 
 def get_dna(length):
@@ -65,14 +66,6 @@ def flip_bit(dna, index):
     dna = deepcopy(dna)  # don't modify the passed array
     dna[index] = 1 - dna[index]
     return dna
-
-
-def plus_minus_cumsum(dna):
-    # +1 for 1, -1 for 0
-    xs = np.array([1 if x == 1 else -1 for x in dna])
-    cumsum = xs.cumsum()
-    cumsum = cumsum - cumsum.mean()  # stupid np -= casting crap
-    return cumsum
 
 
 def plot_dna_as_path(dna, save=True, alpha=1):

@@ -5,13 +5,12 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 
-from RawVariation import get_dna, transcribe_dna, print_dna, plot_dna_as_path, plot_dnas_as_paths, plus_minus_cumsum
-from FunctionOfBits import linear_choice_series, signed_log
+from RawVariation import get_dna, transcribe_dna, print_dna, plot_dna_as_path, plot_dnas_as_paths
+from FunctionOfBits import linear_choice_series, signed_log, plus_minus_cumsum, same_different_direction_path
 
 
-def get_starting_individuals():
+def get_starting_individuals(n_individuals):
     get_length = lambda: max(10, int(np.random.normal(250,50)))
-    n_individuals = 100
     return [get_dna(get_length()) for i in range(n_individuals)]
 
 
@@ -30,9 +29,8 @@ def get_bidirectional_ratio(a,b):
 assert get_bidirectional_ratio(2,4) == get_bidirectional_ratio(6,3) == 2
 
 
-def run_evolution_in_environment(dnas, eval_func):
+def run_evolution_in_environment(dnas, eval_func, n_generations):
     birth_factor = 2  # let this be constant, but death factor apprach 0 for large populations (i.e. it decreases them more)
-    n_generations = 100
     for gen_i in range(n_generations):
         dnas = reproduce(dnas, birth_factor * np.exp(np.random.normal(0, 0.01)), baseline_error_rate=1/100)
         n = len(dnas)
@@ -89,17 +87,16 @@ def select_survivors(dnas, eval_func, birth_factor, death_factor):
     return survivors
 
 
-def run_evolution_in_slightly_different_environments(eval_func, n_params):
-    n_environments = 10
+def run_evolution_in_slightly_different_environments(eval_func, n_params, n_starting_individuals, n_environments, n_generations):
     mean_coefficients = np.random.normal(0, 1, n_params)
     dev = 0  # use dev=0 to see founder effects / chaos with the same starting population in multiple runs of the SAME environment
     environment_deviations = [np.random.normal(0, dev, n_params) for i in range(n_environments)]
-    starting_individuals = get_starting_individuals()
+    starting_individuals = get_starting_individuals(n_starting_individuals)
     for env_i in range(n_environments):
         print(f"environment #{env_i}")
         coefficients = mean_coefficients + environment_deviations[env_i]
         eval_func_in_env = lambda dna, coefficients=coefficients: eval_func(dna, coefficients)  # lambda closure, don't want coefficients changing outside of this scope and then changing what this lambda does, so assign it as default arg and only pass dna
-        evolved_individuals = run_evolution_in_environment(starting_individuals, eval_func_in_env)
+        evolved_individuals = run_evolution_in_environment(starting_individuals, eval_func_in_env, n_generations)
         print(f"{len(evolved_individuals)} individuals exist after evolution")
         plot_dnas_as_paths(evolved_individuals, save=False)
         plt.savefig(f"EvolvedDnasEnv{env_i}.png")
@@ -161,4 +158,4 @@ if __name__ == "__main__":
         return v1 + v2
 
 
-    run_evolution_in_slightly_different_environments(eval_func_1_2, n_params=5)
+    run_evolution_in_slightly_different_environments(eval_func_1_2, n_params=5, n_starting_individuals=10, n_environments=3, n_generations=10)

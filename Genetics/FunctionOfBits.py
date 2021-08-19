@@ -3,7 +3,14 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
-from RawVariation import get_dna, transcribe_dna, flip_bit
+
+
+def plus_minus_cumsum(dna):
+    # +1 for 1, -1 for 0
+    xs = np.array([1 if x == 1 else -1 for x in dna])
+    cumsum = xs.cumsum()
+    cumsum = cumsum - cumsum.mean()  # stupid np -= casting crap
+    return cumsum
 
 
 def linear_choice_series(dna, coefficients=None, modification_function=None):
@@ -28,59 +35,20 @@ def signed_log(x):
     return np.sign(x) * np.log(1+abs(x))
 
 
-def run_evaluation_series_test(eval_func):
-    dna = get_dna(400)
-    xs = []
-    while len(dna) > 0:
-        x = eval_func(dna)
-        print(x)
-        xs.append(x)
-        dna = transcribe_dna(dna)
-    plt.plot(xs)
-    plt.savefig("DnaEvaluationSeries.png")
-    plt.gcf().clear()
-
-
-def show_effect_of_bases_test(eval_func):
-    dna = get_dna(400)
-    # evolve/mutate it a bit so it's not just p=0.5 random choice, want some nontrivial structure
-    for i in range(20):
-        dna = transcribe_dna(dna)
-        if len(dna) == 0:
-            dna = get_dna(400)
-
-    xs = []
-    dna_val = eval_func(dna)
-    for i in range(len(dna)):
-        new_dna = flip_bit(dna, i)
-        new_dna_val = eval_func(new_dna)
-        diff = new_dna_val - dna_val
-        xs.append(diff)
-        print(f"bit {i} has effect of {diff} ({dna_val} --> {new_dna_val})")
-    plt.subplot(2,1,1)
-    plt.plot(xs, c="b")
-    plt.subplot(2,1,2)
-    plt.plot(dna, c="r")
-    plt.savefig("EffectsOfBaseFlips.png")
-    plt.gcf().clear()
+def same_different_direction_path(dna):
+    # 1 means switch directions and go 1 in the new direction
+    # 0 means go 1 more in the same direction as before
+    # initial direction is up
+    val = 0
+    arr = [val]
+    direction = 1
+    for bit in dna:
+        if bit == 1:
+            direction *= -1
+        val += direction
+        arr.append(val)
+    return np.array(arr)
 
 
 if __name__ == "__main__":
-    coefficients = np.random.normal(0,1,4)
-   
-    def eval_func(dna):
-        xs = linear_choice_series(dna, coefficients, modification_function=signed_log)
-        # return xs[-1]  # overweights importance of later bits
-        # return xs.mean()  # importance moves nicely, correlated with each bit's value
-        # return xs.max()  # more sporadic importance of certain bits depending on the dna string, I like this
-        # return xs.max() - xs.min()  # also nice
-        xmax = xs.max()
-        xmin = xs.min()
-        xmean = xs.mean()
-        # alpha_min_mean_max = (xmean - xmin) / (xmax - xmin)
-        # return alpha_min_mean_max
-        top_half_minus_bottom_half = (xmax - xmean) - (xmean - xmin)
-        return top_half_minus_bottom_half
-
-    run_evaluation_series_test(eval_func)
-    show_effect_of_bases_test(eval_func)
+    raise Exception("don't run this, just import its functions")
