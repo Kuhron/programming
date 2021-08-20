@@ -37,7 +37,9 @@ def run_evolution_in_environment(dnas, eval_func, n_generations):
         death_factor_raw = np.exp(-n/100)
         death_factor = alpha(0.8 * 1/birth_factor, 1, death_factor_raw)  # have it tend to something nonzero for large populations, so we don't kill all individuals for sufficiently large population, but still have the product of birth rate and death rate < 1 for large populations
         death_factor *= np.exp(np.random.normal(0, 0.01))
-        dnas = select_survivors(dnas, eval_func, birth_factor, death_factor)
+        dnas, best_dna = select_survivors(dnas, eval_func, birth_factor, death_factor)
+    best_dna = "".join(best_dna.astype(str))
+    print(f"best dna: {best_dna}")
     return dnas
 
 
@@ -80,14 +82,14 @@ def select_survivors(dnas, eval_func, birth_factor, death_factor):
     survivors = at_cutoff_survivors + cutoff_status["above"]
 
     n_killed = len(dnas) - len(survivors)
-    max_fitness = ascending_score_tups[-1][0]
+    max_fitness, best_dna = ascending_score_tups[-1]
     min_len = min(len(dna) for dna in survivors)
     max_len = max(len(dna) for dna in survivors)
     print(f"killed {n_killed} of {len(dnas)} individuals; cutoff fitness {kill_cutoff_val}; max fitness {max_fitness}; length range {min_len} - {max_len}")
-    return survivors
+    return survivors, best_dna
 
 
-def run_evolution_in_slightly_different_environments(eval_func, n_params, n_starting_individuals, n_environments, n_generations):
+def run_evolution_in_slightly_different_environments(eval_func, n_params, path_func, n_starting_individuals, n_environments, n_generations):
     mean_coefficients = np.random.normal(0, 1, n_params)
     dev = 0  # use dev=0 to see founder effects / chaos with the same starting population in multiple runs of the SAME environment
     environment_deviations = [np.random.normal(0, dev, n_params) for i in range(n_environments)]
@@ -98,7 +100,7 @@ def run_evolution_in_slightly_different_environments(eval_func, n_params, n_star
         eval_func_in_env = lambda dna, coefficients=coefficients: eval_func(dna, coefficients)  # lambda closure, don't want coefficients changing outside of this scope and then changing what this lambda does, so assign it as default arg and only pass dna
         evolved_individuals = run_evolution_in_environment(starting_individuals, eval_func_in_env, n_generations)
         print(f"{len(evolved_individuals)} individuals exist after evolution")
-        plot_dnas_as_paths(evolved_individuals, save=False)
+        plot_dnas_as_paths(evolved_individuals, path_func, save=False)
         plt.savefig(f"EvolvedDnasEnv{env_i}.png")
         plt.gcf().clear()
 
@@ -157,5 +159,30 @@ if __name__ == "__main__":
         # print(v1, v2)  # just to make sure the magnitudes are similar enough
         return v1 + v2
 
+    def eval_func_3(dna, params):
+        path = same_different_direction_path(dna)
+        dy = path[-1] - path[0]
+        dx = len(path) - 1
+        alpha = abs(sum(params)) / sum(abs(p) for p in params)
+        assert 0 <= alpha <= 1
+        desired_slope = -1 + alpha * (1 - (-1))  # the slope can only be between -1 and 1 because 1 dx can only go up or down 1
+        actual_slope = dy / dx
+        desired_angle = np.arctan2(1, desired_slope)
+        actual_angle = np.arctan2(1, actual_slope)
+        # length_penalty = len(dna) ** 0.5
+        variance_reward = np.std(path) ** 1
+        deviation_penalty = (1 + abs(actual_angle - desired_angle)) ** 2
+        # print(variance_reward, deviation_penalty)
+        return variance_reward / deviation_penalty
 
-    run_evolution_in_slightly_different_environments(eval_func_1_2, n_params=5, n_starting_individuals=10, n_environments=3, n_generations=10)
+
+    # path_func = cumsum
+    path_func = same_different_direction_path
+    run_evolution_in_slightly_different_environments(
+        eval_func_3, 
+        n_params=5, 
+        path_func=path_func, 
+        n_starting_individuals=100,
+        n_environments=5, 
+        n_generations=100,
+    )

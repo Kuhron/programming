@@ -68,20 +68,20 @@ def flip_bit(dna, index):
     return dna
 
 
-def plot_dna_as_path(dna, save=True, alpha=1):
-    cumsum = plus_minus_cumsum(dna)
-    plt.plot(cumsum, alpha=alpha, c="b")
+def plot_dna_as_path(dna, path_func, save=True, alpha=1):
+    path = path_func(dna)
+    plt.plot(path, alpha=alpha, c="b")
     if save:
-        plt.savefig("DnaCumsum.png")
+        plt.savefig("DnaPath.png")
         plt.gcf().clear()
 
 
-def plot_dnas_as_paths(dnas, save=True):
+def plot_dnas_as_paths(dnas, path_func, save=True):
     alpha = 0.5
     for dna in dnas:
-        plot_dna_as_path(dna, save=False, alpha=alpha)
+        plot_dna_as_path(dna, path_func, save=False, alpha=alpha)
     if save:
-        plt.savefig("DnaCumsums.png")
+        plt.savefig("DnaPaths.png")
         plt.gcf().clear()
 
 
