@@ -115,6 +115,6 @@ if __name__ == "__main__":
         b = salt + b
         h = hash_to_bytes(b)
         z = get_n_leading_zero_bits_of_bytes(h)
-        if z >= 24:
+        if z >= 20:
             print(f"{z} leading zeros: {list(b)} --> {list(h)}")
 
