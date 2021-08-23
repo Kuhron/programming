@@ -233,7 +233,7 @@ def get_binary_search_fenceposts(number):
             if dleft == dright == 0:
                 assert number == left_number == right_number, f"n={number}\nleft={left_number}\nright={right_number}" 
                 if last_val is None:
-                    yield number
+                    yield number, power
                 else:
                     assert last_val == number, f"last={last_val}\nn={number}"  # it should yield the number itself as the last one
                     # don't yield it again
@@ -251,7 +251,7 @@ def get_binary_search_fenceposts(number):
             # duplicate, don't yield it
             pass
         else:
-            yield closer
+            yield closer, power
             last_val = closer
 
 
@@ -305,11 +305,54 @@ def get_deviation_at_value(x, seed, exponent):
 
 def get_fencepost_deviation_sum(x, seed, exponent):
     res = 0
-    for y in get_binary_search_fenceposts(x):
-        dev = get_deviation_at_value(y, seed, exponent)
-        # TODO: maybe could get rid of discontinuities by making the contribution of a fencepost continuous within its sphere of influence from 0 (at edge of window) to max (at the fencepost itself), but this is adding some complication that I would rather not have
-        res += dev
+    for fencepost, power in get_binary_search_fenceposts(x):
+        dev = get_deviation_at_value(fencepost, seed, exponent)
+        if fencepost == 0:
+            assert dev == 0
+            continue
+
+        # attempting to get rid of discontinuities by making the contribution of a fencepost continuous within its sphere of influence from 0 (at edge of window) to max (at the fencepost itself), but this is adding some complication that I would rather not have if there's an easier way
+        fencepost_window_lower_magnitude_bound = 3/4 * fencepost
+        fencepost_window_upper_magnitude_bound = 3/2 * fencepost
+        alpha = (x - fencepost_window_lower_magnitude_bound) / (fencepost_window_upper_magnitude_bound - fencepost_window_lower_magnitude_bound)
+        # alpha is where x is within the fencepost's sphere of influence
+        # note that it still works for negatives, e.g. -1 within [-3, 0] has alpha = (-1 - 0)/(-3 - 0) = -1/-3 = 1/3
+        assert 0 <= alpha <= 1
+        # at the fencepost itself (alpha = (1-3/4)/(3/2-3/4) = 1/3) we want full deviation to be added, want this to drop off smoothly to 0 at alpha = 0 and 1
+        # after a bunch of algebra I have found a family of functions solving this
+        scaling = one_third_smooth_bump_function(alpha)
+        if abs(alpha - 0) < 1e-6 or abs(alpha - 1) < 1e-6:
+            assert abs(scaling - 0) < 1e-6, (alpha, scaling)
+        elif abs(alpha - 1/3) < 1e-6:
+            assert abs(scaling - 1) < 1e-6, (alpha, scaling)
+        else:
+            assert 0 < scaling < 1, (alpha, scaling)
+        res += dev * scaling
+        print(f"x = {x}, fencepost = {fencepost}, power = {power}, alpha = {alpha}, scaling = {scaling}, dev = {dev}, scaled dev = {dev*scaling}")
     return res
+
+
+def one_third_smooth_bump_function(x):
+    assert 0 <= x <= 1
+    # this is a sinusoidal bump function with f(0) = f(1) = 0 and f(1/3) = 1
+    
+    a = 4  # which period of the sin wave are we at (wanted g(x) to be 0 -> a*pi, 1/3 -> (a+1/2)*pi, 1 -> (a+1)*pi)
+    assert type(a) is int  # any int works without changing the result (f)
+    b = 12  # the base of the log in unscaled g = log_b(h(x)) : [0,1] -> [0,1], then scaled g : [0,1] -> [a*pi, (a+1)*pi]
+    assert b > 1  # otherwise sqrt(b) < 1 and b < sqrt(b) so the h curve doesn't work right
+
+    p = math.log((b-1)/(math.sqrt(b)-1), 3)
+    h = 1 + (b-1) * (x**p)
+    g = np.pi * (a + math.log(h, b))
+    f = np.sin(g)**2
+    return f
+
+
+def test_one_third_smooth_bump_function():
+    xs = np.linspace(0, 1, 100)
+    ys = np.vectorize(one_third_smooth_bump_function)(xs)
+    plt.plot(xs, ys)
+    plt.savefig("OneThirdBump.png")
 
 
 def is_in_window_of_influence(x, fencepost):
@@ -452,11 +495,12 @@ if __name__ == "__main__":
     xs = linspace(0+offset, 1000+offset, 1001)
     ys = [get_fencepost_deviation_sum(x, seed, spectrum_exponent) for x in xs]
     # summarize_xs_ys(xs, ys)
-    print_graph(xs, ys, n_ticks=250)
-    print_graph_live(seed, spectrum_exponent, x0=xs[0], x_step=xs[1]-xs[0])
+    # print_graph(xs, ys, n_ticks=250)
+    # print_graph_live(seed, spectrum_exponent, x0=xs[0], x_step=xs[1]-xs[0])
     if not android:
         plt.plot(xs, ys)
-        plt.show()
+        # plt.show()
+        plt.savefig("HashWeatherPlot.png")
 
     #d = get_test_wave_function_at_fenceposts()
     #xs = sorted(d.keys())
