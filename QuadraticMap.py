@@ -51,4 +51,4 @@ if __name__ == "__main__":
 
     xs, ys = get_late_iterations(quadratic_map_2d, 0, 0, coefficients, 10000, 100000)
     plt.scatter(xs, ys, c="k", marker='o', s=(72./plt.gcf().dpi)**2, alpha=0.1)
-    plt.show()
+    plt.savefig("QMap.png")
