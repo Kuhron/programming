@@ -13,3 +13,7 @@ fizzBuzz n =
 
 printFizzBuzz :: Int -> IO ()
 printFizzBuzz n = putStr $ unlines $ fizzBuzz n
+
+main = do
+    let n = 50
+    printFizzBuzz n
