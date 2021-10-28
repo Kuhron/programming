@@ -1,0 +1,108 @@
+# for product-oriented schema extraction, want a basic sound system to operate within
+# would love to do articulators and stuff, and give it real phonetics that will affect the words via change/epenthesis/etc.,
+# but for now start with something very simple so can focus on the schema extraction part
+
+# each vector is a CV syllable, each feature binary
+#
+# consonants:
+# peripheral vs coronal
+# back vs front
+# stop vs continuant
+# oral/fricative-like vs nasal/liquid-like
+# 
+# so the grid of consonants is (where position number is the encoding in these four features):
+#  k ŋg  h  ŋ
+#  p mb  w  m
+#  c ɲɟ  j  ɲ
+#  t nd  s  n
+# NOTE: I may change this because I don't like how there are too many nasals and no liquids
+#
+# vowels:
+# front/back
+# high/low
+# 
+# so the grid of vowels is:
+# i e
+# u a
+#
+# the whole vector for a syllable has 6 bits
+
+# each word is a sequence of some number of these syllables (might use RNN for pattern extraction? not sure yet)
+
+
+import random
+import numpy as np
+
+
+class SoundVector:
+    def __init__(self, bits):
+        assert type(bits) is np.ndarray, bits
+        assert bits.shape == (6,), bits.shape
+        assert np.isin(bits, [0, 1]).all()
+        self.bits = bits
+        self.bit_string = "".join(self.bits.astype(str))
+        self.symbols = SoundVector.get_symbols_from_bits(self.bits)
+        self.string = "".join(self.symbols)
+
+    @staticmethod
+    def get_symbols_from_bits(bits):
+        c_bits = bits[:4]
+        v_bits = bits[4:6]
+        c_symbols = [
+            "k",  "ŋg",  "h", "ŋ",
+            "p",  "mb",  "v", "m",
+            "tʃ", "ndʒ", "r", "j",
+            "t",  "nd",  "s", "n",
+        ]
+        v_symbols = [
+            "i", "e",
+            "u", "a",
+        ]
+        c_2powers = 2 ** np.array([3, 2, 1, 0])
+        c_index = (c_bits * c_2powers).sum()
+        c_str = c_symbols[c_index]
+        v_2powers = 2 ** np.array([1, 0])
+        v_index = (v_bits * v_2powers).sum()
+        v_str = v_symbols[v_index]
+        return [c_str, v_str]
+
+    @staticmethod
+    def random():
+        bits = np.random.choice([0,1], (6,))
+        return SoundVector(bits)
+
+    def __repr__(self):
+        return f"<{self.bit_string} = {self.string}>"
+
+
+class SoundVectorSeries:
+    def __init__(self, bits):
+        assert type(bits) is np.ndarray, type(bits)
+        assert bits.ndim == 2, bits.shape
+        assert bits.shape[-1] == 6, bits.shape
+        assert np.isin(bits, [0, 1]).all()
+
+        self.vectors = []
+        for i in range(bits.shape[0]):
+            v = SoundVector(bits[i,:])
+            self.vectors.append(v)
+
+        self.bit_string = ",".join(v.bit_string for v in self.vectors)
+        self.string = "".join(v.string for v in self.vectors)
+
+    @staticmethod
+    def random():
+        length = np.random.randint(2, 4)
+        bits = np.random.choice([0, 1], (length, 6))
+        return SoundVectorSeries(bits)
+
+    def __repr__(self):
+        return f"<{self.bit_string} = {self.string}>"
+
+
+if __name__ == "__main__":
+    for i in range(100):
+        # v = SoundVector.random()
+        # print(v)
+        w = SoundVectorSeries.random()
+        print(w.string)
