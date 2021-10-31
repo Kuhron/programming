@@ -36,7 +36,7 @@ import numpy as np
 
 class SoundVector:
     def __init__(self, bits):
-        assert type(bits) is np.ndarray, bits
+        assert type(bits) is np.ndarray, type(bits)
         assert bits.shape == (6,), bits.shape
         assert np.isin(bits, [0, 1]).all()
         self.bits = bits
@@ -71,6 +71,14 @@ class SoundVector:
         bits = np.random.choice([0,1], (6,))
         return SoundVector(bits)
 
+    def get_mutated(self):
+        # change one bit
+        bit_index = random.randrange(6)
+        bits = np.copy(self.bits)  # slicing like self.bits[:] retains reference to object and allows mutation, which we don't want
+        bits[bit_index] = 1 - bits[bit_index]
+        assert (bits != self.bits).sum() == 1, "object was mutated"
+        return SoundVector(bits)
+
     def __repr__(self):
         return f"<{self.bit_string} = {self.string}>"
 
@@ -81,6 +89,7 @@ class SoundVectorSeries:
         assert bits.ndim == 2, bits.shape
         assert bits.shape[-1] == 6, bits.shape
         assert np.isin(bits, [0, 1]).all()
+        self.bits = bits
 
         self.vectors = []
         for i in range(bits.shape[0]):
@@ -92,8 +101,16 @@ class SoundVectorSeries:
 
     @staticmethod
     def random():
-        length = np.random.randint(2, 4)
+        length = np.random.randint(2, 5)
         bits = np.random.choice([0, 1], (length, 6))
+        return SoundVectorSeries(bits)
+
+    def get_mutated(self):
+        vector_index = random.randrange(self.bits.shape[0])  # which vector to mutate
+        bit_index = random.randrange(6)
+        bits = np.copy(self.bits)
+        bits[vector_index, bit_index] = 1 - bits[vector_index, bit_index]
+        assert (bits != self.bits).sum() == 1, "object was mutated"
         return SoundVectorSeries(bits)
 
     def __repr__(self):
@@ -101,8 +118,7 @@ class SoundVectorSeries:
 
 
 if __name__ == "__main__":
-    for i in range(100):
-        # v = SoundVector.random()
-        # print(v)
-        w = SoundVectorSeries.random()
-        print(w.string)
+    singulars = [SoundVectorSeries.random() for i in range(100)]
+    plurals = [SoundVectorSeries.random() for i in range(100)]
+    for s, p in zip(singulars, plurals):
+        print(f"the plural of {s.string} is {p.string}")
