@@ -10,3 +10,8 @@ set number
 " https://stackoverflow.com/questions/2600783/how-does-the-vim-write-with-sudo-trick-work
 cmap w!! w !sudo tee > /dev/null %
 
+" show whitespace as chars
+:set listchars=tab:——,trail:·,space:·,extends:>,precedes:<
+" WKJ removed eol char"
+:set list
+
