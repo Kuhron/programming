@@ -26,8 +26,6 @@ class Mapping:
         convergence_array = self.get_convergence_points(x_min, x_max, y_min, y_max, resolution, max_iterations, max_abs)
         plt.imshow(convergence_array)
         plt.colorbar()
-        # plt.savefig("out_convergence.png")
-        plt.show()
 
     def find_convergent_initial_condition(self, min_index, max_index):
         print("finding convergent initial condition")
@@ -59,14 +57,12 @@ class Mapping:
         scatter_points = get_late_trajectory(self, x0, y0, min_index=1000, max_index=100000)
         # scatter_points = late_trajectory
         if trajectory_diverges(scatter_points):
-            print("late trajectory diverges")
+            print("initial state was thought to converge but late trajectory diverges")
             sys.exit()
         print("number of unique points:", len(set(scatter_points)))
         xs = [p[0] for p in scatter_points]
         ys = [p[1] for p in scatter_points]
         plt.scatter(xs, ys, marker=".", s=2)
-        # plt.savefig("out.png")
-        plt.show()
 
 
 class SingleMappingFromXY(Mapping):
@@ -220,13 +216,23 @@ class MappingRecord:
     ARx, ARy = [[[0.8117940962119976, -0.4649971127921413], [-0.8887178003196341, 0.0]], [[0.3258012373210373, -0.742761249782802], [0.2355584065539742, 0.0]]]  # line seemingly without density gradient (linear degree)
     ASx, ASy = [[[-0.07643804233090146, -0.15680941623093836], [0.16742021870347545, 0.0]], [[0.4127171473490223, 0.5271568655076095], [-0.886289791719957, 0.0]]]  # line with central density (linear degree)
     ATx, ATy = [[[-0.9469038431167203, 0.5146927809484609, -0.24388414668947567], [0.16532112389818376, 0.683313502786961, 0.0], [0.05464388876518478, 0.0, 0.0]], [[-0.7867237682661723, -0.588321444771319, -0.4446193487948711], [-0.8684343868626598, 0.4368623082912675, 0.0], [0.19270797193410028, 0.0, 0.0]]]  # danish
+    AUx, AUy = [[[-0.0448042088488132, -0.026871250923233836, 0.9071538175585814, 0.1519682708941663, 0.1735099446788788], [0.6148565523413956, 0.5783766092817089, -0.9716609029061594, -0.14550563690820106, 0.0], [0.2677035731578039, -0.3017079617155052, 0.9189759536575746, 0.0, 0.0], [-0.015898339562792962, -0.17257202425325957, 0.0, 0.0, 0.0], [-0.4400286662521089, 0.0, 0.0, 0.0, 0.0]], [[-0.26801748639454703, 0.8273046034970095, -0.8638963680512879, -0.046828396629829516, 0.18952486552111436], [0.8015148590510217, -0.32254949634797514, -0.9735339271574006, 0.041567126704104895, 0.0], [0.9015119565098915, -0.4161951052512569, -0.1278128981912603, 0.0, 0.0], [-0.9689077987671502, -0.16299725884624294, 0.0, 0.0, 0.0], [0.98108090406905, 0.0, 0.0, 0.0, 0.0]]]  # six leaf loops (quartic degree)
+    AVx, AVy = [[[0.6392670719401352, -0.6586485432949705, -0.3607584382687343, -0.42345237429443916, -0.9902525500369281], [-0.13311354777889806, 0.27219399938959943, -0.359371346592952, 0.30339700923418556, 0.0], [-0.3809801486771769, 0.44582057673888964, 0.8522732970002267, 0.0, 0.0], [-0.42937089999471745, 0.6234130651514471, 0.0, 0.0, 0.0], [-0.19176960675060872, 0.0, 0.0, 0.0, 0.0]], [[-0.6404131020005623, 0.5943806532788953, 0.5700184030116144, -0.47423886921886793, 0.47308824840772656], [0.7934776502463567, 0.8880918648865861, -0.39267198565536177, -0.44318452765967153, 0.0], [0.8164919036049085, 0.5911455469637585, 0.8477145170110525, 0.0, 0.0], [-0.7015081916325443, 0.9915632345409082, 0.0, 0.0, 0.0], [0.6486815235822567, 0.0, 0.0, 0.0, 0.0]]]  # twisted leaves (quartic degree)
+    AWx, AWy = [[[-0.5180704777548775, 0.9528127112653579, 0.5346248524158692, -0.3527398325297635], [-0.9497139720445742, 0.29992814350146335, 0.29990808237609956, 0.0], [-0.8435693452112623, -0.47199278707760883, 0.0, 0.0], [0.6431163467287095, 0.0, 0.0, 0.0]], [[-0.5247607820751827, -0.3813735187716809, -0.173873116714649, -0.3198480970929247], [-0.16859427773075297, 0.3684896155625157, -0.6578919453144063, 0.0], [-0.8529510790745869, -0.05648661051223702, 0.0, 0.0], [0.6009191673287364, 0.0, 0.0, 0.0]]]  # sword blade (cubic degree)
+    AXx, AXy = [[[-0.38258246438483834, -0.005201017951926401, 0.17460134128766902, 0.36215857392309636], [-0.8180205080879146, 0.5462880612849719, 0.036187513445569364, 0.0], [-0.9613810854582976, 0.482106254098976, 0.0, 0.0], [0.4973527539700302, 0.0, 0.0, 0.0]], [[0.4014306295233614, 0.926485378483493, -0.8817942565807413, 0.34460135027614003], [-0.023058243688384827, 0.25577920002851595, 0.5034587499440282, 0.0], [-0.6059073128323387, -0.0052300343351059375, 0.0, 0.0], [0.0315536551734541, 0.0, 0.0, 0.0]]]  # X made of hooked leaves (cubic degree)
+    AYx, AYy = [[[0.03286393687280542, -0.5741864544042616, 0.6254522327689518, 0.9281403263701193], [0.496854598035948, -0.6011007672959343, -0.6330300245837586, 0.0], [0.1354806554720147, 0.4759175357801715, 0.0, 0.0], [-0.37179831412353725, 0.0, 0.0, 0.0]], [[-0.9394966943933196, -0.1838571570024976, -0.5667303152102932, 0.4781021993691146], [0.6395281072250851, -0.33787490060477254, -0.9728327341957506, 0.0], [0.8467384136489782, -0.7469946478023062, 0.0, 0.0], [-0.8113143871867603, 0.0, 0.0, 0.0]]]  # two swoops (cubic degree)
+    AZx, AZy = [[[0.6509367927504683, -0.08752292700961095, 0.8986021008562286, -0.6150952016914468], [-0.30440055897944385, 0.6736570706309368, 0.1596057884372386, 0.0], [-0.3036443078715356, -0.43376560144215204, 0.0, 0.0], [0.2661433021451334, 0.0, 0.0, 0.0]], [[-0.10952214707285268, -0.6409615134266577, 0.5340933913070518, -0.9004496277781597], [-0.7123875567473834, 0.8570406175085687, 0.9849731279307556, 0.0], [-0.23167136462777793, 0.3120660503396455, 0.0, 0.0], [0.6475146087944248, 0.0, 0.0, 0.0]]]  # pentagonal banded twist (cubic degree)
+    BAx, BAy = [[[0.009328904575528485, 0.6939951400524438, -0.3092213851308656, 0.6525483835883261], [-0.2303070950968782, -0.7944876544199464, -0.4494308662252635, 0.0], [-0.5891744233783633, -0.5431480955072889, 0.0, 0.0], [0.9090235467436292, 0.0, 0.0, 0.0]], [[0.8670662556374398, -0.5488648605611777, 0.2414696514114565, 0.39641981695244155], [0.43336386092968815, 0.4503379280648341, -0.2232709867322158, 0.0], [0.5814336946364582, -0.7002933008677303, 0.0, 0.0], [-0.8472148630503407, 0.0, 0.0, 0.0]]]  # starfish tornado (cubic degree)
+
 
 
     records = [
         [Ax, Ay], [Bx, By], [Cx, Cy], [Dx, Dy], [Ex, Ey], [Fx, Fy], [Gx, Gy], [Hx, Hy], [Ix, Iy], [Jx, Jy], 
         [Kx, Ky], [Lx, Ly], [Mx, My], [Nx, Ny], [Ox, Oy], [Px, Py], [Qx, Qy], [Rx, Ry], [Sx, Sy], [Tx, Ty],
         [Ux, Uy], [Vx, Vy], [Wx, Wy], [Xx, Xy], [Yx, Yy], [Zx, Zy], [AAx, AAy], [ABx, ABy], [ACx, ACy], [ADx, ADy],
-        [AEx, AEy], [AFx, AFy], [AGx, AGy], [AHx, AHy], [AIx, AIy], 
+        [AEx, AEy], [AFx, AFy], [AGx, AGy], [AHx, AHy], [AIx, AIy], [AJx, AJy], [AKx, AKy], [ALx, ALy], [AMx, AMy], [ANx, ANy],
+        [AOx, AOy], [APx, APy], [AQx, AQy], [ARx, ARy], [ASx, ASy], [ATx, ATy], [AUx, AUy], [AVx, AVy], [AWx, AWy], [AXx, AXy],
+        [AYx, AYy], [AZx, AZy],
     ]
 
 
@@ -237,22 +243,26 @@ if __name__ == "__main__":
     # mapping2 = DoubleMappingFromXY.find_attractor(mag=1, max_degree=2)
     # print(f"found mapping: {mapping2}")
 
-    # mapping1 = DoubleMappingFromXY(MappingRecord.ARx, MappingRecord.ARy)
+    # mapping1 = DoubleMappingFromXY(MappingRecord.Kx, MappingRecord.Ky)
     # mapping2 = DoubleMappingFromXY(MappingRecord.ASx, MappingRecord.ASy)
-    mapping1 = DoubleMappingFromXY.find_attractor(mag=1, max_degree=2)
-    mapping2 = DoubleMappingFromXY.find_attractor(mag=1, max_degree=2)
+    # mapping1 = DoubleMappingFromXY.find_attractor(mag=1, max_degree=2)
+    # mapping2 = DoubleMappingFromXY.find_attractor(mag=1, max_degree=2)
     # mapping1 = (lambda record: DoubleMappingFromXY(record[0], record[1]))(random.choice(MappingRecord.records))
     # mapping2 = (lambda record: DoubleMappingFromXY(record[0], record[1]))(random.choice(MappingRecord.records))
 
-    mapping = RandomChoiceMappingFromXY([mapping1, mapping2], [0.5, 0.5])
-    # mapping = DoubleMappingFromXY.find_attractor(mag=1, max_degree=1)
-    # mapping = DoubleMappingFromXY(MappingRecord.Tx, MappingRecord.Ty)
+    alpha = 0.5
+    # mapping = RandomChoiceMappingFromXY([mapping1, mapping2], [alpha, 1-alpha])
+    # mapping = DoubleMappingFromXY.find_attractor(mag=1, max_degree=3)
+    mapping = DoubleMappingFromXY(MappingRecord.AZx, MappingRecord.AZy)
     print(mapping)
     # mapping.plot_convergence_points(x_min=-5, x_max=5, y_min=-5, y_max=5, resolution=100, max_iterations=1000, max_abs=10)
 
-    mapping1.plot_attractor()
-    mapping2.plot_attractor()
+    # plt.gcf().clear()
+    # mapping1.plot_attractor()
+    # mapping2.plot_attractor()
     mapping.plot_attractor()
+    plt.show()
+    # plt.savefig(f"StrangeAttractorImages/K_AS/K_AS_alpha_{alpha:.04f}.png")
 
     # found pairings:
     # - C+T
@@ -261,4 +271,7 @@ if __name__ == "__main__":
     # - AF + AG (two lines from linear mappings create starburst-looking pile of sticks; surprisingly not also just a line despite being a combination of linear mappings, and, I'd think, therefore also a linear mapping (but the random choice messes with this; they're not actually composed))
     # - AF + AK (line plus oval creates starburst with curly squid arms)
     # - AR + AS (two linear-degree lines create very interesting palm-leaf pattern)
-#
+    # - AL + AS (line plus spiral creates pentagon made of scratch marks)
+    # - K + AS (isolated segments of arc plus centrally dense line creates multiple arcs/lines intersecting)
+
+
