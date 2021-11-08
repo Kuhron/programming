@@ -261,4 +261,4 @@ if __name__ == "__main__":
     # - AF + AG (two lines from linear mappings create starburst-looking pile of sticks; surprisingly not also just a line despite being a combination of linear mappings, and, I'd think, therefore also a linear mapping (but the random choice messes with this; they're not actually composed))
     # - AF + AK (line plus oval creates starburst with curly squid arms)
     # - AR + AS (two linear-degree lines create very interesting palm-leaf pattern)
-
+#
