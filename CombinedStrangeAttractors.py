@@ -2,9 +2,40 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 import sys
+import os
+from datetime import datetime
+
+
+class DivergenceError(Exception):
+    pass
 
 
 class Mapping:
+    def converges(self):
+        try:
+            self.find_convergent_initial_condition(min_index=100, max_index=1000)
+            return True
+        except DivergenceError:
+            return False
+
+    def converges_with_complexity(self):
+        if not self.converges():
+            return False, None, None, None
+        min_unique_ratio = 0.1
+        n_trials = 10
+        total_points = 0
+        total_unique_points = 0
+        for i in range(n_trials):
+            x0, y0, trajectory = self.find_convergent_initial_condition(min_index=100, max_index=1000)
+            n_unique_points = len(set(trajectory))
+            unique_ratio = n_unique_points / len(trajectory)
+            total_points += len(trajectory)
+            total_unique_points += n_unique_points
+            if unique_ratio >= min_unique_ratio:
+                return True, n_unique_points, len(trajectory), unique_ratio
+        total_unique_ratio = total_unique_points / total_points
+        return False, total_unique_points, total_points, total_unique_ratio
+
     def get_convergence_points(self, x_min=-1, x_max=1, y_min=-1, y_max=1, resolution=100, max_iterations=10000, max_abs=1e6):
         print("getting convergence array")
         xs = np.linspace(x_min, x_max, resolution)
@@ -28,7 +59,7 @@ class Mapping:
         plt.colorbar()
 
     def find_convergent_initial_condition(self, min_index, max_index):
-        print("finding convergent initial condition")
+        # print("finding convergent initial condition")
         max_iterations = 100
         counter = 0
         while True:
@@ -36,7 +67,7 @@ class Mapping:
             if counter % 100 == 0:
                 print(f"now at {counter} iterations in search for convergent initial condition")
             if counter > max_iterations:
-                raise RuntimeError(f"could not find convergent initial condition")
+                raise DivergenceError(f"could not find convergent initial condition")
             # r = np.log(1 + counter)  # start with close to origin, try going farther out over time
             r = np.random.normal(0, 1)
             theta = np.random.uniform(0, 2*np.pi)
@@ -48,7 +79,7 @@ class Mapping:
                 continue
             else:
                 break
-        print("done finding convergent initial condition")
+        # print("done finding convergent initial condition")
         return x0, y0, trajectory
 
     def plot_attractor(self):
@@ -58,7 +89,7 @@ class Mapping:
         # scatter_points = late_trajectory
         if trajectory_diverges(scatter_points):
             print("initial state was thought to converge but late trajectory diverges")
-            sys.exit()
+            raise DivergenceError
         print("number of unique points:", len(set(scatter_points)))
         xs = [p[0] for p in scatter_points]
         ys = [p[1] for p in scatter_points]
@@ -72,6 +103,15 @@ class SingleMappingFromXY(Mapping):
         n_x_powers, n_y_powers = coefficients.shape
         self.x_powers, self.y_powers = np.meshgrid(range(n_x_powers), range(n_y_powers))
         self.coefficients = coefficients
+
+    def perturb(self, amount):
+        # creates a new mapping where some random vector of length `amount` has been added to the coefficients
+        v = np.random.normal(0, 1, self.coefficients.shape)
+        v[self.coefficients == 0] = 0  # don't increase the degree
+        v *= (amount / np.linalg.norm(v))  # normalize magnitude
+        c = v + self.coefficients
+        # print(f"perturbed\n{self.coefficients}\nto\n{c}")
+        return SingleMappingFromXY(c)
 
     def __call__(self, x, y):
         x_power_matrix = x ** self.x_powers
@@ -90,6 +130,18 @@ class DoubleMappingFromXY(Mapping):
         new_x = self.mapping_x(x, y)
         new_y = self.mapping_y(x, y)
         return (new_x, new_y)
+
+    def perturb(self, amount_per_equation):
+        # perturbs the x mapping and the y mapping each by adding a vector of length `amount_per_equation`, returns new mapping
+        mx = self.mapping_x.perturb(amount_per_equation)
+        my = self.mapping_y.perturb(amount_per_equation)
+        return DoubleMappingFromXY.from_single_mappings(mx, my)
+
+    @staticmethod
+    def from_single_mappings(mapping_x, mapping_y):
+        cx = mapping_x.coefficients
+        cy = mapping_y.coefficients
+        return DoubleMappingFromXY(cx, cy)
 
     @staticmethod
     def random(mag=1, max_degree=3):
@@ -169,6 +221,50 @@ def trajectory_diverges(trajectory):
     return not np.isfinite(x) or not np.isfinite(y)
 
 
+def run_perturbation_experiment(perturbation_nelda):
+    mapping = DoubleMappingFromXY.find_attractor(mag=1, max_degree=3)
+    perturbation = 10 ** (-perturbation_nelda)
+    t0 = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    plt.gcf().clear()
+    try:
+        mapping.plot_attractor()
+    except DivergenceError:
+        return
+    dr = f"StrangeAttractorImages/perturbation/perturbation_{t0}/"
+    if not os.path.exists(dr):
+        os.mkdir(dr)
+    plt.savefig(dr + f"/perturbation_{t0}_nelda{perturbation_nelda}_original.png")
+    with open(dr + f"perturbation_{t0}_nelda{perturbation_nelda}_original_coefficients.txt", "w") as f:
+        f.write(repr(mapping))
+
+    n_perturbations_to_get = 10
+    perturbation_counter = 0
+    while perturbation_counter < n_perturbations_to_get:
+        new_mapping = mapping.perturb(perturbation)
+        if not new_mapping.converges():
+            print("new mapping does not converge at all")
+        converges_complexly, n_unique_points, n_points, unique_ratio = new_mapping.converges_with_complexity()
+        if not converges_complexly:
+            print(f"new mapping does not converge complexly: {n_unique_points} unique points out of {n_points} points, for a ratio of {unique_ratio}")
+            continue
+        else:
+            print(f"found complexity in perturbed mapping: {n_unique_points} unique points out of {n_points} points, for a ratio of {unique_ratio}")
+        plt.gcf().clear()
+        # mapping1.plot_attractor()
+        # mapping2.plot_attractor()
+        try:
+            new_mapping.plot_attractor()
+        except DivergenceError:
+            continue
+
+        # plt.show()
+        # plt.savefig(f"StrangeAttractorImages/K_AS/K_AS_alpha_{alpha:.04f}.png")
+        plt.savefig(dr + f"perturbation_{t0}_nelda{perturbation_nelda}_{perturbation_counter}.png")
+        with open(dr + f"perturbation_{t0}_nelda{perturbation_nelda}_{perturbation_counter}_coefficients.txt", "w") as f:
+            f.write(repr(new_mapping))
+        perturbation_counter += 1
+
+
 class MappingRecord:
     Ax, Ay = [[[-0.61812953, 0.62618444, 0.95847548], [-0.28566655, 0.60419982, 0], [-0.82349836, 0, 0]], [[0.41322135, -0.056517, 0.09507931], [0.84468446, -0.05060947, 0], [-0.9864845, 0, 0]]]  # two fractal leaves
     Bx, By = [[[0.011100313095467884, -0.2653760753248544, 0.7175056845186025], [-0.6633260488831336, 0.16221771794919104, 0.0], [-0.6300085491546239, 0.0, 0.0]], [[0.9796117830195128, -0.8743965549320505, -0.9644515017383146], [0.12238901385759271, 0.3614148282517575, 0.0], [0.3019429543542915, 0.0, 0.0]]]  # sandpaper
@@ -223,6 +319,12 @@ class MappingRecord:
     AYx, AYy = [[[0.03286393687280542, -0.5741864544042616, 0.6254522327689518, 0.9281403263701193], [0.496854598035948, -0.6011007672959343, -0.6330300245837586, 0.0], [0.1354806554720147, 0.4759175357801715, 0.0, 0.0], [-0.37179831412353725, 0.0, 0.0, 0.0]], [[-0.9394966943933196, -0.1838571570024976, -0.5667303152102932, 0.4781021993691146], [0.6395281072250851, -0.33787490060477254, -0.9728327341957506, 0.0], [0.8467384136489782, -0.7469946478023062, 0.0, 0.0], [-0.8113143871867603, 0.0, 0.0, 0.0]]]  # two swoops (cubic degree)
     AZx, AZy = [[[0.6509367927504683, -0.08752292700961095, 0.8986021008562286, -0.6150952016914468], [-0.30440055897944385, 0.6736570706309368, 0.1596057884372386, 0.0], [-0.3036443078715356, -0.43376560144215204, 0.0, 0.0], [0.2661433021451334, 0.0, 0.0, 0.0]], [[-0.10952214707285268, -0.6409615134266577, 0.5340933913070518, -0.9004496277781597], [-0.7123875567473834, 0.8570406175085687, 0.9849731279307556, 0.0], [-0.23167136462777793, 0.3120660503396455, 0.0, 0.0], [0.6475146087944248, 0.0, 0.0, 0.0]]]  # pentagonal banded twist (cubic degree)
     BAx, BAy = [[[0.009328904575528485, 0.6939951400524438, -0.3092213851308656, 0.6525483835883261], [-0.2303070950968782, -0.7944876544199464, -0.4494308662252635, 0.0], [-0.5891744233783633, -0.5431480955072889, 0.0, 0.0], [0.9090235467436292, 0.0, 0.0, 0.0]], [[0.8670662556374398, -0.5488648605611777, 0.2414696514114565, 0.39641981695244155], [0.43336386092968815, 0.4503379280648341, -0.2232709867322158, 0.0], [0.5814336946364582, -0.7002933008677303, 0.0, 0.0], [-0.8472148630503407, 0.0, 0.0, 0.0]]]  # starfish tornado (cubic degree)
+    BBx, BBy = [[[0.4402237884355531, 0.2937074048881718, -0.632418145306394, -0.8333300375749026], [-0.315063651330624, -0.9385815615842463, 0.2609496141116854, 0.0], [-0.7975024810391911, 0.10862626944606624, 0.0, 0.0], [0.30931511981429227, 0.0, 0.0, 0.0]], [[0.6486532020275668, -0.4928487014975642, -0.34341581646433283, -0.8975409028481292], [0.7745244100391402, -0.9851966252759037, -0.18440096020624197, 0.0], [-0.704714174365181, -0.3770375273985247, 0.0, 0.0], [-0.28082385750817496, 0.0, 0.0, 0.0]]]  # seashell, loops interrupted by line / sharp turns (cubic)
+    BCx, BCy = [[[0.17972191993518782, 0.3629812127205372, -0.06317376697026655, 0.025587529147727217], [0.7242286029568823, -0.5839655183016759, -0.5164409394865392, 0.0], [-0.5156693395716214, 0.8299521937979639, 0.0, 0.0], [0.07410480061709412, 0.0, 0.0, 0.0]], [[0.4485691804219678, 0.18797465912560773, 0.9518732561311154, 0.9402787490531597], [0.6649170342849917, 0.10530080334097525, 0.778324904456783, 0.0], [-0.8782127165101417, -0.8379989615466286, 0.0, 0.0], [-0.026399526066826384, 0.0, 0.0, 0.0]]]  # seashell loops with sharp hairpins/thorns (cubic)
+    BDx, BDy = [[[-0.7684975294734846, 0.7637040512521869, 0.05300970901529345, -0.42318581576930914], [-0.2881704225279642, 0.35725340052136945, 0.6840266448524375, 0.0], [0.40689589600284326, -0.7305189342468226, 0.0, 0.0], [-0.6464574815235757, 0.0, 0.0, 0.0]], [[-0.8997207375395717, -0.2222097487387964, 0.9114713953800149, -0.17176512497512597], [0.5825462234069643, -0.5038904719035555, -0.09041069192766504, 0.0], [0.45141340954064835, -0.15394322084201972, 0.0, 0.0], [-0.8833775618981721, 0.0, 0.0, 0.0]]]  # parabolic spikes (cubic)
+    BEx, BEy = [[[-0.16493041362447158, -0.9041437947540374, 0.9113901166804084, -0.7263153058229803], [0.6431611624734688, 0.5412627232245006, -0.5092959454792021, 0.0], [-0.24454845252895274, -0.7171049543074732, 0.0, 0.0], [0.18324193022324553, 0.0, 0.0, 0.0]], [[0.6703987942999172, -0.8795599010871593, 0.21897321633423195, -0.24604684388052944], [0.6797342004157245, -0.6259943567828061, -0.7017815851605937, 0.0], [0.7988103357080041, -0.5091836042184552, 0.0, 0.0], [-0.16035500872497233, 0.0, 0.0, 0.0]]]  # cigar with hanging ribbon (cubic)
+    BFx, BFy = [[[-0.12018134347427445, 0.29561697018915223, 0.5558945190514257, 0.4990644691893791], [0.3589300752123965, 0.14201968219459316, -0.15902467760498284, 0.0], [-0.21002463382013903, -0.7186913681227309, 0.0, 0.0], [-0.7834464302040056, 0.0, 0.0, 0.0]], [[-0.3902562872178339, 0.923800243780607, -0.7226033530927982, -0.6479784422001502], [0.7645197408577278, -0.8252373698291118, -0.5677297080090389, 0.0], [0.45838673800711716, 0.8969278723362777, 0.0, 0.0], [-0.6895295136665094, 0.0, 0.0, 0.0]]]  # constellation of isolated constellations of constellations (cubic)
+    BGx, BGy = [[[-0.9044811178602636, 0.5517951232741856, 0.6751852982247533, -0.09325558741644957], [0.24139112448633315, -0.13201375255277048, 0.3722649160675142, 0.0], [-0.7183621105866616, -0.4062741804946277, 0.0, 0.0], [-0.6144558454092746, 0.0, 0.0, 0.0]], [[0.6469039610236014, 0.7213291185161108, -0.7397902462403094, -0.637353210005617], [0.1563581947208208, 0.9905772589757742, -0.5275224473527791, 0.0], [-0.3911335564248546, 0.8015079494516717, 0.0, 0.0], [0.6123026450671776, 0.0, 0.0, 0.0]]]  # swoopy spiky leaf
 
 
 
@@ -253,16 +355,14 @@ if __name__ == "__main__":
     alpha = 0.5
     # mapping = RandomChoiceMappingFromXY([mapping1, mapping2], [alpha, 1-alpha])
     # mapping = DoubleMappingFromXY.find_attractor(mag=1, max_degree=3)
-    mapping = DoubleMappingFromXY(MappingRecord.AZx, MappingRecord.AZy)
-    print(mapping)
+    # mapping = DoubleMappingFromXY(MappingRecord.AZx, MappingRecord.AZy)
+    # print(mapping)
     # mapping.plot_convergence_points(x_min=-5, x_max=5, y_min=-5, y_max=5, resolution=100, max_iterations=1000, max_abs=10)
 
-    # plt.gcf().clear()
-    # mapping1.plot_attractor()
-    # mapping2.plot_attractor()
-    mapping.plot_attractor()
-    plt.show()
-    # plt.savefig(f"StrangeAttractorImages/K_AS/K_AS_alpha_{alpha:.04f}.png")
+    # run_mixing_experiment()
+    while True:
+        run_perturbation_experiment(perturbation_nelda=random.choice([1,2,3]))
+
 
     # found pairings:
     # - C+T
