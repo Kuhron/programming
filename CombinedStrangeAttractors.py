@@ -361,7 +361,7 @@ if __name__ == "__main__":
 
     # run_mixing_experiment()
     while True:
-        run_perturbation_experiment(perturbation_nelda=random.choice([1,2,3]))
+        run_perturbation_experiment(perturbation_nelda=random.choice([1, 1.5, 2, 2.5, 3]))
 
 
     # found pairings:
