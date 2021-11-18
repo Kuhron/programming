@@ -17,6 +17,10 @@ def get_proto_words(n):
     distribution_power = 4
     c_dist = np.random.uniform(0, 1, (len(CONSONANTS),)) ** distribution_power
     v_dist = np.random.uniform(0, 1, (len(VOWELS),)) ** distribution_power
+    c_dist_mask = np.array([random.random() < 0.5 for x in CONSONANTS])
+    v_dist_mask = np.array([random.random() < 0.5 for x in VOWELS])
+    c_dist[~c_dist_mask] = 0
+    v_dist[~v_dist_mask] = 0
     c_dist /= c_dist.sum()
     v_dist /= v_dist.sum()
 
@@ -211,10 +215,10 @@ def print_most_common_correspondences(correspondences, max_n=20):
 
 if __name__ == "__main__":
     proto_words = get_proto_words(500)
-    l1_words, l1_sound_changes = mutate_words(proto_words, random.randint(10, 40))
-    l2_words, l2_sound_changes = mutate_words(proto_words, random.randint(10, 40))
-    l3_words, l3_sound_changes = mutate_words(proto_words, random.randint(10, 40))
-    l4_words, l4_sound_changes = mutate_words(proto_words, random.randint(10, 40))
+    l1_words, l1_sound_changes = mutate_words(proto_words, random.randint(3,8))
+    l2_words, l2_sound_changes = mutate_words(proto_words, random.randint(3,8))
+    l3_words, l3_sound_changes = mutate_words(proto_words, random.randint(3,8))
+    l4_words, l4_sound_changes = mutate_words(proto_words, random.randint(3,8))
 
     print(l1_sound_changes)
     print(l2_sound_changes)
@@ -228,4 +232,4 @@ if __name__ == "__main__":
 
     correspondences = count_correspondences(l1_words, l2_words, include_zeros=False)
     # when including zeros, most of them show up as very common but are spurious
-    print_most_common_correspondences(correspondences)
+    print_most_common_correspondences(correspondences, max_n=50)
