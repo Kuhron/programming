@@ -41,6 +41,7 @@ Mapping/NoiseImages/
 Emergence/Images/
 Genetics/*.png
 StrangeAttractorImages/
+MomentOfInertiaImages/
 
 # saved GAN models
 NeuralNetFiles/
