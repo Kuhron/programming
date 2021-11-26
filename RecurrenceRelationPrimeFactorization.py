@@ -23,17 +23,17 @@ for i in range(1, 40):
     denom = new_denom
     numers.append(numer)
     denoms.append(denom)
-    print(i, numer/denom)
+    # print(i, numer/denom)
 
     # set the term equal to c to get cycle of this period length
     # this results in c*denom - numer = 0 (with convention of wanting the factor of c**2 - bc - m rather than its negative)
     # and we factor the left hand side
     period_1_term = c**2 - b*c - m
     polynomial = sp.expand(c * denom - numer)
-    print("polynomial:", polynomial)
+    # print("polynomial:", polynomial)
     factored = sp.factor(polynomial / period_1_term)
     constant_coefficient, factors = sp.factor_list(polynomial)
-    # print(factors)
+    # print("factors", factors)
     assert (period_1_term, 1) in factors or (-1*period_1_term, 1) in factors
     periods_and_factors_found = []
     for factor, power in factors:
@@ -51,7 +51,11 @@ for i in range(1, 40):
     divisors_needed = sp.divisors(i)
     for period, factor in periods_and_factors_found:
         divisors_needed.remove(period)
-        print(f"sub-period {period} is represented by factor {factor}")
+        if period == i:
+            print(f"unique polynomial for period {i} is {factor}")
+        else:
+            pass
+            # print(f"sub-period {period} is represented by factor {factor}")
     assert len(divisors_needed) == 0, f"period {i} missing divisors {divisors_needed}"
     print()
 
