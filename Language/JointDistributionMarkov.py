@@ -4,8 +4,20 @@
 
 import random
 
-CONSONANTS = "mnŋptkbdgfshvzwlrj"
-VOWELS = "aoeui"
+CONSONANTS = [
+    "m", "n",
+    "p", "t", "ts", "č", "k", "q", "'",
+    "b", "d", "dz", "ǰ", "g",
+    "mb", "nd", "ndz", "nǰ", "ŋg",
+    "p'", "t'", "ts'", "č'", "k'", "q'",
+    "ph", "th", "tsh", "čh", "kh", "qh",
+    "f", "s", "š", "h",
+    "w", "l", "r", "j",
+]
+VOWELS = [
+    "a", "o", "e", "u", "i",
+    "aa", "oo", "ee", "uu", "ii",
+]
 
 
 def get_random_transition_possibilities(min_p=0, max_p=0.5):
@@ -41,16 +53,17 @@ def random_nonempty_subset(lst, probability_per_option):
 
 
 def get_word(transitions, min_length=2):
-    w = ""
+    w = []
     while True:
         last = w[-1] if len(w) > 0 else "#"
         options = transitions[last]
         chosen = random.choice(options)
         if chosen == "#":
             if len(w) >= min_length:  # don't do and because then you'll get # in middle of word (when chosen is # but word isn't long enough yet, it'll go to the else)
-                return w
+                break
         else:
-            w += chosen
+            w.append(chosen)
+    return "".join(w)
 
 
 def get_words(transitions, n):

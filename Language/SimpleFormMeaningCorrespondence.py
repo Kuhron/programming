@@ -12,5 +12,5 @@ if __name__ == "__main__":
     for i in range(100):
         w = SoundVectorSeries.random()
         m = MeaningVector.random()
-        # print(f"{w.string} means {m.gloss}")
+        print(f"{w.string} means {m.gloss}")
         print(f"{m.bit_string} : {w.bit_string}")
