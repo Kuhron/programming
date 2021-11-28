@@ -42,6 +42,7 @@ Emergence/Images/
 Genetics/*.png
 StrangeAttractorImages/
 MomentOfInertiaImages/
+RecurrenceRelationImages/
 
 # saved GAN models
 NeuralNetFiles/
