@@ -1,0 +1,9 @@
+Compile with -rtsopts:
+
+ghc PE10.hs -rtsopts
+
+Run with limited heap size, e.g. for 4 megabytes:
+
+./PE10 +RTS M4m -RTS
+
+See https://wiki.haskell.org/Memory_leak

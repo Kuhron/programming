@@ -1,3 +1,9 @@
+# ignore all files, then unignore all directories, then unignore all files with extensions
+# https://stackoverflow.com/questions/19023550/how-do-i-add-files-without-dots-in-them-all-extension-less-files-to-the-gitign
+*
+!/**/
+!*.*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -55,3 +61,9 @@ Language/clics.sqlite-journal
 Language/src/
 Language/CLICS_Concepts_Raw.txt
 Language/_test_allcoding.txt
+
+# Haskell compiled files
+ProjectEuler/Haskell/*.o
+ProjectEuler/Haskell/*.hi
+# compiled files with no extension
+ProjectEuler/Haskell/[^.]+
