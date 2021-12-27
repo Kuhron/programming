@@ -481,7 +481,7 @@ def print_graph_live(seed, spectrum_exponent, x0, x_step):
 
 
 def plot_live(seed, spectrum_exponent, x0, x_step):
-    max_frames = 100
+    max_frames = 1000
     x = x0
     xs = []
     ys = []
@@ -495,26 +495,6 @@ def plot_live(seed, spectrum_exponent, x0, x_step):
             ys = ys[-max_frames:]
             x += x_step
             iplt.plot(xs, ys)
-
-
-    # plt.ion()
-    # fignum = plt.gcf().number  # use to determine if user has closed plot
-    # while True:
-    #     if not plt.fignum_exists(fignum):
-    #         print("user closed plot; exiting")
-    #         break
-    #     plt.gcf().clear()
-    #     # I should probably learn how to write a context manager for this (with plt. .... as plot:) so I don't just keep copy-pasting this code to close the interactive plot
-    #     
-    #     y = get_fencepost_deviation_sum(x, seed, spectrum_exponent)
-    #     xs.append(x)
-    #     ys.append(y)
-    #     xs = xs[-max_frames:]
-    #     ys = ys[-max_frames:]
-    #     x += x_step
-    #     plt.plot(xs, ys)
-    #     plt.draw()
-    #     plt.pause(0.01)
 
 
 
