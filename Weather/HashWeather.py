@@ -14,6 +14,11 @@ import math
 import functools
 import os
 
+import sys
+sys.path.insert(0, "/home/wesley/programming")
+from InteractivePlot import InteractivePlot
+
+
 # portability to PyDroid for working on this on planes
 android = "ANDROID_BOOTLOGO" in os.environ
 if not android:
@@ -328,7 +333,7 @@ def get_fencepost_deviation_sum(x, seed, exponent):
         else:
             assert 0 < scaling < 1, (alpha, scaling)
         res += dev * scaling
-        print(f"x = {x}, fencepost = {fencepost}, power = {power}, alpha = {alpha}, scaling = {scaling}, dev = {dev}, scaled dev = {dev*scaling}")
+        # print(f"x = {x}, fencepost = {fencepost}, power = {power}, alpha = {alpha}, scaling = {scaling}, dev = {dev}, scaled dev = {dev*scaling}")
     return res
 
 
@@ -474,6 +479,45 @@ def print_graph_live(seed, spectrum_exponent, x0, x_step):
         time.sleep(0.01)
         x += x_step
 
+
+def plot_live(seed, spectrum_exponent, x0, x_step):
+    max_frames = 100
+    x = x0
+    xs = []
+    ys = []
+
+    with InteractivePlot(plot_every_n_steps=10) as iplt:
+        while iplt.is_open():
+            y = get_fencepost_deviation_sum(x, seed, spectrum_exponent)
+            xs.append(x)
+            ys.append(y)
+            xs = xs[-max_frames:]
+            ys = ys[-max_frames:]
+            x += x_step
+            iplt.plot(xs, ys)
+
+
+    # plt.ion()
+    # fignum = plt.gcf().number  # use to determine if user has closed plot
+    # while True:
+    #     if not plt.fignum_exists(fignum):
+    #         print("user closed plot; exiting")
+    #         break
+    #     plt.gcf().clear()
+    #     # I should probably learn how to write a context manager for this (with plt. .... as plot:) so I don't just keep copy-pasting this code to close the interactive plot
+    #     
+    #     y = get_fencepost_deviation_sum(x, seed, spectrum_exponent)
+    #     xs.append(x)
+    #     ys.append(y)
+    #     xs = xs[-max_frames:]
+    #     ys = ys[-max_frames:]
+    #     x += x_step
+    #     plt.plot(xs, ys)
+    #     plt.draw()
+    #     plt.pause(0.01)
+
+
+
 if android:
     linspace = lambda a,b,n: [a+i*(b-a)/(n-1) for i in range(n)]
     sign = lambda x: 1 if x > 0 else -1 if x < 0 else 0
@@ -497,6 +541,7 @@ if __name__ == "__main__":
     # summarize_xs_ys(xs, ys)
     # print_graph(xs, ys, n_ticks=250)
     # print_graph_live(seed, spectrum_exponent, x0=xs[0], x_step=xs[1]-xs[0])
+    plot_live(seed, spectrum_exponent, x0=xs[0], x_step=xs[1]-xs[0])
     if not android:
         plt.plot(xs, ys)
         # plt.show()
