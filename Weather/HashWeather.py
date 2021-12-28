@@ -384,12 +384,18 @@ def is_in_window_of_influence(x, fencepost):
     return 3/4 * fencepost <= x <= 3/2 * fencepost
 
 
-def cosine_like_weight_by_distance(d, max_d, spike_power=1):
+def cosine_like_weight_by_displacement(d, d_ahead, d_behind, spike_power=1):
     # returns in [0, 1]
     # spike_power higher than 1 makes it more spiky around close distances so it drops off faster with distance, just by taking the original weight to that power
-    assert d >= 0, "distance must be non-negative"
+    if d == 0:
+        return 1
+    assert d_ahead > 0 and d_behind > 0
+    displacement_is_ahead_of_reference_point = d > 0
+    max_d = d_ahead if displacement_is_ahead_of_reference_point else d_behind
+    d = abs(d)
     if d > max_d:
         return 0
+
     distance_scaled_to_pi = np.pi * d/max_d
     assert 0 <= distance_scaled_to_pi <= np.pi
     # cosine in this interval goes from 1 to -1, map this to 1 to 0
@@ -400,27 +406,29 @@ def cosine_like_weight_by_distance(d, max_d, spike_power=1):
     return v
 
 
-def get_posts_influencing_x(x, spacing, max_d):
+def get_posts_influencing_x(x, spacing, d_ahead, d_behind):
     # they should be integer multiples of spacing
+    assert d_ahead > 0 and d_behind > 0
     a = spacing
-    min_possible = x - max_d
-    max_possible = x + max_d
+    min_possible = x - d_behind
+    max_possible = x + d_ahead
     min_post = a * math.ceil(min_possible / a)
     max_post = a * math.floor(max_possible / a)
-    assert abs(x - min_post) <= max_d
-    assert abs(x - max_post) <= max_d
+    assert abs(x - min_post) <= d_behind
+    assert abs(x - max_post) <= d_ahead
     res = list(np.arange(min_post, max_post + a, a))
     return res
 
 
-def get_regular_spaced_post_sum(x, seed, spacing, max_distance, hash_distribution, spike_power=1):
+def get_regular_spaced_post_sum(x, seed, spacing, look_ahead_distance, look_behind_distance, hash_distribution, spike_power=1):
     # place posts every `spacing` on x axis, each of these gets a [0,1] value from its hash
     # weight them based on their distance from x, with a cosine-like wave from 0 to 1 (so there is a finite distance, max_distance, at which a post can affect the value of x)
     # value at x is weighted sum of these
-    assert max_distance > spacing/2, "max_distance is too small, so you will get some xs for which there are no neighbors with any weight"
-    posts = get_posts_influencing_x(x, spacing, max_distance)
-    distances_to_posts = [abs(x - post) for post in posts]
-    weights_at_posts = [cosine_like_weight_by_distance(d, max_distance, spike_power=spike_power) for d in distances_to_posts]
+    assert look_ahead_distance >= spacing, "look_ahead_distance is too small, so you will get discontinuous jumps"
+    assert look_behind_distance >= spacing, "look_behind_distance is too small, so you will get some xs for which there are no previous posts with any weight"
+    posts = get_posts_influencing_x(x, spacing, look_ahead_distance, look_behind_distance)
+    displacements_of_posts = [post - x for post in posts]
+    weights_at_posts = [cosine_like_weight_by_displacement(d, look_ahead_distance, look_behind_distance, spike_power=spike_power) for d in displacements_of_posts]
     total_weight = sum(weights_at_posts)
     values_at_posts = [hash_distribution(seed + str(post)) for post in posts]
     weighted_values = [w * v for w,v in zip(weights_at_posts, values_at_posts)]
@@ -596,13 +604,14 @@ if __name__ == "__main__":
     y_func = lambda x: get_regular_spaced_post_sum(
         x, seed=seed, 
         spacing=1, 
-        max_distance=30, 
-        spike_power=6,
+        look_ahead_distance=2,
+        look_behind_distance=50,
+        spike_power=1,
         # hash_distribution=hash_random_01,
-        # hash_distribution=(lambda obj: hash_normal(obj, mu=0, sigma=10)),
-        hash_distribution=(lambda obj: hash_pareto(obj, a=1)),  # pareto a < 1 becomes Extremistan
-    ) + seasonality(x, period=1000, amplitude=10)
-    plot_live(y_func, x0=x0, x_step=x_step, plot_every_n_steps=10, max_frames=1000)
+        hash_distribution=(lambda obj: hash_normal(obj, mu=0, sigma=15)),
+        # hash_distribution=(lambda obj: hash_pareto(obj, a=1)),  # pareto a < 1 becomes Extremistan
+    ) + seasonality(x, period=250, amplitude=10)
+    plot_live(y_func, x0=x0, x_step=x_step, plot_every_n_steps=5, max_frames=500)
 
     print("exiting")
     sys.exit()
