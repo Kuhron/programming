@@ -11,9 +11,14 @@ class InteractivePlot:
         self.fignum = plt.gcf().number  # use to determine if user has closed plot
         return self
 
-    def __exit__(self, type, value, traceback):
-        print("user closed plot; exiting")
-        plt.ioff()
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
+            # no exception occurred
+            print("user closed plot; exiting")
+            plt.ioff()
+        else:
+            plt.ioff()
+            return False  # will reraise the exception
 
     def plot(self, *args, **kwargs):
         self.counter += 1

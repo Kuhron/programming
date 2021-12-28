@@ -13,6 +13,8 @@ import random
 import math
 import functools
 import os
+import numpy as np
+from scipy.stats import norm, pareto
 
 import sys
 sys.path.insert(0, "/home/wesley/programming")
@@ -56,6 +58,22 @@ def hash_random_01(obj):
     s = str(obj)
     n = get_hash(s)
     return n / MAX_HASH
+
+
+def hash_normal(obj, mu=0, sigma=1):
+    q = hash_random_01(obj)
+    value_at_quantile = norm.ppf(q, loc=mu, scale=sigma)
+    return value_at_quantile
+
+
+def hash_pareto(obj, a):
+    q = hash_random_01(obj)
+    # for q < 0.5, take the negative, since pareto only returns positive values, so split the [0,1] hashes into two halves
+    negative = q < 0.5
+    new_q = (q % 0.5) / 0.5
+    assert 0 <= new_q <= 1
+    value_at_quantile = pareto.ppf(new_q, b=a) * (-1 if negative else 1)
+    return value_at_quantile
 
 
 def hash_random_sequence_01(obj):
@@ -366,6 +384,59 @@ def is_in_window_of_influence(x, fencepost):
     return 3/4 * fencepost <= x <= 3/2 * fencepost
 
 
+def cosine_like_weight_by_distance(d, max_d, spike_power=1):
+    # returns in [0, 1]
+    # spike_power higher than 1 makes it more spiky around close distances so it drops off faster with distance, just by taking the original weight to that power
+    assert d >= 0, "distance must be non-negative"
+    if d > max_d:
+        return 0
+    distance_scaled_to_pi = np.pi * d/max_d
+    assert 0 <= distance_scaled_to_pi <= np.pi
+    # cosine in this interval goes from 1 to -1, map this to 1 to 0
+    c = np.cos(distance_scaled_to_pi)
+    v = 0 + (1-0)/(1-(-1)) * (c - (-1))
+    assert 0 <= v <= 1, v
+    v **= spike_power
+    return v
+
+
+def get_posts_influencing_x(x, spacing, max_d):
+    # they should be integer multiples of spacing
+    a = spacing
+    min_possible = x - max_d
+    max_possible = x + max_d
+    min_post = a * math.ceil(min_possible / a)
+    max_post = a * math.floor(max_possible / a)
+    assert abs(x - min_post) <= max_d
+    assert abs(x - max_post) <= max_d
+    res = list(np.arange(min_post, max_post + a, a))
+    return res
+
+
+def get_regular_spaced_post_sum(x, seed, spacing, max_distance, hash_distribution, spike_power=1):
+    # place posts every `spacing` on x axis, each of these gets a [0,1] value from its hash
+    # weight them based on their distance from x, with a cosine-like wave from 0 to 1 (so there is a finite distance, max_distance, at which a post can affect the value of x)
+    # value at x is weighted sum of these
+    assert max_distance > spacing/2, "max_distance is too small, so you will get some xs for which there are no neighbors with any weight"
+    posts = get_posts_influencing_x(x, spacing, max_distance)
+    distances_to_posts = [abs(x - post) for post in posts]
+    weights_at_posts = [cosine_like_weight_by_distance(d, max_distance, spike_power=spike_power) for d in distances_to_posts]
+    total_weight = sum(weights_at_posts)
+    values_at_posts = [hash_distribution(seed + str(post)) for post in posts]
+    weighted_values = [w * v for w,v in zip(weights_at_posts, values_at_posts)]
+    value = sum(weighted_values) / total_weight
+    return value
+
+
+def seasonality(x, period, amplitude):
+    # amplitude is max, not RMS or something else
+    # assume phase of 0 at x=0
+    phase = (x % period) / period
+    theta = phase * 2*np.pi
+    v = np.sin(theta) * amplitude
+    return v
+
+
 def run_simple_simulation():
     options = [
         ["rain", 0.1], ["cloudy", 0.3], ["thunderstorm", 0.1], ["snow", 0.0001],
@@ -480,15 +551,14 @@ def print_graph_live(seed, spectrum_exponent, x0, x_step):
         x += x_step
 
 
-def plot_live(seed, spectrum_exponent, x0, x_step):
-    max_frames = 1000
+def plot_live(y_func, x0, x_step, plot_every_n_steps=1, max_frames=100):
     x = x0
     xs = []
     ys = []
 
-    with InteractivePlot(plot_every_n_steps=10) as iplt:
+    with InteractivePlot(plot_every_n_steps=plot_every_n_steps) as iplt:
         while iplt.is_open():
-            y = get_fencepost_deviation_sum(x, seed, spectrum_exponent)
+            y = y_func(x)
             xs.append(x)
             ys.append(y)
             xs = xs[-max_frames:]
@@ -514,14 +584,29 @@ if __name__ == "__main__":
     # want to get a deterministic function with good autocorrelation like long-term variations, and smaller variations around that trend, etc. to fractal precision
 
     seed = str(time.time())
-    spectrum_exponent = 0.4
-    offset = random.uniform(-100000, 100000)
-    xs = linspace(0+offset, 1000+offset, 1001)
-    ys = [get_fencepost_deviation_sum(x, seed, spectrum_exponent) for x in xs]
+    x0 = random.uniform(-100000, 100000)
+    x_step = 1
+    # xs = linspace(x0, x0+1000, 1001)
+    # ys = [get_fencepost_deviation_sum(x, seed, spectrum_exponent) for x in xs]
     # summarize_xs_ys(xs, ys)
     # print_graph(xs, ys, n_ticks=250)
     # print_graph_live(seed, spectrum_exponent, x0=xs[0], x_step=xs[1]-xs[0])
-    plot_live(seed, spectrum_exponent, x0=xs[0], x_step=xs[1]-xs[0])
+
+    # y_func = lambda x: get_fencepost_deviation_sum(x, seed=seed, spectrum_exponent=0.4)  # too many discontinuous jumps
+    y_func = lambda x: get_regular_spaced_post_sum(
+        x, seed=seed, 
+        spacing=1, 
+        max_distance=30, 
+        spike_power=6,
+        # hash_distribution=hash_random_01,
+        # hash_distribution=(lambda obj: hash_normal(obj, mu=0, sigma=10)),
+        hash_distribution=(lambda obj: hash_pareto(obj, a=1)),  # pareto a < 1 becomes Extremistan
+    ) + seasonality(x, period=1000, amplitude=10)
+    plot_live(y_func, x0=x0, x_step=x_step, plot_every_n_steps=10, max_frames=1000)
+
+    print("exiting")
+    sys.exit()
+
     if not android:
         plt.plot(xs, ys)
         # plt.show()
