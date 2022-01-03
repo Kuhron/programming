@@ -54,18 +54,21 @@ def hash_if(probability, dt_str, event_name_salt):
     return r < probability
 
 
+@functools.lru_cache(maxsize=10000)
 def hash_random_01(obj):
     s = str(obj)
     n = get_hash(s)
     return n / MAX_HASH
 
 
+@functools.lru_cache(maxsize=10000)
 def hash_normal(obj, mu=0, sigma=1):
     q = hash_random_01(obj)
     value_at_quantile = norm.ppf(q, loc=mu, scale=sigma)
     return value_at_quantile
 
 
+@functools.lru_cache(maxsize=10000)
 def hash_pareto(obj, a):
     q = hash_random_01(obj)
     # for q < 0.5, take the negative, since pareto only returns positive values, so split the [0,1] hashes into two halves
@@ -608,9 +611,9 @@ if __name__ == "__main__":
         look_behind_distance=50,
         spike_power=1,
         # hash_distribution=hash_random_01,
-        hash_distribution=(lambda obj: hash_normal(obj, mu=0, sigma=15)),
+        hash_distribution=(lambda obj: hash_normal(obj, mu=0, sigma=16)),
         # hash_distribution=(lambda obj: hash_pareto(obj, a=1)),  # pareto a < 1 becomes Extremistan
-    ) + seasonality(x, period=250, amplitude=10)
+    ) + seasonality(x, period=250, amplitude=4)
     plot_live(y_func, x0=x0, x_step=x_step, plot_every_n_steps=5, max_frames=500)
 
     print("exiting")
