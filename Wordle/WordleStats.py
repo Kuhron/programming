@@ -82,7 +82,7 @@ def get_all_words(length):
     words |= set(words1)
 
     # check also other words files
-    with open("enwiki-20190320-words-frequency.txt") as f:
+    with open("enwiki-20190320-words-frequency.txt") as f:  # credit to https://github.com/IlyaSemenov/wikipedia-word-frequency/blob/master/results/enwiki-20190320-words-frequency.txt
         lines = f.readlines()
     words2 = set()
     for line in lines:
