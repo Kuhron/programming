@@ -67,3 +67,5 @@ ProjectEuler/Haskell/*.o
 ProjectEuler/Haskell/*.hi
 # compiled files with no extension
 ProjectEuler/Haskell/[^.]+
+
+Wordle/enwiki-20190320-words-frequency.txt
