@@ -69,10 +69,54 @@ class WordSearchDataStructure:
         return "#" in d
 
 
+class Color:
+    WRONG = 0
+    MISPLACED = 1
+    RIGHT = 2
+
+
+def evaluate_word(guess, solution):
+    res = [None] * 5
+    for c in set(guess):
+        indices_in_guess = [i for i,x in enumerate(guess) if x == c]
+        indices_in_solution = [i for i,x in enumerate(solution) if x == c]
+        # print("in evaluate_word", c, indices_in_guess, indices_in_solution)
+        # first, if any of them are green, mark those and remove those indices
+        green_indices = set(indices_in_guess) & set(indices_in_solution)
+        for i in green_indices:
+            res[i] = Color.RIGHT
+            indices_in_guess.remove(i)
+            indices_in_solution.remove(i)
+        # then, as long as there are still some left in the solution, mark the first misplaced one as yellow
+        assert set(indices_in_guess) & set(indices_in_solution) == set(), "missed some green index removal"
+        indices_in_guess = sorted(indices_in_guess)
+        yellow_indices = indices_in_guess[:len(indices_in_solution)]
+        # if you run out of this char in solution, then mark the rest gray
+        gray_indices = indices_in_guess[len(indices_in_solution):]
+        for i in yellow_indices:
+            res[i] = Color.MISPLACED
+        for i in gray_indices:
+            res[i] = Color.WRONG
+    assert not any(x is None for x in res)
+    return res
+
+
+def test_evaluate_word():
+    arr_error = evaluate_word("ERROR", "GORGE")
+    assert arr_error == [1,0,2,1,0], arr_error
+    arr_doggy = evaluate_word("DOGGY", "GORGE")
+    assert arr_doggy == [0,2,1,2,0], arr_doggy
+    arr_aggro = evaluate_word("AGGRO", "GORGE")
+    assert arr_aggro == [0,1,1,1,1], arr_aggro
+    arr_ardor = evaluate_word("ARDOR", "GORGE")
+    assert arr_ardor == [0,1,0,1,0], arr_ardor  # it won't mark both Rs as yellow because there's only one R in the solution
+    print("passed test_evaluate_word")
+
+
 def get_all_words(length):
     words = set()
 
-    with open("cmudict.txt") as f:
+    with open("/home/wesley/programming/cmudict.txt") as f:
         lines = f.readlines()
     words1 = [l.split()[0] for l in lines]
     allowed_chars = string.ascii_uppercase
@@ -140,6 +184,21 @@ def nelda_to_x01(d):
     return 10 ** (-d)
 
 
+def x01_weighting_function(x, k):
+    # a curve in the box [0,1]*[0,1] that is above or at the y=x line
+    # imagine a pin being pulled at the midpoint of the line
+    # for k=0, the pin is all the way at the upper left, so f(0) = 1 and in fact f(x) is 1 for all x
+    # for k=1, the pin is in the middle, so f(0.5) = 0.5, and in fact f(x) = x for all x
+    # the pin's x coordinate is linear in k, such that x_pin = k/2
+
+    # so this is used with x = word frequency to get some different weightings by frequency
+    # k=0 is equal weighting regardless of word frequency
+    # k=1 is weighting by word frequency directly
+    # intermediate values of k approximate logarithm-like underweighting of higher frequency words while still weighting them more than lower-frequency words (just not as much more)
+    c = (k / (k-2)) ** 2
+    return x / (x + c*(1-x))
+
+
 def get_word_history():
     fp = "wordle_history.txt"
     with open(fp) as f:
@@ -198,39 +257,49 @@ def report_frequencies_of_words(words, frequencies, x01=True, nelda=True, plot=T
         plt.show()
 
 
-def report_frequencies_of_letters_in_positions(words, frequencies, word_type_str):
+def plot_frequencies_of_letters_in_positions(words, frequencies, word_type_str):
     # how common is each letter in each position
     # and how common is each position for each letter
     counts = {}
     for position in range(1, 6):
         i = position - 1
-        counts[position] = {"equal": {c: 0 for c in string.ascii_uppercase}, "freq": {c: 0 for c in string.ascii_uppercase}}
+        counts[position] = {weight_type: {c: 0 for c in string.ascii_uppercase} for weight_type in ["equal", "freq", "k=0.2"]}
         for w in words:
             c = w[i]
             freq = frequencies.get(w, 0)
+            weighted_freq = x01_weighting_function(freq, k=0.2)
             counts[position]["equal"][c] += 1  # counting each word equally
             counts[position]["freq"][c] += freq  # counting based on frequency, more frequent words get bigger weight
+            counts[position]["k=0.2"][c] += weighted_freq  # counting based on frequency while underweighting higher frequencies but preserving order
         tups_equal = sorted(counts[position]["equal"].items(), key=lambda kv: kv[1], reverse=True)
         tups_freq = sorted(counts[position]["freq"].items(), key=lambda kv: kv[1], reverse=True)
+        tups_k02 = sorted(counts[position]["k=0.2"].items(), key=lambda kv: kv[1], reverse=True)
         letters_equal = [tup[0] for tup in tups_equal]
         letters_freq = [tup[0] for tup in tups_freq]
+        letters_k02 = [tup[0] for tup in tups_k02]
         ns_equal = [tup[1] for tup in tups_equal]
         ns_freq = [tup[1] for tup in tups_freq]
+        ns_k02 = [tup[1] for tup in tups_k02]
         total_n_equal = sum(ns_equal)
         total_n_freq = sum(ns_freq)
+        total_n_k02 = sum(ns_k02)
         ns_equal = [n/total_n_equal for n in ns_equal]
         ns_freq = [n/total_n_freq for n in ns_freq]
+        ns_k02 = [n/total_n_k02 for n in ns_k02]
 
         plot_name = f"letter frequencies in position {position} for {word_type_str}"
-        plt.subplot(2,1,1)
+        plt.subplot(3,1,1)
         plt.title(plot_name)
-        plt.bar(letters_equal, ns_equal, label="words equally weighted")
+        plt.bar(letters_equal, ns_equal, label="k=0 (equal)")
         plt.legend()
-        plt.subplot(2,1,2)
-        plt.bar(letters_freq, ns_freq, label="words weighted by frequency")
+        plt.subplot(3,1,2)
+        plt.bar(letters_k02, ns_k02, label="k=0.2")
         plt.legend()
-        plt.gcf().set_size_inches(6,4)
-        plt.savefig(f"{plot_name}.png")
+        plt.subplot(3,1,3)
+        plt.bar(letters_freq, ns_freq, label="k=1 (frequency)")
+        plt.legend()
+        plt.gcf().set_size_inches(9,9)
+        plt.savefig(f"Images/{plot_name}.png")
         plt.clf()
 
     # now also show how common each position is given a letter
@@ -238,21 +307,105 @@ def report_frequencies_of_letters_in_positions(words, frequencies, word_type_str
         positions = range(1, 6)
         counts_equal = [counts[position]["equal"][c] for position in positions]
         counts_freq = [counts[position]["freq"][c] for position in positions]
+        counts_k02 = [counts[position]["k=0.2"][c] for position in positions]
         total_count_equal = sum(counts_equal)
         total_count_freq = sum(counts_freq)
+        total_count_k02 = sum(counts_k02)
         ns_equal = [n/total_count_equal for n in counts_equal]
         ns_freq = [n/total_count_freq for n in counts_freq]
+        ns_k02 = [n/total_count_k02 for n in counts_k02]
         
         plot_name = f"position frequencies for letter {c} for {word_type_str}"
-        plt.subplot(2,1,1)
+        plt.subplot(3,1,1)
         plt.title(plot_name)
-        plt.bar(positions, ns_equal, label="words equally weighted")
+        plt.bar(positions, ns_equal, label="k=0 (equal)")
         plt.legend()
-        plt.subplot(2,1,2)
-        plt.bar(positions, ns_freq, label="words weighted by frequency")
-        plt.gcf().set_size_inches(6,4)
-        plt.savefig(f"{plot_name}.png")
+        plt.subplot(3,1,2)
+        plt.bar(positions, ns_k02, label="k=0.2")
+        plt.legend()
+        plt.subplot(3,1,3)
+        plt.bar(positions, ns_freq, label="k=1 (frequency)")
+        plt.legend()
+        plt.gcf().set_size_inches(9,9)
+        plt.savefig(f"Images/{plot_name}.png")
         plt.clf()
+
+
+def get_solution_z_score(word, past_solutions, allowed_words, frequencies):
+    # returns the z score of the word's nelda, which can be a rough proxy for how likely this word is to be a solution, based solely on its frequeency
+    if word not in allowed_words:
+        return 0
+    # pretend we don't know what the solutions have been, just use them to construct a distribution across frequencies
+    known_neldas = [x01_to_nelda(frequencies.get(w, 0)) for w in past_solutions]
+    assert all(np.isfinite(nelda) for nelda in known_neldas), "bad nelda for known solution"
+    # model as normal; based on eyeballing, it looks like it
+    mu = np.mean(known_neldas)
+    std = np.std(known_neldas)
+    x = x01_to_nelda(frequencies.get(word, 0))
+    z = (x - mu) / std
+    return abs(z)
+
+
+def get_guess_reward(guess, solution, reward_function):
+    colors = evaluate_word(guess, solution)
+    return sum(reward_function[c] for c in colors)
+
+
+def get_aggregate_guess_reward(guess, solutions, reward_function):
+    return np.mean([get_guess_reward(guess, solution, reward_function) for solution in solutions])
+
+
+def normal_pdf(x, mu=0, sigma=1):
+    z = (x - mu) / sigma
+    return 1/(sigma * math.sqrt(2*np.pi)) * math.exp(-1/2 * z**2)
+
+
+def create_possible_solution_set(past_solutions, allowed_words, frequencies, n_words):
+    # create a simulated set of solution words based on the frequency distribution of the actual solutions
+    pdf_values = []
+    for w in allowed_words:
+        z = get_solution_z_score(w, past_solutions, allowed_words, frequencies)
+        p = normal_pdf(z)
+        pdf_values.append(p)
+    total_p = sum(pdf_values)
+    weights = [p/total_p for p in pdf_values]
+    indices = np.random.choice(list(range(len(allowed_words))), size=n_words, replace=False, p=weights)
+    res = [allowed_words[i] for i in indices]
+
+    # check its distribution
+    neldas = [x01_to_nelda(frequencies.get(w, 0)) for w in res]
+    past_neldas = [x01_to_nelda(frequencies.get(w, 0)) for w in past_solutions]
+    xmin = min(min(neldas), min(past_neldas)) - 0.5
+    xmax = max(max(neldas), max(past_neldas)) + 0.5
+    plt.subplot(2,1,1)
+    plt.title("neldas of simulated solutions")
+    plt.gca().set_xlim((xmin, xmax))
+    plt.hist(neldas, bins=50)
+    plt.subplot(2,1,2)
+    plt.title("neldas of actual solutions")
+    plt.gca().set_xlim((xmin, xmax))
+    plt.hist(past_neldas, bins=50)
+    plt.show()
+
+    return res
+
+
+def find_optimal_starting_word(past_solutions, allowed_words, frequencies, reward_function):
+    # want higher reward for getting a green (letter in the right place)
+    # want some reward but lower for getting a yellow
+
+    # try every allowed word as a starting point for the known solution set, see what it would have gotten you
+    # but then try to bootstrap likely future solutions based on their frequencies
+    rewards = {}
+    for w in allowed_words:
+        z = get_solution_z_score(w, past_solutions, allowed_words, frequencies)
+        reward = get_aggregate_guess_reward(w, past_solutions, reward_function)
+        rewards[w] = reward
+        # print(f"initial guess {w} has reward {reward} and z {z}")
+    for w, reward in sorted(rewards.items(), key=lambda kv: kv[1], reverse=True)[:20]:
+        print(f"initial guess {w} has average reward {reward}")
+    # plt.hist(rewards.values())  # I expected most words to be relatively useless, but that's not actually true; there's a normal distribution with mean about 1.5 (with green=2, yellow=1, gray=0)
+    # plt.show()
 
 
 def query_words(allowed_words, frequencies):
@@ -278,6 +431,7 @@ if __name__ == "__main__":
     assert all(len(w) == length for w in allowed_words)
 
     word_history = get_word_history()
+    past_solutions = word_history.values()
     path_history = {
         201: {
             "w": ["SHIFT", "CANDY", "ROUGE", "BLIMP", "BANAL"],
@@ -300,7 +454,19 @@ if __name__ == "__main__":
     # report_frequencies_of_words(word_history.values(), frequencies, x01=False, nelda=True)
     # report_frequencies_of_words(allowed_words, frequencies, x01=False, nelda=True)
 
-    report_frequencies_of_letters_in_positions(allowed_words, frequencies, word_type_str="allowed words")
-    report_frequencies_of_letters_in_positions(word_history.values(), frequencies, word_type_str="past solutions up to puzzle #{max(word_history.keys())}")
+    # plot_frequencies_of_letters_in_positions(allowed_words, frequencies, word_type_str="allowed words")
+    # plot_frequencies_of_letters_in_positions(word_history.values(), frequencies, word_type_str=f"past solutions up to puzzle #{max(word_history.keys())}")
+
+    # test_evaluate_word()
+    reward_function = {Color.RIGHT: 1.25, Color.MISPLACED: 1, Color.WRONG: 0}
+    # maybe at the beginning we actually don't care that much about getting green, we'd rather just know what letters are there, so weight green and yellow the same, or green only slightly more but not double
+
+    print("creating simulated solution set")
+    new_solutions = create_possible_solution_set(past_solutions, allowed_words, frequencies, n_words=250)
+    print(new_solutions)
+    print("finding starting word rewards for past solutions")
+    find_optimal_starting_word(past_solutions, allowed_words, frequencies, reward_function)
+    print("finding starting word rewards for simulated solutions")
+    find_optimal_starting_word(new_solutions, allowed_words, frequencies, reward_function)
 
     # query_words(allowed_words, frequencies)
