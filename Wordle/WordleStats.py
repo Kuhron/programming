@@ -432,6 +432,7 @@ if __name__ == "__main__":
 
     word_history = get_word_history()
     past_solutions = word_history.values()
+    # as of puzzle 204, there has not been a solution which is plural (there have been pasts though e.g. WROTE)
     path_history = {
         201: {
             "w": ["SHIFT", "CANDY", "ROUGE", "BLIMP", "BANAL"],
@@ -449,6 +450,10 @@ if __name__ == "__main__":
             "w": ["STAIN", "CHORE", "LUMPY", "GORGE"],
             "n": ["TARES", "BLACK", "ERROR", "HORDE", "FORGE", "GORGE"],
         },
+        205: {
+            "w": ["SOARE", "FLING", "CHUMP", "QUERY"],
+            "n": ["TARES", "BLOCK", "WHERE", "FIERY", "QUERY"],
+        }
     }
 
     # report_frequencies_of_words(word_history.values(), frequencies, x01=False, nelda=True)
