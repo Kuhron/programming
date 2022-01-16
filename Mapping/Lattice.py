@@ -21,6 +21,7 @@ from UnitSpherePoint import UnitSpherePoint
 import PlottingUtil as pu
 import MapCoordinateMath as mcm
 import NoiseMath as nm
+import IcosahedronMath as ihm
 
 
 class Lattice:
@@ -187,14 +188,21 @@ class Lattice:
             raise IOError("output filepath exists! Aborting. fp = {}".format(output_fp))
         columns_to_exclude = ["usp", "xyz", "latlondeg"]  # coordinate things that can be recalculated or retrieved from memoization files as needed, don't store them in the database
         # Note that by default, .drop() does not operate inplace; despite the ominous name, df is unharmed by this process. (from https://stackoverflow.com/questions/29763620/)
-        new_df = df.drop(columns_to_exclude, axis=1)
-        assert new_df is not df, "uh-oh, we edited the df in-place"
-        new_df.to_csv(output_fp, index_label="index")
+        for col in columns_to_exclude:
+            if col in df.columns:  # otherwise it will raise error that the column is not found
+                new_df = df.drop(col, axis=1)
+                assert new_df is not df, "uh-oh, we edited the df in-place"
+                df = new_df
+        df.to_csv(output_fp, index_label="index")
 
     def plot_data(self, df, key_str, size_inches=None, cmap=None, equirectangular=True, save=False, category_labels=None, contour_lines=False):
         data_point_indices = df.index
         # data_points = [self.points[p_i] for p_i in data_point_indices]
-        latlons_deg = df["latlondeg"]
+        if "latlondeg" in df.columns:
+            latlons_deg = df["latlondeg"]
+        else:
+            point_indices = df.index
+            latlons_deg = ihm.get_latlons_from_point_numbers(point_indices)
         lats_deg = np.array([ll[0] for ll in latlons_deg])
         lons_deg = np.array([ll[1] for ll in latlons_deg])
         vals = df[key_str]
