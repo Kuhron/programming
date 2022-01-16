@@ -35,7 +35,6 @@ class IcosahedronPointDatabase:
 
         db.variables_dict = BiDict(int, str)
         db.metadata = {
-            "root_dir": root_dir,
             "block_size": block_size,
         }
         db.cache = {}
@@ -141,9 +140,15 @@ class IcosahedronPointDatabase:
             return None
         with open(block_fp) as f:
             lines = f.readlines()
+
         # find the line starting with this point, if any
+        block_size = self.metadata["block_size"]
+        block_number = point_number // block_size
+        block_start = block_number * block_size
+        adjusted_point_number = point_number - block_start
+        assert 0 <= adjusted_point_number < block_size, (point_number, block_size, block_number, block_start, adjusted_point_number)
         lines = [l.strip().split(",") for l in lines]
-        lines_this_point = [l for l in lines if int(l[0]) == point_number]
+        lines_this_point = [l for l in lines if int(l[0]) == adjusted_point_number]
         if len(lines_this_point) == 0:
             # raise KeyError(f"no data for point {point_number}")
             return None
@@ -162,15 +167,18 @@ class IcosahedronPointDatabase:
             # typ = self.get_variable_type_from_name(variable_name)
             # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
             val = d[variable_number]
+            self.add_to_cache(point_number, variable_name, val)
             return val
 
-    def set(self, point_number, variable_name, value, write=False):
-        variable_number = self.get_variable_number_from_name(variable_name)
+    def add_to_cache(self, point_number, variable_name, value):
         if point_number not in self.cache:
             self.cache[point_number] = {variable_name: value}
         else:
             self.cache[point_number][variable_name] = value
 
+    def set(self, point_number, variable_name, value, write=False):
+        variable_number = self.get_variable_number_from_name(variable_name)
+        self.add_to_cache(point_number, variable_name, value)
         if write:
             self.write()  # don't do this too often or it will be slow
 
@@ -178,10 +186,47 @@ class IcosahedronPointDatabase:
         # assume numeric for now, can try ancestry approach later if we are dealing with too many different files and want contiguous points to be more likely to be in the same file
         block_size = self.metadata["block_size"]
         block_number = point_number // block_size
+        return self.get_block_fp_for_block_number(block_number)
+
+    def get_block_fp_for_block_number(self, block_number):
+        block_size = self.metadata["block_size"]
         min_in_block = block_number * block_size
         max_in_block = (block_number + 1) * block_size - 1
         fname = f"Block{block_number}_points_{min_in_block}_to_{max_in_block}.txt"
         return os.path.join(self.blocks_dir, fname)
+
+    def get_all_point_numbers_with_data(self):
+        block_numbers = self.get_all_block_numbers_with_data()
+        res = set()
+        for block_number in block_numbers:
+            point_numbers = self.get_point_numbers_with_data_in_block(block_number)
+            assert res & point_numbers == set(), "overlap"
+            res |= point_numbers
+        return res
+
+    def get_point_numbers_with_data_in_block(self, block_number):
+        block_size = self.metadata["block_size"]
+        block_start = block_number * block_size
+        block_fp = self.get_block_fp_for_block_number(block_number)
+        with open(block_fp) as f:
+            lines = f.readlines()
+        res = set()
+        for l in lines:
+            l = l.strip().split(",")
+            adjusted_pn = int(l[0])
+            pn = block_start + adjusted_pn
+            assert pn not in res
+            res.add(pn)
+        return res
+
+    def get_all_block_numbers_with_data(self):
+        block_files = os.listdir(self.blocks_dir)
+        res = set()
+        for fname in block_files:
+            block_number = int(fname.split("_")[0].replace("Block", ""))
+            assert block_number not in res
+            res.add(block_number)
+        return res
 
     def get_variable_number_from_name(self, name):
         return self.variables_dict[name]
@@ -206,6 +251,8 @@ class IcosahedronPointDatabase:
         block_size = self.metadata["block_size"]
         blocks_in_cache = set(point_number // block_size for point_number in self.cache.keys())
         for block_number in blocks_in_cache:
+            print("block_number", block_number)
+            block_start = block_number * block_size
             point_numbers = set([p for p in self.cache.keys() if p // block_size == block_number])
             fps = set(self.get_block_fp(p) for p in point_numbers)
             assert len(fps) == 1, "problem getting block number from point numbers"
@@ -217,7 +264,8 @@ class IcosahedronPointDatabase:
                     lines = f.readlines()
                 for l in lines:
                     l_split = l.strip().split(",")
-                    p_i = int(l_split[0])
+                    adjusted_p_i = int(l_split[0])
+                    p_i = adjusted_p_i + block_start
                     d = {}
                     for item in l_split[1:]:
                         k,v = item.split("=")
@@ -239,7 +287,9 @@ class IcosahedronPointDatabase:
                         var_num = self.get_variable_number_from_name(var)
                         d[var_num] = val
                 assert len(d) > 0
-                new_l = IcosahedronPointDatabase.line_from_dict(p, d)
+                adjusted_point_number = p - block_start
+                assert 0 <= adjusted_point_number < block_size, (p, block_size, block_number, block_start, adjusted_point_number)
+                new_l = IcosahedronPointDatabase.line_from_dict(adjusted_point_number, d)
                 lines_to_write.append(new_l)
             with open(fp, "w") as f:
                 for l in lines_to_write:

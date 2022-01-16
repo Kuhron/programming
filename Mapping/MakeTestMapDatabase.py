@@ -7,14 +7,13 @@ import os
 import random
 
 
-
-if __name__ == "__main__":
-    root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/MapData/"
+def make_test_db():
+    root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/TestMapData/"
     if IcosahedronPointDatabase.db_exists(root_dir):
         db = IcosahedronPointDatabase.load(root_dir)
         print("db loaded")
     else:
-        block_size = 4096
+        block_size = 65536
         db = IcosahedronPointDatabase.new(root_dir, block_size)
         db.add_variable("is_land")
         db.add_variable("elevation")
@@ -28,10 +27,14 @@ if __name__ == "__main__":
         db[p_i, "elevation"] = elevation
 
         if i % 1000 == 1:
+            print(i)
             db.write(clear_cache=True)
 
     db.write(clear_cache=True)
 
+
+if __name__ == "__main__":
+    make_test_db()
     raise NotImplementedError
 
     lattice = IcosahedralGeodesicLattice(iterations=6)  # max of 7 iterations before running out of memory

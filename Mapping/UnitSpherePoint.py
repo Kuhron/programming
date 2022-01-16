@@ -67,14 +67,40 @@ class UnitSpherePoint:
 
     def latlon(self):
         raise Exception("please use .latlondeg() or .latlonrad()")
-    
-    def distance(self, other):
+
+    @staticmethod
+    def distance_3d_latlondeg_static(latlon1, latlon2):
+        xyz1 = mcm.unit_vector_lat_lon_to_cartesian(*latlon1, deg=True)
+        xyz2 = mcm.unit_vector_lat_lon_to_cartesian(*latlon2, deg=True)
+        dv = np.array(xyz1) - np.array(xyz2)
+        return np.linalg.norm(dv)
+
+    @staticmethod
+    def distance_great_circle_latlondeg_static(latlon1, latlon2):
+        d0 = UnitSpherePoint.distance_3d_latlondeg_static(latlon1, latlon2)
+        r = 1
+        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, r)
+
+    @staticmethod
+    def convert_distance_3d_to_great_circle(d0, r):
+        theta = 2 * np.arcsin(d0 / (2*r))
+        d_gc = r * theta
+        assert 0 <= d_gc <= np.pi * r
+        assert d_gc >= d0, "shortest distance should be a straight line"
+        return d_gc
+
+    def distance_3d(self, other):
         assert type(other) is UnitSpherePoint
         v0 = self.tuples["xyz"]
         v1 = other.tuples["xyz"]
         dv = np.array(v1) - np.array(v0)
         return np.linalg.norm(dv)
-    
+
+    def distance_great_circle(self, other):
+        d0 = self.distance_3d(other)
+        r = 1
+        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, r)
+
     def set_data(self, key, value):
         # use for giving the point elevation, rainfall, etc.
         # and will make it easier to transfer data to another point, e.g. when snapping to lattice
@@ -114,7 +140,18 @@ class UnitSpherePoint:
         a = np.random.normal(0,1,(3,))
         a /= np.linalg.norm(a)
         xyz = a
-        latlondeg = mcm.unit_vector_cartesian_to_lat_lon(*xyz)
+        return UnitSpherePoint.from_xyz(*xyz)
+
+    @staticmethod
+    def from_xyz(x, y, z):
+        xyz = np.array([x, y, z])
+        latlondeg = mcm.unit_vector_cartesian_to_lat_lon(x, y, z, deg=True)
+        return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg})
+
+    @staticmethod
+    def from_latlondeg(lat, lon):
+        latlondeg = np.array([lat, lon])
+        xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon, deg=True)
         return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg})
 
     @staticmethod
