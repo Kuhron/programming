@@ -1,4 +1,4 @@
-cell = "I3"  # paste the formula in J3 and then copy to the rest of column J, transforming column I from number into grade letter
+cell = "B17"  # paste the formula in J3 and then copy to the rest of column J, transforming column I from number into grade letter
 
 conditions = []
 equality_conditions = []
