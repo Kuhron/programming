@@ -25,29 +25,45 @@ def filter_point_numbers_in_region(point_numbers, region_center_latlondeg, regio
     return point_numbers_in_region
 
 
+def get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km):
+    return f"PointNumberCache_center_{region_center_latlondeg[0]}_{region_center_latlondeg[1]}_radius_{region_radius_great_circle_km}km.txt"
+
+
 def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
     point_numbers_in_db = db.get_all_point_numbers_with_data()
     print(f"checking {len(point_numbers_in_db)} points")
     region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
     point_numbers_in_region_in_db = filter_point_numbers_in_region(point_numbers_in_db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
-    point_number_cache_fp = f"PointNumberCache_center_{region_center_latlondeg[0]}_{region_center_latlondeg[1]}_radius_{region_radius_great_circle_km}km.txt"
-    with open(point_number_cache_fp, "w") as f:
-        for pn in point_numbers_in_region_in_db:
-            f.write(f"{pn}\n")
+    write_point_numbers_to_cache(point_numbers_in_region_in_db, region_center_latlondeg, region_radius_great_circle_km)
     return point_numbers_in_region_in_db
 
 
-def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
-    point_number_cache_fp = f"PointNumberCache_center_{region_center_latlondeg[0]}_{region_center_latlondeg[1]}_radius_{region_radius_great_circle_km}km.txt"
+def write_point_numbers_to_cache(point_numbers, region_center_latlondeg, region_radius_great_circle_km):
+    point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
+    with open(point_number_cache_fp, "w") as f:
+        for pn in sorted(point_numbers):
+            f.write(f"{pn}\n")
+
+
+def read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km):
+    point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
     if os.path.exists(point_number_cache_fp):
         with open(point_number_cache_fp) as f:
             lines = f.readlines()
         point_numbers = [int(l.strip()) for l in lines]
+        return point_numbers
     else:
+        raise FileNotFoundError(point_number_cache_fp)
+
+
+def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
+    try:
+        return read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
+    except FileNotFoundError:
         region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
         point_numbers = list(get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_gc_normalized))
-    return point_numbers
+        return point_numbers
 
 
 def get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
@@ -119,10 +135,11 @@ def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_rad
 
 
 def plot_variable(db, point_numbers, var_to_plot):
-    vals = [db[pn, var_to_plot] for pn in point_numbers]
+    pn_to_val = db[point_numbers, var_to_plot]
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
+    vals = [pn_to_val[pn] for pn in point_numbers]
     plt.scatter(lons, lats, c=vals)
     plt.show()
 
@@ -149,11 +166,11 @@ if __name__ == "__main__":
     planet_radius_km = icm.CADA_II_RADIUS_KM
 
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
-    # plot_variable(db, points_with_data_in_region, "elevation_condition")
+    plot_variable(db, points_with_data_in_region, "elevation_condition")
 
     # edit the region and then plot again
     # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
-    edge_length_of_resolution_km = 100
+    edge_length_of_resolution_km = 10
     iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
     print(f"resolution needs {iterations_of_resolution} iterations of icosa")
     n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
@@ -164,22 +181,29 @@ if __name__ == "__main__":
 
     # so using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
     # first, interpolate the conditions at the points_at_this_resolution
-    print("interpolating elevation condition by nearest neighbor")
-    interpolated_elevation_conditions = {}
-    xyzs_with_data = {icm.get_xyz_from_point_number(pn): pn for pn in points_with_data_in_region}
-    for pn in points_at_this_resolution_in_region:
-        if pn in points_with_data_in_region:
-            # we already know its condition, no need to do nearest neighbors
-            continue
-        xyz = icm.get_xyz_from_point_number(pn)
-        nn_xyz, d = icm.get_nearest_neighbor_xyz_to_xyz(xyz, list(xyzs_with_data.keys()))
-        nn_pn = xyzs_with_data[nn_xyz]
-        el_cond = db[nn_pn, "elevation_condition"]
-        interpolated_elevation_conditions[pn] = el_cond
-    # write these to the db
-    print(f"got interpolated elevation conditions, writing {len(interpolated_elevation_conditions)} items to db")
-    print(f"TODO need to update the point number cache when add new points with data in this region; either that or improve the algorithm for getting points in the region, possibly by using the ancestry method to weed out the ones whose parents are too far away for them to be in the region")
-    input("press enter to continue")
-    for pn, el_cond in interpolated_elevation_conditions.items():
-        db[pn, "elevation_condition"] = el_cond
-    db.write()
+    points_where_var_is_undefined = set(points_at_this_resolution_in_region) - set(points_with_data_in_region)
+    if len(points_where_var_is_undefined) == 0:
+        print("all points have data, skipping interpolation")
+    else:
+        print("interpolating elevation condition by nearest neighbor")
+        interpolated_elevation_conditions = {}
+        xyzs_with_data = {icm.get_xyz_from_point_number(pn): pn for pn in points_with_data_in_region}
+        for pn in points_at_this_resolution_in_region:
+            if pn in points_with_data_in_region:
+                # we already know its condition, no need to do nearest neighbors
+                continue
+            xyz = icm.get_xyz_from_point_number(pn)
+            nn_xyz, d = icm.get_nearest_neighbor_xyz_to_xyz(xyz, list(xyzs_with_data.keys()))
+            nn_pn = xyzs_with_data[nn_xyz]
+            el_cond = db[nn_pn, "elevation_condition"]
+            interpolated_elevation_conditions[pn] = el_cond
+        # write these to the db
+        print(f"got interpolated elevation conditions, writing {len(interpolated_elevation_conditions)} items to db")
+        input("press enter to continue")
+        point_numbers_to_cache = points_with_data_in_region
+        for pn, el_cond in interpolated_elevation_conditions.items():
+            db[pn, "elevation_condition"] = el_cond
+            point_numbers_to_cache.append(pn)
+        db.write()
+        write_point_numbers_to_cache(point_numbers_to_cache, region_center_latlondeg, region_radius_great_circle_km)
+

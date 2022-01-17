@@ -127,13 +127,25 @@ class IcosahedronPointDatabase:
             d[var] = int(val)
         return d
 
-    def get(self, point_number, variable_name):
+    def get_single_point(self, point_number, variable_name):
         if point_number in self.cache:
             return self.cache[point_number][variable_name]
         else:
-            return self.get_from_file(point_number, variable_name)
+            return self.get_single_point_from_file(point_number, variable_name)
 
-    def get_from_file(self, point_number, variable_name):
+    def get_multiple_points(self, point_numbers, variable_name):
+        pn_set = set(point_numbers)
+        cached_point_numbers = set(self.cache.keys()) & pn_set
+        non_cached_point_numbers = pn_set - cached_point_numbers
+        d = {}
+        for pn in cached_point_numbers:
+            d[pn] = self.cache[pn][variable_name]
+        d_from_file = self.get_multiple_points_from_file(non_cached_point_numbers, variable_name)
+        d.update(d_from_file)
+        return d
+
+    def get_single_point_from_file(self, point_number, variable_name):
+        variable_number = self.get_variable_number_from_name(variable_name)
         block_fp = self.get_block_fp(point_number)
         if not os.path.exists(block_fp):
             # raise KeyError(f"no data for point {point_number}")
@@ -156,19 +168,54 @@ class IcosahedronPointDatabase:
             raise RuntimeError(f"point {point_number} found more than once!")
         else:
             l, = lines_this_point
-            variable_number = self.get_variable_number_from_name(variable_name)
-            # the first index (0) in l is the point number
-            d = {}
-            for x in l[1:]:
-                k,v = x.split("=")
-                k = int(k)
-                v = int(v)
-                d[k] = v
-            # typ = self.get_variable_type_from_name(variable_name)
-            # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
-            val = d[variable_number]
+            val = IcosahedronPointDatabase.get_variable_from_line(l, variable_number)
             self.add_to_cache(point_number, variable_name, val)
             return val
+
+    def get_multiple_points_from_file(self, pns, variable_name):
+        variable_number = self.get_variable_number_from_name(variable_name)
+        block_size = self.metadata["block_size"]
+        block_number_to_pns = {}
+        for pn in pns:
+            block_number = pn // block_size
+            if block_number not in block_number_to_pns:
+                block_number_to_pns[block_number] = []
+            block_number_to_pns[block_number].append(pn)
+        block_number_to_fp = {bn: self.get_block_fp_for_block_number(bn) for bn in block_number_to_pns.keys()}
+        res_by_pn = {}
+        for block_number, pns_this_block in block_number_to_pns.items():
+            block_fp = block_number_to_fp[block_number]
+            block_start = block_number * block_size
+            adjusted_pns_this_block = [pn - block_start for pn in pns_this_block]
+            assert all(0 <= apn < block_size for apn in adjusted_pns_this_block), "bad adjusted point number"
+            with open(block_fp) as f:
+                lines = f.readlines()
+            lines = [l.strip().split(",") for l in lines]
+            line_dict = {int(l[0]): l for l in lines}
+            for apn in adjusted_pns_this_block:
+                pn = apn + block_start
+                l = line_dict.get(apn)
+                if l is None:
+                    res_by_pn[pn] = None
+                else:
+                    val = IcosahedronPointDatabase.get_variable_from_line(l, variable_number)
+                    self.add_to_cache(pn, variable_name, val)
+                    res_by_pn[pn] = val
+        return res_by_pn
+
+    @staticmethod
+    def get_variable_from_line(l, variable_number):
+        # the first index (0) in l is the point number
+        d_this_line = {}
+        for x in l[1:]:
+            k,v = x.split("=")
+            k = int(k)
+            v = int(v)
+            d_this_line[k] = v
+        val = d_this_line[variable_number]
+        # typ = self.get_variable_type_from_name(variable_name)
+        # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
+        return val
 
     def add_to_cache(self, point_number, variable_name, value):
         if point_number not in self.cache:
@@ -235,8 +282,12 @@ class IcosahedronPointDatabase:
         return self.variables_dict[number]
 
     def __getitem__(self, tup):
-        point_number, variable_name = tup
-        return self.get(point_number, variable_name)
+        point_numbers, variable_name = tup
+        if type(point_numbers) is int or len(point_numbers) == 1:
+            point_number, = point_numbers
+            return self.get_single_point(point_number, variable_name)
+        else:
+            return self.get_multiple_points(point_numbers, variable_name)
 
     def __setitem__(self, tup, val):
         point_number, variable_name = tup
