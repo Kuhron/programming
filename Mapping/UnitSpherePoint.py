@@ -101,9 +101,14 @@ class UnitSpherePoint:
         r = radius
         theta = 2 * np.arcsin(d0 / (2*r))
         d_gc = r * theta
-        assert 0 <= d_gc <= np.pi * r
+        assert 0 <= d_gc <= np.pi * r, f"bad great circle distance {d_gc} from d0={d0}, r={r}"
         assert d_gc >= d0, "shortest distance should be a straight line"
+        # print(f"d0 = {d0}, r = {r} -> great circle distance {d_gc}")
         return d_gc
+
+    @staticmethod
+    def convert_distance_3d_to_great_circle_array(d0, radius=1):
+        return (np.vectorize(lambda d: UnitSpherePoint.convert_distance_3d_to_great_circle(d, radius=radius)))(d0)
 
     def distance_3d(self, other, radius=1):
         assert type(other) is UnitSpherePoint

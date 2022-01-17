@@ -295,7 +295,7 @@ class IcosahedronPointDatabase:
 
     def clear_cache(self):
         self.cache = {}
-        print("cache cleared")
+        print("db cache cleared")
 
     def write(self, clear_cache=True):
         # update the block files on disk

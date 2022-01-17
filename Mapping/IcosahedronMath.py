@@ -41,6 +41,13 @@ def get_xyzs_from_point_numbers(point_numbers):
     return [pos["xyz"] for pos in poses]
 
 
+def get_xyz_array_from_point_numbers(point_numbers):
+    xyzs = get_xyzs_from_point_numbers(point_numbers)
+    arr = np.array(xyzs)
+    assert arr.shape == (len(point_numbers), 3), arr.shape
+    return arr
+
+
 def get_usp_from_point_number(point_number):
     pos = get_position_recursive(point_number)
     assert type(pos) is dict

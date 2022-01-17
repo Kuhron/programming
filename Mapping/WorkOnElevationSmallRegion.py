@@ -2,6 +2,8 @@ from IcosahedronPointDatabase import IcosahedronPointDatabase
 import IcosahedronMath as icm
 from UnitSpherePoint import UnitSpherePoint
 import MapCoordinateMath as mcm
+from GreatCircleDistanceMatrix import GreatCircleDistanceMatrix
+from BiDict import BiDict
 
 import random
 import os
@@ -41,6 +43,16 @@ def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radi
 
 def write_point_numbers_to_cache(point_numbers, region_center_latlondeg, region_radius_great_circle_km):
     point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
+    # keep everything that's already there
+    with open(point_number_cache_fp) as f:
+        lines = f.readlines()
+    existing_pns = set(int(l.strip()) for l in lines)
+    point_numbers = set(point_numbers)
+    if len(point_numbers - existing_pns) == 0:
+        print("all points are already cached")
+        return
+
+    point_numbers |= existing_pns
     with open(point_number_cache_fp, "w") as f:
         for pn in sorted(point_numbers):
             f.write(f"{pn}\n")
@@ -134,6 +146,33 @@ def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_rad
     return closest_descendant_can_be_to_region_center <= region_radius_great_circle_km
 
 
+def interpolate_at_points_nearest_neighbor(points_to_interpolate_at, points_to_interpolate_from, variable_name, db, max_nn_distance=None):
+    # interpolate the conditions at the points_at_this_resolution
+    known_values = db[points_to_interpolate_from, variable_name]
+    assert type(known_values) is dict
+    if len(set(points_to_interpolate_at) - set(points_to_interpolate_from)) == 0:
+        # already know values of all these points, don't bother getting xyz or doing nearest neighbor calculation
+        return {pn: known_values[pn] for pn in points_to_interpolate_at}
+
+    interpolated = {}
+    xyzs_with_data = {icm.get_xyz_from_point_number(pn): pn for pn in points_to_interpolate_from}
+    for pn in points_to_interpolate_at:
+        if pn in known_values:
+            # we already know its condition, no need to do nearest neighbors
+            interpolated[pn] = known_values[pn]
+        else:
+            xyz = icm.get_xyz_from_point_number(pn)
+            nn_xyz, d = icm.get_nearest_neighbor_xyz_to_xyz(xyz, list(xyzs_with_data.keys()))
+            if max_nn_distance is None or d <= max_nn_distance:
+                nn_pn = xyzs_with_data[nn_xyz]
+                el_cond = db[nn_pn, variable_name]
+                interpolated[pn] = el_cond
+            else:
+                # don't interpolate here, the nearest neighbor is too far away
+                interpolated[pn] = None
+    return interpolated
+
+
 def plot_variable(db, point_numbers, var_to_plot):
     pn_to_val = db[point_numbers, var_to_plot]
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
@@ -166,11 +205,15 @@ if __name__ == "__main__":
     planet_radius_km = icm.CADA_II_RADIUS_KM
 
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
-    plot_variable(db, points_with_data_in_region, "elevation_condition")
+
+    # DEBUG
+    # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
+
+    # plot_variable(db, points_with_data_in_region, "elevation_condition")
 
     # edit the region and then plot again
     # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
-    edge_length_of_resolution_km = 10
+    edge_length_of_resolution_km = 100
     iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
     print(f"resolution needs {iterations_of_resolution} iterations of icosa")
     n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
@@ -180,30 +223,39 @@ if __name__ == "__main__":
     # plot_latlons(points_at_this_resolution_in_region)
 
     # so using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
-    # first, interpolate the conditions at the points_at_this_resolution
-    points_where_var_is_undefined = set(points_at_this_resolution_in_region) - set(points_with_data_in_region)
-    if len(points_where_var_is_undefined) == 0:
-        print("all points have data, skipping interpolation")
-    else:
-        print("interpolating elevation condition by nearest neighbor")
-        interpolated_elevation_conditions = {}
-        xyzs_with_data = {icm.get_xyz_from_point_number(pn): pn for pn in points_with_data_in_region}
-        for pn in points_at_this_resolution_in_region:
-            if pn in points_with_data_in_region:
-                # we already know its condition, no need to do nearest neighbors
-                continue
-            xyz = icm.get_xyz_from_point_number(pn)
-            nn_xyz, d = icm.get_nearest_neighbor_xyz_to_xyz(xyz, list(xyzs_with_data.keys()))
-            nn_pn = xyzs_with_data[nn_xyz]
-            el_cond = db[nn_pn, "elevation_condition"]
-            interpolated_elevation_conditions[pn] = el_cond
+
+    interpolate = False
+    if interpolate:
+        interpolated_elevation_conditions = interpolate_at_points_nearest_neighbor(points_to_interpolate_at=points_at_this_resolution_in_region, points_to_interpolate_from=points_with_data_in_region, variable_name="elevation_condition", db=db, max_nn_distance=100/planet_radius_km)
         # write these to the db
         print(f"got interpolated elevation conditions, writing {len(interpolated_elevation_conditions)} items to db")
         input("press enter to continue")
-        point_numbers_to_cache = points_with_data_in_region
+        point_numbers_to_cache = points_at_this_resolution_in_region
         for pn, el_cond in interpolated_elevation_conditions.items():
+            if el_cond is None:
+                # interpolation failed because neighbors were too far away
+                continue
             db[pn, "elevation_condition"] = el_cond
             point_numbers_to_cache.append(pn)
         db.write()
         write_point_numbers_to_cache(point_numbers_to_cache, region_center_latlondeg, region_radius_great_circle_km)
+        points_to_edit = list(interpolated_elevation_conditions.keys())
+    else:
+        points_to_edit = points_with_data_in_region
 
+    # start by generating random elevation circles in the region
+    xyz_array = icm.get_xyz_array_from_point_numbers(points_to_edit)
+    xyz_tuples = [tuple(xyz) for xyz in xyz_array]
+    xyz_dict = BiDict.from_dict(dict(zip(points_to_edit, xyz_tuples)))
+    matrix = GreatCircleDistanceMatrix(xyz_array, radius=planet_radius_km)
+
+    circle_radius_gc = 15
+    n_circles = 100
+    for c_i in range(n_circles):
+        pn_center = random.choice(points_to_edit)
+        xyz_center = np.array(xyz_dict[pn_center])
+        # distances = matrix.get_distances_to_point(xyz_center)
+        p_xyzs_in_circle = matrix.get_points_within_distance_of_point(xyz_center, circle_radius_gc)
+        pns_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle]
+        print(f"this circle contains {pns_in_circle}")
+    # then adjust to meet the conditions
