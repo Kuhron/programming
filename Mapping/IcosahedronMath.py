@@ -510,6 +510,15 @@ def get_child(parent, child_index, iteration):
 
 
 @functools.lru_cache(maxsize=10000)
+def get_children(parent, iteration):
+    if parent in [0, 1]:
+        raise ValueError("point {} cannot have children".format(parent))
+    verify_can_have_children(parent, iteration)  # make sure parent exists and is old enough to have children
+    adder = get_3adder_for_iteration(iteration)
+    return [3 * (parent + adder) + child_index for child_index in [0, 1, 2]]
+
+
+@functools.lru_cache(maxsize=10000)
 def get_parent(point_number):
     # each point except the initial 12 is created from a "parent", a pre-existing point from one of the previous iterations
     # at each iteration, each existing point except the poles gets three new children
@@ -720,6 +729,7 @@ def is_parent_and_child_direction(a, b, a_adjacency):
 
 def unify_five_and_six(adjacency, point_number):
     # converts the five-point adjacencies for points 2-11 (inclusive) into six-point, where two of the points are the same according to the neighbor identities for those 10 points
+    assert type(adjacency) is list
     if point_number >= 12:
         assert len(adjacency) == 6
         return adjacency
@@ -744,7 +754,7 @@ def unify_five_and_six(adjacency, point_number):
     elif identity_pair == ("D", "R"):
         # southern ring
         assert idx_int == 2 and idy_int == 3
-        adj = adjacency[:3] + [adjacency[2]] + adjacency[3:]
+        adj = adjacency[:3] + [adjacency[2],] + adjacency[3:]
     else:
         raise ValueError("invalid identity pair {}".format(identity_pair))
 
@@ -850,6 +860,7 @@ def get_adjacency_when_born(point_number):
     if point_number < 12:
         point_list, adjacency_dict = STARTING_POINTS
         adj_raw = adjacency_dict[point_number]
+        adj_raw = list(adj_raw)
         # print("returning known raw adjacency when born for starting point p#{}".format(point_number))
         return adj_raw  # just return the five-length one here in case this is the final call, only use the casting to six-length when it's an intermediate step to getting some non-initial point's adjacency
 
@@ -1316,6 +1327,32 @@ def get_latlons_of_points_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon
             res.append((lat, lon))
     print(f"done getting latlons in latlon rectangle for {iterations} iterations")
     return res
+
+
+def get_farthest_distance_descendant_can_be(point, radius=1, iteration_of_next_child=None):
+    # when the point is born, it has a L, DL, and D neighbor, toward which any of its descendants will go, and the farthest that descent line can move is arbitrarily close to one of those three points
+    # for purposes of filtering out points in a given region (distance from a given latlon) by stopping the traversal of ancestral lines that will always be too far away
+    if point in [0, 1]:
+        # these have no descendants
+        return 0
+    if iteration_of_next_child is None:
+        iteration_checking_at = get_iteration_born(point)
+    else:
+        iteration_checking_at = iteration_of_next_child - 1
+    adjacency_at_iter = get_adjacency_recursive(point, iteration_checking_at)
+    if point < 12:
+        adjacency_at_iter = unify_five_and_six(adjacency_at_iter, point)
+    l, dl, d, _, _, _ = adjacency_at_iter
+    xyz = get_xyz_from_point_number(point)
+    distance_to_l = get_distance_icosa_point_to_xyz_great_circle(l, xyz)
+    distance_to_dl = get_distance_icosa_point_to_xyz_great_circle(dl, xyz)
+    distance_to_d = get_distance_icosa_point_to_xyz_great_circle(d, xyz)
+    return radius * max(distance_to_l, distance_to_dl, distance_to_d)
+
+
+def get_distance_icosa_point_to_xyz_great_circle(pn, xyz, radius=1):
+    xyz2 = get_xyz_from_point_number(pn)
+    return UnitSpherePoint.distance_3d_xyz_static(xyz, xyz2, radius=radius)
 
 
 def notify_memo_accessed(memo_fp):

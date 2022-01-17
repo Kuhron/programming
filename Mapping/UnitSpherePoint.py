@@ -69,37 +69,54 @@ class UnitSpherePoint:
         raise Exception("please use .latlondeg() or .latlonrad()")
 
     @staticmethod
-    def distance_3d_latlondeg_static(latlon1, latlon2):
+    def distance_3d_xyz_static(xyz1, xyz2, radius=1):
+        x1, y1, z1 = xyz1
+        x2, y2, z2 = xyz2
+        dx = x2 - x1
+        dy = y2 - y1
+        dz = z2 - z1
+        d = (dx**2 + dy**2 + dz**2) ** 0.5
+        return d * radius
+
+    @staticmethod
+    def distance_3d_latlondeg_static(latlon1, latlon2, radius=1):
         xyz1 = mcm.unit_vector_lat_lon_to_cartesian(*latlon1, deg=True)
         xyz2 = mcm.unit_vector_lat_lon_to_cartesian(*latlon2, deg=True)
-        dv = np.array(xyz1) - np.array(xyz2)
-        return np.linalg.norm(dv)
+        return UnitSpherePoint.distance_3d_xyz_static(xyz1, xyz2, radius=radius)
 
     @staticmethod
-    def distance_great_circle_latlondeg_static(latlon1, latlon2):
-        d0 = UnitSpherePoint.distance_3d_latlondeg_static(latlon1, latlon2)
-        r = 1
-        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, r)
+    def distance_great_circle_latlondeg_static(latlon1, latlon2, radius=1):
+        d0 = UnitSpherePoint.distance_3d_latlondeg_static(latlon1, latlon2, radius=1)
+        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, radius=radius)
+        # don't multiply by radius twice, just do it in the great circle conversion call
 
     @staticmethod
-    def convert_distance_3d_to_great_circle(d0, r):
+    def distance_great_circle_xyz_static(xyz1, xyz2, radius=1):
+        d0 = UnitSpherePoint.distance_3d_xyz_static(xyz1, xyz2, radius=1)
+        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, radius=radius)
+        # don't multiply by radius twice, just do it in the great circle conversion call
+
+    @staticmethod
+    def convert_distance_3d_to_great_circle(d0, radius=1):
+        r = radius
         theta = 2 * np.arcsin(d0 / (2*r))
         d_gc = r * theta
         assert 0 <= d_gc <= np.pi * r
         assert d_gc >= d0, "shortest distance should be a straight line"
         return d_gc
 
-    def distance_3d(self, other):
+    def distance_3d(self, other, radius=1):
         assert type(other) is UnitSpherePoint
         v0 = self.tuples["xyz"]
         v1 = other.tuples["xyz"]
         dv = np.array(v1) - np.array(v0)
-        return np.linalg.norm(dv)
+        d = np.linalg.norm(dv)
+        return d * radius
 
-    def distance_great_circle(self, other):
-        d0 = self.distance_3d(other)
-        r = 1
-        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, r)
+    def distance_great_circle(self, other, radius):
+        d0 = self.distance_3d(other, radius=1)
+        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, radius=radius)
+        # multiply by radius once only
 
     def set_data(self, key, value):
         # use for giving the point elevation, rainfall, etc.
