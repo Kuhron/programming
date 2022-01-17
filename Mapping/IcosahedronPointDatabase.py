@@ -251,7 +251,7 @@ class IcosahedronPointDatabase:
         block_size = self.metadata["block_size"]
         blocks_in_cache = set(point_number // block_size for point_number in self.cache.keys())
         for block_number in blocks_in_cache:
-            print("block_number", block_number)
+            print("writing block_number", block_number)
             block_start = block_number * block_size
             point_numbers = set([p for p in self.cache.keys() if p // block_size == block_number])
             fps = set(self.get_block_fp(p) for p in point_numbers)

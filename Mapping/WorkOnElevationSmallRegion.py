@@ -38,7 +38,7 @@ def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radi
     return point_numbers_in_region_in_db
 
 
-def get_point_numbers_with_data_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
+def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
     point_number_cache_fp = f"PointNumberCache_center_{region_center_latlondeg[0]}_{region_center_latlondeg[1]}_radius_{region_radius_great_circle_km}km.txt"
     if os.path.exists(point_number_cache_fp):
         with open(point_number_cache_fp) as f:
@@ -148,16 +148,38 @@ if __name__ == "__main__":
     region_radius_great_circle_km = 1000
     planet_radius_km = icm.CADA_II_RADIUS_KM
 
-    point_numbers = get_point_numbers_with_data_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
-    # plot_variable(db, point_numbers, "elevation_condition")
+    points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
+    # plot_variable(db, points_with_data_in_region, "elevation_condition")
 
     # edit the region and then plot again
     # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
-    edge_length_of_resolution_km = 10
+    edge_length_of_resolution_km = 100
     iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
     print(f"resolution needs {iterations_of_resolution} iterations of icosa")
     n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
     # points_at_this_resolution_in_region = filter_point_numbers_in_region(list(range(n_points_total_at_this_iteration)), region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)  # include points of previous iterations  # too long, brute force over the whole planet
     points_at_this_resolution_in_region = get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations=iterations_of_resolution)
-    print("points in region:", points_at_this_resolution_in_region)
-    plot_latlons(points_at_this_resolution_in_region)
+    # print("points in region:", points_at_this_resolution_in_region)
+    # plot_latlons(points_at_this_resolution_in_region)
+
+    # so using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
+    # first, interpolate the conditions at the points_at_this_resolution
+    print("interpolating elevation condition by nearest neighbor")
+    interpolated_elevation_conditions = {}
+    xyzs_with_data = {icm.get_xyz_from_point_number(pn): pn for pn in points_with_data_in_region}
+    for pn in points_at_this_resolution_in_region:
+        if pn in points_with_data_in_region:
+            # we already know its condition, no need to do nearest neighbors
+            continue
+        xyz = icm.get_xyz_from_point_number(pn)
+        nn_xyz, d = icm.get_nearest_neighbor_xyz_to_xyz(xyz, list(xyzs_with_data.keys()))
+        nn_pn = xyzs_with_data[nn_xyz]
+        el_cond = db[nn_pn, "elevation_condition"]
+        interpolated_elevation_conditions[pn] = el_cond
+    # write these to the db
+    print(f"got interpolated elevation conditions, writing {len(interpolated_elevation_conditions)} items to db")
+    print(f"TODO need to update the point number cache when add new points with data in this region; either that or improve the algorithm for getting points in the region, possibly by using the ancestry method to weed out the ones whose parents are too far away for them to be in the region")
+    input("press enter to continue")
+    for pn, el_cond in interpolated_elevation_conditions.items():
+        db[pn, "elevation_condition"] = el_cond
+    db.write()

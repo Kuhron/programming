@@ -1253,21 +1253,50 @@ def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius):
 def get_nearest_neighbor_to_latlon(latlon, candidates_usp):
     lat, lon = latlon
     xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon)
-    candidates = [cand.xyz() for cand in candidates_usp]
-    return get_nearest_neighbor_to_xyz(xyz, candidates_usp)
+    candidates_xyz = {c.xyz(): c for c in candidates_usp}
+    nn_xyz, d = get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz)
+    return candidates_xyz[nn_xyz], d
 
 
 def get_nearest_neighbor_to_xyz(xyz, candidates_usp):
+    candidates_xyz = {c.xyz(): c for c in candidates_usp}
+    nn_xyz, d = get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz)
+    return candidates_xyz[nn_xyz], d
+
+
+def get_nearest_neighbor_point_number_to_point_number(pn, candidates_pn):
+    xyz = get_xyz_from_point_number(pn)
+    candidates_xyz = {get_xyz_from_point_number(c): c for c in candidates_pn}
+    nn_xyz, d = get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz)
+    return candidates_xyz[nn_xyz], d
+
+
+def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
+    p = np.array(xyz)
+    assert p.shape == (3,), p.shape
+    ps = np.array(candidates_xyz)
+    n = len(candidates_xyz)
+    assert ps.shape == (n, 3), p.shape
+    dx = p-ps
+    d = sum((dx**2).T) ** 0.5
+    assert d.shape == (n,)
+    nn_index = np.argmin(d)
+    min_d = min(d)
+    nn_arr = ps[nn_index]
+    nn_xyz = tuple(nn_arr)
+    return nn_xyz, min_d
+
+
+def _old_iterative_get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
     min_distance = np.inf
     nearest_neighbors = []
-    for c in candidates_usp:
-        c_xyz = c.xyz()
+    for c_xyz in candidates_xyz:
         d = mcm.xyz_distance(xyz, c_xyz)
         if d < min_distance:
-            nearest_neighbors = [c]
+            nearest_neighbors = [c_xyz]
             min_distance = d
         elif d == min_distance:
-            nearest_neighbors.append(c)
+            nearest_neighbors.append(c_xyz)
     if len(nearest_neighbors) == 1:
         return nearest_neighbors[0], min_distance
     else:
