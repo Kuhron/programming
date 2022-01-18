@@ -113,8 +113,10 @@ def get_contour_levels(min_value, max_value, prefer_positive=False, n_sea_contou
 
 
 def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons, with_axis=False):
-    min_lat, max_lat = lat_range if lat_range is not None else (-90, 90)
-    min_lon, max_lon = lon_range if lon_range is not None else (-180, 180)
+    lats = [coords[0] for coords in data_coords]
+    lons = [coords[1] for coords in data_coords]
+    min_lat, max_lat = lat_range if lat_range is not None else (min(lats), max(lats))
+    min_lon, max_lon = lon_range if lon_range is not None else (min(lons), max(lons))
     interpolation_lats = np.linspace(min_lat, max_lat, n_lats)
     interpolation_lons = np.linspace(min_lon, max_lon, n_lons)
     interpolation_grid_latlon = np.array(list(itertools.product(interpolation_lats, interpolation_lons)))

@@ -296,9 +296,10 @@ def write_image_conditions_as_image_shape_in_shorthand(image_name, map_variable)
     rgba_to_condition_dict = get_rgba_to_condition_dict(image_name, map_variable)
     color_to_shorthand = {rgba: row["shorthand"] for rgba, row in rgba_to_condition_dict.items()}
 
-    metadata = get_image_metadata_dict()[image_name]
-    image_fp = metadata["image_fp"]
-    condition_array_dir = metadata["condition_array_dir"]
+    image_metadata = get_image_metadata_dict()[image_name]
+    image_fp = image_metadata["image_fp"]
+    world_metadata = get_world_metadata_dict()[world_name]
+    condition_array_dir = world_metadata["condition_array_dir"]
     im = Image.open(image_fp)
     arr = np.array(im)
     assert arr.shape[-1] == 4, arr.shape  # RGBA dimension

@@ -70,8 +70,8 @@ def get_rc_size(rcs):
     return r_size, c_size
 
 
-def get_condition_array_categorical(image_name, map_variable):
-    strs = get_condition_array_shorthand(image_name, map_variable)
+def get_condition_array_categorical(image_name, world_name, map_variable):
+    strs = get_condition_array_shorthand(image_name, world_name, map_variable)
     # assume all shorthands are non-negative ints, give -1 to the absent condition
     ints = []
     for str_row in strs:
@@ -88,9 +88,9 @@ def get_condition_array_categorical(image_name, map_variable):
     return ints
 
 
-def get_condition_array_shorthand(image_name, map_variable):
-    metadata = get_image_metadata_dict()[image_name]
-    condition_array_dir = metadata["condition_array_dir"]
+def get_condition_array_shorthand(image_name, world_name, map_variable):
+    world_metadata = get_world_metadata_dict()[world_name]
+    condition_array_dir = world_metadata["condition_array_dir"]
 
     filename = f"{image_name}_{map_variable}_condition_shorthand.txt"
     fp = os.path.join(condition_array_dir, filename)
@@ -101,9 +101,9 @@ def get_condition_array_shorthand(image_name, map_variable):
     return strs
 
 
-def get_condition_shorthand_dict(image_name, map_variable):
-    metadata = get_image_metadata_dict()
-    condition_array_dir = metadata[image_name]["condition_array_dir"]
+def get_condition_shorthand_dict(world_name, map_variable):
+    world_metadata = get_world_metadata_dict()[world_name]
+    condition_array_dir = world_metadata["condition_array_dir"]
     shorthand_filename = f"ImageKey_{map_variable}_condition.csv"
     shorthand_fp = os.path.join(condition_array_dir, shorthand_filename)
 
@@ -116,14 +116,14 @@ def get_condition_shorthand_dict(image_name, map_variable):
             row["min"] = float(row["min"]) if row["min"] != "" else None
             row["max"] = float(row["max"]) if row["max"] != "" else None
             assert (row["min"] is None or row["max"] is None) or (row["min"] <= row["max"])
-            dict_key = row[dict_key_colname]
+            dict_key = int(row[dict_key_colname])
             assert dict_key not in d
             d[dict_key] = row
     return d
 
 
-def get_rgba_to_condition_dict(image_name, map_variable):
-    shorthand_dict = get_condition_shorthand_dict(image_name, map_variable)
+def get_rgba_to_condition_dict(world_name, map_variable):
+    shorthand_dict = get_condition_shorthand_dict(world_name, map_variable)
     d = {}
     for sh, row in shorthand_dict.items():
         colors_rgba = row["colors_rgba"]
@@ -150,10 +150,14 @@ def parse_colors_rgba(rgbas_str):
     return res
 
 
-def get_default_values_of_conditions(image_name, map_variable):
-    condition_shorthand_array = get_condition_array_shorthand(image_name, map_variable)
-    shorthand_dict = get_condition_shorthand_dict(image_name, map_variable)
+def get_default_values_of_conditions(world_name, map_variable):
+    shorthand_dict = get_condition_shorthand_dict(world_name, map_variable)
     shorthand_to_default_value = {sh: get_default_value_from_min_and_max(shorthand_dict[sh]["min"], shorthand_dict[sh]["max"]) for sh in shorthand_dict}
+    return shorthand_to_default_value
+
+
+def get_default_value_array(image_name, world_name, map_variable):
+    condition_shorthand_array = get_condition_array_shorthand(image_name, world_name, map_variable)
     convert = np.vectorize(lambda x: shorthand_to_default_value[x])  # don't do .get because we want to raise for invalid key
     default_values = convert(condition_shorthand_array)
     return default_values
@@ -161,14 +165,14 @@ def get_default_values_of_conditions(image_name, map_variable):
 
 def get_default_value_from_min_and_max(min_val, max_val):
     # if condition has min and max, use average
-    # if condition has only min or max, use that +/- 1 on the allowed side (or could just use the extremum itself, since who knows what units that 1 is in)
+    # if condition has only min or max, use that
     # if condition has neither, use 0 (or NaN? but want to seed from the default for elevation, so use 0)
     if min_val is None and max_val is None:
         return 0.0
     elif min_val is None and max_val is not None:
-        return max_val - 1.0
+        return max_val
     elif max_val is None and min_val is not None:
-        return min_val + 1.0
+        return min_val
     else:
         return (min_val + max_val)/2.0
     # return all floats because np.vectorize very annoyingly will only choose a single return type; it assumes the output type of the first element in the input is what is desired for all of the inputs. Not true here if we mix floats and ints!

@@ -4,6 +4,8 @@ from UnitSpherePoint import UnitSpherePoint
 import MapCoordinateMath as mcm
 from GreatCircleDistanceMatrix import GreatCircleDistanceMatrix
 from BiDict import BiDict
+import LoadMapData
+import PlottingUtil as pu
 
 import random
 import os
@@ -173,13 +175,32 @@ def interpolate_at_points_nearest_neighbor(points_to_interpolate_at, points_to_i
     return interpolated
 
 
-def plot_variable(db, point_numbers, var_to_plot):
+def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
     pn_to_val = db[point_numbers, var_to_plot]
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     vals = [pn_to_val[pn] for pn in point_numbers]
     plt.scatter(lons, lats, c=vals)
+    plt.colorbar()
+    plt.title(var_to_plot)
+    if show:
+        plt.show()
+
+
+def plot_variables_scattered(db, point_numbers, vars_to_plot):
+    n_plots = len(vars_to_plot)
+    for i, var in enumerate(vars_to_plot):
+        plt.subplot(1, n_plots, i+1)
+        plot_variable(db, point_numbers, var, show=False)
+    plt.show()
+
+
+def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution):
+    latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
+    values_dict = db[point_numbers, var_to_plot]
+    values = [values_dict[pn] for pn in point_numbers]
+    pu.plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
     plt.show()
 
 
@@ -209,7 +230,9 @@ if __name__ == "__main__":
     # DEBUG
     # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
 
-    # plot_variable(db, points_with_data_in_region, "elevation_condition")
+    # plot_variables_scattered(db, points_with_data_in_region, ["elevation_condition", "elevation"])
+    plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
+    input("press enter to continue")
 
     # edit the region and then plot again
     # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
@@ -249,13 +272,63 @@ if __name__ == "__main__":
     xyz_dict = BiDict.from_dict(dict(zip(points_to_edit, xyz_tuples)))
     matrix = GreatCircleDistanceMatrix(xyz_array, radius=planet_radius_km)
 
-    circle_radius_gc = 15
-    n_circles = 100
+    # db.add_variable("elevation")
+    shorthand_dict = LoadMapData.get_condition_shorthand_dict(world_name="Cada II", map_variable="elevation")
+    elevation_conditions = db[points_to_edit, "elevation_condition"]
+    elevation_condition_to_default_value = LoadMapData.get_default_values_of_conditions(world_name="Cada II", map_variable="elevation")
+    elevation_condition_to_min_value = {sh: shorthand_dict[sh]["min"] for sh in shorthand_dict}
+    elevation_condition_to_max_value = {sh: shorthand_dict[sh]["max"] for sh in shorthand_dict}
+
+    # set elevations to default value for condition
+    for pn in points_to_edit:
+        el_cond = elevation_conditions[pn]
+        val = elevation_condition_to_default_value[el_cond]
+        if db[pn, "elevation"] is None:
+            db[pn, "elevation"] = int(round(val))
+
+    power_law_param = 0.25
+    power_law = lambda: np.random.power(power_law_param)
+    circle_radius_dist = lambda: power_law() * region_radius_great_circle_km
+    n_circles = 100000
     for c_i in range(n_circles):
+        print(f"circle {c_i} / {n_circles}")
+        circle_radius_gc = circle_radius_dist()
         pn_center = random.choice(points_to_edit)
         xyz_center = np.array(xyz_dict[pn_center])
         # distances = matrix.get_distances_to_point(xyz_center)
         p_xyzs_in_circle = matrix.get_points_within_distance_of_point(xyz_center, circle_radius_gc)
-        pns_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle]
-        print(f"this circle contains {pns_in_circle}")
-    # then adjust to meet the conditions
+        pns_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle.keys()]
+        # print(f"this circle contains {pns_in_circle}")
+
+        d_el = int(round(np.random.normal(0, 10)))
+        old_els = db[pns_in_circle, "elevation"]
+        new_els = {pn: old_els[pn] + d_el for pn in pns_in_circle}
+        # check new_els still meet elevation conditions
+        all_meet_conditions = True
+        for pn in pns_in_circle:
+            el_cond = elevation_conditions[pn]
+            min_val = elevation_condition_to_min_value[el_cond]
+            max_val = elevation_condition_to_max_value[el_cond]
+            new_val = new_els[pn]
+            meets_condition = True
+            if min_val is not None:
+                meets_condition = meets_condition and min_val <= new_val
+            if max_val is not None:
+                meets_condition = meets_condition and new_val <= max_val
+            if not meets_condition:
+                all_meet_conditions = False
+                break
+            # can be smarter about how we choose d_el based on the most any point here can move up/down
+        if all_meet_conditions:
+            print("conditions passed, adding to db")
+            d_els = [d_el] * len(pns_in_circle)
+            db.add_values(pns_in_circle, "elevation", d_els)
+            # print(f"added {d_el}")
+            # print("new values:", db[pns_in_circle, "elevation"])
+        else:
+            print("conditions failed, making new circle")
+
+    plot_variables(db, points_to_edit, ["elevation_condition", "elevation"])
+    if input("write these results? y/n (default n)") == "y":
+        db.write()
+

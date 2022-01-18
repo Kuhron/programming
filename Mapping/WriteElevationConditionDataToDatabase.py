@@ -1,6 +1,6 @@
 from IcosahedronPointDatabase import IcosahedronPointDatabase
 from LoadMapData import get_condition_shorthand_dict
-from ImageMetadata import get_image_metadata_dict
+from ImageMetadata import get_image_metadata_dict, get_world_metadata_dict
 import os
 
 
@@ -58,11 +58,12 @@ if __name__ == "__main__":
         print("new db created")
 
     # get the land/sea values from images at some icosahedron point resolution
-    metadata = get_image_metadata_dict()
-    for image_name in metadata.keys():
+    image_metadata = get_image_metadata_dict()
+    world_metadata = get_world_metadata_dict()
+    for image_name in image_metadata.keys():
         print(image_name)
-        pixel_to_icosa_fp = metadata[image_name]["pixel_to_icosa_fp"]
-        condition_array_dir = metadata[image_name]["condition_array_dir"]
+        pixel_to_icosa_fp = image_metadata[image_name]["pixel_to_icosa_fp"]
+        condition_array_dir = world_metadata[world_name]["condition_array_dir"]
         variable_value_key_fp = os.path.join(condition_array_dir, f"ImageKey_{var_to_write}.csv")
         condition_array_fp = os.path.join(condition_array_dir, f"{image_name}_{var_to_write}_shorthand.txt")
 

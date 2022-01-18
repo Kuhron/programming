@@ -71,6 +71,9 @@ class IcosahedronPointDatabase:
 
     def add_variable(self, variable_name):
         var_dict = self.get_variables_dict()
+        if variable_name in var_dict.keys(str, int):
+            print("cannot add existing variable", variable_name)
+            return
         indexes = var_dict.keys(int, str)
         if len(indexes) == 0:
             new_index = 0
@@ -129,7 +132,7 @@ class IcosahedronPointDatabase:
 
     def get_single_point(self, point_number, variable_name):
         if point_number in self.cache:
-            return self.cache[point_number][variable_name]
+            return self.cache[point_number].get(variable_name)
         else:
             return self.get_single_point_from_file(point_number, variable_name)
 
@@ -139,10 +142,13 @@ class IcosahedronPointDatabase:
         non_cached_point_numbers = pn_set - cached_point_numbers
         d = {}
         for pn in cached_point_numbers:
-            d[pn] = self.cache[pn][variable_name]
+            d[pn] = self.cache[pn].get(variable_name)
         d_from_file = self.get_multiple_points_from_file(non_cached_point_numbers, variable_name)
         d.update(d_from_file)
         return d
+
+    def get_multiple_points_multiple_variables(self, point_numbers, variable_names):
+        raise NotImplementedError
 
     def get_single_point_from_file(self, point_number, variable_name):
         variable_number = self.get_variable_number_from_name(variable_name)
@@ -223,11 +229,20 @@ class IcosahedronPointDatabase:
         else:
             self.cache[point_number][variable_name] = value
 
-    def set(self, point_number, variable_name, value, write=False):
+    def set_single_point(self, point_number, variable_name, value, write=False):
+        check_int(value)
         variable_number = self.get_variable_number_from_name(variable_name)
         self.add_to_cache(point_number, variable_name, value)
         if write:
             self.write()  # don't do this too often or it will be slow
+
+    def set_multiple_points(self, point_numbers, variable_name, values, write=False):
+        variable_number = self.get_variable_number_from_name(variable_name)
+        for pn, val in zip(point_numbers, values):
+            check_int(val)
+            self.add_to_cache(pn, variable_name, val)
+        if write:
+            self.write()
 
     def get_block_fp(self, point_number):
         # assume numeric for now, can try ancestry approach later if we are dealing with too many different files and want contiguous points to be more likely to be in the same file
@@ -283,15 +298,33 @@ class IcosahedronPointDatabase:
 
     def __getitem__(self, tup):
         point_numbers, variable_name = tup
-        if type(point_numbers) is int or len(point_numbers) == 1:
-            point_number, = point_numbers
+        if type(point_numbers) is int:
+            point_number = point_numbers
             return self.get_single_point(point_number, variable_name)
         else:
             return self.get_multiple_points(point_numbers, variable_name)
 
     def __setitem__(self, tup, val):
-        point_number, variable_name = tup
-        self.set(point_number, variable_name, val)
+        point_numbers, variable_name = tup
+        if type(point_numbers) is int:
+            point_number = point_numbers
+            self.set_single_point(point_number, variable_name, val)
+        else:
+            self.set_multiple_points(point_numbers, variable_name, val)
+
+    def add_values(self, point_numbers, varname, vals):
+        # instead of db[pns, varname] += vals, since that won't work with the dictionary return value and I can't do __iadd__ on the database object itself because I'm not saying db += vals
+        current_vals = self[point_numbers, varname]
+        if type(point_numbers) is int:
+            point_numbers = [point_numbers]
+        if type(vals) is int:
+            vals = [vals]
+        assert len(point_numbers) == len(vals)
+        new_vals = []
+        for pn, val in zip(point_numbers, vals):
+            new_val = current_vals[pn] + val
+            new_vals.append(new_val)
+        self[point_numbers, varname] = new_vals
 
     def clear_cache(self):
         self.cache = {}
@@ -360,4 +393,9 @@ class IcosahedronPointDatabase:
 def touch(fp):
     assert not os.path.exists(fp), "cannot touch existing file"
     open(fp, "w").close()
+
+
+def check_int(value):
+    if type(value) is not int:
+        raise TypeError(f"Database only accepts int values (you gave {value} of type {type(value)}).\nIf you want enum, make them int shorthands in the condition_array_dir.\nIf you want floats, choose the precision you want and make ints of that, e.g. elevation in millimeters.")
 
