@@ -162,6 +162,10 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
         ax.set_axis_off()
         fig.add_axes(ax)
 
+    Z_finite = Z[np.isfinite(Z)]
+    if Z_finite.size == 0:
+        print(Z)
+        raise ValueError("no finite values found to plot")
     min_value = Z[np.isfinite(Z)].min()
     max_value = Z[np.isfinite(Z)].max()
     contourf_levels = get_contour_levels(min_value, max_value, prefer_positive=True, n_sea_contours=20, n_land_contours=100)

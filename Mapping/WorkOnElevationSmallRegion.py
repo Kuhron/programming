@@ -19,7 +19,7 @@ def filter_point_numbers_in_region(point_numbers, region_center_latlondeg, regio
     point_numbers_in_region = set()
     for i, pn in enumerate(point_numbers):
         if i % 1000 == 0:
-            print("i =", i)
+            print(f"i = {i} / {len(point_numbers)}")
         latlondeg = icm.get_latlon_from_point_number(pn)
         d_gc = UnitSpherePoint.distance_great_circle_latlondeg_static(region_center_latlondeg, latlondeg)
         if d_gc <= region_radius_gc_normalized:
@@ -38,6 +38,11 @@ def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radi
     print(f"checking {len(point_numbers_in_db)} points")
     region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
     point_numbers_in_region_in_db = filter_point_numbers_in_region(point_numbers_in_db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
+    
+    # in case of crash
+    print("---- point_numbers_in_region_in_db ----")
+    print(point_numbers_in_region_in_db)
+    print("//// point_numbers_in_region_in_db ////")
 
     write_point_numbers_to_cache(point_numbers_in_region_in_db, region_center_latlondeg, region_radius_great_circle_km)
     return point_numbers_in_region_in_db
@@ -46,8 +51,11 @@ def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radi
 def write_point_numbers_to_cache(point_numbers, region_center_latlondeg, region_radius_great_circle_km):
     point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
     # keep everything that's already there
-    with open(point_number_cache_fp) as f:
-        lines = f.readlines()
+    try:
+        with open(point_number_cache_fp) as f:
+            lines = f.readlines()
+    except FileNotFoundError:
+        lines = []
     existing_pns = set(int(l.strip()) for l in lines)
     point_numbers = set(point_numbers)
     if len(point_numbers - existing_pns) == 0:
@@ -76,7 +84,7 @@ def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_ra
         return read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
     except FileNotFoundError:
         region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
-        point_numbers = list(get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_gc_normalized))
+        point_numbers = list(get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km))
         return point_numbers
 
 
@@ -177,10 +185,11 @@ def interpolate_at_points_nearest_neighbor(points_to_interpolate_at, points_to_i
 
 def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
     pn_to_val = db[point_numbers, var_to_plot]
+    print(pn_to_val)
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
-    vals = [pn_to_val[pn] for pn in point_numbers]
+    vals = [pn_to_val.get(pn) for pn in point_numbers]
     plt.scatter(lons, lats, c=vals)
     plt.colorbar()
     plt.title(var_to_plot)
@@ -192,16 +201,26 @@ def plot_variables_scattered(db, point_numbers, vars_to_plot):
     n_plots = len(vars_to_plot)
     for i, var in enumerate(vars_to_plot):
         plt.subplot(1, n_plots, i+1)
-        plot_variable(db, point_numbers, var, show=False)
+        plot_variable_scattered(db, point_numbers, var, show=False)
     plt.show()
 
 
-def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution):
+def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=True):
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
     values_dict = db[point_numbers, var_to_plot]
-    values = [values_dict[pn] for pn in point_numbers]
+    print(values_dict)
+    values = [values_dict.get(pn) for pn in point_numbers]
     pu.plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
-    plt.show()
+    if show:
+        plt.show()
+
+
+def plot_variables_interpolated(db, point_numbers, vars_to_plot, resolution):
+    for var in vars_to_plot:
+        plot_variable_interpolated(db, point_numbers, var, resolution, show=False)
+        plt.title(var)
+        plt.show()
+    # don't do subplots here because the PlottingUtil code sets its own fig/ax
 
 
 def plot_latlons(point_numbers):
@@ -218,25 +237,25 @@ if __name__ == "__main__":
     db = IcosahedronPointDatabase.load(root_dir)
     print("loaded db")
 
-    region_center_latlondeg = (10, -87)  # Western Amphoto
+    # region_center_latlondeg = (10, -87)  # Western Amphoto
     # region_center_latlondeg = (-87, 10)  # somewhere in O-Z because I originally mixed up latlon
     # region_center_latlondeg = (90, 0)  # North Pole
-    # region_center_latlondeg = (-14, -115)  # Thiuy-Rainia Bay
-    region_radius_great_circle_km = 1000
+    region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
+    region_radius_great_circle_km = 2000
     planet_radius_km = icm.CADA_II_RADIUS_KM
 
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
     # DEBUG
-    # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
+    points_with_data_in_region = random.sample(points_with_data_in_region, 100)
 
-    # plot_variables_scattered(db, points_with_data_in_region, ["elevation_condition", "elevation"])
-    plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
+    plot_variable_scattered(db, points_with_data_in_region, "elevation_condition")
+    plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=100)
     input("press enter to continue")
 
     # edit the region and then plot again
     # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
-    edge_length_of_resolution_km = 100
+    edge_length_of_resolution_km = 25
     iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
     print(f"resolution needs {iterations_of_resolution} iterations of icosa")
     n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
@@ -289,7 +308,7 @@ if __name__ == "__main__":
     power_law_param = 0.25
     power_law = lambda: np.random.power(power_law_param)
     circle_radius_dist = lambda: power_law() * region_radius_great_circle_km
-    n_circles = 100000
+    n_circles = 1000
     for c_i in range(n_circles):
         print(f"circle {c_i} / {n_circles}")
         circle_radius_gc = circle_radius_dist()
@@ -328,7 +347,7 @@ if __name__ == "__main__":
         else:
             print("conditions failed, making new circle")
 
-    plot_variables(db, points_to_edit, ["elevation_condition", "elevation"])
+    plot_variables_interpolated(db, points_to_edit, ["elevation_condition", "elevation"], resolution=1000)
     if input("write these results? y/n (default n)") == "y":
         db.write()
 

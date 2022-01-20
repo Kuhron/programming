@@ -139,6 +139,7 @@ class IcosahedronPointDatabase:
     def get_multiple_points(self, point_numbers, variable_name):
         pn_set = set(point_numbers)
         cached_point_numbers = set(self.cache.keys()) & pn_set
+        cached_point_numbers = set(pn for pn in cached_point_numbers if variable_name in self.cache[pn])  # if this var not found, read from file (because sometimes the point is only cached with some variables but not others)
         non_cached_point_numbers = pn_set - cached_point_numbers
         d = {}
         for pn in cached_point_numbers:
@@ -218,7 +219,7 @@ class IcosahedronPointDatabase:
             k = int(k)
             v = int(v)
             d_this_line[k] = v
-        val = d_this_line[variable_number]
+        val = d_this_line.get(variable_number)
         # typ = self.get_variable_type_from_name(variable_name)
         # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
         return val
