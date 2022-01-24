@@ -20,7 +20,7 @@ public class SinglyLinkedList<T> {
         return size;
     }
 
-    public void addAtHead(T data) {
+    public void addAtHead(T data) {  // O(1)
         Node<T> newNext = head;
         Node<T> node = new Node<T>(data, newNext);
         head = node;
@@ -30,7 +30,7 @@ public class SinglyLinkedList<T> {
         size++;
     }
 
-    public T removeAtHead() throws EmptyListException {
+    public T removeAtHead() throws EmptyListException {  // O(1), just move a pointer
         if (size == 0) {
             throw new EmptyListException("list is empty");
         }
@@ -43,14 +43,21 @@ public class SinglyLinkedList<T> {
         return data;
     }
 
-    public void addAtTail(T data) {
+    public void addAtTail(T data) {  // O(1), just move a pointer
         Node<T> newNode = new Node<T>(data, null);
-        tail.next = newNode;
-        tail = newNode;
+
+        if (size == 0) {
+            // make head and tail both the new node
+            head = newNode;
+            tail = newNode;
+        } else {
+            tail.next = newNode;
+            tail = newNode;
+        }
         size++;
     }
 
-    public T removeAtTail() {
+    public T removeAtTail() {  // O(n)
         Node<T> newTail = nodeAt(size-2);  // this is why removeAtTail is O(n) for singly linked list, since we don't have tail.prev
         T data = tail.data;
         newTail.next = null;
@@ -59,7 +66,7 @@ public class SinglyLinkedList<T> {
         return data;
     }
 
-    private Node<T> nodeAt(int index) {
+    private Node<T> nodeAt(int index) {  // O(n)
         Node<T> node = head;
         for (int i = 0; i < index; i++) {
             node = node.next;
@@ -67,7 +74,7 @@ public class SinglyLinkedList<T> {
         return node;
     }
 
-    public String toString() {
+    public String toString() {  // O(n)
         String s = "[";
         Node<T> node = head;
         for (int i = 0; i < size; i++) {
