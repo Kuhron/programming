@@ -89,6 +89,28 @@ def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_ra
 
 
 def get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
+    try:
+        return get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations)
+    except FileNotFoundError:
+        points = get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations)
+        fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
+        with open(fp, "w") as f:
+            f.write("\n".join(str(pn) for pn in points))
+        return points
+
+
+def get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations):
+    return f"PointsAtResolution_center_{region_center_latlondeg[0]}_{region_center_latlondeg[1]}_radius_{region_radius_great_circle_km}km_iterations_{iterations}.txt"
+
+
+def get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations):
+    fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
+    with open(fp) as f:
+        lines = f.readlines()
+    return [int(l.strip()) for l in lines]
+
+
+def get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
     # procedure: start with icosa starting points
     # have function which tells you the farthest a point's descendants can get from it
     # calculate the point's distance from the region center
@@ -185,7 +207,7 @@ def interpolate_at_points_nearest_neighbor(points_to_interpolate_at, points_to_i
 
 def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
     pn_to_val = db[point_numbers, var_to_plot]
-    print(pn_to_val)
+    # print(pn_to_val)
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
@@ -208,7 +230,7 @@ def plot_variables_scattered(db, point_numbers, vars_to_plot):
 def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=True):
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
     values_dict = db[point_numbers, var_to_plot]
-    print(values_dict)
+    # print(values_dict)
     values = [values_dict.get(pn) for pn in point_numbers]
     pu.plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
     if show:
@@ -247,26 +269,27 @@ if __name__ == "__main__":
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
     # DEBUG
-    points_with_data_in_region = random.sample(points_with_data_in_region, 100)
+    # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
 
-    plot_variable_scattered(db, points_with_data_in_region, "elevation_condition")
-    plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=100)
-    input("press enter to continue")
+    # plot_variable_scattered(db, points_with_data_in_region, "elevation_condition")
+    # plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
+    # input("press enter to continue")
 
     # edit the region and then plot again
     # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
-    edge_length_of_resolution_km = 25
+    edge_length_of_resolution_km = 10
     iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
     print(f"resolution needs {iterations_of_resolution} iterations of icosa")
+    print("TODO maybe cache this too (in a file like the point numbers, so we have one cache of point numbers with data and another of point numbers in certain region at certain resolution, although maybe only the latter is necessary and then you can easily check the database for which ones have the variable defined)")
     n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
     # points_at_this_resolution_in_region = filter_point_numbers_in_region(list(range(n_points_total_at_this_iteration)), region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)  # include points of previous iterations  # too long, brute force over the whole planet
     points_at_this_resolution_in_region = get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations=iterations_of_resolution)
-    # print("points in region:", points_at_this_resolution_in_region)
+    print(f"{len(points_at_this_resolution_in_region)} points in region")
     # plot_latlons(points_at_this_resolution_in_region)
 
     # so using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
 
-    interpolate = False
+    interpolate = True
     if interpolate:
         interpolated_elevation_conditions = interpolate_at_points_nearest_neighbor(points_to_interpolate_at=points_at_this_resolution_in_region, points_to_interpolate_from=points_with_data_in_region, variable_name="elevation_condition", db=db, max_nn_distance=100/planet_radius_km)
         # write these to the db
@@ -347,7 +370,7 @@ if __name__ == "__main__":
         else:
             print("conditions failed, making new circle")
 
-    plot_variables_interpolated(db, points_to_edit, ["elevation_condition", "elevation"], resolution=1000)
+    plot_variable_interpolated(db, points_to_edit, "elevation", resolution=1000)
     if input("write these results? y/n (default n)") == "y":
         db.write()
 
