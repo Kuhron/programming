@@ -1,7 +1,9 @@
 public class SinglyLinkedList<T> {
-    private Node<T> head = null;
-    private Node<T> tail = null;
-    private int size = 0;
+    private Node<T> head;
+    private Node<T> tail;
+    private int size;
+    private int iterationIndex;
+    private Node<T> iterationNode;
 
     private class Node<T> {
         T data;
@@ -14,6 +16,12 @@ public class SinglyLinkedList<T> {
     }
 
     public SinglyLinkedList() {  // again don't need T in the contsructor declaration
+        head = null;
+        tail = null;
+        size = 0;
+
+        iterationIndex = 0;
+        iterationNode = null;
     }
 
     public int size() {
@@ -72,6 +80,40 @@ public class SinglyLinkedList<T> {
             node = node.next;
         }
         return node;
+    }
+
+    public boolean contains(T data) {
+        Node<T> node = head;
+        for (int i = 0; i < size; i++) {
+            if (node.data == data) return true;
+            node = node.next;
+        }
+        return false;
+    }
+
+    public int indexOf(T data) {
+        Node<T> node = head;
+        for (int i = 0; i < size; i++) {
+            if (node.data == data) return i;
+            node = node.next;
+        }
+        return -1;
+    }
+
+    public boolean hasNext() {
+        return iterationIndex < size - 1;
+    }
+
+    public T getNext() {
+        T data = iterationNode.data;
+        iterationIndex++;
+        iterationNode = iterationNode.next;
+        return data;
+    }
+
+    public void resetIterator() {
+        iterationIndex = 0;
+        iterationNode = head;
     }
 
     public String toString() {  // O(n)
