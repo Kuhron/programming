@@ -1,6 +1,8 @@
+#include <stdio.h>
+
 int main()
 {
-	// std::cout << "Hello, world!";
+-	printf("Hello, world!\n");
 	main();
 	return 0;
 }

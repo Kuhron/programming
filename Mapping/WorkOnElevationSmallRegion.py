@@ -11,6 +11,7 @@ import random
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.spatial import KDTree
 
 
 def filter_point_numbers_in_region(point_numbers, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
@@ -80,23 +81,33 @@ def read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_c
 
 
 def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
+    print("getting point numbers with data in region")
     try:
-        return read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
+        res = read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
+        print("got point numbers from cache")
     except FileNotFoundError:
+        print("calculating point numbers with data in region using icosa math")
         region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
         point_numbers = list(get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km))
-        return point_numbers
+        res = point_numbers
+    print("-- done getting point numbers with data in region")
+    return res
 
 
 def get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
+    print("getting points in region")
     try:
-        return get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations)
+        res = get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations)
+        print("got points from file")
     except FileNotFoundError:
+        print("calculating points in region using icosa math")
         points = get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations)
         fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
         with open(fp, "w") as f:
             f.write("\n".join(str(pn) for pn in points))
-        return points
+        res = points
+    print("-- done getting points in region")
+    return res
 
 
 def get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations):
@@ -180,32 +191,36 @@ def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_rad
 
 def interpolate_at_points_nearest_neighbor(points_to_interpolate_at, points_to_interpolate_from, variable_name, db, max_nn_distance=None):
     # interpolate the conditions at the points_at_this_resolution
+    print("interpolating nearest neighbor")
     known_values = db[points_to_interpolate_from, variable_name]
     assert type(known_values) is dict
     if len(set(points_to_interpolate_at) - set(points_to_interpolate_from)) == 0:
         # already know values of all these points, don't bother getting xyz or doing nearest neighbor calculation
         return {pn: known_values[pn] for pn in points_to_interpolate_at}
 
+    nn_pn_lookup, d_lookup = icm.get_nearest_neighbors_pn_to_pn_with_distance(query_pns=points_to_interpolate_at, candidate_pns=points_to_interpolate_from)
     interpolated = {}
-    xyzs_with_data = {icm.get_xyz_from_point_number(pn): pn for pn in points_to_interpolate_from}
-    for pn in points_to_interpolate_at:
+    for i, pn in enumerate(points_to_interpolate_at):
+        if i % 100 == 0:
+            print(f"interpolating at points; progress {i}/{len(points_to_interpolate_at)}")
         if pn in known_values:
             # we already know its condition, no need to do nearest neighbors
             interpolated[pn] = known_values[pn]
         else:
-            xyz = icm.get_xyz_from_point_number(pn)
-            nn_xyz, d = icm.get_nearest_neighbor_xyz_to_xyz(xyz, list(xyzs_with_data.keys()))
+            d = d_lookup[pn]
+            nn_pn = nn_pn_lookup[pn]
             if max_nn_distance is None or d <= max_nn_distance:
-                nn_pn = xyzs_with_data[nn_xyz]
                 el_cond = db[nn_pn, variable_name]
                 interpolated[pn] = el_cond
             else:
                 # don't interpolate here, the nearest neighbor is too far away
                 interpolated[pn] = None
+    print("-- done interpolating nearest neighbor")
     return interpolated
 
 
 def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
+    print(f"plotting variable scattered: {var_to_plot}")
     pn_to_val = db[point_numbers, var_to_plot]
     # print(pn_to_val)
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
@@ -220,6 +235,7 @@ def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
 
 
 def plot_variables_scattered(db, point_numbers, vars_to_plot):
+    print("plotting variables scattered")
     n_plots = len(vars_to_plot)
     for i, var in enumerate(vars_to_plot):
         plt.subplot(1, n_plots, i+1)
@@ -228,6 +244,7 @@ def plot_variables_scattered(db, point_numbers, vars_to_plot):
 
 
 def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=True):
+    print(f"plotting variable interpolated: {var_to_plot}")
     latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
     values_dict = db[point_numbers, var_to_plot]
     # print(values_dict)
@@ -238,6 +255,7 @@ def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=
 
 
 def plot_variables_interpolated(db, point_numbers, vars_to_plot, resolution):
+    print("plotting variables interpolated")
     for var in vars_to_plot:
         plot_variable_interpolated(db, point_numbers, var, resolution, show=False)
         plt.title(var)
@@ -259,12 +277,16 @@ if __name__ == "__main__":
     db = IcosahedronPointDatabase.load(root_dir)
     print("loaded db")
 
-    # region_center_latlondeg = (10, -87)  # Western Amphoto
-    # region_center_latlondeg = (-87, 10)  # somewhere in O-Z because I originally mixed up latlon
-    # region_center_latlondeg = (90, 0)  # North Pole
-    region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
-    region_radius_great_circle_km = 2000
+    region_center_latlondeg, region_radius_great_circle_km = (10, -87), 1000  # Western Amphoto
+    # region_center_latlondeg, region_radius_great_circle_km = (-87, 10), 1000  # somewhere in O-Z because I originally mixed up latlon
+    # region_center_latlondeg, region_radius_great_circle_km = (90, 0), 2000  # North Pole
+    # region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
+    # region_center_latlondeg, region_radius_great_circle_km = (86.5, -13), 250  # small region in Tomar Strait in Mienta, for testing on smaller regions
     planet_radius_km = icm.CADA_II_RADIUS_KM
+    power_law_param = 0.25
+    power_law = lambda: np.random.power(power_law_param)
+    circle_radius_dist = lambda: power_law() * region_radius_great_circle_km
+    n_circles = 10
 
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
@@ -272,7 +294,7 @@ if __name__ == "__main__":
     # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
 
     # plot_variable_scattered(db, points_with_data_in_region, "elevation_condition")
-    # plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
+    plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
     # input("press enter to continue")
 
     # edit the region and then plot again
@@ -294,17 +316,21 @@ if __name__ == "__main__":
         interpolated_elevation_conditions = interpolate_at_points_nearest_neighbor(points_to_interpolate_at=points_at_this_resolution_in_region, points_to_interpolate_from=points_with_data_in_region, variable_name="elevation_condition", db=db, max_nn_distance=100/planet_radius_km)
         # write these to the db
         print(f"got interpolated elevation conditions, writing {len(interpolated_elevation_conditions)} items to db")
-        input("press enter to continue")
+        # input("press enter to continue")
         point_numbers_to_cache = points_at_this_resolution_in_region
         for pn, el_cond in interpolated_elevation_conditions.items():
             if el_cond is None:
                 # interpolation failed because neighbors were too far away
                 continue
-            db[pn, "elevation_condition"] = el_cond
+            old_el_cond = db[pn, "elevation_condition"]
+            if old_el_cond is not None and el_cond != old_el_cond:
+                raise RuntimeError(f"elevation condition changed: {old_el_cond} -> {el_cond}")
+            if old_el_cond is None:
+                db[pn, "elevation_condition"] = el_cond
             point_numbers_to_cache.append(pn)
         db.write()
         write_point_numbers_to_cache(point_numbers_to_cache, region_center_latlondeg, region_radius_great_circle_km)
-        points_to_edit = list(interpolated_elevation_conditions.keys())
+        points_to_edit = list(set(interpolated_elevation_conditions.keys()) | set(points_with_data_in_region))  # want both the new points and the points already having data
     else:
         points_to_edit = points_with_data_in_region
 
@@ -323,15 +349,17 @@ if __name__ == "__main__":
 
     # set elevations to default value for condition
     for pn in points_to_edit:
-        el_cond = elevation_conditions[pn]
-        val = elevation_condition_to_default_value[el_cond]
-        if db[pn, "elevation"] is None:
+        el = db[pn, "elevation"]
+        if el is None:
+            # print(f"got None for elevation at pn={pn}")
+            # input("check")
+            el_cond = elevation_conditions[pn]
+            val = elevation_condition_to_default_value[el_cond]
             db[pn, "elevation"] = int(round(val))
+        else:
+            # print(f"got {el} for elevation at pn={pn}")
+            pass
 
-    power_law_param = 0.25
-    power_law = lambda: np.random.power(power_law_param)
-    circle_radius_dist = lambda: power_law() * region_radius_great_circle_km
-    n_circles = 1000
     for c_i in range(n_circles):
         print(f"circle {c_i} / {n_circles}")
         circle_radius_gc = circle_radius_dist()
@@ -344,6 +372,8 @@ if __name__ == "__main__":
 
         d_el = int(round(np.random.normal(0, 10)))
         old_els = db[pns_in_circle, "elevation"]
+        print(old_els)
+        input("och")
         new_els = {pn: old_els[pn] + d_el for pn in pns_in_circle}
         # check new_els still meet elevation conditions
         all_meet_conditions = True

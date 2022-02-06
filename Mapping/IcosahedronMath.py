@@ -658,7 +658,7 @@ def get_ancestor_tree_for_multiple_points(point_numbers):
     ancestry = {}
     for i, p in enumerate(point_numbers):
         if i % 100 == 0:
-            print(f"progress: {i}/{len(point_numbers)}")
+            print(f"ancestor tree progress: {i}/{len(point_numbers)}")
         if p in ancestry:
             # don't need to call it
             continue
@@ -1292,6 +1292,30 @@ def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
     nn_arr = ps[nn_index]
     nn_xyz = tuple(nn_arr)
     return nn_xyz, min_d
+
+
+def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_neighbors=1):
+    pn_to_xyz = {}
+    print("getting pn -> xyz mapping")
+    all_pns = list(set(query_pns) | set(candidate_pns))
+    for i, pn in enumerate(all_pns):
+        if i % 100 == 0:
+            print(f"pn -> xyz progress {i}/{len(all_pns)}")
+        xyz = icm.get_xyz_from_point_number(pn)
+        pn_to_xyz[pn] = xyz
+    candidate_xyzs = [pn_to_xyz[pn] for pn in candidate_pns]
+    query_xyzs = [pn_to_xyz[pn] for pn in query_pns]
+
+    print("creating KDTree")
+    kdtree = KDTree(candidate_xyzs)  # ensure order is same as the pn list
+    print("-- done creating KDTree")
+    distances, nn_indices = kdtree.query(query_xyzs, k=k_neighbors)
+    print("done querying KDTree")
+    nn_index_lookup = {pn_query: nn_indices[i] for i, pn_query in enumerate(query_pns)}
+    nn_index_to_pn = {index: points_to_interpolate_from[index] for index in nn_indices}
+    nn_pn_lookup = {pn_query: nn_index_to_pn[nn_index_lookup[pn_query]] for pn_query in query_pns}
+    d_lookup = {pn_query: distances[i] for i, pn_query in enumerate(qury_pns)}
+    return nn_pn_lookup, d_lookup
 
 
 def _old_iterative_get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
