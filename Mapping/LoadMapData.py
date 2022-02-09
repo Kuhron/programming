@@ -113,8 +113,8 @@ def get_condition_shorthand_dict(world_name, map_variable):
         reader = csv.DictReader(f)
         for row in reader:
             row["colors_rgba"] = parse_colors_rgba(row["colors_rgba"])
-            row["min"] = float(row["min"]) if row["min"] != "" else None
-            row["max"] = float(row["max"]) if row["max"] != "" else None
+            row["min"] = int(row["min"]) if row["min"] != "" else None
+            row["max"] = int(row["max"]) if row["max"] != "" else None
             assert (row["min"] is None or row["max"] is None) or (row["min"] <= row["max"])
             dict_key = int(row[dict_key_colname])
             assert dict_key not in d
@@ -167,15 +167,16 @@ def get_default_value_from_min_and_max(min_val, max_val):
     # if condition has min and max, use average
     # if condition has only min or max, use that
     # if condition has neither, use 0 (or NaN? but want to seed from the default for elevation, so use 0)
+    assert type(min_val) in [int, type(None)], min_val
+    assert type(max_val) in [int, type(None)], max_val
     if min_val is None and max_val is None:
-        return 0.0
+        return 0
     elif min_val is None and max_val is not None:
         return max_val
     elif max_val is None and min_val is not None:
         return min_val
     else:
-        return (min_val + max_val)/2.0
-    # return all floats because np.vectorize very annoyingly will only choose a single return type; it assumes the output type of the first element in the input is what is desired for all of the inputs. Not true here if we mix floats and ints!
+        return int(round((min_val + max_val)/2))
 
 
 def create_cada_ii_default_value_dict(map_variable):

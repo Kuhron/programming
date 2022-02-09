@@ -53,6 +53,7 @@ class IcosahedronPointDatabase:
         db.variables_dict = IcosahedronPointDatabase.get_variables_dict_from_file(db.variables_file)
         db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
         db.cache = {}
+        db.verify_blocks()
         return db
 
     @staticmethod
@@ -153,7 +154,7 @@ class IcosahedronPointDatabase:
 
     def get_single_point_from_file(self, point_number, variable_name):
         variable_number = self.get_variable_number_from_name(variable_name)
-        block_fp = self.get_block_fp(point_number)
+        block_fp = self.get_block_fp_for_point_number(point_number)
         if not os.path.exists(block_fp):
             # raise KeyError(f"no data for point {point_number}")
             return None
@@ -245,10 +246,14 @@ class IcosahedronPointDatabase:
         if write:
             self.write()
 
-    def get_block_fp(self, point_number):
-        # assume numeric for now, can try ancestry approach later if we are dealing with too many different files and want contiguous points to be more likely to be in the same file
+    def get_block_number_for_point_number(self, point_number):
         block_size = self.metadata["block_size"]
         block_number = point_number // block_size
+        return block_number
+
+    def get_block_fp_for_point_number(self, point_number):
+        # assume numeric for now, can try ancestry approach later if we are dealing with too many different files and want contiguous points to be more likely to be in the same file
+        block_number = self.get_block_number_for_point_number(point_number)
         return self.get_block_fp_for_block_number(block_number)
 
     def get_block_fp_for_block_number(self, block_number):
@@ -339,7 +344,7 @@ class IcosahedronPointDatabase:
             print("writing block_number", block_number)
             block_start = block_number * block_size
             point_numbers = set([p for p in self.cache.keys() if p // block_size == block_number])
-            fps = set(self.get_block_fp(p) for p in point_numbers)
+            fps = set(self.get_block_fp_for_point_number(p) for p in point_numbers)
             assert len(fps) == 1, "problem getting block number from point numbers"
             fp, = list(fps)
             # for each point, read what's in the file into a dict, update the dict with what's in the cache (but don't delete stuff that's there but isn't in the cache), save line as string, then write them all to the file
@@ -382,6 +387,7 @@ class IcosahedronPointDatabase:
         print("db written")
         if clear_cache:
             self.clear_cache()
+        self.verify_blocks()
 
     @staticmethod
     def line_from_dict(point_number, d):
@@ -389,6 +395,22 @@ class IcosahedronPointDatabase:
         for k,v in sorted(d.items()):
             items.append(f"{k}={v}")
         return ",".join(items)
+
+    def verify_blocks(self):
+        # verify that the block files contain the correct point numbers
+        block_numbers = self.get_all_block_numbers_with_data()
+        failed = False
+        for block_number in block_numbers:
+            pns = self.get_point_numbers_with_data_in_block(block_number)
+            for pn in pns:
+                correct_bn = self.get_block_number_for_point_number(pn)
+                if correct_bn != block_number:
+                    failed = True
+                    print(f"found point {pn} in block {block_number} but it belongs in block {correct_bn}")
+        if failed:
+            raise RuntimeError("points misplaced in blocks")
+        else:
+            print("blocks verified")
 
 
 def touch(fp):

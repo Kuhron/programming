@@ -282,11 +282,13 @@ if __name__ == "__main__":
     # region_center_latlondeg, region_radius_great_circle_km = (90, 0), 2000  # North Pole
     # region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
     # region_center_latlondeg, region_radius_great_circle_km = (86.5, -13), 250  # small region in Tomar Strait in Mienta, for testing on smaller regions
+    # region_center_latlondeg, region_radius_great_circle_km = (25, -84), 2000  # Jhorju
     planet_radius_km = icm.CADA_II_RADIUS_KM
-    power_law_param = 0.25
+    power_law_param = 0.25  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
     power_law = lambda: np.random.power(power_law_param)
     circle_radius_dist = lambda: power_law() * region_radius_great_circle_km
-    n_circles = 10
+    el_stdev = 15
+    n_circles = 10000
 
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
@@ -294,26 +296,36 @@ if __name__ == "__main__":
     # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
 
     # plot_variable_scattered(db, points_with_data_in_region, "elevation_condition")
-    plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
+    plot_variable_scattered(db, points_with_data_in_region, "elevation")  # use this to check if the point locations look right (is it actually interpolating conditions onto icosa lattice points, for instance? (which should locally look like a triangular/hexagonal lattice with random interloping image pixel points) or is it just taking the image pixels? (which should locally look like a rectangular lattice))
+    # plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
     # input("press enter to continue")
 
     # edit the region and then plot again
-    # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
-    edge_length_of_resolution_km = 10
-    iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
-    print(f"resolution needs {iterations_of_resolution} iterations of icosa")
-    print("TODO maybe cache this too (in a file like the point numbers, so we have one cache of point numbers with data and another of point numbers in certain region at certain resolution, although maybe only the latter is necessary and then you can easily check the database for which ones have the variable defined)")
-    n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
-    # points_at_this_resolution_in_region = filter_point_numbers_in_region(list(range(n_points_total_at_this_iteration)), region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)  # include points of previous iterations  # too long, brute force over the whole planet
-    points_at_this_resolution_in_region = get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations=iterations_of_resolution)
-    print(f"{len(points_at_this_resolution_in_region)} points in region")
-    # plot_latlons(points_at_this_resolution_in_region)
 
-    # so using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
-
-    interpolate = True
+    interpolate = True  # only do this when you don't have points in file?
     if interpolate:
-        interpolated_elevation_conditions = interpolate_at_points_nearest_neighbor(points_to_interpolate_at=points_at_this_resolution_in_region, points_to_interpolate_from=points_with_data_in_region, variable_name="elevation_condition", db=db, max_nn_distance=100/planet_radius_km)
+        # raise Exception("FIXME! It will overwrite the existing data with default elevation values if you use interpolate=True")
+        # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
+        edge_length_of_resolution_km = 10
+        iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
+        print(f"resolution needs {iterations_of_resolution} iterations of icosa")
+        print("TODO maybe cache this too (in a file like the point numbers, so we have one cache of point numbers with data and another of point numbers in certain region at certain resolution, although maybe only the latter is necessary and then you can easily check the database for which ones have the variable defined)")
+        n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
+        # points_at_this_resolution_in_region = filter_point_numbers_in_region(list(range(n_points_total_at_this_iteration)), region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)  # include points of previous iterations  # too long, brute force over the whole planet
+        points_at_this_resolution_in_region = get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations=iterations_of_resolution)
+        print(f"{len(points_at_this_resolution_in_region)} points in region")
+        # plot_latlons(points_at_this_resolution_in_region)
+
+        # so using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
+        points_to_interpolate_at = list(set(points_at_this_resolution_in_region) | set(points_with_data_in_region))
+
+        interpolated_elevation_conditions = interpolate_at_points_nearest_neighbor(
+            points_to_interpolate_at=points_to_interpolate_at,
+            points_to_interpolate_from=points_with_data_in_region,
+            variable_name="elevation_condition",
+            db=db,
+            max_nn_distance=100/planet_radius_km,
+        )
         # write these to the db
         print(f"got interpolated elevation conditions, writing {len(interpolated_elevation_conditions)} items to db")
         # input("press enter to continue")
@@ -360,6 +372,8 @@ if __name__ == "__main__":
             # print(f"got {el} for elevation at pn={pn}")
             pass
 
+    n_passed = 0
+    n_failed = 0
     for c_i in range(n_circles):
         print(f"circle {c_i} / {n_circles}")
         circle_radius_gc = circle_radius_dist()
@@ -370,17 +384,55 @@ if __name__ == "__main__":
         pns_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle.keys()]
         # print(f"this circle contains {pns_in_circle}")
 
-        d_el = int(round(np.random.normal(0, 10)))
+        d_el = int(round(np.random.normal(0, el_stdev)))
         old_els = db[pns_in_circle, "elevation"]
-        print(old_els)
-        input("och")
+        # print(f"values in old elevations: {sorted(set(old_els.values()))}")  # debugging when it is overwriting existing data with default elevations
+
+        # keep track of how much each point can move up or down from where it is right now, and adjust d_el toward 0 (but keep its direction) so that the conditions are all still met (unless that change becomes zero in which case just start over)
+        # just look at absolute value of changes that are in the same direction as d_el
+        is_rise = d_el >= 0
+        d_el = abs(d_el)
+        max_move = abs(d_el)
+        for pn in pns_in_circle:
+            el = old_els[pn]
+            # print(f"point {pn} has old_el {el}")
+            el_cond = elevation_conditions[pn]
+            if is_rise:
+                # check if we would go over the max
+                max_val = elevation_condition_to_max_value[el_cond]
+                if max_val is not None:
+                    assert max_val >= el, f"invalid elevation found: {el} exceeds max value of {max_val} at point {pn}"
+                    assert type(max_val) is int, el_cond
+                    move_size = abs(max_val - el)
+                    d_el = min(d_el, move_size)
+            else:
+                min_val = elevation_condition_to_min_value[el_cond]
+                if min_val is not None:
+                    assert el >= min_val, f"invalid elevation found: {el} is below min value of {min_val} at point {pn}"
+                    assert type(min_val) is int, el_cond
+                    move_size = abs(min_val - el)
+                    d_el = min(d_el, move_size)
+            if d_el == 0:
+                print("d_el reached zero, skipping")
+                break
+        if d_el == 0:
+            n_failed += 1
+            continue
+        else:
+            n_passed += 1
+
+        if not is_rise:
+            # convert it back to a fall after minimizing the abs
+            d_el = -1 * d_el
+        assert type(d_el) is int
+
         new_els = {pn: old_els[pn] + d_el for pn in pns_in_circle}
         # check new_els still meet elevation conditions
         all_meet_conditions = True
         for pn in pns_in_circle:
             el_cond = elevation_conditions[pn]
-            min_val = elevation_condition_to_min_value[el_cond]
             max_val = elevation_condition_to_max_value[el_cond]
+            min_val = elevation_condition_to_min_value[el_cond]
             new_val = new_els[pn]
             meets_condition = True
             if min_val is not None:
@@ -399,6 +451,10 @@ if __name__ == "__main__":
             # print("new values:", db[pns_in_circle, "elevation"])
         else:
             print("conditions failed, making new circle")
+            raise Exception("this shouldn't happen anymore")
+
+    assert n_passed + n_failed == n_circles
+    print(f"condition pass rate {n_passed / n_circles}")
 
     plot_variable_interpolated(db, points_to_edit, "elevation", resolution=1000)
     if input("write these results? y/n (default n)") == "y":
