@@ -302,7 +302,7 @@ if __name__ == "__main__":
 
     # edit the region and then plot again
 
-    interpolate = True  # only do this when you don't have points in file?
+    interpolate = False  # only do this when you don't have points in file? but it should be able to know that all those points already have elevation condition (FIXME) and so leaving this as True shouldn't be an issue
     if interpolate:
         # raise Exception("FIXME! It will overwrite the existing data with default elevation values if you use interpolate=True")
         # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
@@ -358,6 +358,8 @@ if __name__ == "__main__":
     elevation_condition_to_default_value = LoadMapData.get_default_values_of_conditions(world_name="Cada II", map_variable="elevation")
     elevation_condition_to_min_value = {sh: shorthand_dict[sh]["min"] for sh in shorthand_dict}
     elevation_condition_to_max_value = {sh: shorthand_dict[sh]["max"] for sh in shorthand_dict}
+
+    set_unknown_
 
     # set elevations to default value for condition
     for pn in points_to_edit:

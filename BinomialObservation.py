@@ -1,7 +1,18 @@
+import scipy.stats
+import math
+
+
 class BinomialObservation:
     def __init__(self, successes=0, trials=0):
         self.successes = successes
         self.trials = trials
+
+    def __repr__(self):
+        ns = self.successes
+        nt = self.trials
+        p = self.get_probability_estimator()
+        w1, w2 = self.get_wilson_ci(0.95)
+        return f"<obs {ns}/{nt} ({w1:.4f}, {p:.4f}, {w2:.4f}) 95% CI>"
 
     def get_probability_estimator(self):
         return self.successes / self.trials
@@ -30,6 +41,10 @@ class BinomialObservation:
         first_term = (1/(1+z**2/n)) * (p_hat + z**2/(2*n))
         second_term = (z/(1+z**2/n)) * math.sqrt((p_hat * (1-p_hat) / n) + (z**2/(4*n**2)))
         return (first_term - second_term, first_term + second_term)
+
+    def get_wilson_width(self, confidence_level):
+        w1, w2 = self.get_wilson_ci(confidence_level)
+        return w2 - w1
 
     def choose_random_possible_probability(self):
         # the real way to do this fairly would be invert the Wilson CI as function of confidence, normalize that integral to 1,
