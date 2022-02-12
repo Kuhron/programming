@@ -106,9 +106,10 @@ def evolve_ca(initial_state, modulus, neighborhood_type, neighbor_sum_constant, 
 
 
 if __name__ == "__main__":
-    n_rows = 120
+    n_rows = 240
     n_cols = int(3/2 * n_rows)
-    modulus = 1 + abs(np.random.normal(0, 2))
+    # modulus = 1 + abs(np.random.normal(0, 2))
+    modulus = 2 ** np.random.uniform(0, 8)
     neighborhood_type = random.choice(["D8", "D4", "diagonal"])
     # neighborhood_type = "D8"
     neighbor_sum_constant = np.random.normal(0, 1)
@@ -122,27 +123,40 @@ if __name__ == "__main__":
     params = {"initial_state": initial_state, "modulus": modulus, "neighborhood_type": neighborhood_type, "neighbor_sum_constant": neighbor_sum_constant, "modification_function": modification_function, "plot": plot, "plot_every_n_steps": plot_every_n_steps}
 
     # can put discoveries here, have the evolve function print locals()
-    fuzzy_cells_and_prions = {'modulus': 3.6184508776628803, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1324512456707755, 'modification_function': 'id'}
-    flashing_amoebas = {'modulus': 1.4229596110653309, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1495842896627948, 'modification_function': 'triangle'}
-    devolution_to_braille = {'modulus': 1.7220424043870777, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': 0.7087672802040939, 'modification_function': 'floor'}
-    wobbly_oscillator = {'modulus': 4.982426272634422, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.13755029176642564, 'modification_function': 'triangle'}  # becomes overlapping positive/negative blobs, with intervening checkerboard space, and the blobs slowly collapse to circles and disappear; fine structure within a color is also visible, curves perpendicular to border lines
-    flowers_in_the_sea = {'modulus': 3.036957539883622, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.30437791227925504, 'modification_function': 'floor'}
-    flashing_growing_checkers = {'modulus': 3.9883087817089526, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -0.9821112017744941, 'modification_function': 'sigmoid2'}
-    jumping_across_barrier = {'modulus': 3.2041633924528496, 'neighborhood_type': 'D4', 'neighbor_sum_constant': 0.26478347096386534, 'modification_function': 'id'}
-    slash_and_flash = {'modulus': 2.4356354632491204, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.6230227015040277, 'modification_function': 'sigmoid2'}
-    devolution_to_oscillating_dots = {'modulus': 2.551584048124375, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -1.0385972513275994, 'modification_function': 'sigmoid2'}
-    cpu_growth = {'modulus': 1.2393709512216025, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 1.1596031460068366, 'modification_function': 'floor'}  # all the cool stuff is at the very beginning, good to start from sparse initial state to watch the crystals grow
-    amoebic_rips = {'modulus': 1.135970110957478, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1542448467294696, 'modification_function': 'sigmoid2'}
-    lake_blobs = {'modulus': 1.1694837210909337, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.22397420704433238, 'modification_function': 'parabola'}
-    amoebas_and_worms = {'modulus': 3, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 1/5.01, 'modification_function': 'floor'}  # some initial states lead to decay to zero
-    pulsating_grid_blobs = {'modulus': 1.1120031224082496, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -0.14000033221259264, 'modification_function': 'triangle'}
-    bubbling_plasmodium = {'modulus': 1.8183835950061158, 'neighborhood_type': 'D4', 'neighbor_sum_constant': 0.4451919694797531, 'modification_function': 'parabola'}
-    pulses_on_torn_fabric = {'modulus': 1.9612420876381274, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 0.23361251099580402, 'modification_function': 'id'}
-    slowly_shrinking_blobs = {'modulus': 1.623625859769556, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.37532641019424623, 'modification_function': 'sigmoid2'}
-    stable_flower_holes = {'modulus': 4.350355617958833, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.12326451605302458, 'modification_function': 'floor'}  # some initial conditions die quickly, others stabilize
+    discoveries = {
+        "amoebas_and_worms": {'modulus': 3, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 1/5.01, 'modification_function': 'floor'},  # some initial states lead to decay to zero
+        "amoebic_rips": {'modulus': 1.135970110957478, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1542448467294696, 'modification_function': 'sigmoid2'},
+        "bubbling_plasmodium": {'modulus': 1.8183835950061158, 'neighborhood_type': 'D4', 'neighbor_sum_constant': 0.4451919694797531, 'modification_function': 'parabola'},
+        "cpu_growth": {'modulus': 1.2393709512216025, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 1.1596031460068366, 'modification_function': 'floor'},  # all the cool stuff is at the very beginning, good to start from sparse initial state to watch the crystals grow
+        "devolution_to_braille": {'modulus': 1.7220424043870777, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': 0.7087672802040939, 'modification_function': 'floor'},
+        "devolution_to_oscillating_dots": {'modulus': 2.551584048124375, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -1.0385972513275994, 'modification_function': 'sigmoid2'},
+        "diamond_crystals": {'modulus': 1.109352311765627, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.03141261043955318, 'modification_function': 'floor'},
+        "flashing_amoebas": {'modulus': 1.4229596110653309, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1495842896627948, 'modification_function': 'triangle'},
+        "flashing_growing_checkers": {'modulus': 3.9883087817089526, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -0.9821112017744941, 'modification_function': 'sigmoid2'},
+        "flowers_in_the_sea": {'modulus': 3.036957539883622, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.30437791227925504, 'modification_function': 'floor'},
+        "fuzzy_cells_and_prions": {'modulus': 3.6184508776628803, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.1324512456707755, 'modification_function': 'id'},
+        "jumping_across_barrier": {'modulus': 3.2041633924528496, 'neighborhood_type': 'D4', 'neighbor_sum_constant': 0.26478347096386534, 'modification_function': 'id'},
+        "lake_blobs": {'modulus': 1.1694837210909337, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.22397420704433238, 'modification_function': 'parabola'},
+        "lifelike_yellow": {'modulus': 1.3332517199177638, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 1.4830482994242475, 'modification_function': 'sigmoid5'},
+        "negative_stars": {'modulus': 244.15664209254857, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': 0.2928871328981523, 'modification_function': 'parabola'},
+        "pulsating_grid_blobs": {'modulus': 1.1120031224082496, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -0.14000033221259264, 'modification_function': 'triangle'},
+        "pulses_on_torn_fabric": {'modulus': 1.9612420876381274, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 0.23361251099580402, 'modification_function': 'id'},
+        "pulsing_crosshatch": {'modulus': 1.9307570232200812, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': 0.1598527751709728, 'modification_function': 'triangle'},
+        "rings_on_chaotic": {'modulus': 2.0482411138332037, 'neighborhood_type': 'D8', 'neighbor_sum_constant': 0.22443345890186495, 'modification_function': 'triangle'},
+        "scabs": {'modulus': 25.779744675762892, 'neighborhood_type': 'D8', 'neighbor_sum_constant': -0.23094413522382012, 'modification_function': 'floor'},
+        "slash_and_flash": {'modulus': 2.4356354632491204, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.6230227015040277, 'modification_function': 'sigmoid2'},
+        "slow_yellow": {'modulus': 22.36433951225598, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -0.44089199730535655, 'modification_function': 'parabola'},
+        "slowly_shrinking_blobs": {'modulus': 1.623625859769556, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.37532641019424623, 'modification_function': 'sigmoid2'},
+        "stable_braille": {'modulus': 1.2575655741701968, 'neighborhood_type': 'diagonal', 'neighbor_sum_constant': -2.0026630056262698, 'modification_function': 'floor'},
+        "stable_flower_holes": {'modulus': 4.350355617958833, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.12326451605302458, 'modification_function': 'floor'},  # some initial conditions die quickly, others stabilize
+        "wobbly_oscillator": {'modulus': 4.982426272634422, 'neighborhood_type': 'D4', 'neighbor_sum_constant': -0.13755029176642564, 'modification_function': 'triangle'},  # becomes overlapping positive/negative blobs, with intervening checkerboard space, and the blobs slowly collapse to circles and disappear; fine structure within a color is also visible, curves perpendicular to border lines
+    }
 
     # for re-running a discovery
-    # params.update(stable_flower_holes)
+    # params.update(slow_yellow)
+    k, d = random.choice(list(discoveries.items()))
+    print(k, d)
+    params.update(d)
 
     arr = evolve_ca(**params)
     plt.imshow(arr)
