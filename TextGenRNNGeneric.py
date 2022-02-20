@@ -4,19 +4,18 @@ from textgenrnn import textgenrnn
 import numpy as np
 
 
-def find_ideal_temperature_range(model, texts, starting_temp, step):
+def find_ideal_temperature_range(model, texts, starting_temp, step, n_samples_per_temp, too_many_copies=0.5, not_enough_copies=0.0):
     # assumes that copying_proportion is monotonic in temperature
     assert starting_temp > 0
     assert step > 0
-    too_many_copies = 0.5
-    not_enough_copies = 0
+    max_temp = 5.0
 
     good_temps = []
     seen_temps = set()
-    is_too_uncreative = lambda p: p >= too_many_copies
-    is_too_creative = lambda p: p <= not_enough_copies
+    is_too_uncreative = lambda p: p > too_many_copies
+    is_too_creative = lambda p: p < not_enough_copies
     is_good = lambda p: (not is_too_uncreative(p)) and (not is_too_creative(p))
-    get_p = lambda temp: get_copying_proportion(temp, model, texts)  # shorthand
+    get_p = lambda temp: get_copying_proportion(temp, model, texts, n_samples_per_temp)  # shorthand
 
     t = starting_temp
     p = get_p(t)
@@ -57,7 +56,7 @@ def find_ideal_temperature_range(model, texts, starting_temp, step):
         found_first_good_temp = False
         while True:
             t += direction * step
-            if t <= 0:
+            if t <= 0 or t > max_temp:
                 break
             p = get_p(t)
             if is_good(p):
@@ -72,10 +71,9 @@ def find_ideal_temperature_range(model, texts, starting_temp, step):
     return good_temps
 
 
-def get_copying_proportion(temperature, model, texts):
+def get_copying_proportion(temperature, model, texts, n_samples):
     if temperature <= 0:
         raise ValueError("non-positive temperature")
-    n_samples = 10  # can reduce this if it takes too long to generate
     samples = model.generate(n=n_samples, return_as_list=True, temperature=[temperature])
     assert len(samples) == n_samples  # because idk what the top_n=3 kwarg does in the function call
     n_copies = sum(x in texts for x in samples)
@@ -163,22 +161,28 @@ if __name__ == "__main__":
 
     good_temps = None
     while True:
-        epochs = 20
-        n_samples_per_temp = 10
+        epochs = 10
+        n_samples_for_testing_temp = 20
+        n_samples_for_generating_at_temp = 50
+        too_many_copies = 0.61
+        not_enough_copies = 0.29
         if epochs > 0:
             textgen.train_on_texts(texts, num_epochs=epochs, gen_epochs=epochs+1)
         # don't use new_model here because want to keep older knowledge
         # use gen_epochs greater than num_epochs to prevent it from generating every single epoch
-        if good_temps is None or good_temps == []:
-            starting_temp = 1.0
+        if good_temps is None:
+            starting_temp = 2.5
             step = 0.25
+        # if good_temps is [] this time, just keep the params the same and try again from that point next time
         else:
             starting_temp = np.mean(good_temps)
             step = np.std(good_temps) / 2 if len(good_temps) > 1 else 0.25  # prevent step = 0
-        good_temps = find_ideal_temperature_range(textgen, texts, starting_temp, step)
+            step = max(0.05, step)  # don't make step too small
+            starting_temp = 0.05 * round(starting_temp / 0.05)  # round to nearest multiple of 0.05
+        good_temps = find_ideal_temperature_range(textgen, texts, starting_temp, step, n_samples_for_testing_temp, too_many_copies, not_enough_copies)
         print(f"good temperature range: {good_temps}")
         if good_temps != []:
-            generate_for_temps_clean(n_samples_per_temp, good_temps, textgen, texts)
+            generate_for_temps_clean(n_samples_for_generating_at_temp, good_temps, textgen, texts)
 
         textgen.save(model_fp)
         print("saved model")
