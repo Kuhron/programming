@@ -177,6 +177,14 @@ function aco() {  # play acoma audio files matching string
 }
 function bright() { xrandr --output $(xrandr | grep " connected" | cut -f1 -d " ") --brightness $1 ;}
 
+function tab4() {
+    for arg in "$@"; do  # https://mywiki.wooledge.org/BashPitfalls (#24)
+        echo $arg
+        expand -t 4 $arg > "_TEMP_TAB_TO_SPACE_"$arg
+        mv "_TEMP_TAB_TO_SPACE_"$arg $arg
+    done
+}
+
 function cdiff() { /usr/bin/diff -u $1 $2 | colordiff | less -R ;}  # https://stackoverflow.com/a/20288437/7376935
 alias diff="cdiff"  # this way it's unambiguous what I want when I type "diff", it goes to the custom function
 
