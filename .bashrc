@@ -166,6 +166,8 @@ alias gitsize="git status --porcelain | sed 's/^...//g;s/\"//g' | xargs -d '\n' 
 alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 alias tmux="TERM=screen-256color-bce tmux"
 
+function midtomp3() { echo "this is broken because I don't know how to embed sed result as output filename"; timidity "$1" -Ow -o - | ffmpeg -i - -acodec libmp3lame -ab 64k $(sed -e "s/mid$/mp3/" "$1") ;}
+
 function truncate() { cut -c 1-$(tput cols) $1 ;}
 function psg() { ps aux | grep $1 | grep -v grep | truncate ;}
 # function null() { "$@" &> /dev/null ;}  # doesn't work
@@ -232,7 +234,8 @@ export LESS="-SR"  # turns off line wrapping in less
 export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
 export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
 export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
-export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH
+export MAVENPATH=$HOME/apache-maven-3.8.4/bin
+export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH:$MAVENPATH
 # export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
 
 
