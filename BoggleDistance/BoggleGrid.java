@@ -1,4 +1,5 @@
 import java.util.Random;
+import java.util.ArrayList;
 
 
 public class BoggleGrid {
@@ -44,19 +45,52 @@ public class BoggleGrid {
         return grid[i][j];
     }
 
-    public PathTree getAllPaths() {
-        PathTree paths = new PathTree();
-        // int nPaths = paths.length;
-        // System.out.printf("got %d new paths\n", nPaths);
-        return paths;
+    // public PathTree getAllPaths() {
+    //     PathTree paths = new PathTree();
+    //     // int nPaths = paths.length;
+    //     // System.out.printf("got %d new paths\n", nPaths);
+    //     return paths;
+    // }
+
+    // public int[][] getAllPathsFromStartingPoint(int[] startingPoint, boolean[][] allowed) {
+
+    // }
+
+    // public int[][] getNextStepsFromStartingPoint(int[] startingPoint, boolean[][] allowed) {
+    //     // allowed is a grid that says whether each cell can be used or not, set them to false in recursive calls when you've used a letter
+
+    // }
+
+    public void printAllStrings() {
+        System.out.println("printing all strings of this BoggleGrid, regardless of if they are words");
+        boolean[][] allowed = new boolean[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                allowed[i][j] = true;
+            }
+        }
+
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                GridPosition start = new GridPosition(i, j);
+                printStringsFromInitialCondition(start, allowed);
+            }
+        }
     }
 
-    public int[][] getAllPathsFromStartingPoint(int[] startingPoint, boolean[][] allowed) {
-
+    public void printStringsFromInitialCondition(GridPosition start, boolean[][] allowed) {
+        // starting at a certain point in the grid, with certain cells allowed to be used, print the strings you can get
+        System.out.println("not implemented");
     }
 
-    public int[][] getNextStepsFromStartingPoint(int[] startingPoint, boolean[][] allowed) {
-        // allowed is a grid that says whether each cell can be used or not, set them to false in recursive calls when you've used a letter
-
+    public ArrayList<GridPosition> getPossibleNextPositions(GridPosition position, boolean[][] allowed) {
+        ArrayList<GridPosition> neighbors = position.getNeighbors(this.size);
+        ArrayList<GridPosition> options = new ArrayList<GridPosition>();
+        for (GridPosition neighbor : neighbors) {
+            if (neighbor.isAllowed(allowed)) {
+                options.add(neighbor);
+            }
+        }
+        return options;
     }
 }
