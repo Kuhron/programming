@@ -1,6 +1,6 @@
 public class BoggleDistance {
     public static void main(String[] args) {
-        int size = 1;
+        int size = 4;
         BoggleGrid grid = BoggleGrid.random(size);
         // grid.print();
         grid.printAllStrings();
