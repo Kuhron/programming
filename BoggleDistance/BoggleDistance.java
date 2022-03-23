@@ -1,9 +1,8 @@
 public class BoggleDistance {
     public static void main(String[] args) {
-        int size = 4;
+        int size = 1;
         BoggleGrid grid = BoggleGrid.random(size);
-        grid.print();
-        // int[][] paths = grid.getAllPaths();
+        // grid.print();
         grid.printAllStrings();
 
         // TODO enumerate all possible grid paths

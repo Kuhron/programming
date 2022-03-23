@@ -2,10 +2,14 @@ import java.util.ArrayList;
 
 
 public class GridPosition {
+    int row;
+    int col;
     int[] position = new int[2];
 
     public GridPosition(int row, int col) {
         this.position = new int[] {row, col};
+        this.row = row;
+        this.col = col;
     }
 
     public ArrayList<GridPosition> getNeighbors(int gridSize) {
@@ -19,16 +23,22 @@ public class GridPosition {
 
         for (int i = minRow; i < maxRow+1; i++) {
             for (int j = minCol; j < maxCol+1; j++) {
-                if (i != j) {
+                boolean isSameAsStart = (i == row && j == col);
+                if (!isSameAsStart) {
                     GridPosition neighbor = new GridPosition(i, j);
                     res.add(neighbor);
                 }
             }
         }
+        // System.out.printf("the neighbors of %s are %s\n", this, res);
         return res;
     }
 
-    public boolean isAllowed(boolean[][] allowed) {
-        return allowed[this.position[0]][this.position[1]];
+    public boolean isAllowed(AllowedGrid allowed) {
+        return allowed.allows(this);
+    }
+
+    public String toString() {
+        return String.format("[%d, %d]", this.row, this.col);
     }
 }

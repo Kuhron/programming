@@ -38,11 +38,8 @@ public class BoggleGrid {
         System.out.println(">");
     }
 
-    public char charAt(int[] index) {
-        assert index.length == 2;
-        int i = index[0];
-        int j = index[1];
-        return grid[i][j];
+    public char charAt(GridPosition index) {
+        return grid[index.row][index.col];
     }
 
     // public PathTree getAllPaths() {
@@ -62,28 +59,44 @@ public class BoggleGrid {
     // }
 
     public void printAllStrings() {
-        System.out.println("printing all strings of this BoggleGrid, regardless of if they are words");
-        boolean[][] allowed = new boolean[size][size];
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                allowed[i][j] = true;
-            }
-        }
+        // number of possible paths is: https://oeis.org/A236690
+        // System.out.println("printing all strings of this BoggleGrid, regardless of if they are words");
+        AllowedGrid allowed = AllowedGrid.allTrue(size);
 
         for (int i = 0; i < size; i++) {
             for (int j = 0; j < size; j++) {
                 GridPosition start = new GridPosition(i, j);
-                printStringsFromInitialCondition(start, allowed);
+                String prefix = Character.toString(charAt(start));
+                printStringsFromInitialCondition(start, prefix, allowed);
             }
         }
     }
 
-    public void printStringsFromInitialCondition(GridPosition start, boolean[][] allowed) {
+    public void printStringsFromInitialCondition(GridPosition start, String prefix, AllowedGrid allowed) {
         // starting at a certain point in the grid, with certain cells allowed to be used, print the strings you can get
-        System.out.println("not implemented");
+
+        ArrayList<String> suffixes = new ArrayList<String>();
+
+        allowed = allowed.withChange(start, false);  // can't revisit this point
+        ArrayList<GridPosition> nextPositions = getPossibleNextPositions(start, allowed);
+
+        // print the string up to now in any case
+        if (prefix.length() > 0) {
+            System.out.println(prefix);
+        }
+
+        if (nextPositions.size() == 0) {
+            // base case reached, print the prefix because there are no suffixes
+            return;
+        }
+
+        for (GridPosition nextStart : nextPositions) {
+            String nextPrefix = prefix + charAt(nextStart);
+            printStringsFromInitialCondition(nextStart, nextPrefix, allowed);
+        }
     }
 
-    public ArrayList<GridPosition> getPossibleNextPositions(GridPosition position, boolean[][] allowed) {
+    public ArrayList<GridPosition> getPossibleNextPositions(GridPosition position, AllowedGrid allowed) {
         ArrayList<GridPosition> neighbors = position.getNeighbors(this.size);
         ArrayList<GridPosition> options = new ArrayList<GridPosition>();
         for (GridPosition neighbor : neighbors) {
