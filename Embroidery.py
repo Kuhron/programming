@@ -76,6 +76,18 @@ class Point:
     def to_polar_array(self):
         return np.array([self.r, self.theta])
 
+    def rotated_about_center(self, d_theta, deg=False):
+        if deg:  # theta was passed in degrees, convert it to radians
+            d_theta = np.pi/180 * d_theta
+        r, theta = self.to_polar()
+        theta += d_theta
+        return Point.from_polar(r, theta)
+
+    def dilated(self, r_factor):
+        r, theta = self.to_polar()
+        r *= r_factor
+        return Point.from_polar(r, theta)
+
     def __repr__(self):
         return f"<Point r={self.r:.4f}, theta={self.theta_degrees:.2f} deg, x={self.x:.4f}, y={self.y:.4f}>"
 
@@ -137,6 +149,15 @@ class Knot:
         knot_type = Stitch.random(0)
         color = get_random_color()
         return Knot(loc, knot_type, color)
+
+    def rotated_about_center(self, d_theta, deg=False):
+        new_location = self.location.rotated_about_center(d_theta, deg=deg)
+        return Knot(new_location, self.knot_type, self.color)
+
+    def dilated(self, r_factor):
+        new_location = self.location.dilated(r_factor)
+        return Knot(new_location, self.knot_type, self.color)
+
 
 
 class Line:
@@ -271,6 +292,14 @@ class Line:
                     r *= 1/2  # lazy way to put it back in the hoop limits when the unperturbed point is outside
         return points
 
+    def rotated_about_center(self, d_theta, deg=False):
+        new_locations = [loc.rotated_about_center(d_theta, deg=deg) for loc in self.locations]
+        return Line(new_locations, self.stitch_type, self.color)
+
+    def dilated(self, r_factor):
+        new_locations = [loc.dilated(r_factor) for loc in self.locations]
+        return Line(new_locations, self.stitch_type, self.color)
+
 
 class Patch:
     def __init__(self, border_line, stitch_type, color, show_border_line):
@@ -300,6 +329,14 @@ class Patch:
 
     def get_xs_and_ys(self):
         return self.border_line.get_xs_and_ys()
+
+    def rotated_about_center(self, d_theta, deg=False):
+        new_border_line = self.border_line.rotated_about_center(d_theta, deg=deg)
+        return Patch(new_border_line, self.stitch_type, self.color, self.show_border_line)
+
+    def dilated(self, r_factor):
+        new_border_line = self.border_line.dilated(r_factor)
+        return Patch(new_border_line, self.stitch_type, self.color, self.show_border_line)
 
 
 class Hoop:
@@ -394,17 +431,43 @@ def angle_between_directional_2d(v1, v2):
 
 
 
+
 if __name__ == "__main__":
     hoop = Hoop()
 
-    for i in range(random.randint(3, 20)):
-        hoop.add_knot(Knot.random())
+    radial_symmetry = 6
+    dilation = 0.75
+    d_theta = 2*np.pi / radial_symmetry
 
-    # for i in range(random.randint(3, 20)):
-    #     hoop.add_line(Line.random(n_points=5, perturbation=0.1))
+    n_knots = 50
+    # n_knots = random.randint(3, 20)
 
-    for i in range(random.randint(3, 50)):
-        hoop.add_patch(Patch.random(n_points=50, perturbation=0.1))
+    n_lines = 3
+    # n_lines = random.randint(3, 20)
+
+    n_patches = 3
+    # n_patches = random.randint(3, 50)
+
+    for i in range(n_knots):
+        k0 = Knot.random()
+        for j in range(radial_symmetry):
+            k = k0.rotated_about_center(j*d_theta)
+            k = k.dilated(dilation**j)
+            hoop.add_knot(k)
+
+    for i in range(n_lines):
+        l0 = Line.random(n_points=5, perturbation=0.1)
+        for j in range(radial_symmetry):
+            l = l0.rotated_about_center(j*d_theta)
+            l = l.dilated(dilation**j)
+            hoop.add_line(l)
+
+    for i in range(n_patches):
+        m0 = Patch.random(n_points=50, perturbation=0.1)
+        for j in range(radial_symmetry):
+            m = m0.rotated_about_center(j*d_theta)
+            m = m.dilated(dilation**j)
+            hoop.add_patch(m)
 
     hoop.plot()
     plt.show()
