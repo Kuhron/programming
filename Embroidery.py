@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy import interpolate
 
 
 # the canvas is the unit circle
@@ -88,6 +89,10 @@ class Point:
         r *= r_factor
         return Point.from_polar(r, theta)
 
+    def dilated_to_r(self, target_r):
+        r, theta = self.to_polar()
+        return Point.from_polar(target_r, theta)
+
     def __repr__(self):
         return f"<Point r={self.r:.4f}, theta={self.theta_degrees:.2f} deg, x={self.x:.4f}, y={self.y:.4f}>"
 
@@ -158,15 +163,20 @@ class Knot:
         new_location = self.location.dilated(r_factor)
         return Knot(new_location, self.knot_type, self.color)
 
+    def radius_limited(self, max_r):
+        new_location_xy, = limit_r_of_points([self.location], max_r=1, as_array=False)
+        new_location = Point(*new_location_xy)
+        return Knot(new_location, self.knot_type, self.color)
 
 
 class Line:
-    def __init__(self, locations, stitch_type, color):
+    def __init__(self, locations, stitch_type, color, smoothing):
         assert all(type(x) is Point for x in locations)
         self.locations = locations
         assert Stitch.is_valid(stitch_type)
         self.stitch_type = stitch_type
         self.color = color
+        self.smoothing = smoothing
 
     @staticmethod
     def random(n_points=None, perturbation=0.1):
@@ -180,7 +190,8 @@ class Line:
     def random_from_locs(locs):
         stitch_type = Stitch.random(1)
         color = get_random_color()
-        return Line(locs, stitch_type, color)
+        smoothing = abs(np.random.normal(0, 1))
+        return Line(locs, stitch_type, color, smoothing)
 
     def close_shape(self):
         if self.locations[0] == self.locations[-1]:
@@ -196,6 +207,42 @@ class Line:
             xs.append(loc.x)
             ys.append(loc.y)
         return xs, ys
+
+    def get_xs_and_ys_arrays(self):
+        xs, ys = self.get_xs_and_ys()
+        xs = np.array(xs)
+        ys = np.array(ys)
+        return xs, ys
+
+    def get_xs_and_ys_smoothed(self, smoothing=0, resolution=100, closed=False):
+        # https://stackoverflow.com/questions/53328619/smooth-the-path-of-line-with-python
+        if closed:
+            self.close_shape()
+        x, y = self.get_xs_and_ys_arrays()
+        assert len(x) == len(y)
+        assert x.ndim == 1 and y.ndim == 1
+        if len(x) == 2:
+            # too few points for spline interpolation
+            return x, y
+        elif len(x) == 3:
+            # too few points for cubic spline (which is default)
+            spline_degree = 2
+        else:
+            spline_degree = 3
+        # print("x=",x)
+        # print("y=",y)
+        # x = np.r_[x, x[0]]  # this is adding the first element to the end again
+        # y = np.r_[y, y[0]]  # this is adding the first element to the end again
+        f, u = interpolate.splprep([x, y], s=smoothing, per=False, k=spline_degree)  # per=True means it treats the input as periodic, but I am letting user choose whether the shape is closed (i.e. treated as periodic) or not
+        # create interpolated lists of points
+        xint, yint = interpolate.splev(np.linspace(0, 1, resolution), f)
+
+        # the interpolated path may exit the hoop, fix that
+        arr = np.array([xint, yint])
+        points = arr.T
+        points = limit_r_of_points(points, max_r=1)
+        xint, yint = points.T
+        return xint, yint
 
     @staticmethod
     def get_random_path_completely_random(n_points):
@@ -224,9 +271,9 @@ class Line:
         return points
 
     @staticmethod
-    def get_random_closed_path(n_points, perturbation):
+    def get_random_closed_path(n_points, perturbation, self_intersection_tolerance=0.01):
         # start with a circle and perturb the path
-        # TODO: opposite_direction = random.choice([True, False])  # which way theta rotates for each path increment around the perimeter of the baseline circle
+        opposite_direction = random.choice([True, False])  # which way theta rotates for each path increment around the perimeter of the baseline circle
         # re-calculate what the rest of the circle should look like at each step after perturbation, based on current location and number of steps left
 
         points = []
@@ -251,21 +298,19 @@ class Line:
             else:
                 print(f"failed to get p0 within hoop, got {new_point}")
 
-        # d_theta_left = 2*np.pi
-        # d_theta_this_step = d_theta_left / n_steps_left
-        # first_step_length = ((radius * np.cos(d_theta_this_step) - radius)**2 + (radius * np.sin(d_theta_this_step))**2) ** 0.5  # from initial point at (1, 0) to first point at (r cos theta, r sin theta)
-
         # now set p0 as the current point
         p = p0
-        v = v0  # displacement vector from center
+        v = v0  # displacement vector from center of circle patch (NOT from center of hoop)
         for step_i in range(n_points):
             theta_left = angle_between_directional_2d(v, v0)  # FROM current point, about center, TO p0 (the first point we put on the edge)
             if theta_left == 0 and n_steps_left > 0:
                 # the case where we have only just put p0 on the circle and haven't traversed any angle yet
                 theta_left += 2*np.pi
+            if opposite_direction:
+                theta_left *= -1
             print(f"n_steps_left = {n_steps_left}; theta_left = {180/np.pi*theta_left} deg")
 
-            # just get the next unperturbed point by getting a vector of same radius as vi but with incremented theta, rather than trying to actually do the math to rotate it about the center or anything like that
+            # just get the next unperturbed point by getting a vector of same radius as v but with incremented theta, rather than trying to actually do the math to rotate it about the center or anything like that
             next_d_theta = theta_left / n_steps_left
             r = mag_2d(v)  # current radius
             theta_position = angle_2d(v)
@@ -273,36 +318,55 @@ class Line:
             while True:
                 v_next = np.array([r * np.cos(next_theta_position), r * np.sin(next_theta_position)])
                 p_next = c + v_next
-                print(f"- next d theta = {180/np.pi*next_d_theta} deg\n  r = {r}\n  theta_position = {180/np.pi*theta_position} deg\n  next_theta_position = {180/np.pi*next_theta_position} deg\n  v_next = {v_next}\n  p_next = {p_next}\n  c = {c}\n")
+                # print(f"- next d theta = {180/np.pi*next_d_theta} deg\n  r = {r}\n  theta_position = {180/np.pi*theta_position} deg\n  next_theta_position = {180/np.pi*next_theta_position} deg\n  v_next = {v_next}\n  p_next = {p_next}\n  c = {c}\n")
 
                 q = Point.random_2d_uniform(max_r=perturbation).to_cartesian_array()  # perturbation of this new point
-                print(f"rolled perturbation: {q}")
+                # print(f"rolled perturbation: {q}")
                 p_perturbed = p_next + q
                 candidate_point = Point.from_cartesian(*p_perturbed)
-                if candidate_point.r < 1:
-                    # accept the point, it's within the boundaries of the hoop
-                    p = p_perturbed
-                    v = p_perturbed - c
-                    points.append(candidate_point)
-                    n_steps_left -= 1
-                    print(f"accepted new point {candidate_point}, {n_steps_left} steps left")
-                    break
-                else:
-                    print(f"perturbation failed at step {step_i}, rerolling")
+                last_point = points[-1]
+                candidate_segment = (last_point, candidate_point)
+                existing_path = points
+
+                meets_r_requirement = candidate_point.r < 1
+                if not meets_r_requirement:
+                    print(f"perturbation failed at step {step_i} due to going beyond the hoop's border; rerolling")
                     r *= 1/2  # lazy way to put it back in the hoop limits when the unperturbed point is outside
+                    continue
+
+                intersects_self = segment_intersects_path(candidate_segment, existing_path)
+                meets_self_intersection_requirement = (not intersects_self) or random.random() < self_intersection_tolerance
+                if not meets_self_intersection_requirement:
+                    print(f"perturbation failed at step {step_i} due to self-intersection; rerolling")
+                    continue
+
+                # point meets the requirements, accept it
+                p = p_perturbed
+                v = p_perturbed - c
+                points.append(candidate_point)
+                n_steps_left -= 1
+                print(f"accepted new point {candidate_point}, {n_steps_left} steps left")
+                break
+
         return points
 
     def rotated_about_center(self, d_theta, deg=False):
         new_locations = [loc.rotated_about_center(d_theta, deg=deg) for loc in self.locations]
-        return Line(new_locations, self.stitch_type, self.color)
+        return Line(new_locations, self.stitch_type, self.color, self.smoothing)
 
     def dilated(self, r_factor):
         new_locations = [loc.dilated(r_factor) for loc in self.locations]
-        return Line(new_locations, self.stitch_type, self.color)
+        return Line(new_locations, self.stitch_type, self.color, self.smoothing)
+
+    def radius_limited(self, max_r):
+        new_locations_xy = limit_r_of_points(self.locations, max_r=1, as_array=False)
+        new_locations = [Point(*new_location_xy) for new_location_xy in new_locations_xy]
+        return Line(new_locations, self.stitch_type, self.color, self.smoothing)
+
 
 
 class Patch:
-    def __init__(self, border_line, stitch_type, color, show_border_line):
+    def __init__(self, border_line, stitch_type, color, show_border_line, smoothing):
         # border locations treated as a path around the border, and we assume we will connect the end to the beginning
         assert type(border_line) is Line
         self.border_line = border_line
@@ -311,6 +375,7 @@ class Patch:
         self.color = color
         assert type(show_border_line) is bool
         self.show_border_line = show_border_line
+        self.smoothing = smoothing
 
     @staticmethod
     def random(n_points=None, perturbation=0.1):
@@ -325,18 +390,27 @@ class Patch:
         stitch_type = Stitch.random(2)
         color = get_random_color()
         show_border_line = random.choice([True, False])
-        return Patch(border_line, stitch_type, color, show_border_line)
+        smoothing = abs(np.random.normal(0, 1))
+        return Patch(border_line, stitch_type, color, show_border_line, smoothing)
 
     def get_xs_and_ys(self):
         return self.border_line.get_xs_and_ys()
 
+    def get_xs_and_ys_smoothed(self, smoothing=0, resolution=100):
+        return self.border_line.get_xs_and_ys_smoothed(smoothing=smoothing, resolution=resolution, closed=True)
+
     def rotated_about_center(self, d_theta, deg=False):
         new_border_line = self.border_line.rotated_about_center(d_theta, deg=deg)
-        return Patch(new_border_line, self.stitch_type, self.color, self.show_border_line)
+        return Patch(new_border_line, self.stitch_type, self.color, self.show_border_line, self.smoothing)
 
     def dilated(self, r_factor):
         new_border_line = self.border_line.dilated(r_factor)
-        return Patch(new_border_line, self.stitch_type, self.color, self.show_border_line)
+        return Patch(new_border_line, self.stitch_type, self.color, self.show_border_line, self.smoothing)
+
+    def radius_limited(self, max_r):
+        new_border_line = self.border_line.radius_limited(max_r)
+        return Patch(new_border_line, self.stitch_type, self.color, self.show_border_line, self.smoothing)
+
 
 
 class Hoop:
@@ -368,34 +442,40 @@ class Hoop:
         plt.gca().set_aspect('equal')
 
         # do larger dimensionality first, so patches don't cover lines and lines don't cover points
+        zorder = 0
         for patch in self.patches:
-            self.plot_patch(patch)
+            self.plot_patch(patch, zorder=zorder)
+            zorder += 1
 
         for line in self.lines:
-            self.plot_line(line)
+            self.plot_line(line, zorder=zorder)
+            zorder += 1
 
         for knot in self.knots:
-            self.plot_knot(knot)
+            self.plot_knot(knot, zorder=zorder)
+            zorder += 1
 
     # could be a static method but whatever
-    def plot_patch(self, patch):
-        xs, ys = patch.get_xs_and_ys()
-        plt.fill(xs, ys, color=patch.color)
+    def plot_patch(self, patch, **kwargs):
+        # xs, ys = patch.get_xs_and_ys()
+        xs, ys = patch.get_xs_and_ys_smoothed(smoothing=patch.smoothing, resolution=100)
+        plt.fill(xs, ys, color=patch.color, **kwargs)
         # TODO stitch type texture
 
         if patch.show_border_line:
-            self.plot_line(patch.border_line)
+            self.plot_line(patch.border_line, **kwargs)
 
-    def plot_line(self, line):
-        xs, ys = line.get_xs_and_ys()
-        plt.plot(xs, ys, color=line.color)
+    def plot_line(self, line, **kwargs):
+        # xs, ys = line.get_xs_and_ys()
+        xs, ys = line.get_xs_and_ys_smoothed(smoothing=line.smoothing, resolution=100)
+        plt.plot(xs, ys, color=line.color, **kwargs)
         # TODO stitch type texture
 
-    def plot_knot(self, knot):
+    def plot_knot(self, knot, **kwargs):
         x, y = knot.location.to_cartesian()
         color = knot.color
         marker = Stitch.get_marker(knot.knot_type)
-        plt.scatter(x, y, color=color, marker=marker)
+        plt.scatter(x, y, color=color, marker=marker, **kwargs)
 
 
 def get_random_color():
@@ -430,43 +510,111 @@ def angle_between_directional_2d(v1, v2):
     return res
 
 
+def segment_intersects_path(candidate_segment, existing_path):
+    a, b = candidate_segment
+    assert type(a) is Point
+    assert type(b) is Point
+    assert all(type(p) is Point for p in existing_path)
+    for p, q in zip(existing_path[:-1], existing_path[1:]):
+        # see if segment a-b intersects p-q
+        # if it's the most recent segment, we expect that q (the most recent point) will be the same as our segment a (when adding to a path head-to-tail like we do in the line generation)
+        result_for_common_endpoint = False if q == a else True  # we set intersection to False for the case where it's the head-tail linkage
+        if segment_intersects_segment((a,b), (p,q), result_for_common_endpoint):
+            # print(f"segments intersect:\n  a = {a}\n  b = {b}\n  p = {p}\n  q = {q}\n")
+            return True
+    return False
+
+
+def segment_intersects_segment(seg1, seg2, result_for_common_endpoint=False):
+    a, b = seg1
+    p, q = seg2
+
+    # ignore zero division for now, hope that it just never comes up because we're doing random directions
+    xa, ya = a.to_cartesian()
+    xb, yb = b.to_cartesian()
+    xp, yp = p.to_cartesian()
+    xq, yq = q.to_cartesian()
+    
+    # alpha is amount along the (b-a) vector starting from a
+    # beta is amount along the (q-p) vector starting from p
+    alpha = ((ya-yp)*(xq-xp)-(xa-xp)*(yq-yp)) / ((xb-xa)*(yq-yp)-(yb-ya)*(xq-xp))
+    beta = ((yp-ya)*(xb-xa)-(xp-xa)*(yb-ya)) / ((xq-xp)*(yb-ya)-(yq-yp)*(xb-xa))
+
+    raw_intersects = 0 <= alpha <= 1 and 0 <= beta <= 1
+    has_common_endpoint = alpha in [0, 1] and beta in [0, 1]
+    if has_common_endpoint:
+        assert raw_intersects
+        return result_for_common_endpoint
+    else:
+        return raw_intersects
+
+
+def limit_r_of_points(points, max_r=1, as_array=True):
+    res = []
+    for item in points:
+        if type(item) is Point:
+            x, y = item.to_cartesian()
+        else:
+            x, y = item
+        p = Point.from_cartesian(x, y)
+        if p.r > max_r:
+            new_r = min(max_r, p.r)
+            new_p = p.dilated_to_r(new_r)
+            print(f"limiting radius of point to {max_r}:\n   {p}\n-> {new_p}\n")
+            input("check")
+            res.append(new_p.to_cartesian())
+        else:
+            # it's fine as is
+            res.append([x, y])
+
+    if as_array:
+        return np.array(res)
+    else:
+        return res
 
 
 if __name__ == "__main__":
     hoop = Hoop()
 
-    radial_symmetry = 6
-    dilation = 0.75
+    radial_symmetry = 1 if random.random() < 0.5 else random.randint(2, 8)
+    dilation = random.uniform(0.5, 1.1)
     d_theta = 2*np.pi / radial_symmetry
 
-    n_knots = 50
-    # n_knots = random.randint(3, 20)
+    # n_knots = 50
+    n_knots = random.randint(8, 50)
 
-    n_lines = 3
-    # n_lines = random.randint(3, 20)
+    # n_lines = 3
+    n_lines = random.randint(3, 8)
 
-    n_patches = 3
-    # n_patches = random.randint(3, 50)
+    # n_patches = 3
+    n_patches = random.randint(3, 6)
 
     for i in range(n_knots):
         k0 = Knot.random()
         for j in range(radial_symmetry):
             k = k0.rotated_about_center(j*d_theta)
             k = k.dilated(dilation**j)
+            k = k.radius_limited(1)
             hoop.add_knot(k)
 
     for i in range(n_lines):
-        l0 = Line.random(n_points=5, perturbation=0.1)
+        n_points = random.randint(2, 30)
+        perturbation = random.uniform(0, 0.15)
+        l0 = Line.random(n_points=n_points, perturbation=perturbation)
         for j in range(radial_symmetry):
             l = l0.rotated_about_center(j*d_theta)
             l = l.dilated(dilation**j)
+            # l = l.radius_limited(1)
             hoop.add_line(l)
 
     for i in range(n_patches):
-        m0 = Patch.random(n_points=50, perturbation=0.1)
+        n_points = random.randint(6, 100)
+        perturbation = random.uniform(0, 0.15)
+        m0 = Patch.random(n_points=n_points, perturbation=perturbation)
         for j in range(radial_symmetry):
             m = m0.rotated_about_center(j*d_theta)
             m = m.dilated(dilation**j)
+            # m = m.radius_limited(1)
             hoop.add_patch(m)
 
     hoop.plot()
