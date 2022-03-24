@@ -148,10 +148,11 @@ class Line:
         self.color = color
 
     @staticmethod
-    def random():
-        n_points = random.randint(20, 100)
+    def random(n_points=None, perturbation=0.1):
+        if n_points is None:
+            n_points = random.randint(20, 100)
         # locs = Line.get_random_path_completely_random(n_points)
-        locs = Line.get_random_path_with_momentum(n_points, perturbation=0.1)
+        locs = Line.get_random_path_with_momentum(n_points, perturbation=perturbation)
         return Line.random_from_locs(locs)
 
     @staticmethod
@@ -248,10 +249,11 @@ class Line:
             r = mag_2d(v)  # current radius
             theta_position = angle_2d(v)
             next_theta_position = theta_position + next_d_theta
-            v_next = np.array([r * np.cos(next_theta_position), r * np.sin(next_theta_position)])
-            p_next = c + v_next
-            print(f"- next d theta = {180/np.pi*next_d_theta} deg\n  r = {r}\n  theta_position = {180/np.pi*theta_position} deg\n  next_theta_position = {180/np.pi*next_theta_position} deg\n  v_next = {v_next}\n  p_next = {p_next}\n  c = {c}\n")
             while True:
+                v_next = np.array([r * np.cos(next_theta_position), r * np.sin(next_theta_position)])
+                p_next = c + v_next
+                print(f"- next d theta = {180/np.pi*next_d_theta} deg\n  r = {r}\n  theta_position = {180/np.pi*theta_position} deg\n  next_theta_position = {180/np.pi*next_theta_position} deg\n  v_next = {v_next}\n  p_next = {p_next}\n  c = {c}\n")
+
                 q = Point.random_2d_uniform(max_r=perturbation).to_cartesian_array()  # perturbation of this new point
                 print(f"rolled perturbation: {q}")
                 p_perturbed = p_next + q
@@ -266,6 +268,7 @@ class Line:
                     break
                 else:
                     print(f"perturbation failed at step {step_i}, rerolling")
+                    r *= 1/2  # lazy way to put it back in the hoop limits when the unperturbed point is outside
         return points
 
 
@@ -281,11 +284,12 @@ class Patch:
         self.show_border_line = show_border_line
 
     @staticmethod
-    def random():
-        n_points = random.randint(20, 100)
+    def random(n_points=None, perturbation=0.1):
+        if n_points is None:
+            n_points = random.randint(20, 100)
         # n_points = 8  # debug
-        perturbation = 0.1
         # perturbation = 0.0  # debug
+
         locs = Line.get_random_closed_path(n_points, perturbation=perturbation)
         border_line = Line.random_from_locs(locs)
         border_line.close_shape()
@@ -393,10 +397,14 @@ def angle_between_directional_2d(v1, v2):
 if __name__ == "__main__":
     hoop = Hoop()
 
-    for i in range(5):
+    for i in range(random.randint(3, 20)):
         hoop.add_knot(Knot.random())
-        hoop.add_line(Line.random())
-        hoop.add_patch(Patch.random())
+
+    # for i in range(random.randint(3, 20)):
+    #     hoop.add_line(Line.random(n_points=5, perturbation=0.1))
+
+    for i in range(random.randint(3, 50)):
+        hoop.add_patch(Patch.random(n_points=50, perturbation=0.1))
 
     hoop.plot()
     plt.show()
