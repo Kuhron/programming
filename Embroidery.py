@@ -561,7 +561,6 @@ def limit_r_of_points(points, max_r=1, as_array=True):
             new_r = min(max_r, p.r)
             new_p = p.dilated_to_r(new_r)
             print(f"limiting radius of point to {max_r}:\n   {p}\n-> {new_p}\n")
-            input("check")
             res.append(new_p.to_cartesian())
         else:
             # it's fine as is
@@ -587,14 +586,14 @@ if __name__ == "__main__":
     n_lines = random.randint(3, 8)
 
     # n_patches = 3
-    n_patches = random.randint(3, 6)
+    n_patches = random.randint(3, 15)
 
     for i in range(n_knots):
         k0 = Knot.random()
         for j in range(radial_symmetry):
             k = k0.rotated_about_center(j*d_theta)
             k = k.dilated(dilation**j)
-            k = k.radius_limited(1)
+            # k = k.radius_limited(1)
             hoop.add_knot(k)
 
     for i in range(n_lines):
