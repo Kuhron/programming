@@ -78,12 +78,12 @@ store(singleU) "BEHILNOQRU.#?" U+01C3 U+02D0 U+02C8 U+0320
 c store(equalK) "BEGHILNOQRU#?.!abcdefghijlnoprstuvwxyz" "#="
   store(equalD) "B"    "C"    "E"    "G"    "H"    "I"    "L"    "N"    "O" \
                 "Q"    "R"    "S"    "T"    "U"    "Z"    "#"    "?"    "."    U+01C3 \
-                "abcdefghi" "jlnoprst" "uvwxyz" U+203F U+031F \
+                "abcdefghi" "jlmnoprst" "uvwxyz" U+203F U+031F \
                 "0"
   store(equalU) U+0299 U+00C7 U+0258 U+0262 U+029C U+0268 U+029F U+0274 U+0275 \
                 U+02A1 U+0280 U+1D98 U+00FE U+0289 U+1D9A U+203F U+0294 U+2016 U+01C2 \
                 U+0251 U+03B2 U+00E7 U+00F0 U+0259 U+0278 U+0263 U+0265 U+026A \
-                U+025F U+026C U+0272 U+0252 U+0298 U+0279 U+0283 U+03B8 \
+                U+025F U+026C U+03BC U+0272 U+0252 U+0298 U+0279 U+0283 U+03B8 \
                 U+026F U+028B U+028D U+03C7 U+028F U+0292 U+203F U+002B \
                 U+2205
 

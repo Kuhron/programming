@@ -231,6 +231,7 @@ function base() {
 
 export LESS="-SR"  # turns off line wrapping in less
 # export PYTHONPATH=$PYTHONPATH:/home/wesley/programming  # this is a bad idea if using python outside of programming dir, it will try to look for libraries there
+export PYTHONPATH=$PYTHONPATH:/home/wesley/linux-tone-keyboard
 export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
 export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
 export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
