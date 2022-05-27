@@ -99,9 +99,9 @@ class PlayerSet:
 
     def setup_players(self, player_type_dict):
         self.players = []
-        for player_type, n_players in player_type_dict:
-            self.players += [player_type() for _ in range(n_players)]
-        self.players = random.shuffle(self.players)
+        for player_creation_func, n_players in player_type_dict.items():
+            self.players += [player_creation_func() for _ in range(n_players)]
+        random.shuffle(self.players)
 
     def assign_opponents_to_players(self):
         for player in self.players:

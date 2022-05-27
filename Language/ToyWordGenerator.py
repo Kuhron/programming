@@ -4,7 +4,8 @@ import random
 def get_syllable():
     onsets = "ptkmnshywlr "
     vowels = "aeiou"
-    codas = "mnslryw "
+    # codas = "mnslryw "
+    codas = onsets
     o = random.choice(onsets)
     v = random.choice(vowels)
     c = random.choice(codas)

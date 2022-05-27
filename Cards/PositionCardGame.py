@@ -12,8 +12,9 @@ from Card import Card, DeckOfCards, Player, PlayerSet
 
 
 class Player:
-    def __init__(self, deck_generator):
+    def __init__(self, deck_generator, board):
         self.deck_generator = deck_generator
+        self.board = board
         self.hand = [next(self.deck_generator) for i in range(5)]
         self.opponents = None
 
@@ -67,12 +68,32 @@ class Player:
     def get_card_from_hand(self):
         return random.choice(self.hand)
 
+    def choose_card_to_give(self):
+        # TODO improve
+        return random.choice(self.hand)
+
     def get_subset_adding_to_zero(self):
         for i in range(1000):
             n = random.choice([2, 3, 4])
             cards = random.sample(self.hand, n)
             if self.get_position_from_cards(cards) == 0:
                 return cards
+
+    def put_cards_on_board(self, cards):
+        for c in cards:
+            self.board.add_card(c)
+
+    def give_card_to_player(card, counterparty):
+        self.hand.remove(card)
+        counterparty.hand.append(card)
+
+    def take_card_from_player(counterparty, other_has_choice):
+        if other_has_choice:
+            chosen = counterparty.choose_card_to_give()
+        else:
+            chosen = counterparty.get_card_from_hand()
+        counterparty.hand.remove(chosen)
+        self.hand.append(chosen)
 
 
 class ManualPlayer(Player):
@@ -160,5 +181,13 @@ if __name__ == "__main__":
     deck.shuffle()
     deck_generator = deck.deal()
     board = Board()
-    player_set = PlayerSet(deck_generator, n_manual_players=1, n_ai_players=1)
+    n_manual_players = 1
+    n_ai_players = 1
+    create_manual_player = lambda: ManualPlayer(deck_generator, board)
+    create_ai_player = lambda: AiPlayer(deck_generator, board)
+    player_type_dict = {
+        create_manual_player: n_manual_players,
+        create_ai_player: n_ai_players,
+    }
+    player_set = PlayerSet(player_type_dict)
     play(player_set, board)
