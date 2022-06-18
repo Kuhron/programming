@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 
-class InteractivePlot:
+class InteractivePlot():
     def __init__(self, plot_every_n_steps=1):
         self.plot_every_n_steps = plot_every_n_steps
 
@@ -38,3 +38,23 @@ class InteractivePlot:
 
     def is_closed(self):
         return not self.is_open()
+
+
+    # these are just "inheriting" from plt
+    # (which is a module, not a class, so you can't inherit from it)
+    # if I can figure out how to get this to work in general that would be great
+    # using getattr/hasattr causes infinite recursion
+
+    def contourf(self, *args, **kwargs):
+        plt.contourf(*args, **kwargs)
+
+    def contour(self, *args, **kwargs):
+        plt.contour(*args, **kwargs)
+
+    def colorbar(self, *args, **kwargs):
+        plt.colorbar(*args, **kwargs)
+
+    def arrow(self, *args, **kwargs):
+        plt.arrow(*args, **kwargs)
+
+
