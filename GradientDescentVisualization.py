@@ -57,24 +57,66 @@ def get_random_function_and_gradient():
     return f, grad
 
 
+def perturb_vector_slight_rotation(v):
+    re, im = v
+    z = re + im*1j
+    d_theta = np.random.normal(0, np.pi/100)
+    z2 = cos(d_theta) + 1j*sin(d_theta)
+    z *= z2  # rotate slightly
+    return np.array([z.real, z.imag])
+
+
 def gradient_descent(x, f, grad, learning_rate):
     dx = -1 * learning_rate * grad(*x)
-    return x + dx
+    return x + dx, None
 
 
 def gradient_descent_with_random_kicks(x, f, grad, learning_rate, kick_rate):
     x2 = gradient_descent(x, f, grad, learning_rate)
+    g1 = grad(*x)
     g2 = grad(*x2)
+    g3 = grad(*((x + x2) / 2))
+    g = min(np.linalg.norm(g1), np.linalg.norm(g2), np.linalg.norm(g3))
+    # if the two gradients (at x and x2) cancel out mostly, then we are likely to oscillate
     # the smaller the gradient is here, the more likely we are to need a kick to go somewhere else (to avoid local minimum)
-    kick_mag = kick_rate * 1/np.linalg.norm(g2)
+    kick_mag = kick_rate * np.exp(-g)
     kick_direction = np.random.uniform(0, 2*pi)
     kick = kick_mag * np.array([cos(kick_direction), sin(kick_direction)])
-    return x2 + kick
+    return x2 + kick, None
+    # would be nice if it had memory of when it had a good score so it can resist local minima that aren't as good as its record so far
 
 
-def get_next_guess(x, f, grad):
+def gradient_descent_with_ema(x, f, grad, learning_rate, ema_gamma, memory):
+    g = grad(*x)
+    # perturb the gradient's direction slightly
+    g = perturb_vector_slight_rotation(g)
+
+    past_ema = memory.get("ema")
+    if past_ema is None:
+        new_ema = g
+    else:
+        new_ema = ema_gamma * past_ema + (1 - ema_gamma) * g
+    memory["ema"] = new_ema
+    ema_grad_magnitude = np.linalg.norm(new_ema)
+    # if the ema has magnitude near zero, it indicates we may be stuck in a minimum and/or oscillating, so jack up the learning rate
+
+    learning_rate_adjustment = 1 / ema_grad_magnitude
+    effective_learning_rate = learning_rate * learning_rate_adjustment
+    dx = -1 * effective_learning_rate * g
+    new_x = x + dx
+    # TODO oscillation detection still not really working; it correctly jumps when we are sitting at a minimum, but oscillation never gets treated the same way as this
+    # TODO the ema-caused jump is too often in the same direction as previous jumps
+    return new_x, memory
+
+
+def get_next_guess(x, f, grad, memory=None):
+    # memory is a dictionary used to store stuff for better optimization algorithms, e.g. adaptive things that remember something like EMA of the past gradients
+    if memory is None:
+        memory = {}
+
     # return gradient_descent(x, f, grad, learning_rate=0.1)
-    return gradient_descent_with_random_kicks(x, f, grad, learning_rate=0.1, kick_rate=0.1)
+    # return gradient_descent_with_random_kicks(x, f, grad, learning_rate=0.1, kick_rate=0.5)
+    return gradient_descent_with_ema(x, f, grad, learning_rate=0.01, ema_gamma=0.7, memory=memory)
 
 
 def plot_background(X, Y, Z):
@@ -113,7 +155,9 @@ if __name__ == "__main__":
     ys = np.linspace(0, 2*pi, 200)
     X, Y = np.meshgrid(xs, ys)
     Z = f(X, Y)
+    global_max = Z.max()
     global_min = Z.min()
+    transform_score = lambda x: (x - global_min) / (global_max - global_min)
 
     p = get_random_point_in_box()
 
@@ -125,12 +169,13 @@ if __name__ == "__main__":
     plt.draw()
     plt.pause(0.01)
 
-    scores = [f(*p) - global_min]
+    scores = [transform_score(f(*p))]
+    memory = None
     while True:
-        new_p = get_next_guess(p, f, grad)
+        new_p, memory = get_next_guess(p, f, grad, memory)
         new_p = new_p % (2*pi)  # ideally can show the arrow "wrap around" the torus so it's clearer that an algorithm is overshooting
-        print(f"{p} -> {new_p} (diff {new_p - p})")
-        scores.append(f(*new_p) - global_min)
+        # print(f"{p} -> {new_p} (diff {new_p - p})")
+        scores.append(transform_score(f(*new_p)))
 
         for art in art_objs:
             # remove the point markers and lines from last step, but keep the function contour background
