@@ -14,7 +14,10 @@ import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 
 
-def filter_point_numbers_in_region(point_numbers, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
+def filter_point_numbers_in_region_one_by_one(point_numbers, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
+    # goes over all point numbers you pass in, gets their distance from the center,
+    # and returns the ones that are within the radius
+
     # gc = great-circle distance
     region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
     point_numbers_in_region = set()
@@ -23,11 +26,22 @@ def filter_point_numbers_in_region(point_numbers, region_center_latlondeg, regio
             print(f"i = {i} / {len(point_numbers)}")
         latlondeg = icm.get_latlon_from_point_number(pn)
         d_gc = UnitSpherePoint.distance_great_circle_latlondeg_static(region_center_latlondeg, latlondeg)
+        print(f"distance from center {region_center_latlondeg}\nto point #{pn} {latlondeg}\nis {d_gc} normalized to sphere radius 1")
         if d_gc <= region_radius_gc_normalized:
             point_numbers_in_region.add(pn)
             print("added point", pn)
     point_numbers_in_region = sorted(point_numbers_in_region)
     return point_numbers_in_region
+
+
+def filter_point_numbers_in_region_all_at_once(point_numbers, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
+    # try doing like nearest neighbors or large-scale distance query or something
+    region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
+    xyzs = icm.get_xyzs_from_point_numbers(point_numbers)
+    xyz = mcm.unit_vector_lat_lon_to_cartesian(region_center_latlondeg)
+    distances = UnitSpherePoint.distance_3d_xyzs_to_xyz_static(xyzs, xyz)
+    mask = distances <= region_radius_gc_normalized
+    return point_numbers[mask]
 
 
 def get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km):
@@ -37,7 +51,11 @@ def get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circl
 def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
     point_numbers_in_db = db.get_all_point_numbers_with_data()
     print(f"checking {len(point_numbers_in_db)} points")
-    region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
+    
+    # try different algorithms for finding the correct set of points
+    # filter_point_numbers_in_region = filter_point_numbers_in_region_one_by_one
+    filter_point_numbers_in_region = filter_point_numbers_in_region_all_at_once
+    
     point_numbers_in_region_in_db = filter_point_numbers_in_region(point_numbers_in_db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
     
     # in case of crash
@@ -87,7 +105,6 @@ def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_ra
         print("got point numbers from cache")
     except FileNotFoundError:
         print("calculating point numbers with data in region using icosa math")
-        region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
         point_numbers = list(get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km))
         res = point_numbers
     print("-- done getting point numbers with data in region")
@@ -277,12 +294,17 @@ if __name__ == "__main__":
     db = IcosahedronPointDatabase.load(root_dir)
     print("loaded db")
 
-    region_center_latlondeg, region_radius_great_circle_km = (10, -87), 1000  # Western Amphoto
+    # region_center_latlondeg, region_radius_great_circle_km = (10, -87), 1000  # Western Amphoto
     # region_center_latlondeg, region_radius_great_circle_km = (-87, 10), 1000  # somewhere in O-Z because I originally mixed up latlon
     # region_center_latlondeg, region_radius_great_circle_km = (90, 0), 2000  # North Pole
     # region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
     # region_center_latlondeg, region_radius_great_circle_km = (86.5, -13), 250  # small region in Tomar Strait in Mienta, for testing on smaller regions
     # region_center_latlondeg, region_radius_great_circle_km = (25, -84), 2000  # Jhorju
+    region_center_latlondeg, region_radius_great_circle_km = (
+        UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
+    )
+    print(f"region centered at {region_center_latlondeg} deg with radius {region_radius_great_circle_km} km")
+
     planet_radius_km = icm.CADA_II_RADIUS_KM
     power_law_param = 0.25  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
     power_law = lambda: np.random.power(power_law_param)
@@ -359,7 +381,7 @@ if __name__ == "__main__":
     elevation_condition_to_min_value = {sh: shorthand_dict[sh]["min"] for sh in shorthand_dict}
     elevation_condition_to_max_value = {sh: shorthand_dict[sh]["max"] for sh in shorthand_dict}
 
-    set_unknown_
+    # set_unknown_
 
     # set elevations to default value for condition
     for pn in points_to_edit:

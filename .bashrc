@@ -161,7 +161,6 @@ alias grepdocx="/home/wesley/grepdocx.sh"
 alias rpdf="python /home/wesley/programming/ReadRandomPdf.py"
 alias amongus="sudo wine .steam/steam/steamapps/common/Among\ Us/Among\ Us.exe"
 alias synctime="sudo tlsdate -s -H mail.google.com"
-alias gs="git status"
 alias gitsize="git status --porcelain | sed 's/^...//g;s/\"//g' | xargs -d '\n' -I {} du -h {} | sort -h"
 alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 alias tmux="TERM=screen-256color-bce tmux"

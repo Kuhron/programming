@@ -79,6 +79,19 @@ class UnitSpherePoint:
         return d * radius
 
     @staticmethod
+    def distance_3d_xyzs_to_xyz_static(xyzs, xyz, radius=1):
+        three, n_points = xyzs.shape
+        assert three == 3, f"xyzs shape should be (3, n) but got {xyzs.shape}"
+        assert xyz.shape == (3,), f"xyz shape should be (3,) but got {xyz.shape}"
+        diffs = xyzs - xyz
+        assert diffs.shape == (3, n_points)
+        diff2 = diffs ** 2
+        diff2_sum = np.sum(diff2, axis=1)
+        assert diff2_sum.shape == (n_points,)
+        d = np.sqrt(diff2_sum)
+        return d
+
+    @staticmethod
     def distance_3d_latlondeg_static(latlon1, latlon2, radius=1):
         xyz1 = mcm.unit_vector_lat_lon_to_cartesian(*latlon1, deg=True)
         xyz2 = mcm.unit_vector_lat_lon_to_cartesian(*latlon2, deg=True)
@@ -109,6 +122,19 @@ class UnitSpherePoint:
     @staticmethod
     def convert_distance_3d_to_great_circle_array(d0, radius=1):
         return (np.vectorize(lambda d: UnitSpherePoint.convert_distance_3d_to_great_circle(d, radius=radius)))(d0)
+    
+    @staticmethod
+    def convert_distance_great_circle_to_3d(d_gc, radius=1):
+        r = radius
+        theta = d_gc / r
+        d0 = 2 * r * np.sin(theta)
+        assert 0 <= d0 <= 2*r, f"bad 3d distance {d0} from d_gc={d_gc}, r={r}"
+        assert d0 <= d_gc, "shortest distance should be a straight line"
+        return d0
+
+    @staticmethod
+    def convert_distance_great_circle_to_3d_array(d_gc, radius=1):
+        return (np.vectorize(lambda d: UnitSpherePoint.convert_distance_great_circle_to_3d(d, radius=radius)))(d_gc)
 
     def distance_3d(self, other, radius=1):
         assert type(other) is UnitSpherePoint

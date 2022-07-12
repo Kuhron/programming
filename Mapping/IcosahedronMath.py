@@ -21,23 +21,52 @@ CADA_II_RADIUS_FACTOR = 2.116
 CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
 
+def get_point_number_from_point_code(point_code):
+    # TODO figure out better way to do this than brute force
+    if point_code is None:
+        return None
+    for i, code in enumerate(get_all_point_codes_in_order()):
+        # print(f"checking {i} {code} for {point_code}")
+        if code == point_code:
+            return i
+
+
+def get_point_code_from_point_number(point_number):
+    # TODO figure out better way to do this than brute force
+    if point_number is None:
+        return None
+    for i, code in enumerate(get_all_point_codes_in_order()):
+        # print(f"checking {code} {i} for {point_number}")
+        if i == point_number:
+            return code
+
+
+def get_latlon_from_point_code(point_code):
+    pos = get_position_from_point_code_recursive(point_code)
+    return pos["latlondeg"]
+
+
+def get_xyz_from_point_code(point_code):
+    raise NotImplementedError
+
+
 def get_latlon_from_point_number(point_number):
-    pos = get_position_recursive(point_number)
+    pos = get_position_from_point_number_recursive(point_number)
     return pos["latlondeg"]
 
 
 def get_latlons_from_point_numbers(point_numbers):
-    poses = get_positions_recursive(point_numbers)
+    poses = get_positions_from_point_numbers_recursive(point_numbers)
     return [pos["latlondeg"] for pos in poses]
 
 
 def get_xyz_from_point_number(point_number):
-    pos = get_position_recursive(point_number)
+    pos = get_position_from_point_number_recursive(point_number)
     return pos["xyz"]
 
 
 def get_xyzs_from_point_numbers(point_numbers):
-    poses = get_positions_recursive(point_numbers)
+    poses = get_positions_from_point_numbers_recursive(point_numbers)
     return [pos["xyz"] for pos in poses]
 
 
@@ -49,9 +78,51 @@ def get_xyz_array_from_point_numbers(point_numbers):
 
 
 def get_usp_from_point_number(point_number):
-    pos = get_position_recursive(point_number)
+    pos = get_position_from_point_number_recursive(point_number)
     assert type(pos) is dict
     return UnitSpherePoint(pos, point_number=point_number)
+
+
+def get_all_point_codes_in_order():
+    # go through each iteration, keep track of how many points you have
+    # don't re-yield the ones you already gave (and the duplicates should have trailing zeros)
+    iteration = 0
+    point_count = 0
+    while True:
+        g = get_all_point_codes_in_order_up_to_iteration(iteration)
+        for i, code in enumerate(g):
+            # print(f"got p#{i} code {code} from iteration {iteration}")
+            if i < point_count:
+                # if we've yielded the first 12,
+                # point_count is 12 and i maxes at 11 for points to exclude
+                assert code.endswith("0")
+                continue  # don't re-yield
+            else:
+                assert not code.endswith("0")
+                yield code
+                point_count += 1
+        iteration += 1
+
+
+def get_all_point_codes_in_order_up_to_iteration(iteration):
+    if iteration == 0:
+        for c in list("ABCDEFGHIJKL"):
+            yield c
+    else:
+        previous_points = get_all_point_codes_in_order_up_to_iteration(iteration - 1)
+        children_to_yield = []
+        for i, code in enumerate(previous_points):
+            # print(f"got point {code} from previous iteration {iteration - 1}")
+            yield code + "0"  # do this no matter what so next call can use it to make children
+            if i < 2:
+                # ignore the poles since they can't reproduce, but still yield the pole itself
+                continue
+            else:
+                # print(f"creating codes {code}[1,2,3]")
+                children_to_yield += [code + x for x in list("123")]
+        # only yield the children after all the points from the previous iteration have been yielded
+        for code in children_to_yield:
+            yield code
 
 
 def get_iterations_from_points(n):
@@ -526,7 +597,21 @@ def get_children(parent, iteration):
 
 
 @functools.lru_cache(maxsize=10000)
-def get_parent(point_number):
+def get_parent_from_point_code(point_code):
+    return point_code[:-1]
+
+
+@functools.lru_cache(maxsize=10000)
+def get_directional_parent_from_point_code(point_code):
+    # TODO better than brute force
+    point_number = get_point_number_from_point_code(point_code)
+    dp_number = get_directional_parent_from_point_number(point_number)
+    dp_code = get_point_code_from_point_number(dp_number)
+    return dp_code
+
+
+@functools.lru_cache(maxsize=10000)
+def get_parent_from_point_number(point_number):
     # each point except the initial 12 is created from a "parent", a pre-existing point from one of the previous iterations
     # at each iteration, each existing point except the poles gets three new children
     # so e.g. iteration 1 has 42 points, 40 of those get 3 children each, creating 120 new points, so iteration 2 has 162 points, correct
@@ -539,7 +624,7 @@ def get_parent(point_number):
 
 
 @functools.lru_cache(maxsize=10000)
-def get_directional_parent(point_number):
+def get_directional_parent_from_point_number(point_number):
     # safe but slow: use known process of creation of new points, guarantees correct answer
     return get_directional_parent_via_inheritance(point_number)
     # risky but fast: use patterns seen in the numbers, but without proof that these generalizations will always hold
@@ -551,7 +636,7 @@ def get_directional_parent_via_inheritance(point_number):
     # the parent at the other end of the edge that was bisected to produce this point
     if point_number < 12:
         return None
-    parent = get_parent(point_number)
+    parent = get_parent_from_point_number(point_number)
     iteration_born = get_iteration_born(point_number)
     # print("{} was born i={}".format(point_number, iteration_born))
     parent_adjacency_in_born_iteration = get_adjacency_recursive(parent, iteration_born)
@@ -589,9 +674,15 @@ def test_directional_parent_correctness(point_numbers):
             print(f"failure: point {p} has directional parent of {dp_i} by inheritance (which is the correct one), but numerology gave {dp_n}")
 
 
-def get_parents(point_number):
-    p0 = get_parent(point_number)
-    p1 = get_directional_parent(point_number)
+def get_parents_from_point_code(point_code):
+    p0 = get_parent_from_point_code(point_code)
+    p1 = get_directional_parent_from_point_code(point_code)
+    return [p0, p1]
+
+
+def get_parents_from_point_number(point_number):
+    p0 = get_parent_from_point_number(point_number)
+    p1 = get_directional_parent_from_point_number(point_number)
     return [p0, p1]
 
 
@@ -609,7 +700,7 @@ def get_parent_chain(point_number):
     else:
         iteration_born = get_iteration_born(point_number)
         child_index = get_child_index(point_number)
-        parent = get_parent(point_number)
+        parent = get_parent_from_point_number(point_number)
         parent_iteration_born = get_iteration_born(parent)
         previous_chain = get_parent_chain(parent)
         chain = [x for x in previous_chain]
@@ -645,7 +736,7 @@ def get_ancestor_tree(point_number, existing_ancestry=None):
             if child in existing_ancestry or child in ancestry:
                 # already know its parent
                 continue
-            parents = get_parents(child)
+            parents = get_parents_from_point_number(child)
             parents = [x if x is not None else -1 for x in parents]  # convert to -1 for int sorting
             ancestry[child] = parents
             new_farthest_back_generation += parents
@@ -701,7 +792,7 @@ def get_all_positions_in_ancestor_tree(ancestry):
         # print(f"getting position from ancestry for child {child} of parents {p0}, {p1}")
         if p0 == -1 and p1 == -1:
             # print(f"getting position for parentless point {child}")
-            pos = get_position_recursive(child)
+            pos = get_position_from_point_number_recursive(child)
             pn_to_position[child] = pos
         else:
             # print(f"getting position for point {child} with parents in the tree")
@@ -715,7 +806,7 @@ def get_all_positions_in_ancestor_tree(ancestry):
 
 
 def is_parent_and_child(parent, child):
-    return parent == get_parent(child)
+    return parent == get_parent_from_point_number(child)
 
 
 def is_parent_and_child_direction(a, b, a_adjacency):
@@ -873,7 +964,7 @@ def get_adjacency_when_born(point_number):
 
     # --- new stuff with attempts at unification
 
-    parent = get_parent(point_number)
+    parent = get_parent_from_point_number(point_number)
     child_index = get_child_index(point_number)
     parent_previous_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
     # the child index of this new point is the same as what its actual index in the adjacency list will be (of its parent)
@@ -938,97 +1029,7 @@ def get_adjacency_when_born(point_number):
     pb_dpar = pb_dpar_from_b
     neighbors[pb_dpar_index_from_child] = pb_dpar
 
-
-    # --- old stuff with too many conditions, gonna try unifying it ---
-
-    # see AdjacencyInduction.png about how to get the current adjacency from the previous generation's
-    # parent = get_parent(point_number)
-    # --- new stuff with attempts at unification
-    # child_index = get_child_index(point_number)
-    # parent_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
-    # if parent < 12:
-    #     assert parent not in [0, 1], "parent of p#{} is a pole ({}) but this should not happen".format(point_number, parent)
-    #     # need to account that for the initial points other than the poles, there is a relation in which two of the neighbor directions point to the same neighbor point
-    #     parent_adjacency = unify_five_and_six(parent_adjacency, parent)
-    #     assert len(parent_adjacency) == 6, "parent p#{} has adjacency of wrong length: {}".format(parent, parent_adjacency)
-
-    # print("using parent adjacency {}".format(parent_adjacency))
-    # parL = parent_adjacency[get_direction_number_from_label("L")]
-    # parDL = parent_adjacency[get_direction_number_from_label("DL")]
-    # parD = parent_adjacency[get_direction_number_from_label("D")]
-    # parR = parent_adjacency[get_direction_number_from_label("R")]
-    # parUR = parent_adjacency[get_direction_number_from_label("UR")]
-    # parU = parent_adjacency[get_direction_number_from_label("U")]
-
-    # parL_is_north_pole = parL == 0
-    # parU_is_north_pole = parU == 0
-    # parR_is_south_pole = parR == 1
-    # parD_is_south_pole = parD == 1
-    # if parL_is_north_pole or parU_is_north_pole:
-    #     previous_np_adj = get_adjacency_recursive(0, iteration-1)
-    # if parR_is_south_pole or parD_is_south_pole:
-    #     previous_sp_adj = get_adjacency_recursive(1, iteration-1)
-    # parent_on_NR = is_initial_northern_ring_point(parent)
-    # parent_on_SR = is_initial_southern_ring_point(parent)
-    # on_northern_seam = is_on_northern_seam(point_number)
-    # on_northern_seam_and_parent_has_five_neighbors = on_northern_seam and parent_on_NR
-    # on_northern_seam_and_parent_has_six_neighbors = on_northern_seam and not parent_on_NR
-    # on_southern_seam = is_on_southern_seam(point_number)
-    # on_southern_seam_and_parent_has_five_neighbors = on_southern_seam and parent_on_SR
-    # on_southern_seam_and_parent_has_six_neighbors = on_southern_seam and not parent_on_SR
-
-    # so many conditions
-    # ugggggh oh god why
-    # if child_index == 0:
-    #     # parent plus its L, DL, U neighbors will give you all six new neighbors
-    #     neighbors = {}
-    #     # the new point is between parent and L, so parent is the R neighbor
-    #     neighbors["R"] = parent
-    #     # the parent's old left neighbor is the new point's L neighbor
-    #     neighbors["L"] = parL
-    #     # the parent's upper neighbor's D child (index 2) is the new point's UR neighbor
-    #     neighbors["UR"] = get_child(parUR, 1, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 1, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 2, iteration)
-    #     # the parent's upper neighbor's DL child (index 1) is the new point's U neighbor
-    #     neighbors["U"] = get_child(parUR, 0, iteration) if on_northern_seam_and_parent_has_five_neighbors else get_child(parU, 0, iteration) if on_northern_seam_and_parent_has_six_neighbors else get_child(parU, 1, iteration)
-    #     # the parent's left neighbor's D child (index 2) is the new point's DL neighbor
-    #     neighbors["DL"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
-    #     # the parent's DL child (index 1) is the new point's D neighbor
-    #     neighbors["D"] = get_child(parent, 1, iteration)
-    # elif child_index == 1:
-    #     # parent plus its L, DL, D neighbors will give you all six new neighbors
-    #     neighbors = {}
-    #     # the parent is the UR
-    #     neighbors["UR"] = parent
-    #     # the parent's DL is the DL
-    #     neighbors["DL"] = parDL
-    #     # the parent's D child (index 2) is the R
-    #     neighbors["R"] = get_child(parent, 2, iteration)
-    #     # the parent's L child (index 0) is the U
-    #     neighbors["U"] = get_child(parent, 0, iteration)
-    #     # the parent's left's D child (index 2) is the L
-    #     neighbors["L"] = get_child(go_upright_from_north_pole_neighbor(parent, previous_np_adj, -1), 0, iteration) if parL_is_north_pole else get_child(parL, 2, iteration)
-    #     # the parent's down's L child (index 0) is the D
-    #     neighbors["D"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
-    # elif child_index == 2:
-    #     # parent plus its DL, D, R neighbors will give you all six new neighbors
-    #     neighbors = {}
-    #     # the parent is the U
-    #     neighbors["U"] = parent
-    #     # the parent's D is the D
-    #     neighbors["D"] = parD
-    #     # the parent's R's L child (index 0) is the UR
-    #     neighbors["UR"] = get_child(parUR, 1, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 1, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 0, iteration)
-    #     # the parent's R's DL child (index 1) is the R
-    #     neighbors["R"] = get_child(parUR, 2, iteration) if on_southern_seam_and_parent_has_five_neighbors else get_child(parR, 2, iteration) if on_southern_seam_and_parent_has_six_neighbors else get_child(parR, 1, iteration)
-    #     # the parent's DL child (index 1) is the L
-    #     neighbors["L"] = get_child(parent, 1, iteration)
-    #     # the parent's D's L child (index 0) is the DL
-    #     neighbors["DL"] = get_child(go_upright_from_south_pole_neighbor(parent, previous_sp_adj, -1), 2, iteration) if parD_is_south_pole else get_child(parD, 0, iteration)
-    # else:
-    #     raise RuntimeError("invalid child index encountered: {}".format(child_index))
-
     # print("got neighbors of p#{} when born at i={}: {}".format(point_number, iteration, neighbors))
-    # return convert_adjacency_label_dict_to_list(neighbors)
     return neighbors  # try populating it as list by index rather than using direction labels at all
 
 
@@ -1037,7 +1038,7 @@ def is_on_northern_seam(p):
     if is_initial_northern_ring_point(p):
         return True
     else:
-        parent = get_parent(p)
+        parent = get_parent_from_point_number(p)
         child_index = get_child_index(p)
         return child_index == 0 and is_on_northern_seam(parent)
 
@@ -1046,7 +1047,7 @@ def is_on_southern_seam(p):
     if is_initial_southern_ring_point(p):
         return True
     else:
-        parent = get_parent(p)
+        parent = get_parent_from_point_number(p)
         child_index = get_child_index(p)
         return child_index == 2 and is_on_southern_seam(parent)
 
@@ -1138,18 +1139,36 @@ def get_child_index(point_number):
 
 
 @functools.lru_cache(maxsize=10000)
-def get_parent_positions(point_number):
-    p0, p1 = get_parents(point_number)
-    pos0 = get_position_recursive(p0)
-    pos1 = get_position_recursive(p1)
+def get_parent_positions_from_point_code(point_code):
+    p0, p1 = get_parents_from_point_code(point_code)
+    pos0 = get_position_from_point_code_recursive(p0)
+    pos1 = get_position_from_point_code_recursive(p1)
     return pos0, pos1
+
+
+@functools.lru_cache(maxsize=10000)
+def get_parent_positions_from_point_number(point_number):
+    p0, p1 = get_parents_from_point_number(point_number)
+    pos0 = get_position_from_point_number_recursive(p0)
+    pos1 = get_position_from_point_number_recursive(p1)
+    return pos0, pos1
+
+
+def get_position_of_point_code_using_parents(point_code):
+    originals = list("ABCDEFGHIJKL")
+    if point_code in originals:
+        pos, adj = STARTING_POINTS
+        index = originals.index(point_code)
+        return pos[index].tuples
+    pos0, pos1 = get_parent_positions_from_point_code(point_code)
+    return get_position_of_child_from_parent_positions(pos0, pos1)
 
 
 def get_position_of_point_number_using_parents(point_number):
     if point_number < 12:
         pos, adj = STARTING_POINTS
         return pos[point_number].tuples
-    pos0, pos1 = get_parent_positions(point_number)
+    pos0, pos1 = get_parent_positions_from_point_number(point_number)
     return get_position_of_child_from_parent_positions(pos0, pos1)
 
 
@@ -1163,11 +1182,16 @@ def get_position_of_child_from_parent_positions(pos0, pos1):
 
 
 @functools.lru_cache(maxsize=10000)
-def get_position_recursive(point_number):
+def get_position_from_point_code_recursive(point_code):
+    return get_position_of_point_code_using_parents(point_code)
+
+
+@functools.lru_cache(maxsize=10000)
+def get_position_from_point_number_recursive(point_number):
     return get_position_of_point_number_using_parents(point_number)
 
 
-def get_positions_recursive(point_numbers):
+def get_positions_from_point_numbers_recursive(point_numbers):
     # somehow need to make it efficient to do this for multiple points
     # e.g. they will probably run into same parents/grandparents/etc. at some point, those shouldn't be recalculated
     print(f"getting positions recursively for {len(point_numbers)} points")
@@ -1412,7 +1436,7 @@ def get_farthest_distance_descendant_can_be(point, radius=1, iteration_of_next_c
 
 def get_distance_icosa_point_to_xyz_great_circle(pn, xyz, radius=1):
     xyz2 = get_xyz_from_point_number(pn)
-    return UnitSpherePoint.distance_3d_xyz_static(xyz, xyz2, radius=radius)
+    return UnitSpherePoint.distance_great_circle_xyz_static(xyz, xyz2, radius=radius)
 
 
 def notify_memo_accessed(memo_fp):
@@ -1429,7 +1453,7 @@ def test_parent_is_correct_neighbor():
         point_number = random.randint(12, 655362-1)
         n_iterations = get_iterations_needed_for_point_number(point_number)
         adj = get_specific_adjacency_from_memo(point_number, n_iterations)
-        parent = get_parent(point_number)
+        parent = get_parent_from_point_number(point_number)
         parent_point_direction_number = get_parent_point_direction_number(point_number)
         corresponding_neighbor = adj[parent_point_direction_number]
         assert parent == corresponding_neighbor
@@ -1531,7 +1555,7 @@ def test_position_recursive(compare_memo=True):
         point = random.randint(0, 655362)
         born_iteration = get_iteration_born(point)
         iteration = born_iteration
-        pos = get_position_recursive(point)
+        pos = get_position_from_point_number_recursive(point)
         print("\n-- test_position_recursive p#{} i={}".format(point, iteration))
         print("pos: {}".format(pos))
         if compare_memo:
@@ -1580,24 +1604,30 @@ if __name__ == "__main__":
     # test_parent_is_correct_neighbor()
     # test_children_are_correct_neighbors()
 
-    # for point_number in range(0, 162):
-    #     p0 = get_parent(point_number)
-    #     p1 = get_directional_parent(point_number)
-    #     print("{} {} -> {}".format(p0, p1, point_number))
+    for pn in range(0, 642):
+        pn0 = get_parent_from_point_number(pn)
+        pn1 = get_directional_parent_from_point_number(pn)
+        pc = get_point_code_from_point_number(pn)
+        pc0 = get_point_code_from_point_number(pn0)
+        pc1 = get_point_code_from_point_number(pn1)
+        print(f"\tpn {pn}\tpc {pc}\nparent\tpn {pn0}\tpc {pc0}\ndirpar\tpn {pn1}\tpc {pc1}\n")
+        # point_code = get_point_code_from_point_number(point_number)
+        # latlon = get_latlon_from_point_code(point_code)
+        # print(f"# {point_number} = {point_code}, at {latlon}")
     # print(get_position_of_point_number_using_parents(point_number))
 
     # point_numbers = [random.randint(10**3,10**6) for i in range(100)]
-    point_numbers = list(range(2562))
-    print(point_numbers)
-    ancestry = get_ancestor_tree_for_multiple_points(point_numbers)
-    pn_to_position = get_all_positions_in_ancestor_tree(ancestry)
-    for pn in point_numbers:
-        p0, p1 = ancestry[pn]
-        print(f"{pn}\t{p0}\t{p1}")  # for exporting to Excel
-    directional_parents = [ancestry[pn][1] for pn in point_numbers]
-    plt.scatter(point_numbers, directional_parents)
-    plt.show()
-    test_directional_parent_correctness(point_numbers)
+    # point_numbers = list(range(2562))
+    # print(point_numbers)
+    # ancestry = get_ancestor_tree_for_multiple_points(point_numbers)
+    # pn_to_position = get_all_positions_in_ancestor_tree(ancestry)
+    # for pn in point_numbers:
+    #     p0, p1 = ancestry[pn]
+    #     print(f"{pn}\t{p0}\t{p1}")  # for exporting to Excel
+    # directional_parents = [ancestry[pn][1] for pn in point_numbers]
+    # plt.scatter(point_numbers, directional_parents)
+    # plt.show()
+    # test_directional_parent_correctness(point_numbers)
     # g = get_ancestor_graph_from_ancestor_tree(tree)
     # nx.draw(g, with_labels=True)
     # plt.show()
