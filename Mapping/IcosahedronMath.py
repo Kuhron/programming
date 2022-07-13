@@ -21,6 +21,7 @@ CADA_II_RADIUS_FACTOR = 2.116
 CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
 
+@functools.lru_cache(maxsize=10000)
 def get_point_number_from_point_code(point_code):
     # TODO figure out better way to do this than brute force
     if point_code is None:
@@ -31,6 +32,7 @@ def get_point_number_from_point_code(point_code):
             return i
 
 
+@functools.lru_cache(maxsize=10000)
 def get_point_code_from_point_number(point_number):
     # TODO figure out better way to do this than brute force
     if point_number is None:
@@ -519,6 +521,23 @@ def get_starting_point_ring(starting_point):
         return "southern_ring"
     else:
         raise ValueError("invalid ring code {}".format(ring_code))
+
+
+def get_starting_point_code_directional_dict():
+    # this will help with finding the directional parent for a given point code
+    # A and B don't have directions (L,DL,D = 1,2,3) coming from them
+    return {
+        "C": {"1": "A", "2": "K", "3": "L"},
+        "D": {"1": "C", "2": "L", "3": "B"},
+        "E": {"1": "A", "2": "C", "3": "D"},
+        "F": {"1": "E", "2": "D", "3": "B"},
+        "G": {"1": "A", "2": "E", "3": "F"},
+        "H": {"1": "G", "2": "F", "3": "B"},
+        "I": {"1": "A", "2": "G", "3": "H"},
+        "J": {"1": "I", "2": "H", "3": "B"},
+        "K": {"1": "A", "2": "I", "3": "J"},
+        "L": {"1": "K", "2": "J", "3": "B"},
+    }
 
 
 def write_initial_memo_files():
@@ -1439,6 +1458,51 @@ def get_distance_icosa_point_to_xyz_great_circle(pn, xyz, radius=1):
     return UnitSpherePoint.distance_great_circle_xyz_static(xyz, xyz2, radius=radius)
 
 
+def print_pars_and_dpars_numbers_and_codes(iteration):
+    n = get_points_from_iterations(iteration)
+    for pn in range(n):
+        pn0 = get_parent_from_point_number(pn)
+        pn1 = get_directional_parent_from_point_number(pn)
+        pc = get_point_code_from_point_number(pn)
+        pc0 = get_point_code_from_point_number(pn0)
+        pc1 = get_point_code_from_point_number(pn1)
+        print(f"\tpn {pn}\tpc {pc}\nparent\tpn {pn0}\tpc {pc0}\ndirpar\tpn {pn1}\tpc {pc1}\n")
+
+
+def get_dpar_dicts_up_to_iteration(iteration):
+    # in the point code system, since parents are obvious,
+    # just care about how the directional parents work
+    points = get_all_point_codes_in_order()
+    n = get_points_from_iterations(iteration)
+    dpar_by_point = {}
+    children_by_dpar = {}
+    for i, pc in enumerate(points):
+        if i > n:
+            raise RuntimeError("shouldn't happen")
+        elif i == n:
+            # reached end of points for this iteration
+            break
+        # par = get_parent_from_point_code(pc)
+        dpar = get_directional_parent_from_point_code(pc)
+        dpar_by_point[pc] = dpar
+        if dpar not in children_by_dpar:
+            children_by_dpar[dpar] = []
+        children_by_dpar[dpar].append(pc)
+    return dpar_by_point, children_by_dpar
+
+
+def plot_directional_parent_graph(iteration):
+    g = nx.DiGraph()
+    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration)
+    for dpar, children in children_by_dpar.items():
+        print(f"dpar {dpar} has directional children {children}")
+    for pc, dpar in dpar_by_point.items():
+        if dpar is not None:
+            g.add_edge(dpar, pc)
+    nx.draw(g, with_labels=True)
+    plt.show()
+
+
 def notify_memo_accessed(memo_fp):
     # depending what I want at the time, maybe do nothing, maybe just print that it was accessed, or maybe raise exception if I'm trying to avoid any memoization at all
     # pass
@@ -1604,17 +1668,12 @@ if __name__ == "__main__":
     # test_parent_is_correct_neighbor()
     # test_children_are_correct_neighbors()
 
-    for pn in range(0, 642):
-        pn0 = get_parent_from_point_number(pn)
-        pn1 = get_directional_parent_from_point_number(pn)
-        pc = get_point_code_from_point_number(pn)
-        pc0 = get_point_code_from_point_number(pn0)
-        pc1 = get_point_code_from_point_number(pn1)
-        print(f"\tpn {pn}\tpc {pc}\nparent\tpn {pn0}\tpc {pc0}\ndirpar\tpn {pn1}\tpc {pc1}\n")
-        # point_code = get_point_code_from_point_number(point_number)
-        # latlon = get_latlon_from_point_code(point_code)
-        # print(f"# {point_number} = {point_code}, at {latlon}")
+    print_pars_and_dpars_numbers_and_codes(iteration=3)
+    # point_code = get_point_code_from_point_number(point_number)
+    # latlon = get_latlon_from_point_code(point_code)
+    # print(f"# {point_number} = {point_code}, at {latlon}")
     # print(get_position_of_point_number_using_parents(point_number))
+    plot_directional_parent_graph(iteration=5)
 
     # point_numbers = [random.randint(10**3,10**6) for i in range(100)]
     # point_numbers = list(range(2562))
