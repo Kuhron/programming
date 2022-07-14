@@ -620,8 +620,84 @@ def get_parent_from_point_code(point_code):
     return point_code[:-1]
 
 
-@functools.lru_cache(maxsize=10000)
 def get_directional_parent_from_point_code(point_code):
+    print(f"getting dpar of {point_code}")
+    if point_code in list("ABCDEFGHIJKL"):
+        print(f"known type: original point, giving dpar None of point {point_code}")
+        return None
+    elif len(point_code) >= 3 and point_code[-2] == "0":
+        # it's a zero-child, e.g. C123 -> C1203
+        # DON'T iteratively remove the 0s, e.g. D3001 has dpar D301, NOT D31
+        x = point_code[:-2]
+        y = point_code[-1]
+        dpar = x + y
+        print(f"known type: zero child, giving dpar {dpar} of point {point_code}")
+        return dpar
+    else:
+        # convert it to the C-D peel and then convert the answer back to the correct peel
+        cd_code, peel_offset = normalize_peel(point_code)
+        assert cd_code[0] in ["C", "D"], "peel normalization failed"
+        cd_dpar = None  # then check for this later to see if all conditions still failed
+
+    try:
+        cd_dpar = {
+            "C1":"A", "C2":"K", "C3":"L",
+            "D1":"C", "D2":"L", "D3":"B",
+        }[cd_code]
+        print(f"known type: iteration 1, giving dpar {cd_dpar} of point {cd_code}")
+    except KeyError:
+        pass
+
+    if cd_dpar is None and len(cd_code) == 3:
+        # iteration 2
+        from_northern_ring = cd_code[0] == "C"
+        from_southern_ring = cd_code[0] == "D"
+        two_digits = "".join(sorted(cd_code[1:]))
+        if from_northern_ring:
+            if two_digits == "12":
+                cd_dpar = "K1"
+            elif two_digits == "13":
+                cd_dpar = "C2"
+            elif two_digits == "23":
+                cd_dpar = "L1"
+            else:
+                raise ValueError(f"invalid two_digits: {two_digits}")
+        elif from_southern_ring:
+            if two_digits == "12":
+                cd_dpar = "C3"
+            elif two_digits == "13":
+                cd_dpar = "D2"
+            elif two_digits == "23":
+                cd_dpar = "L3"
+            else:
+                raise ValueError(f"invalid two_digits: {two_digits}")
+        else:
+            raise ValueError(f"cd_code should be on northern ring (starting with C) or southern ring (starting with D) but got {cd_code}")
+        print(f"known type: iteration 2, giving dpar {cd_dpar} of point {cd_code}")
+    elif cd_dpar is None and has_repeating_last_digit(cd_code):
+        stripped_code = strip_repeating_last_digits(cd_code)
+        cd_dpar = get_directional_parent_from_point_code(stripped_code)
+        print(f"known type: repeating last digit, giving dpar {cd_dpar} of point {cd_code}")
+    elif cd_dpar is None:
+        cd_dpar = get_directional_parent_from_point_code_brute_force(cd_code)
+        print(f"brute-forcing dpar for {cd_code} because it does not fall into a known type, got {cd_dpar}")
+        # input("check")
+    
+    assert cd_dpar is not None
+    dpar = reapply_peel_offset(cd_dpar, peel_offset)
+    # I anticipate there might be a problem with getting/reapplying peel offset for the wrap-around (CD vs KL peels)
+    print(f"within peel normalization, got dpar {cd_dpar} from point_code {cd_code}\ninside original peel,      got dpar {dpar} from point_code {point_code}")
+    
+    # debug while coding all these conditions
+    dpar_brute_force = get_directional_parent_from_point_code_brute_force(point_code)
+    assert dpar == dpar_brute_force, f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}"
+
+    print()
+    return dpar
+
+
+@functools.lru_cache(maxsize=10000)
+def get_directional_parent_from_point_code_brute_force(point_code):
     # TODO better than brute force
     point_number = get_point_number_from_point_code(point_code)
     dp_number = get_directional_parent_from_point_number(point_number)
@@ -677,6 +753,45 @@ def get_directional_parent_via_numerology(point_number):
     # hard class: after that, they do some more chaotic things
     # ?
 
+
+def normalize_peel(point_code):
+    x = point_code[0]
+    y = point_code[1:]
+    assert x in list("ABCDEFGHIJKL")
+    if x in ["A", "B"]:
+        assert len(x) == 1, f"got pole-child code, which should not happen: {point_code}"
+        cd_code, peel_offset = x, 0
+    else:
+        northern_ring = list("CEGIK")
+        southern_ring = list("DFHJL")
+        if x in northern_ring:
+            peel_offset = northern_ring.index(x)
+            cd_code = "C" + y
+        else:
+            assert x in southern_ring
+            peel_offset = southern_ring.index(x)
+            cd_code = "D" + y
+    return cd_code, peel_offset
+
+
+def reapply_peel_offset(cd_code, peel_offset):
+    if peel_offset == 0 or cd_code in ["A", "B"]:
+        return cd_code
+    northern_ring = list("CEGIK")
+    southern_ring = list("DFHJL")
+    x = cd_code[0]
+    y = cd_code[1:]
+    if x == "C":
+        x2 = northern_ring[peel_offset]
+    elif x == "K":
+        x2 = northern_ring[peel_offset - 1]
+    elif x == "D":
+        x2 = southern_ring[peel_offset]
+    elif x == "L":
+        x2 = southern_ring[peel_offset - 1]
+    else:
+        raise ValueError(f"invalid original ancestor: {x}, from cd_code {cd_code}, peel_offset {peel_offset}")
+    return x2 + y
 
 
 def test_directional_parent_correctness(point_numbers):
@@ -1469,19 +1584,29 @@ def print_pars_and_dpars_numbers_and_codes(iteration):
         print(f"\tpn {pn}\tpc {pc}\nparent\tpn {pn0}\tpc {pc0}\ndirpar\tpn {pn1}\tpc {pc1}\n")
 
 
-def get_dpar_dicts_up_to_iteration(iteration):
+def get_dpar_dicts_up_to_iteration(iteration, first_dchildren_only=True):
     # in the point code system, since parents are obvious,
     # just care about how the directional parents work
+
+    # all dpars can get more dchildren by taking any dchild and repeating its last digit
+    # e.g. K1 has directional children K01, C12, C21, K011, C122, C211, K0111, C1222, etc.
+    # the dchildren without repeating last digit are the "first directional children"
+
     points = get_all_point_codes_in_order()
     n = get_points_from_iterations(iteration)
     dpar_by_point = {}
     children_by_dpar = {}
     for i, pc in enumerate(points):
+        if i % 1000 == 0:
+            print(f"getting dpar dicts, point {i}/{n}")
         if i > n:
             raise RuntimeError("shouldn't happen")
         elif i == n:
             # reached end of points for this iteration
             break
+
+        if has_repeating_last_digit(pc):
+            continue
         # par = get_parent_from_point_code(pc)
         dpar = get_directional_parent_from_point_code(pc)
         dpar_by_point[pc] = dpar
@@ -1491,11 +1616,58 @@ def get_dpar_dicts_up_to_iteration(iteration):
     return dpar_by_point, children_by_dpar
 
 
-def plot_directional_parent_graph(iteration):
-    g = nx.DiGraph()
-    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration)
+def has_repeating_last_digit(s):
+    if len(s) < 2:
+        return False
+    # suffices only to check the last two
+    # if there are more repetitions before that then this is still true
+    return s[-1] == s[-2]
+
+
+def strip_repeating_last_digits(s):
+    while has_repeating_last_digit(s):
+        s = s[:-1]
+    return s
+
+
+def strip_trailing_zeros(s):
+    while s[-1] == "0":
+        s = s[:-1]
+    return s
+
+
+def print_first_dchildren(iteration):
+    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration, first_dchildren_only=True)
     for dpar, children in children_by_dpar.items():
         print(f"dpar {dpar} has directional children {children}")
+
+
+def show_random_dpar_relations(max_iteration):
+    # for helping me with pattern recognition for understanding how dpars work
+    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration=max_iteration, first_dchildren_only=True)
+    n_points_to_show = 100
+    points = random.sample(dpar_by_point.keys(), n_points_to_show)
+    print("point\tdpar")
+    for pc in points:
+        dpar = dpar_by_point[pc]
+        print(f"{pc}\t{dpar}")
+        for i in range(1, len(pc)):
+            # observe the dpar of the point gotten by removing this digit
+            related_pc = pc[:i] + pc[i+1:]
+            related_pc_display = pc[:i] + "-" + pc[i+1:]
+            try:
+                related_pc_key = strip_repeating_last_digits(related_pc)  # since dpar will be the same after stripping these
+                related_pc_key = strip_trailing_zeros(related_pc_key)
+                related_dpar = dpar_by_point[related_pc_key]
+                print(f"{related_pc_display}\t{related_dpar}")
+            except KeyError:
+                print(f"{related_pc_display}\tdoesn't exist")
+        print()
+
+
+def plot_directional_parent_graph(iteration):
+    g = nx.DiGraph()
+    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration, first_dchildren_only=True)
     for pc, dpar in dpar_by_point.items():
         if dpar is not None:
             g.add_edge(dpar, pc)
@@ -1668,12 +1840,14 @@ if __name__ == "__main__":
     # test_parent_is_correct_neighbor()
     # test_children_are_correct_neighbors()
 
-    print_pars_and_dpars_numbers_and_codes(iteration=3)
+    # print_pars_and_dpars_numbers_and_codes(iteration=3)
     # point_code = get_point_code_from_point_number(point_number)
     # latlon = get_latlon_from_point_code(point_code)
     # print(f"# {point_number} = {point_code}, at {latlon}")
     # print(get_position_of_point_number_using_parents(point_number))
-    plot_directional_parent_graph(iteration=5)
+    # plot_directional_parent_graph(iteration=5)
+    # print_first_dchildren(iteration=5)
+    show_random_dpar_relations(max_iteration=5)
 
     # point_numbers = [random.randint(10**3,10**6) for i in range(100)]
     # point_numbers = list(range(2562))
