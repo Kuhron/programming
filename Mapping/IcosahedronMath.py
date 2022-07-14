@@ -625,63 +625,65 @@ def get_directional_parent_from_point_code(point_code):
     if point_code in list("ABCDEFGHIJKL"):
         print(f"known type: original point, giving dpar None of point {point_code}")
         return None
-    elif len(point_code) >= 3 and point_code[-2] == "0":
-        # it's a zero-child, e.g. C123 -> C1203
-        # DON'T iteratively remove the 0s, e.g. D3001 has dpar D301, NOT D31
-        x = point_code[:-2]
-        y = point_code[-1]
-        dpar = x + y
-        print(f"known type: zero child, giving dpar {dpar} of point {point_code}")
-        return dpar
+    # elif len(point_code) >= 3 and point_code[-2] == "0":
+    #     # it's a zero-child, e.g. C123 -> C1203
+    #     # DON'T iteratively remove the 0s, e.g. D3001 has dpar D301, NOT D31
+    #     x = point_code[:-2]
+    #     y = point_code[-1]
+    #     dpar = x + y
+    #     print(f"known type: zero child, giving dpar {dpar} of point {point_code}")
+    #     return dpar
     else:
         # convert it to the C-D peel and then convert the answer back to the correct peel
         cd_code, peel_offset = normalize_peel(point_code)
         assert cd_code[0] in ["C", "D"], "peel normalization failed"
         cd_dpar = None  # then check for this later to see if all conditions still failed
 
-    try:
-        cd_dpar = {
-            "C1":"A", "C2":"K", "C3":"L",
-            "D1":"C", "D2":"L", "D3":"B",
-        }[cd_code]
-        print(f"known type: iteration 1, giving dpar {cd_dpar} of point {cd_code}")
-    except KeyError:
-        pass
+    # try:
+    #     cd_dpar = {
+    #         "C1":"A", "C2":"K", "C3":"L",
+    #         "D1":"C", "D2":"L", "D3":"B",
+    #     }[cd_code]
+    #     print(f"known type: iteration 1, giving dpar {cd_dpar} of point {cd_code}")
+    # except KeyError:
+    #     pass
 
-    if cd_dpar is None and len(cd_code) == 3:
-        # iteration 2
-        from_northern_ring = cd_code[0] == "C"
-        from_southern_ring = cd_code[0] == "D"
-        two_digits = "".join(sorted(cd_code[1:]))
-        if from_northern_ring:
-            if two_digits == "12":
-                cd_dpar = "K1"
-            elif two_digits == "13":
-                cd_dpar = "C2"
-            elif two_digits == "23":
-                cd_dpar = "L1"
-            else:
-                raise ValueError(f"invalid two_digits: {two_digits}")
-        elif from_southern_ring:
-            if two_digits == "12":
-                cd_dpar = "C3"
-            elif two_digits == "13":
-                cd_dpar = "D2"
-            elif two_digits == "23":
-                cd_dpar = "L3"
-            else:
-                raise ValueError(f"invalid two_digits: {two_digits}")
-        else:
-            raise ValueError(f"cd_code should be on northern ring (starting with C) or southern ring (starting with D) but got {cd_code}")
-        print(f"known type: iteration 2, giving dpar {cd_dpar} of point {cd_code}")
-    elif cd_dpar is None and has_repeating_last_digit(cd_code):
-        stripped_code = strip_repeating_last_digits(cd_code)
-        cd_dpar = get_directional_parent_from_point_code(stripped_code)
-        print(f"known type: repeating last digit, giving dpar {cd_dpar} of point {cd_code}")
-    elif cd_dpar is None:
-        cd_dpar = get_directional_parent_from_point_code_brute_force(cd_code)
-        print(f"brute-forcing dpar for {cd_code} because it does not fall into a known type, got {cd_dpar}")
-        # input("check")
+    # if cd_dpar is None and len(cd_code) == 3:
+    #     # iteration 2
+    #     from_northern_ring = cd_code[0] == "C"
+    #     from_southern_ring = cd_code[0] == "D"
+    #     two_digits = "".join(sorted(cd_code[1:]))
+    #     if from_northern_ring:
+    #         if two_digits == "12":
+    #             cd_dpar = "K1"
+    #         elif two_digits == "13":
+    #             cd_dpar = "C2"
+    #         elif two_digits == "23":
+    #             cd_dpar = "L1"
+    #         else:
+    #             raise ValueError(f"invalid two_digits: {two_digits}")
+    #     elif from_southern_ring:
+    #         if two_digits == "12":
+    #             cd_dpar = "C3"
+    #         elif two_digits == "13":
+    #             cd_dpar = "D2"
+    #         elif two_digits == "23":
+    #             cd_dpar = "L3"
+    #         else:
+    #             raise ValueError(f"invalid two_digits: {two_digits}")
+    #     else:
+    #         raise ValueError(f"cd_code should be on northern ring (starting with C) or southern ring (starting with D) but got {cd_code}")
+    #     print(f"known type: iteration 2, giving dpar {cd_dpar} of point {cd_code}")
+    # elif cd_dpar is None and has_repeating_last_digit(cd_code):
+    #     stripped_code = strip_repeating_last_digits(cd_code)
+    #     cd_dpar = get_directional_parent_from_point_code(stripped_code)
+    #     print(f"known type: repeating last digit, giving dpar {cd_dpar} of point {cd_code}")
+    # elif cd_dpar is None:
+    #     cd_dpar = get_directional_parent_from_point_code_brute_force(cd_code)
+    #     print(f"brute-forcing dpar for {cd_code} because it does not fall into a known type, got {cd_dpar}")
+    #     # input("check")
+
+    cd_dpar = get_directional_parent_from_point_code_using_box_corner_mapping(cd_code)
     
     assert cd_dpar is not None
     dpar = reapply_peel_offset(cd_dpar, peel_offset)
@@ -690,10 +692,103 @@ def get_directional_parent_from_point_code(point_code):
     
     # debug while coding all these conditions
     dpar_brute_force = get_directional_parent_from_point_code_brute_force(point_code)
-    assert dpar == dpar_brute_force, f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}"
+    # assert dpar == dpar_brute_force, f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}"
+    if dpar != dpar_brute_force:
+        print(f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}")
+        input("acknowledge")
 
     print()
     return dpar
+
+
+def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, mapping_stack=None):
+    # box-corner mapping is where you take an original half-peel
+    # e.g. the square (two triangle faces) with C at the upper right
+    # C at upper right has upper left of A, lower left of K, lower right of L
+    # D at upper right has upper left of C, lower left of L, lower right of B
+    # other half-peel boxes are the same, just add the peel-analogue offset (C,D=E,F=G,H=I,J=K,L)
+    # see what happens to the corners of the boxes (which are dpars of parts of the path)
+    # if we replace the upper right corner (ancestor) with one of its children
+    # e.g. we want to compare the paths to get to C2131 vs C131,
+    # which is a C vs C2 mapping for the first step
+    # C -> C2 makes the corners A -> K1, K -> K (=K0), and L -> L1
+    # these mappings exist for all four steps you can take from an ancestor (0, 1, 2, and 3)
+    # corresponding to the quadrant of the half-peel box where that step is the upper right
+    # so for C -> C0 you just shrink to the upper right box quadrant
+    # and that gives you A -> C1, K -> C2, L -> C3
+    # etc. Now I will just list the mappings.
+    if mapping_stack is None:
+        mapping_stack = []
+    # assumes the peel is normalized to CD
+    mappings = {
+        "C0": [("C","C0"), ("A","C1"), ("K","C2"), ("L","C3")],
+        "C1": [("C","C1"), ("A","A"), ("K","K1"), ("L","C2")],
+        "C2": [("C","C2"), ("A","K1"), ("K","K0"), ("L","L1")],
+        "C3": [("C","C3"), ("A","C2"), ("K","L1"), ("L","L0")],
+        "D0": [("D","D0"), ("C","D1"), ("L","D2"), ("B","D3")],
+        "D1": [("D","D1"), ("C","C0"), ("L","C3"), ("B","D2")],
+        "D2": [("D","D2"), ("C","C3"), ("L","L0"), ("B","L3")],
+        "D3": [("D","D3"), ("C","D2"), ("L","L3"), ("B","B")],
+    }
+    iter1 = {
+        "C1":"A", "C2":"K", "C3":"L",
+        "D1":"C", "D2":"L", "D3":"B",
+    }
+
+    try:
+        dpar = iter1[point_code]
+        print(f"known type: iteration 1, giving dpar {dpar} of point {point_code}")
+        return dpar
+    except KeyError:
+        pass
+    
+    assert len(point_code) >= 3, f"shouldn't use box corner mapping with point from iteration 0 or 1, but got {point_code}"
+    new_point_code, mapping_stack = shorten_by_box_corner_mapping(point_code, mapping_stack, mappings)
+    new_dpar = get_directional_parent_from_point_code_using_box_corner_mapping(new_point_code, mapping_stack)
+    print(f"got new_dpar {new_dpar}")
+    dpar, mapping_stack = lengthen_by_box_corner_mapping(new_dpar, mapping_stack, mappings)
+    return dpar
+
+
+def shorten_by_box_corner_mapping(point_code, mapping_stack, mappings):
+    prefix = point_code[:2]
+    tail = point_code[2:]
+    mapping = mappings[prefix]
+
+    # apply the mapping to the point
+    # the shorter ones are first in the tuples
+    new_prefix = None
+    for shorter, longer in mapping:
+        if longer == prefix:
+            new_prefix = shorter
+            break
+    assert new_prefix is not None, f"failed to get new prefix for shortening code {point_code} by mapping {mapping}"
+    new_point_code = new_prefix + tail
+
+    # add the mapping to the stack (using the prefix as shorthand)
+    mapping_stack = mapping_stack + [prefix]
+    print(f"shortened {point_code} to {new_point_code} using mapping {mapping}")
+    return new_point_code, mapping_stack
+
+
+def lengthen_by_box_corner_mapping(point_code, mapping_stack, mappings):
+    # use the last mapping on the stack
+    prefix = mapping_stack[-1]
+    # remove the mapping from the stack so it's not reused
+    mapping_stack = mapping_stack[:-1]
+    mapping = mappings[prefix]
+
+    point_prefix = point_code[0]
+    tail = point_code[1:]
+    new_prefix = None
+    for shorter, longer in mapping:
+        if shorter == point_prefix:
+            new_prefix = longer
+            break
+    assert new_prefix is not None, f"failed to get new prefix for lengthening code {point_code} by mapping {mapping}"
+    new_point_code = new_prefix + tail
+    print(f"lengthened {point_code} to {new_point_code} using mapping {mapping}")
+    return new_point_code, mapping_stack
 
 
 @functools.lru_cache(maxsize=10000)
@@ -1642,27 +1737,50 @@ def print_first_dchildren(iteration):
         print(f"dpar {dpar} has directional children {children}")
 
 
-def show_random_dpar_relations(max_iteration):
+def show_first_digit_dpar_relations(max_iteration):
+    raise Exception("deprecated")
     # for helping me with pattern recognition for understanding how dpars work
-    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration=max_iteration, first_dchildren_only=True)
-    n_points_to_show = 100
-    points = random.sample(dpar_by_point.keys(), n_points_to_show)
-    print("point\tdpar")
-    for pc in points:
-        dpar = dpar_by_point[pc]
-        print(f"{pc}\t{dpar}")
-        for i in range(1, len(pc)):
-            # observe the dpar of the point gotten by removing this digit
-            related_pc = pc[:i] + pc[i+1:]
-            related_pc_display = pc[:i] + "-" + pc[i+1:]
-            try:
-                related_pc_key = strip_repeating_last_digits(related_pc)  # since dpar will be the same after stripping these
-                related_pc_key = strip_trailing_zeros(related_pc_key)
-                related_dpar = dpar_by_point[related_pc_key]
-                print(f"{related_pc_display}\t{related_dpar}")
-            except KeyError:
-                print(f"{related_pc_display}\tdoesn't exist")
-        print()
+    # one pattern is that the same first digit will be added to the dpar as was added to the point
+    # e.g. H2102 has dpar of H212, while H-102 has dpar of H-12
+    # but this isn't true in general, so see what points don't obey it
+
+    # dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration=max_iteration, first_dchildren_only=True)
+    # obeying_pattern = []
+    # not_obeying_pattern = []
+    # for pc, dpar in dpar_by_point.items():
+    #     if len(pc) <= 2:
+    #         # original point or iteration 1, ignore these since they're just memorized
+    #         continue
+    #     print("point\tdpar")
+    #     print(f"{pc}\t{dpar}")
+    #     i = 1
+    #     # observe the dpar of the point gotten by removing this digit
+    #     related_pc = pc[:i] + pc[i+1:]
+    #     related_pc_display = pc[:i] + "-" + pc[i+1:]
+    #     related_pc_key = strip_repeating_last_digits(related_pc)  # since dpar will be the same after stripping these
+    #     related_pc_key = strip_trailing_zeros(related_pc_key)
+    #     related_dpar = dpar_by_point[related_pc_key]
+    #     related_dpar_display = related_dpar[0] + "-" + related_dpar[1:] if related_dpar is not None else None
+    #     print(f"{related_pc_display}\t{related_dpar_display}")
+    #     print()
+
+    #     tup = (pc, dpar, related_pc_display, related_dpar_display)
+    #     dpar_is_same_other_than_missing_digit = related_dpar_display == dpar[0] + "-" + dpar[2:]
+    #     pc_is_same_other_than_missing_digit = related_pc_display == pc[0] + "-" + pc[2:]
+    #     assert pc_is_same_other_than_missing_digit, "problem in how you coded this"
+    #     missing_digit_is_same = pc[1] == dpar[1]
+    #     obeys_pattern = dpar_is_same_other_than_missing_digit and pc_is_same_other_than_missing_digit and missing_digit_is_same
+    #     if obeys_pattern:
+    #         obeying_pattern.append(tup)
+    #     else:
+    #         not_obeying_pattern.append(tup)
+    
+    # for tup in obeying_pattern:
+    #     print(f"obeys: {tup}")
+    # print()
+    # for tup in not_obeying_pattern:
+    #     print(f"does not obey: {tup}")
+    # print()
 
 
 def plot_directional_parent_graph(iteration):
@@ -1847,7 +1965,8 @@ if __name__ == "__main__":
     # print(get_position_of_point_number_using_parents(point_number))
     # plot_directional_parent_graph(iteration=5)
     # print_first_dchildren(iteration=5)
-    show_random_dpar_relations(max_iteration=5)
+    # show_first_digit_dpar_relations(max_iteration=4)
+    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration=4, first_dchildren_only=True)
 
     # point_numbers = [random.randint(10**3,10**6) for i in range(100)]
     # point_numbers = list(range(2562))
