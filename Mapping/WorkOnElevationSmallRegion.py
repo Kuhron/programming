@@ -100,10 +100,13 @@ def read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_c
 
 def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
     print("getting point numbers with data in region")
-    try:
-        res = read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
-        print("got point numbers from cache")
-    except FileNotFoundError:
+    if False:
+        pass
+    # try:
+    #     res = read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
+    #     print("got point numbers from cache")
+    # except FileNotFoundError:
+    else:
         print("calculating point numbers with data in region using icosa math")
         point_numbers = list(get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km))
         res = point_numbers
@@ -332,7 +335,7 @@ if __name__ == "__main__":
         iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
         print(f"resolution needs {iterations_of_resolution} iterations of icosa")
         print("TODO maybe cache this too (in a file like the point numbers, so we have one cache of point numbers with data and another of point numbers in certain region at certain resolution, although maybe only the latter is necessary and then you can easily check the database for which ones have the variable defined)")
-        n_points_total_at_this_iteration = icm.get_points_from_iterations(iterations_of_resolution)
+        n_points_total_at_this_iteration = icm.get_n_points_from_iterations(iterations_of_resolution)
         # points_at_this_resolution_in_region = filter_point_numbers_in_region(list(range(n_points_total_at_this_iteration)), region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)  # include points of previous iterations  # too long, brute force over the whole planet
         points_at_this_resolution_in_region = get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations=iterations_of_resolution)
         print(f"{len(points_at_this_resolution_in_region)} points in region")

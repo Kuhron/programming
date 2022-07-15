@@ -19,7 +19,7 @@ def make_test_db():
         db.add_variable("elevation")
         print("new db created")
 
-    max_p_i = icm.get_points_from_iterations(7) - 1
+    max_p_i = icm.get_n_points_from_iterations(7) - 1
     for i in range(1000000):
         p_i = random.randint(0, max_p_i)
         # print("elevation at point", p_i, "is", db[p_i, "elevation"])

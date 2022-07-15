@@ -25,7 +25,7 @@ class IcosahedralGeodesicLattice(Lattice):
         self.iterations = iterations
         if iterations > 7:
             warn_iterations(iterations)
-        self.n_points = IcosahedronMath.get_points_from_iterations(self.iterations)
+        self.n_points = IcosahedronMath.get_n_points_from_iterations(self.iterations)
         # ordered_points, adjacencies_by_point_index = self.get_adjacencies()
         # self.adjacencies_by_point_index = adjacencies_by_point_index
         # self.points = ordered_points
