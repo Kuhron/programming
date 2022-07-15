@@ -621,9 +621,9 @@ def get_parent_from_point_code(point_code):
 
 
 def get_directional_parent_from_point_code(point_code):
-    print(f"getting dpar of {point_code}")
+    # print(f"getting dpar of {point_code}")
     if point_code in list("ABCDEFGHIJKL"):
-        print(f"known type: original point, giving dpar None of point {point_code}")
+        # print(f"known type: original point, giving dpar None of point {point_code}")
         return None
     # elif len(point_code) >= 3 and point_code[-2] == "0":
     #     # it's a zero-child, e.g. C123 -> C1203
@@ -688,16 +688,16 @@ def get_directional_parent_from_point_code(point_code):
     assert cd_dpar is not None
     dpar = reapply_peel_offset(cd_dpar, peel_offset)
     # I anticipate there might be a problem with getting/reapplying peel offset for the wrap-around (CD vs KL peels)
-    print(f"within peel normalization, got dpar {cd_dpar} from point_code {cd_code}\ninside original peel,      got dpar {dpar} from point_code {point_code}")
+    # print(f"within peel normalization, got dpar {cd_dpar} from point_code {cd_code}\ninside original peel,      got dpar {dpar} from point_code {point_code}")
     
     # debug while coding all these conditions
-    dpar_brute_force = get_directional_parent_from_point_code_brute_force(point_code)
-    # assert dpar == dpar_brute_force, f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}"
-    if dpar != dpar_brute_force:
-        print(f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}")
-        input("acknowledge")
+    # dpar_brute_force = get_directional_parent_from_point_code_brute_force(point_code)
+    # # assert dpar == dpar_brute_force, f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}"
+    # if dpar != dpar_brute_force:
+    #     # print(f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}")
+    #     input("acknowledge")
 
-    print()
+    # print()
     return dpar
 
 
@@ -739,7 +739,7 @@ def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, 
 
     try:
         dpar = iter1[point_code]
-        print(f"known type: iteration 1, giving dpar {dpar} of point {point_code}")
+        # print(f"known type: iteration 1, giving dpar {dpar} of point {point_code}")
         return dpar
     except KeyError:
         pass
@@ -747,20 +747,20 @@ def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, 
     assert len(point_code) >= 3, f"shouldn't use box corner mapping with point from iteration 0 or 1, but got {point_code}"
     new_point_code, mapping_stack = shorten_by_box_corner_mapping(point_code, mapping_stack, mappings)
     new_dpar = get_directional_parent_from_point_code_using_box_corner_mapping(new_point_code, mapping_stack)
-    print(f"got new_dpar {new_dpar}")
+    # print(f"got new_dpar {new_dpar}")
 
     if dpar_is_on_reversed_edge_from_perspective_of_point(new_dpar, point_code):
-        print(f"dpar {new_dpar} is reversed")
+        # print(f"dpar {new_dpar} is reversed")
         new_dpar = reverse_edge_polarity(new_dpar)
-        print(f"dpar reverse-encoded to {new_dpar}")
+        # print(f"dpar reverse-encoded to {new_dpar}")
     
     dpar, mapping_stack = lengthen_by_box_corner_mapping(new_dpar, mapping_stack, mappings)
     
     # now undo the reversed polarity if it is like that
     if point_code_is_in_reversed_polarity_encoding(dpar):
-        print(f"dpar {dpar} is in reverse-polarity encoding")
+        # print(f"dpar {dpar} is in reverse-polarity encoding")
         dpar = correct_reversed_edge_polarity(dpar)
-        print(f"dpar re-encoded to {dpar}")
+        # print(f"dpar re-encoded to {dpar}")
 
     return dpar
 
@@ -782,7 +782,7 @@ def shorten_by_box_corner_mapping(point_code, mapping_stack, mappings):
 
     # add the mapping to the stack (using the prefix as shorthand)
     mapping_stack = mapping_stack + [prefix]
-    print(f"shortened {point_code} to {new_point_code} using mapping {mapping}")
+    # print(f"shortened {point_code} to {new_point_code} using mapping {mapping}")
     return new_point_code, mapping_stack
 
 
@@ -802,7 +802,7 @@ def lengthen_by_box_corner_mapping(point_code, mapping_stack, mappings):
             break
     assert new_prefix is not None, f"failed to get new prefix for lengthening code {point_code} by mapping {mapping}"
     new_point_code = new_prefix + tail
-    print(f"lengthened {point_code} to {new_point_code} using mapping {mapping}")
+    # print(f"lengthened {point_code} to {new_point_code} using mapping {mapping}")
     return new_point_code, mapping_stack
 
 
