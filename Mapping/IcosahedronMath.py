@@ -721,14 +721,16 @@ def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, 
         mapping_stack = []
     # assumes the peel is normalized to CD
     mappings = {
+        # need A0 and B0 for when we're dealing with lengthening of reverse-polarity codes
+        # similarly with using A3 instead of K1 and B1 instead of L3
         "C0": [("C","C0"), ("A","C1"), ("K","C2"), ("L","C3")],
-        "C1": [("C","C1"), ("A","A"), ("K","K1"), ("L","C2")],
-        "C2": [("C","C2"), ("A","K1"), ("K","K0"), ("L","L1")],
+        "C1": [("C","C1"), ("A","A0"), ("K","A3"), ("L","C2")],
+        "C2": [("C","C2"), ("A","A3"), ("K","K0"), ("L","L1")],
         "C3": [("C","C3"), ("A","C2"), ("K","L1"), ("L","L0")],
         "D0": [("D","D0"), ("C","D1"), ("L","D2"), ("B","D3")],
         "D1": [("D","D1"), ("C","C0"), ("L","C3"), ("B","D2")],
-        "D2": [("D","D2"), ("C","C3"), ("L","L0"), ("B","L3")],
-        "D3": [("D","D3"), ("C","D2"), ("L","L3"), ("B","B")],
+        "D2": [("D","D2"), ("C","C3"), ("L","L0"), ("B","B1")],
+        "D3": [("D","D3"), ("C","D2"), ("L","B1"), ("B","B0")],
     }
     iter1 = {
         "C1":"A", "C2":"K", "C3":"L",
@@ -746,7 +748,20 @@ def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, 
     new_point_code, mapping_stack = shorten_by_box_corner_mapping(point_code, mapping_stack, mappings)
     new_dpar = get_directional_parent_from_point_code_using_box_corner_mapping(new_point_code, mapping_stack)
     print(f"got new_dpar {new_dpar}")
+
+    if dpar_is_on_reversed_edge_from_perspective_of_point(new_dpar, point_code):
+        print(f"dpar {new_dpar} is reversed")
+        new_dpar = reverse_edge_polarity(new_dpar)
+        print(f"dpar reverse-encoded to {new_dpar}")
+    
     dpar, mapping_stack = lengthen_by_box_corner_mapping(new_dpar, mapping_stack, mappings)
+    
+    # now undo the reversed polarity if it is like that
+    if point_code_is_in_reversed_polarity_encoding(dpar):
+        print(f"dpar {dpar} is in reverse-polarity encoding")
+        dpar = correct_reversed_edge_polarity(dpar)
+        print(f"dpar re-encoded to {dpar}")
+
     return dpar
 
 
@@ -789,6 +804,106 @@ def lengthen_by_box_corner_mapping(point_code, mapping_stack, mappings):
     new_point_code = new_prefix + tail
     print(f"lengthened {point_code} to {new_point_code} using mapping {mapping}")
     return new_point_code, mapping_stack
+
+
+def dpar_is_on_reversed_edge_from_perspective_of_point(dpar, reference_point_code):
+    # get peel of reference point, it should be normalized to C-D peel
+    orig = reference_point_code[0]
+    if orig not in ["C", "D"]:
+        raise ValueError(f"please normalize peel for point {reference_point_code} to C-D")
+
+    # e.g. from the perspective of the C-D peel, the K-A edge runs the wrong way
+    # you'd want it to run down (toward K) from A (so in the 3 direction from A)
+    # but instead it runs up (toward A) from K (so in the 1 direction from K)
+    # similarly the L-B edge runs to the right, in the 3 direction from L
+    # but we want it to run to the left, in the 1 direction from B
+    # so we will code points on these *as if* they do this,
+    # for the purposes of box corner mapping to find dpars
+    # and then convert the result back to the correct notation
+
+    # don't treat K/L as being reversed, just the points on the edge itself
+    if len(dpar) == 1:
+        return False
+
+    is_on_k_a_edge = dpar[0] == "K" and all(x in ["0", "1"] for x in dpar[1:])
+    is_on_l_b_edge = dpar[0] == "L" and all(x in ["0", "3"] for x in dpar[1:])
+    return is_on_k_a_edge or is_on_l_b_edge
+
+
+def flip_prefix_for_edge_reversal(x):
+    assert len(x) == 1, x
+    return {"A":"K", "K":"A", "B":"L", "L":"B"}[x]
+
+
+def flip_tail_for_edge_reversal(tail):
+    # convert the non-zeros to ones and treat as a binary decimal, then subtract from 1
+    if all(x in ["0", "1"] for x in tail):
+        tail_has_ones_or_threes = "1"
+    elif all(x in ["0", "3"] for x in tail):
+        tail_has_ones_or_threes = "3"
+        tail = tail.replace("3", "1")
+    else:
+        raise Exception("shouldn't happen, tail is " + tail)
+    
+    assert all(x in ["0", "1"] for x in tail), tail
+    # just subtract from binary the way I know how to subtract from power of 10
+    # where every pair adds up to the base-1 except the last one, which adds to the base
+    new_tail = ""
+    for x in tail[:-1]:
+        if x == "0":
+            # flip the ones and threes
+            if tail_has_ones_or_threes == "1":
+                new_tail += "3"
+            elif tail_has_ones_or_threes == "3":
+                new_tail += "1"
+            else:
+                raise Exception("shouldn't happen")
+        elif x == "1":
+            new_tail += "0"
+        else:
+            raise Exception("shouldn't happen")
+    
+    # now do the last one
+    assert tail[-1] == "1", f"tail can't have trailing zeros: {tail}"
+    if tail_has_ones_or_threes == "1":
+        new_tail += "3"
+    elif tail_has_ones_or_threes == "3":
+        new_tail += "1"
+    else:
+        raise Exception("shouldn't happen")
+    
+    return new_tail
+
+
+def reverse_edge_polarity(point_code):
+    # points of form K{0,1}+ can be reverse-polarity-coded as A{0,3}+
+    # similarly L{0,3}+ can be reverse-polarity-coded as B{0,1}+
+    # (this is because of the reversed edges messing up dpar finding)
+    # this function allows it to go either way
+    prefix = point_code[0]
+    tail = point_code[1:]
+    new_prefix = flip_prefix_for_edge_reversal(prefix)
+    new_tail = flip_tail_for_edge_reversal(tail)
+    new_point_code = new_prefix + new_tail
+    assert len(new_point_code) == len(point_code), f"got wrong length code {new_point_code} from reversing {point_code}"
+    return new_point_code
+
+
+def correct_reversed_edge_polarity(point_code):
+    # this function only wants codes that are already in reverse-polarity-coded form
+    if not point_code_is_in_reversed_polarity_encoding(point_code):
+        # it's not in improper-polarity mode
+        print(f"warning: code {point_code} is not in reverse-polarity-coded form, returning it as-is")
+        return point_code
+    return reverse_edge_polarity(point_code)
+
+
+def point_code_is_in_reversed_polarity_encoding(point_code):
+    prefix = point_code[0]
+    tail = point_code[1]
+    is_on_k_a_edge = prefix == "A" and all(x in ["0", "3"] for x in tail)
+    is_on_l_b_edge = prefix == "B" and all(x in ["0", "1"] for x in tail)
+    return is_on_k_a_edge or is_on_l_b_edge
 
 
 @functools.lru_cache(maxsize=10000)
@@ -1966,7 +2081,7 @@ if __name__ == "__main__":
     # plot_directional_parent_graph(iteration=5)
     # print_first_dchildren(iteration=5)
     # show_first_digit_dpar_relations(max_iteration=4)
-    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration=4, first_dchildren_only=True)
+    dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration=6, first_dchildren_only=True)
 
     # point_numbers = [random.randint(10**3,10**6) for i in range(100)]
     # point_numbers = list(range(2562))
