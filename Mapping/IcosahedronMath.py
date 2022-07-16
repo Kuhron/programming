@@ -20,7 +20,7 @@ CADA_II_RADIUS_FACTOR = 2.116
 CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
 
-# @functools.lru_cache(maxsize=10000)
+@functools.lru_cache(maxsize=100000)
 def get_point_number_from_point_code(point_code):
     # base cases
     if point_code is None:
@@ -64,7 +64,7 @@ def get_point_number_from_point_code_brute_force(point_code):
             return i
 
 
-# @functools.lru_cache(maxsize=10000)
+@functools.lru_cache(maxsize=100000)
 def get_point_code_from_point_number(point_number):
     # base cases
     if point_number is None:
@@ -107,33 +107,40 @@ def get_point_code_from_point_number_brute_force(point_number):
     raise RuntimeError("should never get here")
 
 
+@functools.lru_cache(maxsize=100000)
 def get_latlon_from_point_code(point_code):
-    pos = get_position_from_point_code_recursive(point_code)
-    return pos["latlondeg"]
+    xyz = get_xyz_from_point_code_recursive(point_code)
+    return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
 
 
+@functools.lru_cache(maxsize=100000)
 def get_xyz_from_point_code(point_code):
-    raise NotImplementedError
+    xyz = get_xyz_from_point_code_recursive(point_code)
+    return xyz
 
 
+@functools.lru_cache(maxsize=100000)
 def get_latlon_from_point_number(point_number):
-    pos = get_position_from_point_number_recursive(point_number)
-    return pos["latlondeg"]
+    xyz = get_xyz_from_point_number_recursive(point_number)
+    return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
 
 
 def get_latlons_from_point_numbers(point_numbers):
-    poses = get_positions_from_point_numbers_recursive(point_numbers)
-    return [pos["latlondeg"] for pos in poses]
+    # poses = get_positions_from_point_numbers_recursive(point_numbers)
+    # return [pos["latlondeg"] for pos in poses]
+    return [get_latlon_from_point_number(pn) for pn in point_numbers]
 
 
+@functools.lru_cache(maxsize=100000)
 def get_xyz_from_point_number(point_number):
-    pos = get_position_from_point_number_recursive(point_number)
-    return pos["xyz"]
+    xyz = get_xyz_from_point_number_recursive(point_number)
+    return xyz
 
 
 def get_xyzs_from_point_numbers(point_numbers):
-    poses = get_positions_from_point_numbers_recursive(point_numbers)
-    return [pos["xyz"] for pos in poses]
+    # poses = get_positions_from_point_numbers_recursive(point_numbers)
+    # return [pos["xyz"] for pos in poses]
+    return [get_xyz_from_point_number(pn) for pn in point_numbers]
 
 
 def get_xyz_array_from_point_numbers(point_numbers):
@@ -144,7 +151,7 @@ def get_xyz_array_from_point_numbers(point_numbers):
 
 
 def get_usp_from_point_number(point_number):
-    pos = get_position_from_point_number_recursive(point_number)
+    pos = get_xyz_from_point_number_recursive(point_number)
     assert type(pos) is dict
     return UnitSpherePoint(pos, point_number=point_number)
 
@@ -685,7 +692,7 @@ def get_opposite_neighbor_direction(i):
     # more succinctly could do return (i+3)%6, but the dict makes it more readable and also throws for unexpected stuff like 1.5 or -1
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_child(parent, child_index, iteration):
     if parent in [0, 1]:
         raise ValueError("point {} cannot have children".format(parent))
@@ -694,7 +701,7 @@ def get_child(parent, child_index, iteration):
     return 3 * (parent + adder) + child_index
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_children(parent, iteration):
     if parent in [0, 1]:
         raise ValueError("point {} cannot have children".format(parent))
@@ -703,7 +710,7 @@ def get_children(parent, iteration):
     return [3 * (parent + adder) + child_index for child_index in [0, 1, 2]]
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_parent_from_point_code(point_code):
     return strip_trailing_zeros(point_code[:-1])
 
@@ -948,7 +955,7 @@ def point_code_is_in_reversed_polarity_encoding(point_code):
     return is_on_k_a_edge or is_on_l_b_edge
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_directional_parent_from_point_code_brute_force(point_code):
     print("brute-forcing dpar from pc")
     point_number = get_point_number_from_point_code(point_code)
@@ -957,7 +964,7 @@ def get_directional_parent_from_point_code_brute_force(point_code):
     return dp_code
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_parent_from_point_number(point_number):
     # each point except the initial 12 is created from a "parent", a pre-existing point from one of the previous iterations
     # at each iteration, each existing point except the poles gets three new children
@@ -970,7 +977,7 @@ def get_parent_from_point_number(point_number):
     return point_number // 3 - get_3adder_for_iteration(get_iteration_born(point_number))
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_directional_parent_from_point_number(point_number):
     # safe but slow: use known process of creation of new points, guarantees correct answer
     return get_directional_parent_via_inheritance(point_number)
@@ -978,7 +985,7 @@ def get_directional_parent_from_point_number(point_number):
     # return get_directional_parent_via_numerology(point_number)
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_directional_parent_via_inheritance(point_number):
     # the parent at the other end of the edge that was bisected to produce this point
     if point_number < 12:
@@ -1063,10 +1070,11 @@ def get_parents_from_point_number(point_number):
     p1_code = get_directional_parent_from_point_code(pc)
     p0 = get_point_number_from_point_code(p0_code)
     p1 = get_point_number_from_point_code(p1_code)
-    print(f"#{point_number} = {pc} has parents #{p0_code} and {p1_code}")
+    # print(f"#{point_number} = {pc} has parents #{p0} = {p0_code} and #{p1} = {p1_code}")
     return [p0, p1]
 
 
+# @functools.lru_cache(maxsize=10000)
 def get_parent_chain(point_number):
     # go forward in time, starting from the initial point which gives rise ultimately to this one
     # return list of tuples, one for each iteration starting with zero up to and including the one where this point was born
@@ -1115,90 +1123,96 @@ def get_parent_chain(point_number):
 
 
 def get_ancestor_tree(point_number, existing_ancestry=None):
-    # dict of child: parents
-    if existing_ancestry is None:
-        existing_ancestry = {}
-    else:
-        # for combining ancestry trees of multiple points, if we see a point's parent>child tuple already there,
-        # then don't have to recalculate the rest of its ancestry which should also already be there
-        pass
+    raise Exception("deprecated; can now efficiently calculate par and dpar on the fly")
+    # # dict of child: parents
+    # if existing_ancestry is None:
+    #     existing_ancestry = {}
+    # else:
+    #     # for combining ancestry trees of multiple points, if we see a point's parent>child tuple already there,
+    #     # then don't have to recalculate the rest of its ancestry which should also already be there
+    #     pass
 
-    ancestry = {}
-    # use sets of tuples to take advantage of constant-time lookup
-    farthest_back_generation = [point_number]
-    while len(farthest_back_generation) > 0:
-        new_farthest_back_generation = []
-        for child in farthest_back_generation:
-            if child in existing_ancestry or child in ancestry:
-                # already know its parent
-                continue
-            parents = get_parents_from_point_number(child)
-            parents = [x if x is not None else -1 for x in parents]  # convert to -1 for int sorting
-            ancestry[child] = parents
-            new_farthest_back_generation += parents
-        farthest_back_generation = [x for x in new_farthest_back_generation if x != -1]
-    return ancestry
+    # ancestry = {}
+    # # use sets of tuples to take advantage of constant-time lookup
+    # farthest_back_generation = [point_number]
+    # while len(farthest_back_generation) > 0:
+    #     new_farthest_back_generation = []
+    #     for child in farthest_back_generation:
+    #         if child in existing_ancestry or child in ancestry:
+    #             # already know its parent
+    #             continue
+    #         parents = get_parents_from_point_number(child)
+    #         parents = [x if x is not None else -1 for x in parents]  # convert to -1 for int sorting
+    #         ancestry[child] = parents
+    #         new_farthest_back_generation += parents
+    #     farthest_back_generation = [x for x in new_farthest_back_generation if x != -1]
+    # return ancestry
 
 
 def get_ancestor_tree_for_multiple_points(point_numbers):
-    print(f"getting ancestor tree for {len(point_numbers)} points")
-    ancestry = {}
-    for i, p in enumerate(point_numbers):
-        if i % 100 == 0:
-            print(f"ancestor tree progress: {i}/{len(point_numbers)}")
-        if p in ancestry:
-            # don't need to call it
-            continue
-        else:
-            p_ancestry = get_ancestor_tree(p, existing_ancestry=ancestry)
-            ancestry.update(p_ancestry)
-            assert p in ancestry, "failed to update ancestry correctly, should be adding parents of current point"
-    print(f"done getting ancestor tree for {len(point_numbers)} points")
-    return ancestry
+    raise Exception("deprecated; can now efficiently calculate par and dpar on the fly")
+    # print(f"getting ancestor tree for {len(point_numbers)} points")
+    # ancestry = {}
+    # for i, p in enumerate(point_numbers):
+    #     if i % 100 == 0:
+    #         print(f"ancestor tree progress: {i}/{len(point_numbers)}")
+    #     if p in ancestry:
+    #         # don't need to call it
+    #         continue
+    #     else:
+    #         p_ancestry = get_ancestor_tree(p, existing_ancestry=ancestry)
+    #         ancestry.update(p_ancestry)
+    #         assert p in ancestry, "failed to update ancestry correctly, should be adding parents of current point"
+    # print(f"done getting ancestor tree for {len(point_numbers)} points")
+    # return ancestry
 
 
 def get_ancestor_graph(point_number):
-    ancestry = get_ancestor_tree(point_number)
-    return get_ancestor_graph_from_ancestor_tree(ancestry)
+    raise Exception("deprecated; can now efficiently calculate par and dpar on the fly")
+    # ancestry = get_ancestor_tree(point_number)
+    # return get_ancestor_graph_from_ancestor_tree(ancestry)
 
 
 def get_ancestor_graph_for_multiple_points(point_numbers):
-    ancestry = get_ancestor_tree_for_multiple_points(point_numbers)
-    return get_ancestor_graph_from_ancestor_tree(ancestry)
+    raise Exception("deprecated; can now efficiently calculate par and dpar on the fly")
+    # ancestry = get_ancestor_tree_for_multiple_points(point_numbers)
+    # return get_ancestor_graph_from_ancestor_tree(ancestry)
 
 
 def get_ancestor_graph_from_ancestor_tree(ancestry):
-    g = nx.DiGraph()
-    for child, (p0, p1) in ancestry.items():
-        if p0 != -1:
-            g.add_edge(p0, child)
-        if p1 != -1:
-            g.add_edge(p1, child)
-    return g
+    raise Exception("deprecated; can now efficiently calculate par and dpar on the fly")
+    # g = nx.DiGraph()
+    # for child, (p0, p1) in ancestry.items():
+    #     if p0 != -1:
+    #         g.add_edge(p0, child)
+    #     if p1 != -1:
+    #         g.add_edge(p1, child)
+    # return g
 
 
 def get_all_positions_in_ancestor_tree(ancestry):
-    # auxiliary function meant to help make it easier to get the positions of a large number of points
-    # by taking advantage of the fact that many of them share ancestry, so that position info can be reused without recalculation
-    child_to_parents = ancestry
-    pn_to_position = {}
-    for child in sorted(child_to_parents.keys()):
-        # do the lower-number points first because they are created earlier, and then later points can use position information from them
-        p0, p1 = child_to_parents[child]
-        # print(f"getting position from ancestry for child {child} of parents {p0}, {p1}")
-        if p0 == -1 and p1 == -1:
-            # print(f"getting position for parentless point {child}")
-            pos = get_position_from_point_number_recursive(child)
-            pn_to_position[child] = pos
-        else:
-            # print(f"getting position for point {child} with parents in the tree")
-            pos0 = pn_to_position[p0]
-            pos1 = pn_to_position[p1]
-            # print(f"p0 is at {pos0}\np1 is at {pos1}")
-            pos = get_position_of_child_from_parent_positions(pos0, pos1)
-            # print(f"child is at {pos}")
-            pn_to_position[child] = pos
-    return pn_to_position
+    raise Exception("deprecated; can now efficiently calculate par and dpar on the fly")
+    # # auxiliary function meant to help make it easier to get the positions of a large number of points
+    # # by taking advantage of the fact that many of them share ancestry, so that position info can be reused without recalculation
+    # child_to_parents = ancestry
+    # pn_to_position = {}
+    # for child in sorted(child_to_parents.keys()):
+    #     # do the lower-number points first because they are created earlier, and then later points can use position information from them
+    #     p0, p1 = child_to_parents[child]
+    #     # print(f"getting position from ancestry for child {child} of parents {p0}, {p1}")
+    #     if p0 == -1 and p1 == -1:
+    #         # print(f"getting position for parentless point {child}")
+    #         pos = get_position_from_point_number_recursive(child)
+    #         pn_to_position[child] = pos
+    #     else:
+    #         # print(f"getting position for point {child} with parents in the tree")
+    #         pos0 = pn_to_position[p0]
+    #         pos1 = pn_to_position[p1]
+    #         # print(f"p0 is at {pos0}\np1 is at {pos1}")
+    #         pos = get_position_of_child_from_parent_positions(pos0, pos1)
+    #         # print(f"child is at {pos}")
+    #         pn_to_position[child] = pos
+    # return pn_to_position
 
 
 def is_parent_and_child(parent, child):
@@ -1255,7 +1269,7 @@ def unify_five_and_six(adjacency, point_number):
     return adj
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_adjacency_recursive(point_number, iteration):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
@@ -1346,7 +1360,7 @@ def get_index_clockwise_step(original_index, n_steps, n_neighbors):
     return (original_index + n_steps) % n_neighbors
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_adjacency_when_born(point_number):
     # print("get_adjacency_when_born({})".format(point_number))
     iteration = get_iteration_born(point_number)
@@ -1535,67 +1549,70 @@ def get_child_index(point_number):
 
 
 @functools.lru_cache(maxsize=10000)
-def get_parent_positions_from_point_code(point_code):
+def get_parent_xyzs_from_point_code(point_code):
     p0, p1 = get_parents_from_point_code(point_code)
-    pos0 = get_position_from_point_code_recursive(p0)
-    pos1 = get_position_from_point_code_recursive(p1)
-    return pos0, pos1
+    xyz0 = get_xyz_from_point_code_recursive(p0)
+    xyz1 = get_xyz_from_point_code_recursive(p1)
+    return xyz0, xyz1
 
 
 @functools.lru_cache(maxsize=10000)
-def get_parent_positions_from_point_number(point_number):
+def get_parent_xyzs_from_point_number(point_number):
     p0, p1 = get_parents_from_point_number(point_number)
-    pos0 = get_position_from_point_number_recursive(p0)
-    pos1 = get_position_from_point_number_recursive(p1)
-    return pos0, pos1
+    xyz0 = get_xyz_from_point_number_recursive(p0)
+    xyz1 = get_xyz_from_point_number_recursive(p1)
+    return xyz0, xyz1
 
 
-def get_position_of_point_code_using_parents(point_code):
+def get_xyz_of_point_code_using_parents(point_code):
     originals = list("ABCDEFGHIJKL")
     if point_code in originals:
         pos, adj = STARTING_POINTS
         index = originals.index(point_code)
-        return pos[index].tuples
-    pos0, pos1 = get_parent_positions_from_point_code(point_code)
-    return get_position_of_child_from_parent_positions(pos0, pos1)
+        # return pos[index].tuples
+        return pos[index].xyz()
+    xyz0, xyz1 = get_parent_xyzs_from_point_code(point_code)
+    return get_xyz_of_child_from_parent_xyzs(xyz0, xyz1)
 
 
-def get_position_of_point_number_using_parents(point_number):
+def get_xyz_of_point_number_using_parents(point_number):
     if point_number < 12:
         pos, adj = STARTING_POINTS
-        return pos[point_number].tuples
-    pos0, pos1 = get_parent_positions_from_point_number(point_number)
-    return get_position_of_child_from_parent_positions(pos0, pos1)
+        # return pos[point_number].tuples
+        return pos[point_number].xyz()
+    xyz0, xyz1 = get_parent_xyzs_from_point_number(point_number)
+    return get_xyz_of_child_from_parent_xyzs(xyz0, xyz1)
 
 
-def get_position_of_child_from_parent_positions(pos0, pos1):
-    p0 = UnitSpherePoint(pos0)
-    p1 = UnitSpherePoint(pos1)
-    midpoint = UnitSpherePoint.get_midpoint(p0, p1)
-    xyz = midpoint.xyz()
-    latlon = midpoint.latlondeg()
-    return {"xyz": xyz, "latlondeg": latlon}
+def get_xyz_of_child_from_parent_xyzs(xyz0, xyz1):
+    # reduce use of UnitSpherePoint objects where they are unnecessary
+    # also reduce use of latlon and conversion to/from it where it is unnecessary
+    return mcm.get_unit_sphere_midpoint_from_xyz(xyz0, xyz1)
 
 
-@functools.lru_cache(maxsize=10000)
-def get_position_from_point_code_recursive(point_code):
-    return get_position_of_point_code_using_parents(point_code)
+@functools.lru_cache(maxsize=100000)
+def get_xyz_from_point_code_recursive(point_code):
+    return get_xyz_of_point_code_using_parents(point_code)
 
 
-@functools.lru_cache(maxsize=10000)
-def get_position_from_point_number_recursive(point_number):
-    return get_position_of_point_number_using_parents(point_number)
+@functools.lru_cache(maxsize=100000)
+def get_xyz_from_point_number_recursive(point_number):
+    return get_xyz_of_point_number_using_parents(point_number)
 
 
-def get_positions_from_point_numbers_recursive(point_numbers):
+def get_xyzs_from_point_numbers_recursive(point_numbers):
     # somehow need to make it efficient to do this for multiple points
     # e.g. they will probably run into same parents/grandparents/etc. at some point, those shouldn't be recalculated
-    print(f"getting positions recursively for {len(point_numbers)} points")
-    tree = get_ancestor_tree_for_multiple_points(point_numbers)
-    print("got ancestor tree")
-    pn_to_position = get_all_positions_in_ancestor_tree(tree)
-    print(f"done getting positions recursively for {len(point_numbers)} points")
-    return [pn_to_position[p] for p in point_numbers]
+
+    return [get_xyz_from_point_number_recursive(pn) for pn in point_numbers]
+
+    # old, slow
+    # print(f"getting positions recursively for {len(point_numbers)} points")
+    # tree = get_ancestor_tree_for_multiple_points(point_numbers)
+    # print("got ancestor tree")
+    # pn_to_position = get_all_positions_in_ancestor_tree(tree)
+    # print(f"done getting positions recursively for {len(point_numbers)} points")
+    # return [pn_to_position[p] for p in point_numbers]
 
     # old, very slow
     # brute-force, just get each one individually
@@ -2070,13 +2087,14 @@ def test_report_cada_ii_iteration_requirements():
 
 
 def test_position_recursive(compare_memo=True):
+    raise Exception("if want to use this, edit it to use only xyz returning functions rather than position dicts that have both xyz and latlon")
     t0 = time.time()
     iterations_reported_as_having_no_memo = set()
     for i in range(1000):
         point = random.randint(0, 655362)
         born_iteration = get_iteration_born(point)
         iteration = born_iteration
-        pos = get_position_from_point_number_recursive(point)
+        pos = get_xyz_from_point_number_recursive(point)
         print("\n-- test_position_recursive p#{} i={}".format(point, iteration))
         print("pos: {}".format(pos))
         if compare_memo:

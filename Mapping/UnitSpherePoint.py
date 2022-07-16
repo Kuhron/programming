@@ -158,8 +158,7 @@ class UnitSpherePoint:
     def get_midpoint(p0, p1):
         xyz0 = p0.get_coords("xyz")
         xyz1 = p1.get_coords("xyz")
-        midpoint_raw_xyz = (np.array(xyz0) + np.array(xyz1)) / 2
-        midpoint_normalized_xyz = tuple((midpoint_raw_xyz / np.linalg.norm(midpoint_raw_xyz)).reshape(3))
+        midpoint_normalized_xyz = mcm.get_unit_sphere_midpoint_from_xyz(xyz0, xyz1)
         midpoint_normalized_latlon = mcm.unit_vector_cartesian_to_lat_lon(*midpoint_normalized_xyz, deg=True)
         coords_dict = {"xyz": midpoint_normalized_xyz, "latlondeg": midpoint_normalized_latlon}
         return UnitSpherePoint(coords_dict)

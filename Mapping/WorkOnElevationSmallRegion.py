@@ -9,6 +9,7 @@ import PlottingUtil as pu
 
 import random
 import os
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
@@ -21,12 +22,18 @@ def filter_point_numbers_in_region_one_by_one(point_numbers, region_center_latlo
     # gc = great-circle distance
     region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
     point_numbers_in_region = set()
+    t0 = time.time()
+    n_points = len(point_numbers)
     for i, pn in enumerate(point_numbers):
-        if i % 1000 == 0:
-            print(f"i = {i} / {len(point_numbers)}")
+        if i % 100 == 0 and i != 0:
+            dt = time.time() - t0
+            rate = i / dt
+            time_remaining = (n_points - i) / rate
+            print(f"i = {i} / {len(point_numbers)}; estimated {time_remaining:.2f} seconds remaining")
+            print("TODO there has got to be a way to use the point codes to infer from ancestry that the point is too far away from the region, so I can filter them faster without actually calculating their position")
         latlondeg = icm.get_latlon_from_point_number(pn)
         d_gc = UnitSpherePoint.distance_great_circle_latlondeg_static(region_center_latlondeg, latlondeg)
-        print(f"distance from center {region_center_latlondeg}\nto point #{pn} {latlondeg}\nis {d_gc} normalized to sphere radius 1")
+        # print(f"distance from center {region_center_latlondeg}\nto point #{pn} {latlondeg}\nis {d_gc} normalized to sphere radius 1")
         if d_gc <= region_radius_gc_normalized:
             point_numbers_in_region.add(pn)
             print("added point", pn)
@@ -35,13 +42,14 @@ def filter_point_numbers_in_region_one_by_one(point_numbers, region_center_latlo
 
 
 def filter_point_numbers_in_region_all_at_once(point_numbers, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
-    # try doing like nearest neighbors or large-scale distance query or something
-    region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
-    xyzs = icm.get_xyzs_from_point_numbers(point_numbers)
-    xyz = mcm.unit_vector_lat_lon_to_cartesian(region_center_latlondeg)
-    distances = UnitSpherePoint.distance_3d_xyzs_to_xyz_static(xyzs, xyz)
-    mask = distances <= region_radius_gc_normalized
-    return point_numbers[mask]
+    raise Exception("deprecated; one-by-one should be fast enough now")
+    # # try doing like nearest neighbors or large-scale distance query or something
+    # region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
+    # xyzs = icm.get_xyzs_from_point_numbers(point_numbers)
+    # xyz = mcm.unit_vector_lat_lon_to_cartesian(region_center_latlondeg)
+    # distances = UnitSpherePoint.distance_3d_xyzs_to_xyz_static(xyzs, xyz)
+    # mask = distances <= region_radius_gc_normalized
+    # return point_numbers[mask]
 
 
 def get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km):
@@ -53,8 +61,8 @@ def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radi
     print(f"checking {len(point_numbers_in_db)} points")
     
     # try different algorithms for finding the correct set of points
-    # filter_point_numbers_in_region = filter_point_numbers_in_region_one_by_one
-    filter_point_numbers_in_region = filter_point_numbers_in_region_all_at_once
+    filter_point_numbers_in_region = filter_point_numbers_in_region_one_by_one
+    # filter_point_numbers_in_region = filter_point_numbers_in_region_all_at_once
     
     point_numbers_in_region_in_db = filter_point_numbers_in_region(point_numbers_in_db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
     
@@ -314,6 +322,13 @@ if __name__ == "__main__":
     circle_radius_dist = lambda: power_law() * region_radius_great_circle_km
     el_stdev = 15
     n_circles = 10000
+
+    # just test how fast it is to get the positions of all points in the database
+    # point_numbers_in_database = db.get_all_point_numbers_with_data()
+    # for i, pn in enumerate(point_numbers_in_database):
+    #     xyz = icm.get_xyz_from_point_number(pn)
+    #     if i % 100 == 0:
+    #         print(i, pn, xyz)
 
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 

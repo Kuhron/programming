@@ -49,6 +49,11 @@ def mag_3d(v):
     return np.sqrt(v[0]**2 + v[1]**2 + v[2]**2)
 
 
+def mag_3d_simple(xyz):
+    x, y, z = xyz
+    return (x**2 + y**2 + z**2) ** 0.5
+
+
 def angle_between_vectors(v1, v2):
     verify_3d_match(v1, v2)
     point_array_shape = v1.shape[1:]
@@ -187,10 +192,28 @@ def get_radius_about_center_surface_point_for_circle_of_area_proportion_on_unit_
 
 
 def xyz_distance(xyz0, xyz1):
-    xyz0 = np.array(xyz0)
-    xyz1 = np.array(xyz1)
-    return np.linalg.norm(xyz1-xyz0)
+    # make it simple and fast, no numpy
+    x0, y0, z0 = xyz0
+    x1, y1, z1 = xyz1
+    dx = x1 - x0
+    dy = y1 - y0
+    dz = z1 - z0
+    dxyz = (dx, dy, dz)
+    return mag_3d_simple(dxyz)
 
+
+def get_unit_sphere_midpoint_from_xyz(xyz0, xyz1):
+    # do it simple with basic math functions, no numpy casting or anything fancy, want fast
+    x0, y0, z0 = xyz0
+    x1, y1, z1 = xyz1
+    xm = (x0 + x1) / 2
+    ym = (y0 + y1) / 2
+    zm = (z0 + z1) / 2
+    m_raw = (xm, ym, zm)
+    mag = mag_3d_simple(m_raw)
+    m = (xm / mag, ym / mag, zm / mag)
+    assert abs(mag_3d_simple(m) - 1) < 1e-9
+    return m
 
 
 if __name__ == "__main__":
