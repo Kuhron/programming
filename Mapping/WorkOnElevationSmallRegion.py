@@ -25,6 +25,8 @@ def filter_point_numbers_in_region_one_by_one(point_numbers, region_center_latlo
     t0 = time.time()
     n_points = len(point_numbers)
     for i, pn in enumerate(point_numbers):
+        # pc = icm.get_point_code_from_point_number(pn)
+        # print(pc)  # to see what kind of iteration precision we are dealing with here
         if i % 100 == 0 and i != 0:
             dt = time.time() - t0
             rate = i / dt
@@ -108,13 +110,10 @@ def read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_c
 
 def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
     print("getting point numbers with data in region")
-    if False:
-        pass
-    # try:
-    #     res = read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
-    #     print("got point numbers from cache")
-    # except FileNotFoundError:
-    else:
+    try:
+        res = read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km)
+        print("got point numbers from cache")
+    except FileNotFoundError:
         print("calculating point numbers with data in region using icosa math")
         point_numbers = list(get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km))
         res = point_numbers
@@ -172,12 +171,15 @@ def get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle
     starting_points = list(range(2, 12))
     to_check = starting_points
     for iteration in range(0, iterations+1):
-        if len(to_check) == 0:
+        n_to_check = len(to_check)
+        if n_to_check == 0:
             break
         to_check_next_round = []
         print(f"checking iteration {iteration}")
         # for each point, only check its actual distance on the first time you see it
-        for pn in to_check:
+        for i, pn in enumerate(to_check):
+            if i % 100 == 0 and i != 0:
+                print(f"{i}/{n_to_check} this round (iteration {iteration})")
             # print(f"checking point {pn}")
             if iteration == icm.get_iteration_born(pn):
                 # check its distance, put it in points_in_region if it fits
@@ -311,10 +313,18 @@ if __name__ == "__main__":
     # region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
     # region_center_latlondeg, region_radius_great_circle_km = (86.5, -13), 250  # small region in Tomar Strait in Mienta, for testing on smaller regions
     # region_center_latlondeg, region_radius_great_circle_km = (25, -84), 2000  # Jhorju
-    region_center_latlondeg, region_radius_great_circle_km = (
-        UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
-    )
-    print(f"region centered at {region_center_latlondeg} deg with radius {region_radius_great_circle_km} km")
+    # region_center_latlondeg, region_radius_great_circle_km = (-54.28119589256169, 175.64265081464623), 250  # random from 2022-07-16
+    region_center_latlondeg, region_radius_great_circle_km = (26.083351229768834, 94.04570559120195), 2000  # northern Mienta, from a random point
+    region_center_point_code = icm.get_nearest_icosa_point_to_latlon(region_center_latlondeg, maximum_distance=1, planet_radius=icm.CADA_II_RADIUS_KM)
+
+    # to choose random one
+    # region_center_point_code = icm.get_random_point_code(min_iterations=3, expected_iterations=6)
+    # region_center_latlondeg = icm.get_latlon_from_point_code(region_center_point_code)
+    # region_radius_great_circle_km = 2000
+    # region_center_latlondeg, region_radius_great_circle_km = (
+    #    UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
+    # )
+    print(f"region centered at {region_center_point_code} {region_center_latlondeg} deg with radius {region_radius_great_circle_km} km")
 
     planet_radius_km = icm.CADA_II_RADIUS_KM
     power_law_param = 0.25  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
@@ -330,23 +340,37 @@ if __name__ == "__main__":
     #     if i % 100 == 0:
     #         print(i, pn, xyz)
 
+    point_numbers_in_db = db.get_all_point_numbers_with_data()
+    for pn in point_numbers_in_db:
+        pc = icm.get_point_code_from_point_number(pn)
+        input(pc)
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
     # DEBUG
     # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
 
+    # use this to check if the point locations look right 
+    # (is it actually interpolating conditions onto icosa lattice points, for instance? 
+    # (which should locally look like a triangular/hexagonal lattice 
+    # with random interloping image pixel points) 
+    # or is it just taking the image pixels? 
+    # (which should locally look like a rectangular lattice))
+    # plot_variable_scattered(db, points_with_data_in_region, "elevation") 
+
     # plot_variable_scattered(db, points_with_data_in_region, "elevation_condition")
-    plot_variable_scattered(db, points_with_data_in_region, "elevation")  # use this to check if the point locations look right (is it actually interpolating conditions onto icosa lattice points, for instance? (which should locally look like a triangular/hexagonal lattice with random interloping image pixel points) or is it just taking the image pixels? (which should locally look like a rectangular lattice))
     # plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
     # input("press enter to continue")
 
     # edit the region and then plot again
 
-    interpolate = False  # only do this when you don't have points in file? but it should be able to know that all those points already have elevation condition (FIXME) and so leaving this as True shouldn't be an issue
+    interpolate = True  # only do this when you don't have points in file? but it should be able to know that all those points already have elevation condition (FIXME) and so leaving this as True shouldn't be an issue
     if interpolate:
         # raise Exception("FIXME! It will overwrite the existing data with default elevation values if you use interpolate=True")
-        # interpolate condition at other points as nearest neighbor (with some max distance to that neighbor so we don't get things like the middle of the ocean thinking it has to be a coast/shallow because that's what's on the edge of the nearest image thousands of km away)
-        edge_length_of_resolution_km = 10
+        # interpolate condition at other points as nearest neighbor
+        # (with some max distance to that neighbor so we don't get things like 
+        # the middle of the ocean thinking it has to be a coast/shallow 
+        # because that's what's on the edge of the nearest image thousands of km away)
+        edge_length_of_resolution_km = 100
         iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
         print(f"resolution needs {iterations_of_resolution} iterations of icosa")
         print("TODO maybe cache this too (in a file like the point numbers, so we have one cache of point numbers with data and another of point numbers in certain region at certain resolution, although maybe only the latter is necessary and then you can easily check the database for which ones have the variable defined)")
@@ -380,10 +404,13 @@ if __name__ == "__main__":
             if old_el_cond is None:
                 db[pn, "elevation_condition"] = el_cond
             point_numbers_to_cache.append(pn)
-        db.write()
+            print(f"p #{pn} had old elevation condition {old_el_cond}, new {el_cond}")
+        if input("write these results? y/n (default n)") == "y":
+            db.write()
         write_point_numbers_to_cache(point_numbers_to_cache, region_center_latlondeg, region_radius_great_circle_km)
         points_to_edit = list(set(interpolated_elevation_conditions.keys()) | set(points_with_data_in_region))  # want both the new points and the points already having data
     else:
+        print("not interpolating, just using points that already have db data")
         points_to_edit = points_with_data_in_region
 
     # start by generating random elevation circles in the region

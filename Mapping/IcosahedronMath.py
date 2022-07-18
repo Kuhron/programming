@@ -152,8 +152,7 @@ def get_xyz_array_from_point_numbers(point_numbers):
 
 def get_usp_from_point_number(point_number):
     pos = get_xyz_from_point_number_recursive(point_number)
-    assert type(pos) is dict
-    return UnitSpherePoint(pos, point_number=point_number)
+    return UnitSpherePoint.from_xyz(*pos, point_number=point_number)
 
 
 def get_all_point_codes_in_order():
@@ -1670,7 +1669,7 @@ def get_nearest_icosa_point_to_latlon(latlon, maximum_distance, planet_radius):
 
 
 def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius):
-    # print("getting nearest icosa point to {}".format(xyz))
+    print("getting nearest icosa point to {}".format(xyz))
     max_distance_normalized = maximum_distance / planet_radius
     candidate_usps, candidate_adjacencies = STARTING_POINTS
     iteration = 0
@@ -1697,22 +1696,25 @@ def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius):
 def get_nearest_neighbor_to_latlon(latlon, candidates_usp):
     lat, lon = latlon
     xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon)
-    candidates_xyz = {c.xyz(): c for c in candidates_usp}
+    candidates_dict = {c.xyz(): c for c in candidates_usp}
+    candidates_xyz = list(candidates_dict.keys())
     nn_xyz, d = get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz)
-    return candidates_xyz[nn_xyz], d
+    return candidates_dict[nn_xyz], d
 
 
 def get_nearest_neighbor_to_xyz(xyz, candidates_usp):
-    candidates_xyz = {c.xyz(): c for c in candidates_usp}
+    candidates_dict = {c.xyz(): c for c in candidates_usp}
+    candidates_xyz = list(candidates_dict.keys())
     nn_xyz, d = get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz)
-    return candidates_xyz[nn_xyz], d
+    return candidates_dict[nn_xyz], d
 
 
 def get_nearest_neighbor_point_number_to_point_number(pn, candidates_pn):
     xyz = get_xyz_from_point_number(pn)
-    candidates_xyz = {get_xyz_from_point_number(c): c for c in candidates_pn}
+    candidates_dict = {get_xyz_from_point_number(c): c for c in candidates_pn}
+    candidates_xyz = list(candidates_dict.keys())
     nn_xyz, d = get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz)
-    return candidates_xyz[nn_xyz], d
+    return candidates_dict[nn_xyz], d
 
 
 def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
@@ -1720,7 +1722,9 @@ def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
     assert p.shape == (3,), p.shape
     ps = np.array(candidates_xyz)
     n = len(candidates_xyz)
-    assert ps.shape == (n, 3), p.shape
+    if n == 0:
+        raise ValueError("empty candidates list")
+    assert ps.shape == (n, 3), f"ps should have shape ({n}, 3) but got {ps.shape}:\n{ps}"
     dx = p-ps
     d = sum((dx**2).T) ** 0.5
     assert d.shape == (n,)
@@ -2158,13 +2162,15 @@ if __name__ == "__main__":
     # n_points = get_n_points_from_iterations(iterations)
     # for i, pc in enumerate(get_all_point_codes_in_order_up_to_iteration(iterations)):
     # for i, pc in enumerate(get_all_point_codes_in_order()):
-    for i in range(10000):
-        pc = get_random_point_code(min_iterations=4, expected_iterations=5)
+    for i in range(1625217):
+        pc = get_random_point_code(min_iterations=4, expected_iterations=13)
+        # in the point database as of 2022-07-15, there are 1625217 points with average iterations around 13
         dpar = get_directional_parent_from_point_code(pc)
         # for speed comparison, MEMORY LEAK beware:
         # dpar = get_directional_parent_from_point_code_brute_force(pc)
         latlon = get_latlon_from_point_code(pc)
-        print(f"{pc} <- {dpar}, point is located at {latlon}")
+        if i % 1000 == 0 and i != 0:
+            print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
 
     # point_numbers = [random.randint(10**3,10**6) for i in range(100)]
     # point_numbers = list(range(2562))

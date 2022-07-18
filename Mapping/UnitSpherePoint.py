@@ -115,7 +115,7 @@ class UnitSpherePoint:
         theta = 2 * np.arcsin(d0 / (2*r))
         d_gc = r * theta
         assert 0 <= d_gc <= np.pi * r, f"bad great circle distance {d_gc} from d0={d0}, r={r}"
-        assert d_gc >= d0, "shortest distance should be a straight line"
+        assert d_gc > d0 or abs(d_gc - d0) < 1e-9, f"shortest distance should be a straight line, but got great-circle {d_gc} from Euclidean {d0}"
         # print(f"d0 = {d0}, r = {r} -> great circle distance {d_gc}")
         return d_gc
 
@@ -190,16 +190,16 @@ class UnitSpherePoint:
         return UnitSpherePoint.from_xyz(*xyz)
 
     @staticmethod
-    def from_xyz(x, y, z):
+    def from_xyz(x, y, z, point_number=None):
         xyz = np.array([x, y, z])
         latlondeg = mcm.unit_vector_cartesian_to_lat_lon(x, y, z, deg=True)
-        return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg})
+        return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg}, point_number=point_number)
 
     @staticmethod
-    def from_latlondeg(lat, lon):
+    def from_latlondeg(lat, lon, point_number=None):
         latlondeg = np.array([lat, lon])
         xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon, deg=True)
-        return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg})
+        return UnitSpherePoint({"xyz":xyz, "latlondeg":latlondeg}, point_number=point_number)
 
     @staticmethod
     def random():

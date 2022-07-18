@@ -264,12 +264,15 @@ class IcosahedronPointDatabase:
         return os.path.join(self.blocks_dir, fname)
 
     def get_all_point_numbers_with_data(self):
+        print("getting points with data in database")
         block_numbers = self.get_all_block_numbers_with_data()
         res = set()
         for block_number in block_numbers:
+            # print(f"reading block {block_number}")
             point_numbers = self.get_point_numbers_with_data_in_block(block_number)
             assert res & point_numbers == set(), "overlap"
             res |= point_numbers
+        print("done getting points with data")
         return res
 
     def get_point_numbers_with_data_in_block(self, block_number):
@@ -284,6 +287,7 @@ class IcosahedronPointDatabase:
             adjusted_pn = int(l[0])
             pn = block_start + adjusted_pn
             assert pn not in res
+            # print(f"got point number {pn}")
             res.add(pn)
         return res
 
