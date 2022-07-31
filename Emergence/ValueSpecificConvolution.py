@@ -21,7 +21,7 @@ class ConvolutionByValue:
 
 
 def convolve_by_value(arr, kernels, convolve_values=False, condition_function=None):
-    # condition function gets a value corresponding to a condition, e.g. the values map instead to (val % 2) so all cells which are even will get the convolution for value of 0, and all cells which are odd will get a different c onvolution kernel
+    # condition function gets a value corresponding to a condition, e.g. the values map instead to (val % 2) so all cells which are even will get the convolution for value of 0, and all cells which are odd will get a different convolution kernel
     assert type(convolve_values) is bool  # passing later kwarg as positional
 
     values = np.unique(arr)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     plt.ion()
     fignum = plt.gcf().number
-    
+
     while True:
         if not plt.fignum_exists(fignum):
             plt.ioff()

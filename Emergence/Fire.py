@@ -15,7 +15,8 @@ from InteractivePlot import InteractivePlot
 
 def get_dryness_array(size, resolution):
     arr = get_2d_noise(min_val=0, max_val=1, x_range=size, y_range=size, n_xs=resolution, n_ys=resolution)
-    return arr ** 2  # lower the dryness values for wetter areas
+    p = random.uniform(1, 2.5)
+    return arr ** p  # lower the dryness values for wetter areas
 
 
 def get_fuel_array(size, resolution):
@@ -95,7 +96,7 @@ def plot_fire(dryness, fuel, fire, plt=plt):
     cmap.set_bad(color="black")
     cmap.set_under(color="black")
     plt.imshow(fire, cmap=cmap, vmin=1e-6)
-    plt.colorbar()
+    plt.colorbar()  # jumps around too much when you put the frames together into a video
     plt.title("fire intensity")
 
 
