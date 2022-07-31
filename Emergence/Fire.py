@@ -3,6 +3,7 @@
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 import sys
 from scipy.signal import convolve2d
 
@@ -76,25 +77,32 @@ def evolve(dryness, fuel, fire):
 
 def plot_fire(dryness, fuel, fire, plt=plt):
     plt.subplot(1, 3, 1)
-    plt.imshow(dryness)
+    cmap = cm.get_cmap("jet")
+    plt.imshow(dryness, cmap=cmap)
     plt.colorbar()
     plt.title("dryness")
 
     plt.subplot(1, 3, 2)
-    plt.imshow(fuel)
+    cmap = cm.get_cmap("RdYlGn").copy()
+    cmap.set_bad(color="black")
+    cmap.set_under(color="black")
+    plt.imshow(fuel, cmap=cmap, vmin=1e-6)
     plt.colorbar()
     plt.title("fuel")
 
     plt.subplot(1, 3, 3)
-    plt.imshow(fire)
+    cmap = cm.get_cmap("autumn").copy()
+    cmap.set_bad(color="black")
+    cmap.set_under(color="black")
+    plt.imshow(fire, cmap=cmap, vmin=1e-6)
     plt.colorbar()
-    plt.title("fire")
+    plt.title("fire intensity")
 
 
 if __name__ == "__main__":
     size = 4
-    resolution = 250
-    plot_every_n_steps = 10
+    resolution = 150
+    plot_every_n_steps = 1
 
     dryness = get_dryness_array(size, resolution)
     fuel = get_fuel_array(size, resolution)
@@ -107,15 +115,15 @@ if __name__ == "__main__":
     # so an intense fire will deplete fuel faster
     # I guess fire intensity is unbounded, if there's enough fuel in that cell it can keep going up
 
-    with InteractivePlot(plot_every_n_steps) as iplt:
+    with InteractivePlot(plot_every_n_steps, suppress_show=True, figsize=(12,3)) as iplt:
         while iplt.is_open():
             plot_fire(dryness, fuel, fire, plt=iplt)
             dryness, fuel, fire = evolve(dryness, fuel, fire)
-            iplt.step()
+            iplt.step(savefig=True)
 
             if (fire == 0).all():
                 plot_fire(dryness, fuel, fire, plt=iplt)
-                iplt.force_draw_static()  # even if it's not the right counter number in the iplt
+                iplt.force_draw_static(savefig=False)  # even if it's not the right counter number in the iplt
                 input("the fire is over; press enter to close")
                 break
 

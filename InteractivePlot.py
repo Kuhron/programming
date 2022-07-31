@@ -1,4 +1,6 @@
 import matplotlib.pyplot as plt
+from datetime import datetime
+import os
 
 
 
@@ -18,45 +20,66 @@ def if_open(func):
 
 
 class InteractivePlot():
-    def __init__(self, plot_every_n_steps=1):
+    def __init__(self, plot_every_n_steps=1, suppress_show=False, figsize=None):
         self.plot_every_n_steps = plot_every_n_steps
+        self.suppress_show = suppress_show
+        self.figsize = figsize
 
     def __enter__(self):
         self.counter = 0
-        plt.ion()
-        self.fignum = plt.gcf().number  # use to determine if user has closed plot
-        self.fig = plt.gcf()  # failsafe if fignum gives false positive because it's always 1 when there's only one figure (e.g. if user closes and then a new figure is created before the next check)
+        if not self.suppress_show:
+            plt.ion()
+            self.fignum = plt.gcf().number  # use to determine if user has closed plot
+            self.fig = plt.gcf()  # failsafe if fignum gives false positive because it's always 1 when there's only one figure (e.g. if user closes and then a new figure is created before the next check)
+        self.time_created = datetime.utcnow().strftime("%Y-%m-%d-%H%M%S")
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:
             # no exception occurred
             print("user closed plot; exiting")
-            plt.ioff()
+            if not self.suppress_show:
+                plt.ioff()
         else:
-            plt.ioff()
+            if not self.suppress_show:
+                plt.ioff()
             return False  # will reraise the exception
 
-    def step(self):
+    def step(self, draw=True, savefig=False):
         self.counter += 1
         if self.should_plot():
-            self.draw()
+            if draw:
+                self.draw(savefig=savefig)
         else:
             return
 
-    def draw(self, will_redraw=True):
-        plt.draw()
-        plt.pause(0.01)
+    def draw(self, will_redraw=True, savefig=False):
+        if not self.suppress_show:
+            plt.draw()
+            plt.pause(0.01)
+
+        if savefig:
+            fdir = "InteractivePlot-" + self.time_created
+            fname = self.time_created + "-i" + str(self.counter) + ".png"
+            if not os.path.exists(fdir):
+                os.mkdir(fdir)
+            fp = os.path.join(fdir, fname)
+            if self.figsize is not None:
+                plt.gcf().set_size_inches(*self.figsize)
+            self.savefig(fp, dpi=100)
+
         if will_redraw:
             plt.gcf().clear()
 
-    def force_draw_static(self):
-        self.draw(will_redraw=False)
+    def force_draw_static(self, savefig=False):
+        self.draw(will_redraw=False, savefig=savefig)
 
     def should_plot(self):
         return self.counter % self.plot_every_n_steps == 0
 
     def is_open(self):
+        if self.suppress_show:
+            return True
         return plt.fignum_exists(self.fignum) and self.fig_is_same()
 
     def is_closed(self):
@@ -103,4 +126,8 @@ class InteractivePlot():
     def title(self, *args, **kwargs):
         plt.title(*args, **kwargs)
 
+    @if_open
+    def savefig(self, *args, **kwargs):
+        plt.savefig(*args, **kwargs)
+        print(f"fig saved at {args[0]}")
 
