@@ -220,18 +220,18 @@ def invert_data(data, pivot):
     return [x.to_raw_data() for x in lst]
 
 
-def note_number_to_hertz(n):
+def note_number_to_hertz(n, a=440):
     # a440 is 69, c0 ~=16 Hz is 0
     deviation_from_a440 = (n - 69)/12
-    a440_freq = 440
+    a440_freq = a
     factor_deviation = 2 ** deviation_from_a440
     return a440_freq * factor_deviation
 
 
-def hertz_to_note_number(hz):
+def hertz_to_note_number(hz, a=440):
     # a440 is 69, c0 ~=16 Hz is 0
     log2_hz = math.log(hz, 2)
-    log2_a440 = math.log(440, 2)
+    log2_a440 = math.log(a, 2)
     deviation_in_logs = log2_hz - log2_a440
     deviation_in_semitones = deviation_in_logs*12
     return 69 + deviation_in_semitones
