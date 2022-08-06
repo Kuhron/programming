@@ -5,9 +5,17 @@ import numpy as np
 from PIL import Image
 
 
+PHOTOS_DIR = "/home/wesley/Desktop/IPhone Media/IPhone Media Temp Storage"
+
+
+def get_random_image_fps(n):
+    # regardless of size
+    image_files = glob(PHOTOS_DIR + "/**/*.jpg")
+    return random.sample(image_files, n)
+
+
 def initialize_size_report():
-    photos_dir = "/home/wesley/Desktop/IPhone Media/IPhone Media Temp Storage"
-    image_files = glob(photos_dir + "/**/*.jpg")
+    image_files = glob(PHOTOS_DIR + "/**/*.jpg")
     print(len(image_files))
     sizes = {}
     size_record = ""
@@ -23,7 +31,7 @@ def initialize_size_report():
 
     with open("ImageDatasets/PhonePhotos.txt", "w") as f:
         f.write(size_record)
-    
+
     for k,v in sorted(sizes.items(), key=lambda kv: kv[1], reverse=True):
         print("size {} occurred {} times".format(k,v))
 
