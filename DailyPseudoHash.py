@@ -31,9 +31,19 @@ def get_day_number():
     return (d1 - d0).days
 
 
-def get_rand_val(s):
+def plot_trajectory_over_days(s, n_days):
+    vals = []
+    for i in range(n_days):
+        val = get_rand_val(s, day_number_fudge=i)
+        vals.append(val)
+    plt.scatter(range(n_days), vals)
+    plt.show()
+
+
+def get_rand_val(s, day_number_fudge=0):
     # seed values, one for the day and the rest from the string
-    day_num = get_day_number()
+    # day_number_fudge is just for checking that a string's trajectory over values is sufficiently random from day to day
+    day_num = get_day_number() + day_number_fudge
     l = len(s)
     l_no_vowels = len(re.sub("[aoeui]", "", s))
     l_no_lower = len(re.sub("[a-z]", "", s))
@@ -75,6 +85,7 @@ if __name__ == "__main__":
         val = get_rand_val(s)
         vals.append(val)
         print(f"\nstring:\n----vvv----\n{s}\n----^^^----\ngave value {val}")
+        # plot_trajectory_over_days(s, n_days=100)
 
     plt.hist(vals, bins=100)
     plt.show()
