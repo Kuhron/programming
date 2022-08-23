@@ -77,7 +77,7 @@ if __name__ == "__main__":
     all_text = all_text
 
     vals = []
-    n_samples = 100000
+    n_samples = 10000
     min_len = 6
     max_len = 150
     for i in range(n_samples):
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         val = get_rand_val(s)
         vals.append(val)
         print(f"\nstring:\n----vvv----\n{s}\n----^^^----\ngave value {val}")
-        # plot_trajectory_over_days(s, n_days=100)
+        plot_trajectory_over_days(s, n_days=10000)
 
     plt.hist(vals, bins=100)
     plt.show()

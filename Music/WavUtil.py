@@ -52,6 +52,12 @@ def get_silence_for_duration(seconds):
     return ys
 
 
+def pad_signal_with_silence(signal, seconds_per_side):
+    sil = get_silence_for_duration(seconds_per_side)
+    signal = np.concatenate([sil, signal, sil])
+    return signal
+
+
 def send_freq_to_stream(freq, seconds, stream, initial_click=False):
     ys = get_signal_from_freq(freq, seconds, initial_click=False)
     send_signal_to_stream(ys, stream)
