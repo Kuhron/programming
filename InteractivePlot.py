@@ -96,38 +96,48 @@ class InteractivePlot():
 
     @if_open
     def plot(self, *args, **kwargs):
-        plt.plot(*args, **kwargs)
+        return plt.plot(*args, **kwargs)
+
+    @if_open
+    def scatter(self, *args, **kwargs):
+        return plt.scatter(*args, **kwargs)
 
     @if_open
     def contourf(self, *args, **kwargs):
-        plt.contourf(*args, **kwargs)
+        return plt.contourf(*args, **kwargs)
 
     @if_open
     def contour(self, *args, **kwargs):
-        plt.contour(*args, **kwargs)
+        return plt.contour(*args, **kwargs)
 
     @if_open
     def colorbar(self, *args, **kwargs):
-        plt.colorbar(*args, **kwargs)
+        return plt.colorbar(*args, **kwargs)
 
     @if_open
     def arrow(self, *args, **kwargs):
-        plt.arrow(*args, **kwargs)
+        return plt.arrow(*args, **kwargs)
 
     @if_open
     def subplot(self, *args, **kwargs):
-        plt.subplot(*args, **kwargs)
+        return plt.subplot(*args, **kwargs)
 
     @if_open
     def imshow(self, *args, **kwargs):
-        plt.imshow(*args, **kwargs)
+        return plt.imshow(*args, **kwargs)
 
     @if_open
     def title(self, *args, **kwargs):
-        plt.title(*args, **kwargs)
+        return plt.title(*args, **kwargs)
+
+    def gcf(self, *args, **kwargs):
+        return plt.gcf(*args, **kwargs)
+
+    def gca(self, *args, **kwargs):
+        return plt.gca(*args, **kwargs)
 
     @if_open
     def savefig(self, *args, **kwargs):
-        plt.savefig(*args, **kwargs)
-        print(f"fig saved at {args[0]}")
+        print(f"saving fig at {args[0]}")
+        return plt.savefig(*args, **kwargs)
 
