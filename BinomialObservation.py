@@ -1,4 +1,6 @@
 import scipy.stats
+import numpy as np
+import matplotlib.pyplot as plt
 import math
 
 
@@ -56,3 +58,24 @@ class BinomialObservation:
         return random.uniform(*wci)
 
 
+def wilson_function(successes, trials, confidence, alpha=0):
+    # alpha means how far you go between the lower bound and the upper bound of the Wilson CI
+    binom = BinomialObservation(successes, trials)
+    lb, ub = binom.get_wilson_ci(confidence)
+    return lb + alpha*(ub-lb)
+
+
+if __name__ == "__main__":
+    # plot Wilson CI as continuous function
+    successes = np.linspace(0, 5, 100)
+    trials = np.linspace(0.01, 5, 100)
+    Suc, Tri = np.meshgrid(successes, trials)
+    valid_mask = (Suc <= Tri)
+    confidence = 0.1
+    alpha = 0
+    Z = np.zeros(valid_mask.shape)
+    Z[valid_mask] = np.vectorize(lambda suc, tri: wilson_function(suc, tri, confidence, alpha))(Suc[valid_mask], Tri[valid_mask])
+    Z[~valid_mask] = np.nan
+    plt.imshow(Z)
+    plt.colorbar()
+    plt.show()

@@ -141,5 +141,7 @@ if __name__ == "__main__":
     ragas = load_ragas()
     for raga in ragas:
         print(raga)
-        print(raga.get_notes(tonic="C"))
+        # for tonic in "CKDHEFXGJARB":
+        tonic = "C"
+        print(f"with tonic of {tonic}:", ", ".join(raga.get_notes(tonic)))
         print()
