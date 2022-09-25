@@ -7,6 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from scipy.stats import pearsonr
+
+import sys
+sys.path.insert(0, "/home/wesley/programming/")
 from Music.WavUtil import write_signal_to_wav
 
 

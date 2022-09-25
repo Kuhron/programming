@@ -37,7 +37,7 @@ FlexPy/Bible/texts/
 FlexPy/KrisCorpusToolsDebugging.py
 
 # virus genomes
-Genetics/ncbi_dataset/
+Genetics/NCBI/ncbi_dataset/
 
 # image files for random ML stuff
 ImageDatasets/
