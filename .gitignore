@@ -49,6 +49,7 @@ Genetics/*.png
 StrangeAttractorImages/
 MomentOfInertiaImages/
 RecurrenceRelationImages/
+Genetics/ChemicalDiagrams/
 
 # saved GAN models
 NeuralNetFiles/

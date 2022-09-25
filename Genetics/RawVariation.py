@@ -10,10 +10,14 @@ def get_dna(length):
 
 
 def print_dna(dna):
+    print(get_dna_str(dna))
+
+
+def get_dna_str(dna):
     # c = "01"
     c = ".|"
     s = ">" + "".join(c[x] for x in dna)
-    print(s)
+    return s
 
 
 def transcribe_dna_iterative(dna, baseline_error_rate=1/1000):
