@@ -24,17 +24,27 @@ def get_some_chemicals(dna):
     expected_n = len(dna)
     should_transcribe = lambda: random.random() > 1 / expected_n
     expected_len = 10
-    get_next_base = lambda: random.random() > 1 / expected_len
     while should_transcribe():
-        i = random.randrange(len(dna))
-        s = []
-        while get_next_base():
-            s.append(dna[i])
-            i += 1
-            if i >= len(dna):
-                break
-        chemical = get_chemical_from_substring(s)
+        chemical = get_random_chemical(dna, expected_len)
         yield chemical
+
+
+def get_random_chemical(dna, expected_substring_len):
+    s = get_random_substring(dna, expected_substring_len)
+    chemical = get_chemical_from_substring(s)
+    return chemical
+
+
+def get_random_substring(dna, expected_len):
+    i = random.randrange(len(dna))
+    s = []
+    get_next_base = lambda: random.random() > 1 / expected_len
+    while get_next_base():
+        s.append(dna[i])
+        i += 1
+        if i >= len(dna):
+            break
+    return s
 
 
 def get_all_chemicals(dna):
@@ -85,29 +95,31 @@ def simulate_chemical_reactions(chemicals):
 if __name__ == "__main__":
     dnas = [rv.get_dna(1000) for i in range(100)]
 
-    chem0, = get_all_chemicals([0])
-    assert chem0.name == "orinan"
-    chem1, = get_all_chemicals([1])
-    assert chem1.name == "R-cretinan"
+    while True:
+        dna0 = rv.get_dna(100)
+        dna1 = rv.get_dna(100)
+        chem0 = get_random_chemical(dna0, 10)
+        chem1 = get_random_chemical(dna1, 10)
+        chem2a = chem0.react_with(chem1)
+        chem2b = chem1.react_with(chem0)
+        assert chem2a == chem2b
+        reaction = chem0.get_reaction_properties(chem1)
+        if reaction["possible"]:
+            print(f"  {chem0}\n+ {chem1}\n= {chem2a}\n")
+            print("reaction:", reaction)
+            input("check\n")
+        else:
+            pass # print(f"  {chem0}\n+ {chem1}\n  cannot react\n")
 
-    all_chemicals = set()
     for dna in dnas:
         counts = {}
         for chemical in get_some_chemicals(dna):
             if chemical not in counts:
                 counts[chemical] = 0
             counts[chemical] += 1
-            if chemical not in all_chemicals:
-                chemical.plot()
-                all_chemicals.add(chemical)
         print(f"\nDNA string:\n{rv.get_dna_str(dna)}\nproduced chemicals:")
         for chemical, count in sorted(counts.items(), key=lambda kv: kv[1], reverse=True):
             print(f"{count} units of {chemical}")
-
-# how should chemicals behave? some numbers can determine whether / how often they will react with each other
-# reactions should produce a result that has some new properties based on the reactants
-# environment that organisms live in should have some effect on both the organism and the chemicals
-# e.g. heat can speed up the decomposition of chemicals, aid metabolism, trigger certain reactions, etc.
 
 # how should chemicals affect organisms? I think having them be the vector for ecological dynamics will be easiest
 # basically the organisms interact through exchange of chemicals and then some can kill others or such by causing certain reactions
