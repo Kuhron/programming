@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import math
 
 
@@ -309,7 +310,7 @@ class OrganicChemical:
         repulsion = h_repulsion + v_repulsion
 
         if possible:
-            behavior = ("easy" if repulsion <= 0 else "hard") + "-" + ("hot" if energy_diff <= 0 else "cold")
+            behavior = ("easy" if repulsion < 0 else "hard" if repulsion > 0 else "indifferent") + "-" + ("hot" if energy_diff < 0 else "cold" if energy_diff > 0 else "ambient")
         else:
             behavior = "none"
 
@@ -318,6 +319,8 @@ class OrganicChemical:
             assert verticality_diff == 0, "stoichiometry error"
 
         return {
+            "first reactant": self.path_str,
+            "second reactant": other.path_str,
             "possible": possible,
             "behavior": behavior,
             "repulsion": repulsion,
@@ -327,6 +330,17 @@ class OrganicChemical:
             "amount of second reactant": yt,
             "amount of product": zt,
         }
+
+    @staticmethod
+    def get_all_path_strs_in_order():
+        for c in "ORULD":
+            yield c
+        # take every path from previous iteration (except O) and add the chars to it in order
+        for path in OrganicChemical.get_all_path_strs_in_order():
+            if path == "O":
+                continue
+            for c in "RULD":
+                yield path + c
 
 
 
@@ -342,6 +356,56 @@ def to_tuple(x):
         return tuple(to_tuple(y) for y in x)
 
 
+
+if __name__ == "__main__":
+    n_chems = 500
+    path_strs = OrganicChemical.get_all_path_strs_in_order()
+    path_strs = [next(path_strs) for i in range(n_chems)]
+    chems = [OrganicChemical.from_path_str(s) for s in path_strs]
+
+    repulsion_arr = np.zeros((n_chems, n_chems))
+    energy_diff_arr = np.zeros((n_chems, n_chems))
+    for i in range(n_chems):
+        for j in range(i, n_chems):
+            # DO look at how chemical i interacts with itself
+            reaction = chems[i].get_reaction_properties(chems[j])
+            repulsion = reaction["repulsion"]
+            energy_diff = reaction["energy_diff"]
+            repulsion_arr[i][j] = repulsion
+            repulsion_arr[j][i] = repulsion
+            energy_diff_arr[i][j] = energy_diff
+            energy_diff_arr[j][i] = energy_diff
+
+    max_repulsion = abs(repulsion_arr).max()
+    max_energy_diff = abs(energy_diff_arr).max()
+    # get these vmin and vmax BEFORE setting nan, that causes bugs in getting max abs
+
+    repulsion_arr[repulsion_arr == 0] = np.nan
+    energy_diff_arr[energy_diff_arr == 0] = np.nan
+
+    colors_positive = plt.cm.winter(np.linspace(0, 1, 128))[::-1]
+    colors_negative = plt.cm.autumn(np.linspace(0, 1, 128))
+    colors = np.vstack((colors_negative, colors_positive))
+    cmap = mcolors.LinearSegmentedColormap.from_list("cmap", colors)
+    # cmap = plt.get_cmap("RdYlBu").copy()
+
+    # energy_diff_cmap_pos = plt.cm.
+    # energy_diff_cmap_neg = plt.cm.autumn(np.linspace(-max_energy_diff, 0, 128))
+    # colors2 = plt.cm.gist_heat_r(np.linspace(0, 1, 128))
+    # colors = np.vstack((colors1, colors2))
+    cmap.set_bad(color="black")
+
+    ax1 = plt.subplot(1,2,1)
+    plt.imshow(repulsion_arr, cmap=cmap, vmin=-max_repulsion, vmax=max_repulsion)
+    plt.colorbar()
+    plt.title("repulsion")
+    plt.subplot(1,2,2, sharex=ax1, sharey=ax1)
+    plt.imshow(energy_diff_arr, cmap=cmap, vmin=-max_energy_diff, vmax=max_energy_diff)
+    plt.colorbar()
+    plt.title("energy diff")
+    plt.show()
+
+
 # how should chemicals behave? some numbers can determine whether / how often they will react with each other
 # reactions should produce a result that has some new properties based on the reactants
 # environment that organisms live in should have some effect on both the organism and the chemicals
@@ -350,3 +414,6 @@ def to_tuple(x):
 # horizontal and vertical charges should be preserved, so that creates stoichiometry
 # energy need not be preserved, treat this as endo/exothermic
 # size need not be preserved, don't worry about this for now
+
+
+
