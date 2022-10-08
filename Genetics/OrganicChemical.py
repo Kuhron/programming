@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import math
+import random
 
 
 class OrganicChemical:
@@ -170,7 +171,7 @@ class OrganicChemical:
         return self.name is not None
 
     def get_designation(self):
-        return f"{self.name} : {self.path_str}" if self.has_name() else self.path_str
+        return f"{self.name}:{self.path_str}" if self.has_name() else self.path_str
 
     def to_str(self):
         s = "["
@@ -356,13 +357,8 @@ def to_tuple(x):
         return tuple(to_tuple(y) for y in x)
 
 
-
-if __name__ == "__main__":
-    n_chems = 500
-    path_strs = OrganicChemical.get_all_path_strs_in_order()
-    path_strs = [next(path_strs) for i in range(n_chems)]
-    chems = [OrganicChemical.from_path_str(s) for s in path_strs]
-
+def plot_reaction_types(chems):
+    n_chems = len(chems)
     repulsion_arr = np.zeros((n_chems, n_chems))
     energy_diff_arr = np.zeros((n_chems, n_chems))
     for i in range(n_chems):
@@ -380,6 +376,13 @@ if __name__ == "__main__":
     max_energy_diff = abs(energy_diff_arr).max()
     # get these vmin and vmax BEFORE setting nan, that causes bugs in getting max abs
 
+    reaction_type_arr = np.zeros(repulsion_arr.shape)
+    reaction_type_arr[repulsion_arr == 0] += 10
+    reaction_type_arr[repulsion_arr > 0] += 20
+    reaction_type_arr[energy_diff_arr == 0] += 1
+    reaction_type_arr[energy_diff_arr > 0] += 2
+    assert set(np.unique(reaction_type_arr)) - {0,1,2,10,11,12,20,21,22} == set()
+
     repulsion_arr[repulsion_arr == 0] = np.nan
     energy_diff_arr[energy_diff_arr == 0] = np.nan
 
@@ -395,15 +398,159 @@ if __name__ == "__main__":
     # colors = np.vstack((colors1, colors2))
     cmap.set_bad(color="black")
 
-    ax1 = plt.subplot(1,2,1)
+    # discrete colormap for the reaction types, where signs are treated as 0 (negative), 1 (zero), 2 (positive) for dimensions R, ED
+    # so values are 0, 1, 2, 10, 11, 12, 20, 21, 22
+    # https://stackoverflow.com/questions/9707676/defining-a-discrete-colormap-for-imshow-in-matplotlib
+    discrete_cmap = mcolors.ListedColormap([
+        "red", "0.25", "purple",  # 0=easy-hot, 1=easy-ambient, 2=easy-cold
+        "orange", "0.5", "blue",  # 10=indifferent-hot, 11=indifferent-ambient, 12=indifferent-cold
+        "yellow", "0.75", "green",  # 20=hard-hot, 21=hard-ambient, 22=hard-cold
+    ])
+    bounds = [-0.5, 0.5, 1.5, 2.5, 10.5, 11.5, 12.5, 20.5, 21.5, 22.5]
+    norm = mcolors.BoundaryNorm(bounds, discrete_cmap.N)
+
+    ax1 = plt.subplot(1,3,1)
     plt.imshow(repulsion_arr, cmap=cmap, vmin=-max_repulsion, vmax=max_repulsion)
     plt.colorbar()
-    plt.title("repulsion")
-    plt.subplot(1,2,2, sharex=ax1, sharey=ax1)
+    plt.title("repulsion (-easy +hard)")
+    plt.subplot(1,3,2, sharex=ax1, sharey=ax1)
     plt.imshow(energy_diff_arr, cmap=cmap, vmin=-max_energy_diff, vmax=max_energy_diff)
     plt.colorbar()
-    plt.title("energy diff")
+    plt.title("energy diff (-hot +cold)")
+    plt.subplot(1,3,3, sharex=ax1, sharey=ax1)
+    plt.imshow(reaction_type_arr, cmap=discrete_cmap, norm=norm)
+    plt.colorbar()
+    plt.title("reaction type")
     plt.show()
+
+
+def react_many_chemicals(chems, amounts, temperature):
+    # you have a box of various chemicals in different amounts
+    # certain pairs will react spontaneously and others require activation energy
+    # could try something like just let them bump into each other at random and see if they want to react?
+    # need some idea of temperature (affected by exo/endothermic reactions that occur) which contributes to activation energy
+    # probabilistic reactions? e.g. if it's a spontaneous reaction, the chance of occurring is higher for very negative repulsion values
+    # if reaction requires activation energy, how to incorporate that into the probability of reacting?
+    # and what about when the reaction requires a lot of the reactants? I guess it has to happen in those quantized amounts?
+
+    amounts_over_time = {c: [amounts[c]] for c in chems}
+    temperature_over_time = [temperature]
+
+    t = 0  # t=0 is when we have initial condition, so after the first reaction it should be t=1
+    while t < 100000:
+        if t % 1000 == 0:
+            print(f"t = {t}")
+
+        chems, amounts, temperature = react_one_pair_from_many_chemicals(chems, amounts, temperature)
+        t += 1
+
+        # look at the new amounts, any new chems must get zeros before this
+        # current time series length is t-1, and we will append the t-th item
+        all_chems = set(amounts_over_time.keys()) | set(amounts.keys())
+        for c in all_chems:
+            if c not in amounts_over_time:
+                # new chemical, so we give it a history of zeros before this
+                amounts_over_time[c] = [0] * (t - 1)
+            amount = amounts.get(c, 0)
+            amounts_over_time[c].append(amount)
+
+        temperature_over_time.append(temperature)
+
+    top_chems = [c for c,n in sorted(amounts_over_time.items(), key=lambda kv: kv[1][-1], reverse=True)[:10]]
+    other_chems = [c for c in amounts_over_time.keys() if c not in top_chems]
+
+    for chem in other_chems:
+        amounts = amounts_over_time[chem]
+        plt.plot(amounts, c="0.5", alpha=0.5)
+    for chem in top_chems:
+        amounts = amounts_over_time[chem]
+        label = chem.designation
+        color = None  # let it assign them a color
+        plt.plot(amounts, label=label, c=color)
+
+    plt.legend(loc="upper left")
+    plt.show()
+
+    plt.plot(temperature_over_time)
+    plt.show()
+
+
+def react_one_pair_from_many_chemicals(chems, amounts, temperature):
+    # pick a pair based on the amounts (common chemicals are more likely to bump into each other)
+    p = np.array([amounts[c] for c in chems]) / sum(amounts.values())
+    ns = list(range(len(chems)))
+    ci1 = np.random.choice(ns, p=p)
+    ci2 = np.random.choice(ns, p=p)
+    c1 = chems[ci1]
+    c2 = chems[ci2]
+    n1 = amounts[c1]
+    n2 = amounts[c2]
+    reaction = c1.get_reaction_properties(c2)
+
+    if reaction["possible"]:
+        # higher temperature decreases repulsion
+        repulsion = reaction["repulsion"]
+        effective_repulsion = reaction["repulsion"] - temperature
+        # sigmoid is probability of reaction occurring
+        # lower repulsion = higher probability, so use 1/(1+exp(+x)) not -x
+        z = 1 / (1 + math.exp(effective_repulsion))
+        r = random.random()
+        reaction_happens = r < z
+        # print(f"repulsion {repulsion}, temperature {temperature}, effective repulsion {effective_repulsion}, z {z}, r {r}, reaction happens {reaction_happens}")
+    else:
+        reaction_happens = False
+
+    if reaction_happens:
+        n1_needed = reaction["amount of first reactant"]
+        n2_needed = reaction["amount of second reactant"]
+        reaction_happens = n1 >= n1_needed and n2 >= n2_needed
+
+    if reaction_happens:
+        # print(f"picked {c1.designation} ({n1} units) and {c2.designation} ({n2} units)")
+        # print(reaction)
+
+        initial_n_particles = sum(amounts.values())
+        initial_energy = temperature * initial_n_particles  # temperature is average kinetic energy
+
+        # do one of the reaction
+        n1_used = n1_needed
+        n2_used = n2_needed
+        c3 = c1.react_with(c2)
+        n3_made = reaction["amount of product"]
+
+        amounts[c1] -= n1_used
+        amounts[c2] -= n2_used
+        if c3 not in amounts:
+            amounts[c3] = 0
+        amounts[c3] += n3_made
+
+        # remove used-up chemicals
+        chems = [c for c in chems if amounts[c] != 0]
+        amounts = {c: amounts[c] for c in chems}
+
+        # print(f"-{n1_used} {c1.designation} , -{n2_used} {c2.designation} , +{n3_made} {c3.designation}")
+
+        # energy diff is already scaled by amounts of reactants and product
+        final_energy = initial_energy - reaction["energy_diff"]
+        final_n_particles = sum(amounts.values())
+        temperature = final_energy / final_n_particles
+
+    else:
+        pass
+
+    return chems, amounts, temperature
+
+
+
+if __name__ == "__main__":
+    n_chems = 50
+    all_path_strs = OrganicChemical.get_all_path_strs_in_order()
+    path_strs = [next(all_path_strs) for i in range(n_chems)]
+    chems = [OrganicChemical.from_path_str(s) for s in path_strs]
+    # plot_reaction_types(chems)
+    amounts = {chem: random.randint(0, 100) for chem in chems}
+    temperature = 0
+    react_many_chemicals(chems, amounts, temperature)
 
 
 # how should chemicals behave? some numbers can determine whether / how often they will react with each other

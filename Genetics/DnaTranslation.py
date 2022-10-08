@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import functools
 
 import RawVariation as rv
-from OrganicChemical import OrganicChemical
+from OrganicChemical import OrganicChemical, plot_reaction_types, react_many_chemicals
 
 
 def get_some_chemicals(dna):
@@ -90,11 +90,7 @@ def simulate_chemical_reactions(chemicals):
     raise NotImplementedError
 
 
-
-
-if __name__ == "__main__":
-    dnas = [rv.get_dna(1000) for i in range(100)]
-
+def print_random_reactions():
     while True:
         dna0 = rv.get_dna(100)
         dna1 = rv.get_dna(100)
@@ -111,6 +107,12 @@ if __name__ == "__main__":
         else:
             pass # print(f"  {chem0}\n+ {chem1}\n  cannot react\n")
 
+
+
+if __name__ == "__main__":
+    dnas = [rv.get_dna(1000) for i in range(100)]
+
+    # print_random_reactions()
     for dna in dnas:
         counts = {}
         for chemical in get_some_chemicals(dna):
@@ -118,8 +120,13 @@ if __name__ == "__main__":
                 counts[chemical] = 0
             counts[chemical] += 1
         print(f"\nDNA string:\n{rv.get_dna_str(dna)}\nproduced chemicals:")
-        for chemical, count in sorted(counts.items(), key=lambda kv: kv[1], reverse=True):
+        items = sorted(counts.items(), key=lambda kv: kv[1], reverse=True)
+        for chemical, count in items:
             print(f"{count} units of {chemical}")
+
+        chems = [chem for chem, count in items]
+        plot_reaction_types(chems)
+        react_many_chemicals(chems, counts, temperature=0)
 
 # how should chemicals affect organisms? I think having them be the vector for ecological dynamics will be easiest
 # basically the organisms interact through exchange of chemicals and then some can kill others or such by causing certain reactions
