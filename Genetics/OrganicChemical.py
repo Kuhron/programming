@@ -491,12 +491,23 @@ def react_one_pair_from_many_chemicals(chems, amounts, temperature):
         # higher temperature decreases repulsion
         repulsion = reaction["repulsion"]
         effective_repulsion = reaction["repulsion"] - temperature
+        # print(f"repulsion {repulsion}, temperature {temperature:.4f}, effective repulsion {effective_repulsion:.4f}")
+
         # sigmoid is probability of reaction occurring
         # lower repulsion = higher probability, so use 1/(1+exp(+x)) not -x
-        z = 1 / (1 + math.exp(effective_repulsion))
+        try:
+            z = 1 / (1 + math.exp(effective_repulsion))
+        except OverflowError:
+            if effective_repulsion > 0:
+                z = 0
+            elif effective_repulsion < 0:
+                z = 1
+            else:
+                raise ValueError(z)
+
         r = random.random()
         reaction_happens = r < z
-        # print(f"repulsion {repulsion}, temperature {temperature}, effective repulsion {effective_repulsion}, z {z}, r {r}, reaction happens {reaction_happens}")
+        # print(f"z {z:.4f}, r {r:.4f}, reaction happens {reaction_happens}")
     else:
         reaction_happens = False
 
