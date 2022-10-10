@@ -125,7 +125,7 @@ if __name__ == "__main__":
             print(f"{count} units of {chemical}")
 
         chems = [chem for chem, count in items]
-        # plot_reaction_types(chems)
+        plot_reaction_types(chems, show_magnitude_plots=False)
         react_many_chemicals(chems, counts, temperature=0)
 
 # how should chemicals affect organisms? I think having them be the vector for ecological dynamics will be easiest

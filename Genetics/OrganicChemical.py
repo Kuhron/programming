@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import math
 import random
+import functools
 
 
 class OrganicChemical:
@@ -200,6 +201,7 @@ class OrganicChemical:
     def __repr__(self):
         return self.to_str()
 
+    @functools.lru_cache(maxsize=10000)
     def react_with(self, other):
         path0 = self.path_str if self.path_str != "O" else ""
         path1 = other.path_str if other.path_str != "O" else ""
@@ -258,6 +260,7 @@ class OrganicChemical:
         s = sx * sy
         return s * abs(x) * abs(y)
 
+    @functools.lru_cache(maxsize=10000)
     def get_reaction_properties(self, other):
         product = self.react_with(other)
         h0 = self.horizontality
@@ -357,7 +360,7 @@ def to_tuple(x):
         return tuple(to_tuple(y) for y in x)
 
 
-def plot_reaction_types(chems):
+def plot_reaction_types(chems, show_magnitude_plots=True, show_type_plot=True):
     n_chems = len(chems)
     repulsion_arr = np.zeros((n_chems, n_chems))
     energy_diff_arr = np.zeros((n_chems, n_chems))
@@ -409,18 +412,27 @@ def plot_reaction_types(chems):
     bounds = [-0.5, 0.5, 1.5, 2.5, 10.5, 11.5, 12.5, 20.5, 21.5, 22.5]
     norm = mcolors.BoundaryNorm(bounds, discrete_cmap.N)
 
-    ax1 = plt.subplot(1,3,1)
-    plt.imshow(repulsion_arr, cmap=cmap, vmin=-max_repulsion, vmax=max_repulsion)
-    plt.colorbar()
-    plt.title("repulsion (-easy +hard)")
-    plt.subplot(1,3,2, sharex=ax1, sharey=ax1)
-    plt.imshow(energy_diff_arr, cmap=cmap, vmin=-max_energy_diff, vmax=max_energy_diff)
-    plt.colorbar()
-    plt.title("energy diff (-hot +cold)")
-    plt.subplot(1,3,3, sharex=ax1, sharey=ax1)
-    plt.imshow(reaction_type_arr, cmap=discrete_cmap, norm=norm)
-    plt.colorbar()
-    plt.title("reaction type")
+    n_cols = (2 if show_magnitude_plots else 0) + (1 if show_type_plot else 0)
+    if n_cols == 0:
+        return
+
+    if show_magnitude_plots:
+        ax1 = plt.subplot(1,n_cols,1)
+        plt.imshow(repulsion_arr, cmap=cmap, vmin=-max_repulsion, vmax=max_repulsion)
+        plt.colorbar()
+        plt.title("repulsion (-easy +hard)")
+        plt.subplot(1,n_cols,2, sharex=ax1, sharey=ax1)
+        plt.imshow(energy_diff_arr, cmap=cmap, vmin=-max_energy_diff, vmax=max_energy_diff)
+        plt.colorbar()
+        plt.title("energy diff (-hot +cold)")
+    if show_type_plot:
+        if show_magnitude_plots:
+            assert n_cols == 3
+            plt.subplot(1,n_cols,3, sharex=ax1, sharey=ax1)
+        plt.imshow(reaction_type_arr, cmap=discrete_cmap, norm=norm)
+        cbar = plt.colorbar(ticks=[(bounds[i] + bounds[i+1])/2 for i in range(len(bounds)-1)])
+        cbar.ax.set_yticklabels(["EH", "EA", "EC", "IH", "IA", "IC", "HH", "HA", "HC"])
+        plt.title("reaction type")
     plt.show()
 
 
@@ -456,12 +468,13 @@ def react_many_chemicals(chems, amounts, temperature):
 
         temperature_over_time.append(temperature)
 
-    top_chems = [c for c,n in sorted(amounts_over_time.items(), key=lambda kv: kv[1][-1], reverse=True)[:10]]
+    n_top_chems = 15
+    top_chems = [c for c,n in sorted(amounts_over_time.items(), key=lambda kv: kv[1][-1], reverse=True)[:n_top_chems]]
     other_chems = [c for c in amounts_over_time.keys() if c not in top_chems]
 
-    for chem in other_chems:
-        amounts = amounts_over_time[chem]
-        plt.plot(amounts, c="0.5", alpha=0.5)
+    # for chem in other_chems:
+    #     amounts = amounts_over_time[chem]
+    #     plt.plot(amounts, c="0.5", alpha=0.5)
     for chem in top_chems:
         amounts = amounts_over_time[chem]
         label = chem.designation
