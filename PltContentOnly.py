@@ -13,10 +13,10 @@ def get_fig_ax(size_inches):
     return fig, ax
 
 
-def imshow_content_only(arr, size_inches=(6,6), save_fp=None):
+def imshow_content_only(arr, size_inches=(6,6), save_fp=None, **kwargs):
     # https://stackoverflow.com/questions/8218608/scipy-savefig-without-frames-axes-only-content
     fig, ax = get_fig_ax(size_inches)
-    ax.imshow(arr, aspect="auto")
+    ax.imshow(arr, aspect="auto", **kwargs)
     if save_fp is not None:
         fig.savefig(save_fp)
 
