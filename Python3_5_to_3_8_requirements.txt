@@ -31,7 +31,6 @@ itsdangerous==1.1.0
 Jinja2==2.11.3
 joblib==1.2.0
 jsonschema==2.6.0
-jupyter-core==4.4.0
 kiwisolver==1.0.1
 matplotlib==3.0.3
 mpmath==1.1.0
