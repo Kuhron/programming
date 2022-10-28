@@ -230,7 +230,7 @@ def run_perturbation_experiment(perturbation_nelda):
         mapping.plot_attractor()
     except DivergenceError:
         return
-    dr = f"StrangeAttractorImages/perturbation/perturbation_{t0}/"
+    dr = f"Images/StrangeAttractor/perturbation/perturbation_{t0}/"
     if not os.path.exists(dr):
         os.mkdir(dr)
     plt.savefig(dr + f"/perturbation_{t0}_nelda{perturbation_nelda}_original.png")

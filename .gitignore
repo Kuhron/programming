@@ -46,7 +46,9 @@ BasisSpectrumOutput/
 Mapping/NoiseImages/
 Emergence/Images/
 Genetics/*.png
-Chaos/Images/
+Chaos/Images/**/*.png
+# for Chaos images, keep the files telling what the coefficients are (non-png files) for ability to reconstruct cool images
+# .gitignore needs comments to be ON THEIR OWN LINE!
 MomentOfInertiaImages/
 RecurrenceRelationImages/
 Genetics/ChemicalDiagrams/
