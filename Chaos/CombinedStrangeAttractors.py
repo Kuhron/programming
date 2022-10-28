@@ -39,7 +39,7 @@ class Mapping:
         total_unique_ratio = total_unique_points / total_points
         return False, total_unique_points, total_points, total_unique_ratio
 
-    def get_convergence_points(self, x_min=-1, x_max=1, y_min=-1, y_max=1, resolution=100, max_iterations=10000, max_abs=100):
+    def get_convergence_points(self, x_min=-1, x_max=1, y_min=-1, y_max=1, resolution=100, max_iterations=10000, max_abs=1e6):
         print("getting convergence array")
         xs = np.linspace(x_min, x_max, resolution)
         ys = np.linspace(y_min, y_max, resolution)
@@ -56,7 +56,7 @@ class Mapping:
         print("done getting convergence array")
         return convergence
 
-    def plot_convergence_points(self, x_min=-1, x_max=1, y_min=-1, y_max=1, resolution=100, max_iterations=10000, max_abs=100):
+    def plot_convergence_points(self, x_min=-1, x_max=1, y_min=-1, y_max=1, resolution=100, max_iterations=10000, max_abs=1e6):
         convergence_array = self.get_convergence_points(x_min, x_max, y_min, y_max, resolution, max_iterations, max_abs)
         plt.imshow(convergence_array)
         plt.colorbar()
@@ -77,7 +77,7 @@ class Mapping:
             x0 = r * np.cos(theta)
             y0 = r * np.sin(theta)
             # x0, y0 = np.random.uniform(-1, 1, (2,))
-            trajectory = get_late_trajectory(self, x0, y0, min_index=min_index, max_index=max_index, max_abs=100)
+            trajectory = get_late_trajectory(self, x0, y0, min_index=min_index, max_index=max_index, max_abs=1e6)
             if trajectory_diverges(trajectory):
                 continue
             else:
@@ -199,7 +199,7 @@ class RandomChoiceMappingFromXY(Mapping):
         return f"<Random choice mapping from the sub-mappings:\n\t{str_of_mapping_reprs}\n>"
 
 
-def get_late_trajectory(mapping, x0, y0, min_index, max_index, max_abs=100):
+def get_late_trajectory(mapping, x0, y0, min_index, max_index, max_abs=1e6):
     assert max_index > min_index
     res = []
     x,y = x0,y0
@@ -408,8 +408,8 @@ if __name__ == "__main__":
     # mapping.plot_attractor()
     # plt.show()
 
-    run_mixing_experiment()
-    # run_mixing_experiment(["AL", "AS"])
+    # run_mixing_experiment()
+    run_mixing_experiment(["X", "Y"])
     # while True:
     #     run_perturbation_experiment(perturbation_nelda=random.choice([1, 1.5, 2, 2.5, 3]))
 
