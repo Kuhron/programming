@@ -2,8 +2,13 @@ k = 3
 wid = 72
 chars = [" ", "."]
 
-def display_binary_time(with_number = False):
-    s = "{0:b}".format(math.floor(1000*time.time()))
+
+def get_ms():
+    return int(1024 * time.time())
+
+
+def display_binary_time(ms, with_number = False):
+    s = "{0:b}".format(ms)
     s = "0"*(k*math.ceil(wid/k)-len(s))+s
     s = "|"+"|".join([s[k*u:k*u+k] for u in range(math.ceil(len(s)/k))])+"|"
     s = "|"+"|".join([s[k*(k+1)*u:k*(k+1)*u+k*(k+1)] for u in range(math.ceil(len(s)/(k*(k+1))))])
@@ -64,9 +69,12 @@ def display_binary_time(with_number = False):
 if __name__ == "__main__":
     import math, time
 
-    kuhoehjm = input("Show number? (y/n): ")
-    user_choice_with_number = kuhoehjm == "y"
-    
+    with_number = input("Show number? (y/n): ") == "y"
+
+    resolution = 1/1024
+    wait = 1/2 * resolution
     while True:
-        display_binary_time(with_number = user_choice_with_number)
-        #time.sleep(1)
+        ms = get_ms()
+        display_binary_time(ms, with_number)
+        while get_ms() == ms:
+            time.sleep(wait)
