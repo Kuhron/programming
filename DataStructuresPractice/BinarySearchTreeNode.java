@@ -1,6 +1,7 @@
 public class BinarySearchTreeNode<T extends Comparable<T>> {
     public Integer key;
     public T value;
+    public BinarySearchTreeNode<T> parent;
     public BinarySearchTreeNode<T> left;
     public BinarySearchTreeNode<T> right;
 
@@ -30,6 +31,55 @@ public class BinarySearchTreeNode<T extends Comparable<T>> {
             }
         }
     }
-}
 
+    public BinarySearchTreeNode<T> getSuccessor() {
+        if (right == null) {
+            return parent;
+        } else {
+            BinarySearchTreeNode<T> current = right;
+            while (current.left != null) {
+                current = current.left;
+            }
+            return current;
+        }
+    }
+
+    public void printInOrder() {
+        if (left != null) {
+            left.printInOrder();
+        }
+        printValue();
+        if (right != null) {
+            right.printInOrder();
+        }
+    }
+
+    public void printPreOrder() {
+        printValue();
+        if (left != null) {
+            left.printPreOrder();
+        }
+        if (right != null) {
+            right.printPreOrder();
+        }
+    }
+
+    public void printPostOrder() {
+        if (left != null) {
+            left.printPostOrder();
+        }
+        if (right != null) {
+            right.printPostOrder();
+        }
+        printValue();
+    }
+
+    public void printKeyAndValue() {
+        System.out.printf("%d:%s ", key, value);
+    }
+
+    public void printValue() {
+        System.out.printf("%s ", value);
+    }
+}
 
