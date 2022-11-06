@@ -181,7 +181,7 @@ def get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle
             if i % 100 == 0 and i != 0:
                 print(f"{i}/{n_to_check} this round (iteration {iteration})")
             # print(f"checking point {pn}")
-            if iteration == icm.get_iteration_born(pn):
+            if iteration == icm.get_iteration_born_from_point_number(pn):
                 # check its distance, put it in points_in_region if it fits
                 d = distance(pn)
                 # print(f"distance from {pn} to region center is {d}")
@@ -343,7 +343,6 @@ if __name__ == "__main__":
     point_numbers_in_db = db.get_all_point_numbers_with_data()
     for pn in point_numbers_in_db:
         pc = icm.get_point_code_from_point_number(pn)
-        input(pc)
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
     # DEBUG

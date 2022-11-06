@@ -126,9 +126,11 @@ def get_latlon_from_point_number(point_number):
 
 
 def get_latlons_from_point_numbers(point_numbers):
-    # poses = get_positions_from_point_numbers_recursive(point_numbers)
-    # return [pos["latlondeg"] for pos in poses]
     return [get_latlon_from_point_number(pn) for pn in point_numbers]
+
+
+def get_latlons_from_point_codes(point_codes):
+    return [get_latlon_from_point_code(pc) for pc in point_codes]
 
 
 @functools.lru_cache(maxsize=100000)
@@ -138,9 +140,11 @@ def get_xyz_from_point_number(point_number):
 
 
 def get_xyzs_from_point_numbers(point_numbers):
-    # poses = get_positions_from_point_numbers_recursive(point_numbers)
-    # return [pos["xyz"] for pos in poses]
     return [get_xyz_from_point_number(pn) for pn in point_numbers]
+
+
+def get_xyzs_from_point_codes(point_codes):
+    return [get_xyz_from_point_code(pc) for pc in point_codes]
 
 
 def get_xyz_array_from_point_numbers(point_numbers):
@@ -207,7 +211,6 @@ def get_all_point_codes_in_order_up_to_iteration_with_trailing_zeros(iteration):
 
 
 def get_random_point_code(min_iterations, expected_iterations):
-    # probability of getting the poles themselves goes to zero so just don't do those
     if expected_iterations <= min_iterations:
         raise ValueError(f"expected_iterations ({expected_iterations}) must be greater than min_iterations ({min_iterations})")
     s = random.choice("CDEFGHIJKL")
@@ -217,8 +220,29 @@ def get_random_point_code(min_iterations, expected_iterations):
         s += random.choice("0123")
         if random.random() < 1/(expected_iterations - min_iterations):
             break
-    s = strip_trailing_zeros(s)
-    return s
+
+    # based on the number of points in this iteration, maybe replace with one of the poles
+    iterations_used = get_iteration_number_from_point_code(s)
+    n_points_this_iteration = get_n_points_from_iterations(iterations_used)
+    prob_of_pole = 2 / n_points_this_iteration
+    if random.random() < prob_of_pole:
+        return random.choice(["A", "B"])
+    else:
+        s = strip_trailing_zeros(s)
+        return s
+
+
+def get_random_point_number(min_iterations, expected_iterations):
+    pc = get_random_point_code(min_iterations, expected_iterations)
+    pn = get_point_number_from_point_code(pc)
+    return pn
+
+
+def get_iteration_number_from_point_code(pc):
+    # this INCLUDES trailing zeros, we want to know what iteration something is at
+    # for iteration born, use get_iteration_born instead
+    # the initial points have length 1, just their letter A-L
+    return len(pc) - 1
 
 
 def get_iterations_from_n_points(n):
@@ -258,47 +282,6 @@ def get_iterations_needed_for_point_number(point_number):
     return math.ceil(iters_exact)
 
 
-def get_specific_adjacencies_from_memo(point_numbers, n_iterations):
-    verify_valid_point_numbers(point_numbers, n_iterations)
-    memo_fp = get_adjacency_memo_fp(n_iterations)
-    # print("getting adjacency memo for iteration {}: {}".format(n_iterations, memo_fp))
-    with open(memo_fp) as f:
-        notify_memo_accessed(memo_fp)
-        lines = f.readlines()
-    lines = [lines[i] for i in point_numbers]
-    d = {}
-    for point_number, l in zip(point_numbers,lines):
-        pi, neighbors = parse_adjacency_line(l)
-        assert pi == point_number
-        d[pi] = neighbors
-    # print("returning {}".format(d))
-    return d
-
-
-def get_specific_adjacency_from_memo(point_number, n_iterations):
-    return get_specific_adjacencies_from_memo([point_number], n_iterations)[point_number]
-
-
-def get_specific_positions_from_memo(point_numbers, n_iterations):
-    verify_valid_point_numbers(point_numbers, n_iterations)
-    memo_fp = get_position_memo_fp(n_iterations)
-    with open(memo_fp) as f:
-        notify_memo_accessed(memo_fp)
-        lines = f.readlines()
-    lines = [lines[i] for i in point_numbers]
-    d = {}
-    for point_number, l in zip(point_numbers,lines):
-        pi, xyz, latlon = parse_position_line(l)
-        assert pi == point_number
-        d[pi] = {"xyz":xyz, "latlondeg":latlon}
-    return d
-
-
-def get_specific_position_from_memo(point_number):
-    n_iterations = get_iterations_needed_for_point_number(point_number)
-    return get_specific_positions_from_memo([point_number], n_iterations)[point_number]
-
-
 def verify_valid_point_numbers(point_numbers, n_iterations):
     points_at_iter = get_exact_n_points_from_iterations(n_iterations)
     for p in point_numbers:
@@ -333,65 +316,21 @@ def can_have_children(point_number, n_iterations):
     return True
 
 
-def parse_adjacency_line(l):
-    pi, neighbors_str = l.strip().split(":")
-    pi = int(pi)
-    neighbors = [int(x) for x in neighbors_str.split(",")]
-    return pi, neighbors
+def scatter_icosa_points_by_number(point_numbers, show=True):
+    point_codes = [get_point_code_from_point_number(pn) for pn in point_numbers]
+    scatter_icosa_points_by_code(point_codes, show=show)
 
 
-def parse_position_line(l):
-    pi, rest = l.strip().split(":")
-    pi = int(pi)
-    xyz_str, latlon_str = rest.split(";")
-    xyz = [float(x) for x in xyz_str.split(",")]
-    assert len(xyz) == 3
-    latlon = [float(x) for x in latlon_str.split(",")]
-    assert len(latlon) == 2
-    return pi, xyz, latlon
-
-
-def get_adjacency_line(point_number, ordered_neighbor_point_numbers):
-    s1 = str(point_number)
-    s2 = ",".join(str(x) for x in ordered_neighbor_point_numbers)
-    return s1 + ":" + s2 + "\n"
-
-
-def get_position_line(point_number, xyz, latlon):
-    s1 = str(point_number)
-    s2 = ",".join(str(x) for x in xyz)
-    s3 = ",".join(str(x) for x in latlon)
-    return s1 + ";" + s2 + ";" + s3 + "\n"
-
-
-def parse_adjacency_memo_file(memo_fp):
-    # format: each line is index:neighbor_list (comma separated point numbers)
-    # e.g. 0:1752,1914,2076,2238,2400
-    with open(memo_fp) as f:
-        notify_memo_accessed(memo_fp)
-        lines = f.readlines()
-    d = {}
-    for l in lines:
-        pi, neighbors = parse_adjacency_line(l)
-        d[pi] = neighbors
-    return d
-
-
-def parse_position_memo_file(memo_fp):
-    # format: each line is index:xyz;latlon (xyz and latlon are comma-separated)
-    # e.g. 0:6.123233995736766e-17,0.0,1.0;90,0
-    with open(memo_fp) as f:
-        notify_memo_accessed(memo_fp)
-        lines = f.readlines()
-    d = {}
-    for l in lines:
-        pi, xyz, latlon = parse_position_line(l)
-        d[pi] = {"xyz":xyz, "latlondeg":latlon}
-    return d
+def scatter_icosa_points_by_code(point_codes, show=True):
+    latlons = get_latlons_from_point_codes(point_codes)
+    lats = [ll[0] for ll in latlons]
+    lons = [ll[1] for ll in latlons]
+    plt.scatter(lats, lons)
+    if show:
+        plt.show()
 
 
 def plot_neighbor_relationships(n_iterations):
-    # hopefully at some point I can figure out a mathematical expression for all of this and not have to memoize anything
     d = get_adjacency_memo_dict(n_iterations)
     n_points = get_exact_n_points_from_iterations(n_iterations)
     point_numbers = range(12, n_points)
@@ -447,22 +386,6 @@ def plot_coordinate_patterns(n_iterations):
     plot_neighbor_relationships(n_iterations)
     plot_xyzs(n_iterations)
     plot_latlons(n_iterations)
-
-
-def get_adjacency_memo_fp(n_iterations):
-    return "/home/wesley/programming/Mapping/MemoIcosa/MemoIcosaAdjacency_Iteration{}.txt".format(n_iterations)
-
-
-def get_position_memo_fp(n_iterations):
-    return "/home/wesley/programming/Mapping/MemoIcosa/MemoIcosaPosition_Iteration{}.txt".format(n_iterations)
-
-
-def get_adjacency_memo_dict(n_iterations):
-    return parse_adjacency_memo_file(get_adjacency_memo_fp(n_iterations))
-
-
-def get_position_memo_dict(n_iterations):
-    return parse_position_memo_file(get_position_memo_fp(n_iterations))
 
 
 def get_starting_points_latlon_named():
@@ -632,27 +555,6 @@ def get_starting_point_code_directional_dict():
         "K": {"1": "A", "2": "I", "3": "J"},
         "L": {"1": "K", "2": "J", "3": "B"},
     }
-
-
-def write_initial_memo_files():
-    # ordered_points, adjacencies_by_point_index = get_starting_points()
-    ordered_points = STARTING_POINTS_ORDERED
-    adjacencies_by_point_index = STARTING_POINTS_ADJACENCY
-
-    s_adj = ""
-    s_pos = ""
-    for pi, p in enumerate(ordered_points):
-        adj = adjacencies_by_point_index[pi]
-        l_adj = get_adjacency_line(pi, adj)
-        l_pos = get_position_line(pi, p.xyz(), p.latlondeg())
-        assert l_adj[-1] == l_pos[-1] == "\n"
-        s_adj += l_adj
-        s_pos += l_pos
-    with open(get_adjacency_memo_fp(n_iterations=0), "w") as f:
-        f.write(s_adj)
-    with open(get_position_memo_fp(n_iterations=0), "w") as f:
-        f.write(s_pos)
-    print("initial memo files written")
 
 
 def get_sample_average_edge_length(points, adjacencies, radius):
@@ -973,7 +875,7 @@ def get_parent_from_point_number(point_number):
     if point_number < 12:
         return None  # initial points have no parents
     # see IcosaParentChildRelations.ods for math
-    return point_number // 3 - get_3adder_for_iteration(get_iteration_born(point_number))
+    return point_number // 3 - get_3adder_for_iteration(get_iteration_born_from_point_number(point_number))
 
 
 # @functools.lru_cache(maxsize=10000)
@@ -990,7 +892,7 @@ def get_directional_parent_via_inheritance(point_number):
     if point_number < 12:
         return None
     parent = get_parent_from_point_number(point_number)
-    iteration_born = get_iteration_born(point_number)
+    iteration_born = get_iteration_born_from_point_number(point_number)
     # print("{} was born i={}".format(point_number, iteration_born))
     parent_adjacency_in_born_iteration = get_adjacency_recursive(parent, iteration_born)
     parent_adjacency_in_previous_iteration = get_adjacency_recursive(parent, iteration_born-1)
@@ -1091,10 +993,10 @@ def get_parent_chain(point_number):
         }
         return [d]
     else:
-        iteration_born = get_iteration_born(point_number)
+        iteration_born = get_iteration_born_from_point_number(point_number)
         child_index = get_child_index(point_number)
         parent = get_parent_from_point_number(point_number)
-        parent_iteration_born = get_iteration_born(parent)
+        parent_iteration_born = get_iteration_born_from_point_number(parent)
         previous_chain = get_parent_chain(parent)
         chain = [x for x in previous_chain]
         iterations_with_same_parent = list(range(parent_iteration_born+1, iteration_born))
@@ -1268,13 +1170,21 @@ def unify_five_and_six(adjacency, point_number):
     return adj
 
 
+def get_adjacency_from_point_number(pn, iteration):
+    raise NotImplementedError
+
+
+def get_adjacency_from_point_code(pc, iteration):
+    raise NotImplementedError
+
+
 # @functools.lru_cache(maxsize=10000)
 def get_adjacency_recursive(point_number, iteration):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
     # print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
 
-    if iteration == get_iteration_born(point_number):
+    if iteration == get_iteration_born_from_point_number(point_number):
         return get_adjacency_when_born(point_number)
 
     if point_number in [0, 1]:
@@ -1362,7 +1272,7 @@ def get_index_clockwise_step(original_index, n_steps, n_neighbors):
 # @functools.lru_cache(maxsize=10000)
 def get_adjacency_when_born(point_number):
     # print("get_adjacency_when_born({})".format(point_number))
-    iteration = get_iteration_born(point_number)
+    iteration = get_iteration_born_from_point_number(point_number)
 
     if point_number < 12:
         point_list, adjacency_dict = STARTING_POINTS
@@ -1634,12 +1544,17 @@ def get_3adder_for_iteration(i):
     return numer // denom  # avoid int() flooring for floats like x.9999
 
 
-def get_iteration_born(point_number):
+def get_iteration_born_from_point_number(point_number):
     if point_number < 0:
         raise ValueError("invalid point number {}".format(point_number))
     elif point_number < 12:
         return 0
     return math.ceil(get_exact_iterations_from_n_points(point_number+1))
+
+
+def get_iteration_born_from_point_code(point_code):
+    pc = strip_trailing_zeros(point_code)
+    return get_iteration_number_from_point_code(pc)
 
 
 def get_parent_point_direction_label(point_number):
@@ -1837,7 +1752,7 @@ def get_farthest_distance_descendant_can_be(point, radius=1, iteration_of_next_c
         # these have no descendants
         return 0
     if iteration_of_next_child is None:
-        iteration_checking_at = get_iteration_born(point)
+        iteration_checking_at = get_iteration_born_from_point_number(point)
     else:
         iteration_checking_at = iteration_of_next_child - 1
     adjacency_at_iter = get_adjacency_recursive(point, iteration_checking_at)
@@ -1854,6 +1769,12 @@ def get_farthest_distance_descendant_can_be(point, radius=1, iteration_of_next_c
 def get_distance_icosa_point_to_xyz_great_circle(pn, xyz, radius=1):
     xyz2 = get_xyz_from_point_number(pn)
     return UnitSpherePoint.distance_great_circle_xyz_static(xyz, xyz2, radius=radius)
+
+
+def get_distance_icosa_points_great_circle(pn1, pn2, radius=1):
+    xyz1 = get_xyz_from_point_number(pn1)
+    xyz2 = get_xyz_from_point_number(pn2)
+    return UnitSpherePoint.distance_great_circle_xyz_static(xyz1, xyz2, radius=radius)
 
 
 def print_pars_and_dpars_numbers_and_codes(iteration):
@@ -1981,11 +1902,22 @@ def plot_directional_parent_graph(iteration):
     plt.show()
 
 
-def notify_memo_accessed(memo_fp):
-    # depending what I want at the time, maybe do nothing, maybe just print that it was accessed, or maybe raise exception if I'm trying to avoid any memoization at all
-    # pass
-    print("memo accessed: {}".format(memo_fp))
-    # raise RuntimeError("memo accessed but shouldn't be: {}".format(memo_fp))  # advantage here that it will show the call stack
+def get_region_around_point(point_number, iteration, max_distance_gc_normalized):
+    # follow adjacency paths at this iteration resolution until you get every point within the radius
+    verify_valid_point_numbers([point_number], iteration)
+    res = {point_number}
+    new_points = [point_number]
+    while len(new_points) > 0:
+        pn = new_points[0]
+        neighbors = get_adjacency_recursive(pn, iteration)
+        print(f"got neighbors of {pn}: {neighbors}")
+        for neighbor in neighbors:
+            if neighbor not in res:
+                d = get_distance_icosa_points_great_circle(point_number, neighbor, radius=1)
+                if d <= max_distance_gc_normalized:
+                    new_points.append(neighbor)
+        new_points = new_points[1:]
+    return res
 
 
 def test_parent_is_correct_neighbor():
@@ -1994,7 +1926,7 @@ def test_parent_is_correct_neighbor():
     for i in range(100):
         point_number = random.randint(12, 655362-1)
         n_iterations = get_iterations_needed_for_point_number(point_number)
-        adj = get_specific_adjacency_from_memo(point_number, n_iterations)
+        adj = get_adjacency_from_point_number(point_number, n_iterations)
         parent = get_parent_from_point_number(point_number)
         parent_point_direction_number = get_parent_point_direction_number(point_number)
         corresponding_neighbor = adj[parent_point_direction_number]
@@ -2007,9 +1939,9 @@ def test_children_are_correct_neighbors():
     # verify that it matches the child numbers gotten from adjacency bisection
     for i in range(100):
         point_number = random.randint(12, 327682-1)  # exclude the last memoized iteration since they won't have children yet
-        born_iteration = get_iteration_born(point_number)
+        born_iteration = get_iteration_born_from_point_number(point_number)
         for n_iterations in range(born_iteration, 9):
-            adj = get_specific_adjacency_from_memo(point_number, n_iterations)
+            adj = get_adjacency_from_point_number(point_number, n_iterations)
             # print("p{} i{} adj: {}".format(point_number, n_iterations, adj))
             if n_iterations > born_iteration:
                 children = [get_child(point_number, child_index, n_iterations) for child_index in [0,1,2]]
@@ -2020,65 +1952,38 @@ def test_children_are_correct_neighbors():
 
 def test_adjacency_when_born():
     for i in range(162):
-        # point_number = random.randint(0, 41)
         point_number = i
         print("checking adjacency when born of p#{}".format(point_number))
         res_no_memo = get_adjacency_when_born(point_number)
-        res_memo = get_specific_adjacency_from_memo(point_number, get_iteration_born(point_number))
-        assert res_no_memo == res_memo, "mismatch for p#{} when born:\ncomputed: {}\nmemoized: {}".format(point_number, res_no_memo, res_memo)
-    print("test succeeded: adjacency calculated from scratch is the same as the memoized adjacency")
+    print("test succeeded: adjacency calculated from scratch")
 
 
-def test_adjacency_recursive(compare_memo=True):
+def test_adjacency():
     t0 = time.time()
-    iterations_reported_as_having_no_memo = set()
     for i in range(1000):
-        point = random.randint(0, 655362)
-        born_iteration = get_iteration_born(point)
+        pn = random.randint(0, 655362)
+        born_iteration = get_iteration_born_from_point_number(pn)
         iteration = max(born_iteration, random.randint(6, 20))
-        adj = get_adjacency_recursive(point, iteration)
-        print("\n-- test_adjacency_recursive p#{} i={}".format(point, iteration))
+        adj = get_adjacency_from_point_number(pn, iteration)
+        print("\n-- test_adjacency p#{} i={}".format(pn, iteration))
         print("adj: {}".format(adj))
-        if compare_memo:
-            try:
-                adj_from_memo = get_specific_adjacency_from_memo(point, iteration)
-                assert adj == adj_from_memo
-            except FileNotFoundError:
-                if iteration not in iterations_reported_as_having_no_memo:
-                    print("skipping memo check for iteration {} because no memo file exists".format(iteration))
-                    iterations_reported_as_having_no_memo.add(iteration)
-                else:
-                    pass
-    if compare_memo:
-        print("test succeeded: getting adjacency recursively matches memoized adjacency")
     else:
-        print("test succeeded: finished computing adjacency recursively but did not check memo")
+        print("test succeeded: finished computing adjacency")
     t1 = time.time()
     print("time elapsed: {:.4f} seconds".format(t1-t0))
 
 
-def test_pole_adjacency():
-    for iteration in range(9):
-        p0rec = get_adjacency_recursive(0, iteration)
-        p0memo = get_specific_adjacency_from_memo(0, iteration)
-        p1rec = get_adjacency_recursive(1, iteration)
-        p1memo = get_specific_adjacency_from_memo(1, iteration)
-        assert p0rec == p0memo, "north pole mismatch: {} vs {}".format(p0rec, p0memo)
-        assert p1rec == p1memo, "north pole mismatch: {} vs {}".format(p1rec, p1memo)
-    print("test succeeded: pole adjacency calculated from scratch is the same as the memoized adjacency")
-
-
 def test_get_generic_point_neighbor():
     for point in range(0, 20):
-        born_iteration = get_iteration_born(point)
+        born_iteration = get_iteration_born_from_point_number(point)
         for di in [1, 2, 3]:
             iteration = born_iteration + di  # don't make it the born generation, so we'll have a previous neighbor
             for neigh_index in range(6 if point >= 12 else 5):
                 print("\n-- test_get_generic_point_neighbor: case p#{} i={} ni={}".format(point, iteration, neigh_index))
-                previous_neighbor_in_direction = get_specific_adjacency_from_memo(point, iteration-1)[neigh_index]
+                previous_neighbor_in_direction = get_adjacency_from_point_number(point, iteration-1)[neigh_index]
                 new_p = get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration)
                 # print(new_p)
-                adj = get_specific_adjacency_from_memo(point, iteration)
+                adj = get_adjacency_from_point_number(point, iteration)
                 # print(adj[neigh_index])
                 assert new_p == adj[neigh_index]
     print("test succeeded: generic point neighbor works")
@@ -2090,36 +1995,6 @@ def test_report_cada_ii_iteration_requirements():
         print("edge length {} km on Cada II requires {} iterations".format(edge_length, get_iterations_needed_for_edge_length(edge_length, radius)))
 
 
-def test_position_recursive(compare_memo=True):
-    raise Exception("if want to use this, edit it to use only xyz returning functions rather than position dicts that have both xyz and latlon")
-    t0 = time.time()
-    iterations_reported_as_having_no_memo = set()
-    for i in range(1000):
-        point = random.randint(0, 655362)
-        born_iteration = get_iteration_born(point)
-        iteration = born_iteration
-        pos = get_xyz_from_point_number_recursive(point)
-        print("\n-- test_position_recursive p#{} i={}".format(point, iteration))
-        print("pos: {}".format(pos))
-        if compare_memo:
-            try:
-                pos_from_memo = get_specific_position_from_memo(point)
-                assert np.allclose(pos["xyz"], pos_from_memo["xyz"], rtol=1e-6), "{} does not match {}".format(pos, pos_from_memo)
-                assert np.allclose(pos["latlondeg"], pos_from_memo["latlondeg"], rtol=1e-6), "{} does not match {}".format(pos, pos_from_memo)
-            except FileNotFoundError:
-                if iteration not in iterations_reported_as_having_no_memo:
-                    print("skipping memo check for iteration {} because no memo file exists".format(iteration))
-                    iterations_reported_as_having_no_memo.add(iteration)
-                else:
-                    pass
-    if compare_memo:
-        print("test succeeded: getting position recursively matches memoized position")
-    else:
-        print("test succeeded: finished computing position recursively but did not check memo")
-    t1 = time.time()
-    print("time elapsed: {:.4f} seconds".format(t1-t0))
-
-
 def test_get_nearest_point_to_latlon():
     maximum_distance = 0.001
     max_point_number = -1
@@ -2129,7 +2004,7 @@ def test_get_nearest_point_to_latlon():
         p, distance = get_nearest_icosa_point_to_latlon(latlon, maximum_distance, planet_radius)
         max_point_number = max(max_point_number, p.point_number)
         print("result: {} which is {} units away from {}".format(p, distance*planet_radius, latlon))
-    max_iter = get_iteration_born(max_point_number)
+    max_iter = get_iteration_born_from_point_number(max_point_number)
     points_needed = get_n_points_from_iterations(max_iter)
     print("test succeeded: got sufficiently near icosa points for various latlons; largest point number encountered was {}, which requires {} iterations, having a total of {} points".format(max_point_number, max_iter, points_needed))
 
@@ -2165,12 +2040,20 @@ if __name__ == "__main__":
     for i in range(1625217):
         pc = get_random_point_code(min_iterations=4, expected_iterations=13)
         # in the point database as of 2022-07-15, there are 1625217 points with average iterations around 13
-        dpar = get_directional_parent_from_point_code(pc)
+        # dpar = get_directional_parent_from_point_code(pc)
         # for speed comparison, MEMORY LEAK beware:
         # dpar = get_directional_parent_from_point_code_brute_force(pc)
-        latlon = get_latlon_from_point_code(pc)
-        if i % 1000 == 0 and i != 0:
-            print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
+        # latlon = get_latlon_from_point_code(pc)
+        iteration_born = get_iteration_born_from_point_code(pc)
+        adjacency = get_adjacency_from_point_code(pc, iteration_born)
+        # if i % 1000 == 0 and i != 0:
+            # print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
+
+    point_number = get_random_point_number(min_iterations=6, expected_iterations=8)
+    iteration = get_iteration_born_from_point_number(point_number)
+    region = get_region_around_point(point_number, iteration, max_distance_gc_normalized=0.01)
+    print(region)
+    scatter_icosa_points_by_number(region, show=True)
 
     # point_numbers = [random.randint(10**3,10**6) for i in range(100)]
     # point_numbers = list(range(2562))
