@@ -15,6 +15,18 @@ class AdjacencyListGraph:
             for node in nodes:
                 self.add_node(node)
 
+    @staticmethod
+    def complete(nodes):
+        # make it more easily than adding all these edges one by one
+        g = AdjacencyListGraph()
+        n = len(nodes)
+        for i in range(n):
+            lst = list(range(i)) + list(range(i+1,n))  # exclude i itself
+            g.adjacency_list.append(lst)
+        g.node_index_by_label = {label: i for i, label in enumerate(nodes)}
+        g.n_nodes = n
+        return g
+
     def add_node(self, label):
         self.adjacency_list.append([])
         self.node_labels.append(label)
