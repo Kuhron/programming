@@ -1,7 +1,7 @@
 # implementing the "arithmetic" on point code strings
 # to try to remove the need for recursion as much as possible in computing adjacency
 
-from BoxCornerMapping import correct_reversed_edge_polarity, point_code_is_in_reversed_polarity_encoding
+from BoxCornerMapping import correct_reversed_edge_polarity, point_code_is_in_reversed_polarity_encoding, reverse_edge_polarity
 
 
 NORTHERN_RING = ["C", "E", "G", "I", "K"]
@@ -9,6 +9,9 @@ SOUTHERN_RING = ["D", "F", "H", "J", "L"]
 
 
 def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
+    if pc in [None, "?"]:
+        return pc
+    
     assert x in [1, 2, 3, -1, -2, -3], repr(x)
 
     pc, peel_offset = normalize_peel(pc)
@@ -21,60 +24,81 @@ def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
         "B": {1: "L"},  # for reversed L-B edge
     }
 
-    print(f"adding {x:+} to {pc}")
+    # print(f"adding {x:+} to {pc}")
 
-    if len(pc) == 1:
-        return initial_points_results[pc][x]
+    if fix_edge_polarity and pc in ["A", "B"]:
+        # fix_edge_polarity indicates that we are in top-level call
+        # it's okay to do like A + 3 = K in intermediate calls (with reversed K-A edge)
+        raise ValueError(f"directions from poles are ill-defined: {pc=}, {x=}")
+    elif len(pc) == 1:
+        res = initial_points_results[pc][x]
+    else:
+        on_edge_CA = head == "C" and all(y in ["0", "1"] for y in tail)
+        on_edge_DB = head == "D" and all(y in ["0", "3"] for y in tail)
 
-    if x == 2:
-        y1 = add1(pc)
-        y13 = add3(y1)
-        y3 = add3(pc)
-        y31 = add1(y3)
-        assert y13 == y31, f"{pc} +1+3 = {y13} ; {pc} +3+1 = {y31}"
-        res = y13
-    elif x == -2:
-        # special case where it's on C-A edge and we subtract 2 to do peel shift only
-        peel_shift_case = head == "C" and all(y in ["0", "1"] for y in tail)
-        if peel_shift_case:
-            new_head = initial_points_results[head][x]
-            new_tail = tail
+        if x == 2:
+            y1 = add1(pc)
+            y13 = add3(y1)
+            y3 = add3(pc)
+            y31 = add1(y3)
+            assert y13 == y31, f"{pc} +1+3 = {y13} ; {pc} +3+1 = {y31}"
+            res = y13
+        
+        # refraction cases
+        elif on_edge_CA and x == -3:
+            new_head = "E"
+            new_tail = replace_zeros_with_twos(tail)
             res = new_head + new_tail
-        else:
+        elif on_edge_CA and x == -2:
+            # do the refracting last, so do -2 = -1-3 NOT -3-1
+            y1 = sub1(pc)
+            y13 = sub3(y1)
+            res = y13
+        elif on_edge_DB and x == -1:
+            new_head = "F"
+            new_tail = replace_zeros_with_twos(tail)
+            res = new_head + new_tail
+        elif on_edge_DB and x == -2:
+            # do the refracting last, so do -2 = -3-1 NOT -1-3
+            y3 = sub3(pc)
+            y31 = sub1(y3)
+            res = y31
+
+        elif x == -2:
+            # general case for -2, no refraction
             y1 = sub1(pc)
             y13 = sub3(y1)
             y3 = sub3(pc)
             y31 = sub1(y3)
             assert y13 == y31, f"{pc} -1-3 = {y13} ; {pc} -3-1 = {y31}"
             res = y13
-    else:
-        direction_digit = abs(x)
-        plus = x > 0
-        overflow, new_tail = increment_binary_code(tail, direction_digit, plus)
-        
-        # overflow is used to change watershed by applying to the point letter
-        if overflow == 0:
-            new_head = head
-        elif overflow == 1:
-            assert plus, "shouldn't get positive overflow from subtracting"
-            new_head = add_direction_to_point_code(head, x, fix_edge_polarity=False)
-        elif overflow == -1:
-            assert not plus, "shouldn't get negative overflow from adding"
-            new_head = add_direction_to_point_code(head, x, fix_edge_polarity=False)
         else:
-            raise ValueError(overflow)
-        
-        if new_head is None:
-            raise ValueError("invalid subtraction operation")
-        res = new_head + new_tail
+            direction_digit = abs(x)
+            plus = x > 0
+            overflow, new_tail = increment_binary_code(tail, direction_digit, plus)
+            
+            # overflow is used to change watershed by applying to the point letter
+            if overflow == 0:
+                new_head = head
+            elif overflow == 1:
+                assert plus, "shouldn't get positive overflow from subtracting"
+                new_head = add_direction_to_point_code(head, x, fix_edge_polarity=False)
+            elif overflow == -1:
+                assert not plus, "shouldn't get negative overflow from adding"
+                new_head = add_direction_to_point_code(head, x, fix_edge_polarity=False)
+            else:
+                raise ValueError(overflow)
+            
+            res = new_head + new_tail
 
     # only fix the edge polarity at the very final result
-    if fix_edge_polarity and point_code_is_in_reversed_polarity_encoding(res):
+    if res is not None and fix_edge_polarity and point_code_is_in_reversed_polarity_encoding(res):
         res = correct_reversed_edge_polarity(res)
 
-    res = apply_peel_offset(res, peel_offset)
-    assert len(res) == len(pc), f"need same #iterations in result but got {pc} {x:+} = {res}"
-    print(f"result: {pc} {x:+} = {res}\n")
+    if res not in [None, "?"]:
+        res = apply_peel_offset(res, peel_offset)
+        assert len(res) == len(pc), f"need same #iterations in result but got {pc} {x:+} = {res}"
+    # print(f"result: {pc} {x:+} = {res}\n")
     return res
 
     # head = pc[0]
@@ -107,7 +131,7 @@ sub3 = lambda pc: add_direction_to_point_code(pc, -3, fix_edge_polarity=False)
 
 def increment_binary_code(tail, direction_digit, plus=True):
     # things like adding 1 or 3 to C102231
-    print(f"increment binary: {tail=}, {direction_digit=}, {plus=}")
+    # print(f"increment binary: {tail=}, {direction_digit=}, {plus=}")
     if direction_digit == 1:
         colors = [[0, 1], [3, 2]]
     elif direction_digit == 3:
@@ -130,10 +154,10 @@ def increment_binary_code(tail, direction_digit, plus=True):
         this_bit = this_color.index(x)
         lst_colors.append(this_color)
         lst_bits.append(this_bit)
-    print(f"{lst_colors=}, {lst_bits=}")
+    # print(f"{lst_colors=}, {lst_bits=}")
 
     overflow, new_bits = binary_up_one(lst_bits) if plus else binary_down_one(lst_bits)
-    print(f"{new_bits=}")
+    # print(f"{new_bits=}")
     
     # now get the value within the right color for each bit
     new_lst = []
@@ -141,7 +165,7 @@ def increment_binary_code(tail, direction_digit, plus=True):
         new_digit = this_color[this_new_bit]
         new_lst.append(new_digit)
     new_tail = "".join(str(x) for x in new_lst)
-    print(f"{new_tail=}")
+    # print(f"{new_tail=}")
 
     return overflow, new_tail
 
@@ -209,7 +233,7 @@ def normalize_peel(point_code):
 
 
 def apply_peel_offset(pc, peel_offset):
-    print(f"applying peel offset {peel_offset} to {pc}")
+    # print(f"applying peel offset {peel_offset} to {pc}")
     if peel_offset == 0 or pc[0] in ["A", "B"]:
         return pc
     head = pc[0]
@@ -224,3 +248,14 @@ def apply_peel_offset(pc, peel_offset):
     
     new_head = ps[(ps.index(head) + peel_offset) % 5]
     return new_head + tail
+
+
+def replace_zeros_with_twos(tail):
+    res = ""
+    for c in tail:
+        if c == "0":
+            res += "2"
+        else:
+            assert c == "1" or c == "3", f"shouldn't be replacing 0->2 in string {tail}"
+            res += c
+    return res

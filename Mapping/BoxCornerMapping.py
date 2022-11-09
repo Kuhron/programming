@@ -15,6 +15,9 @@
 # etc.
 
 
+PEELS = ["CD", "EF", "GH", "IJ", "KL"]
+
+
 def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, mapping_stack=None):
     if mapping_stack is None:
         mapping_stack = []
@@ -129,9 +132,11 @@ def dpar_is_on_reversed_edge_from_perspective_of_point(dpar, reference_point_cod
     return is_on_k_a_edge or is_on_l_b_edge
 
 
-def flip_prefix_for_edge_reversal(x):
+def flip_prefix_for_edge_reversal(x, reference_peel="KL"):
+    assert reference_peel in PEELS
     assert len(x) == 1, x
-    return {"A":"K", "K":"A", "B":"L", "L":"B"}[x]
+    k, l = reference_peel
+    return {"A":k, k:"A", "B":l, l:"B"}[x]
 
 
 def flip_tail_for_edge_reversal(tail):
@@ -165,15 +170,16 @@ def flip_tail_for_edge_reversal(tail):
     return new_tail
 
 
-def reverse_edge_polarity(point_code):
+def reverse_edge_polarity(point_code, reference_peel="KL"):
     # points of form K{0,1}+ can be reverse-polarity-coded as A{0,3}+
     # similarly L{0,3}+ can be reverse-polarity-coded as B{0,1}+
     # (this is because of the reversed edges messing up dpar finding)
     # this function allows it to go either way
+    assert reference_peel in PEELS
     prefix = point_code[0]
     tail = point_code[1:]
     tail_no_trailing_zeros, trailing_zeros = separate_trailing_zeros(tail)
-    new_prefix = flip_prefix_for_edge_reversal(prefix)
+    new_prefix = flip_prefix_for_edge_reversal(prefix, reference_peel)
     new_tail_no_trailing_zeros = flip_tail_for_edge_reversal(tail_no_trailing_zeros)
     new_tail = new_tail_no_trailing_zeros + trailing_zeros
     new_point_code = new_prefix + new_tail

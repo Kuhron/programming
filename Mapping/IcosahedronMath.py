@@ -153,6 +153,13 @@ def get_all_point_codes_in_order():
         iteration += 1
 
 
+def get_all_point_codes_in_order_including_trailing_zero_repeats():
+    iteration = 0
+    while True:
+        yield from get_all_point_codes_in_order_up_to_iteration_with_trailing_zeros(iteration)
+        iteration += 1
+
+
 def get_all_point_codes_in_order_up_to_iteration(iteration):
     # this one isn't recursive for building the point codes,
     # it just takes the output of the recursive one and strips the zeros off
@@ -181,6 +188,13 @@ def get_all_point_codes_in_order_up_to_iteration_with_trailing_zeros(iteration):
         # only yield the children after all the points from the previous iteration have been yielded
         for code in children_to_yield:
             yield code
+
+
+def get_all_point_codes_in_iteration(iteration):
+    for pc in get_all_point_codes_in_order_up_to_iteration_with_trailing_zeros(iteration):
+        pc_it = get_iteration_number_from_point_code(pc)
+        if pc_it == iteration:
+            yield pc
 
 
 def get_random_point_code(min_iterations, expected_iterations, max_iterations):
@@ -618,12 +632,14 @@ def get_children_from_point_number(pn, iteration):
 def get_parent_from_point_code(pc):
     if len(pc) == 1:
         return None
-    enforce_no_trailing_zeros(pc)
+    if pc[-1] == "0":
+        return pc[:-1]  # treat it as its own parent when it stays in the same place
     return strip_trailing_zeros(pc[:-1])
 
 
 def get_directional_parent_from_point_code(pc):
-    enforce_no_trailing_zeros(pc)
+    if pc[-1] == "0":
+        return pc[:-1]  # treat it as its own dpar when it stays in the same place
     if len(pc) == 1:
         return None
     else:
@@ -919,8 +935,8 @@ def unify_five_and_six(adjacency, point_number):
     return adj
 
 
-def get_adjacency_from_point_number(pn, iteration):
-    return get_adjacency_recursive(pn, iteration)
+def get_adjacency_from_point_number(pn, iteration, force_six_directions=False):
+    return get_adjacency_recursive(pn, iteration, force_six_directions=force_six_directions)
 
 
 def get_adjacency_from_point_code(pc, iteration, use_existing_method=False):
@@ -933,9 +949,9 @@ def get_adjacency_from_point_code(pc, iteration, use_existing_method=False):
     if use_existing_method:
         # just copy existing logic for point numbers (works, but slow)
         pn = get_point_number_from_point_code(pc)
-        pns = get_adjacency_from_point_number(pn, iteration)
-        adj = [get_point_code_from_point_number(pn1) for pn1 in pns]
-        adj = [x.ljust(len(pc), "0") for x in adj]
+        pns = get_adjacency_from_point_number(pn, iteration, force_six_directions=True)
+        adj = [get_point_code_from_point_number(pn1) if pn1 is not None else None for pn1 in pns]
+        adj = [str(x).ljust(len(pc), "0") for x in adj]
         return adj
 
     neighL = add_direction_to_point_code(pc, 1)
@@ -948,13 +964,13 @@ def get_adjacency_from_point_code(pc, iteration, use_existing_method=False):
 
 
 # @functools.lru_cache(maxsize=10000)
-def get_adjacency_recursive(point_number, iteration):
+def get_adjacency_recursive(point_number, iteration, force_six_directions=False):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
     # print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
 
     if iteration == get_iteration_born_from_point_number(point_number):
-        return get_adjacency_when_born_from_point_number(point_number)
+        return get_adjacency_when_born_from_point_number(point_number, force_six_directions=force_six_directions)
 
     if point_number in [0, 1]:
         if iteration == 0:
@@ -1039,14 +1055,21 @@ def get_index_clockwise_step(original_index, n_steps, n_neighbors):
 
 
 # @functools.lru_cache(maxsize=10000)
-def get_adjacency_when_born_from_point_number(point_number):
+def get_adjacency_when_born_from_point_number(point_number, force_six_directions=False):
     # print("get_adjacency_when_born({})".format(point_number))
     iteration = get_iteration_born_from_point_number(point_number)
 
+    # if point_number < 2:
+    #     raise ValueError(f"directions from poles are ill-defined: {point_number=}")
     if point_number < 12:
         point_list, adjacency_dict = STARTING_POINTS
         adj_raw = adjacency_dict[point_number]
         adj_raw = list(adj_raw)
+        if force_six_directions:
+            if point_number in [0, 2, 4, 6, 8, 10]:  # northern ring
+                adj_raw.append(None)  # -3 is undefined
+            else:
+                adj_raw = adj_raw[:3] + [None] + adj_raw[3:]  # -1 is undefined
         # print("returning known raw adjacency when born for starting point p#{}".format(point_number))
         return adj_raw  # just return the five-length one here in case this is the final call, only use the casting to six-length when it's an intermediate step to getting some non-initial point's adjacency
 
@@ -1820,16 +1843,20 @@ if __name__ == "__main__":
     # n_points = get_n_points_from_iterations(iterations)
     # for i, pc in enumerate(get_all_point_codes_in_order_up_to_iteration(iterations)):
     # for i, pc in enumerate(get_all_point_codes_in_order()):
-    i = 0
+    # for pc in get_all_point_codes_in_iteration(1):
+    i = 2
     while True:
-        pc = get_random_point_code(min_iterations=3, expected_iterations=3, max_iterations=3)
         # in the point database as of 2022-07-15, there are 1625217 points with average iterations around 13
+        # pc = get_random_point_code(min_iterations=3, expected_iterations=3, max_iterations=3)
+        # pc = random.choice(["C", "D"]) + pc[1:]
+        # pc = ("C" + "".join(random.choice("01") for i in range(3))) if random.random() < 0.5 else ("D" + "".join(random.choice("03") for i in range(3)))
+        pc = get_point_code_from_point_number(i).ljust(5, "0")
         par = get_parent_from_point_code(pc)
         dpar = get_directional_parent_from_point_code(pc)
         # latlon = get_latlon_from_point_code(pc)
-        iteration_born = get_iteration_born_from_point_code(pc)
-        adj_test = get_adjacency_from_point_code(pc, iteration_born, use_existing_method=False)
-        adj_known = get_adjacency_from_point_code(pc, iteration_born, use_existing_method=True)
+        iteration = get_iteration_number_from_point_code(pc)
+        adj_test = get_adjacency_from_point_code(pc, iteration, use_existing_method=False)
+        adj_known = get_adjacency_from_point_code(pc, iteration, use_existing_method=True)
         # print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
         print("p\tpar\tdpar\t+1\t+2\t+3\t-1\t-2\t-3")
         for adj in [adj_known, adj_test]:
@@ -1837,7 +1864,7 @@ if __name__ == "__main__":
             print(f"{pc}\t{par}\t{dpar}\t{adj_str}")
         for neigh_known, neigh_test in zip(adj_known, adj_test):
             if neigh_test not in [None, "?"] and neigh_known != neigh_test:
-                input(f"Warning: {neigh_test=}, {neigh_known=}")
+                raise RuntimeError(f"Warning: {neigh_test=}, {neigh_known=}")
         print("----")
         i += 1
 
