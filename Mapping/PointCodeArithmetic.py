@@ -46,18 +46,26 @@ def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
         
         # refraction cases
         elif on_edge_CA and x == -3:
-            new_head = "E"
-            new_tail = replace_zeros_with_twos(tail)
-            res = new_head + new_tail
+            if all(y == "0" for y in tail):
+                # we will get extraneous solution where p-3 = p-2, but p-3 should be undefined
+                res = None
+            else:
+                new_head = "E"
+                new_tail = replace_zeros_with_twos(tail)
+                res = new_head + new_tail
         elif on_edge_CA and x == -2:
             # do the refracting last, so do -2 = -1-3 NOT -3-1
             y1 = sub1(pc)
             y13 = sub3(y1)
             res = y13
         elif on_edge_DB and x == -1:
-            new_head = "F"
-            new_tail = replace_zeros_with_twos(tail)
-            res = new_head + new_tail
+            if all(y == "0" for y in tail):
+                # we will get extraneous solution where p-1 = p-2, but p-3 should be undefined
+                res = None
+            else:
+                new_head = "F"
+                new_tail = replace_zeros_with_twos(tail)
+                res = new_head + new_tail
         elif on_edge_DB and x == -2:
             # do the refracting last, so do -2 = -3-1 NOT -1-3
             y3 = sub3(pc)

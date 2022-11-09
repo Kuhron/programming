@@ -951,7 +951,7 @@ def get_adjacency_from_point_code(pc, iteration, use_existing_method=False):
         pn = get_point_number_from_point_code(pc)
         pns = get_adjacency_from_point_number(pn, iteration, force_six_directions=True)
         adj = [get_point_code_from_point_number(pn1) if pn1 is not None else None for pn1 in pns]
-        adj = [str(x).ljust(len(pc), "0") for x in adj]
+        adj = [str(x).ljust(len(pc), "0") if x is not None else None for x in adj]
         return adj
 
     neighL = add_direction_to_point_code(pc, 1)
@@ -964,49 +964,60 @@ def get_adjacency_from_point_code(pc, iteration, use_existing_method=False):
 
 
 # @functools.lru_cache(maxsize=10000)
-def get_adjacency_recursive(point_number, iteration, force_six_directions=False):
+def get_adjacency_recursive(pn, iteration, force_six_directions=False):
     # use get_adjacency_when_born() here as base case
     # for non-born iterations, use the formula for child number from parent, index, and iteration
     # print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
 
-    if iteration == get_iteration_born_from_point_number(point_number):
-        return get_adjacency_when_born_from_point_number(point_number, force_six_directions=force_six_directions)
+    if iteration == get_iteration_born_from_point_number(pn):
+        return get_adjacency_when_born_from_point_number(pn, force_six_directions=force_six_directions)
 
-    if point_number in [0, 1]:
+    if pn in [0, 1]:
         if iteration == 0:
             ordered_points, adj = STARTING_POINTS
-            return adj[point_number]
-        elif point_number == 0:
-            previous_adj = get_adjacency_recursive(point_number, iteration-1)
-            return [get_north_pole_neighbor(previous_neighbor, iteration) for previous_neighbor in previous_adj]
-        elif point_number == 1:
-            previous_adj = get_adjacency_recursive(point_number, iteration-1)
-            return [get_south_pole_neighbor(previous_neighbor, iteration) for previous_neighbor in previous_adj]
+            res = adj[pn]
+        elif pn == 0:
+            previous_adj = get_adjacency_recursive(pn, iteration-1)
+            res = [get_north_pole_neighbor(previous_neighbor, iteration) for previous_neighbor in previous_adj]
+        elif pn == 1:
+            previous_adj = get_adjacency_recursive(pn, iteration-1)
+            res = [get_south_pole_neighbor(previous_neighbor, iteration) for previous_neighbor in previous_adj]
         else:
             raise ValueError("shouldn't happen")
 
-    # print("reached lower cases for p#{} i#{}".format(point_number, iteration))
-
-    # children born this iteration are easy to find for points >= 2
-    childL = get_child_from_point_number(point_number, 0, iteration)
-    childDL = get_child_from_point_number(point_number, 1, iteration)
-    childD = get_child_from_point_number(point_number, 2, iteration)
-    neighbors = [childL, childDL, childD]
-    if point_number < 12:
-        neighbors += [None, None]
     else:
-        neighbors += [None, None, None]
-    
-    # then the other two/three can be gotten as the children of the point's previous neighbors
-    previous_adj = get_adjacency_recursive(point_number, iteration-1)
-    assert len(neighbors) == len(previous_adj), "adjacency length for p#{} changed".format(point_number)
-    for neigh_i in range(len(previous_adj)):
-        if neighbors[neigh_i] is None:
-            previous_neighbor = previous_adj[neigh_i]
-            new_neighbor = get_generic_point_neighbor(previous_neighbor, point_number, iteration)  # the new neighbor of that point in the direction of this point
-            neighbors[neigh_i] = new_neighbor
+        # print("reached lower cases for p#{} i#{}".format(point_number, iteration))
+        # children born this iteration are easy to find for points >= 2
+        childL = get_child_from_point_number(pn, 0, iteration)
+        childDL = get_child_from_point_number(pn, 1, iteration)
+        childD = get_child_from_point_number(pn, 2, iteration)
+        neighbors = [childL, childDL, childD]
+        if pn < 12:
+            neighbors += [None, None]
+        else:
+            neighbors += [None, None, None]
+        
+        # then the other two/three can be gotten as the children of the point's previous neighbors
+        previous_adj = get_adjacency_recursive(pn, iteration-1)
+        assert len(neighbors) == len(previous_adj), "adjacency length for p#{} changed".format(pn)
+        for neigh_i in range(len(previous_adj)):
+            if neighbors[neigh_i] is None:
+                previous_neighbor = previous_adj[neigh_i]
+                new_neighbor = get_generic_point_neighbor(previous_neighbor, pn, iteration)  # the new neighbor of that point in the direction of this point
+                neighbors[neigh_i] = new_neighbor
 
-    return neighbors
+        res = neighbors
+
+    if force_six_directions and len(res) == 5:
+        pc = get_point_code_from_point_number(pn)
+        if pc[0] in ["A", "C", "E", "G", "I", "K"]:
+            # -3 is undefined
+            res.append(None)
+        else:
+            # -1 is undefined
+            res = res[:3] + [None] + res[3:]
+    
+    return res
 
     # --- old stuff; should no longer make any use of direction labels for this
     # previous_adj = unify_five_and_six(previous_adj, point_number)
