@@ -56,7 +56,7 @@ def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, 
     dpar, mapping_stack = lengthen_by_box_corner_mapping(new_dpar, mapping_stack, mappings)
     
     # try leaving it in reverse-polarity-encoding for recursive calls
-    # then clean it up by stripping zeros and correcting polarity encoding once have answer
+    # then clean it up by correcting polarity encoding once have answer
     return dpar
 
 
@@ -172,8 +172,10 @@ def reverse_edge_polarity(point_code):
     # this function allows it to go either way
     prefix = point_code[0]
     tail = point_code[1:]
+    tail_no_trailing_zeros, trailing_zeros = separate_trailing_zeros(tail)
     new_prefix = flip_prefix_for_edge_reversal(prefix)
-    new_tail = flip_tail_for_edge_reversal(tail)
+    new_tail_no_trailing_zeros = flip_tail_for_edge_reversal(tail_no_trailing_zeros)
+    new_tail = new_tail_no_trailing_zeros + trailing_zeros
     new_point_code = new_prefix + new_tail
     assert len(new_point_code) == len(point_code), f"got wrong length code {new_point_code} from reversing {point_code}"
     return new_point_code
@@ -196,4 +198,12 @@ def point_code_is_in_reversed_polarity_encoding(point_code):
     is_on_k_a_edge = prefix == "A" and uses_threes and has_non_zero
     is_on_l_b_edge = prefix == "B" and uses_ones and has_non_zero
     return is_on_k_a_edge or is_on_l_b_edge
+
+
+def separate_trailing_zeros(s):
+    zeros = ""
+    while s[-1] == "0":
+        zeros += "0"
+        s = s[:-1]
+    return s, zeros
 

@@ -1,121 +1,226 @@
 # implementing the "arithmetic" on point code strings
 # to try to remove the need for recursion as much as possible in computing adjacency
 
-
-# equations about how this arithmetic works
-# where r, s = some string made of {0,1,2,3};
-#       P, Q = initial icosa points;
-#       PA, PB = initial icosa points on the upper or lower ring, respectively
-#       x = direction in {1,2,3};
-#       (+), (-) = peel shift ahead (C->E) or back (C->K), respectively.
-#           (note that peel shift directions are backwards from addition/subtraction,
-#           i.e. adding 1/2/3 yields no peel shift or a backward peel shift
-#           and subtracting 1/2/3 yields no peel shift or a forward peel shift)
-# there might be a way to unify some of this some more, but I think it works for now
-
-# identity 1: Px - x = P0  (similarly Prx - x = Pr0)
-# identity 2: P1 + 3 = P3 + 1 = P2 ; => P2 - 3 = P1 ; P2 - 1 = P3
-# identity 3: PA1 - 3 = None ; PB3 - 1 = None
-# identity 4: PA1 + 1 = A0 ; PB3 + 3 = B0
-# identity 5: PA1 + 2 = (-)PA1 ; PA1 - 2 = (+)PA1 ; PB3 + 2 = (-)PB3 ; PB3 - 2 = (+)PB3
-# identity 6: PB1 + 1 = PA0
-# identity 7: P2 + 2 = (-)P0
-# identity 8: PA2 + 1 = (-)PA1 ; PB2 + 3 = (-)PB3
-# identity 9: PA3 + 3 = (-)PB0
-# identity 10: PA2 + 3 = PA3 + 2 = (-)PB1 ; => PB1 - 2 = (+)PA3 ; PB1 - 3 = (+)PA2
-# identity 11: PB1 + 2 = PB2 + 1 = PA3 ; => PA3 - 1 = PB2 ; PA3 - 2 = PB1
-# identity 12: lim {PA1, PA11, PA111, ...} = A ; lim {PB3, PB33, PB333, ...} = B
-# identity 13: if Pr + x = Ps, then Prx + x = Ps0
-# identity 14: if Pr + x = Ps, then Pxr + x = P0s
-
-# use Haskell convention of lst = [head] + [tail ...] = [init ...] + [last]
+from BoxCornerMapping import correct_reversed_edge_polarity, point_code_is_in_reversed_polarity_encoding
 
 
-def add_direction_to_point_code(pc, x):
+NORTHERN_RING = ["C", "E", "G", "I", "K"]
+SOUTHERN_RING = ["D", "F", "H", "J", "L"]
+
+
+def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
+    assert x in [1, 2, 3, -1, -2, -3], repr(x)
+
+    pc, peel_offset = normalize_peel(pc)
     head = pc[0]
     tail = pc[1:]
-    init = pc[:-1]
-    last = pc[-1]
-    pas = ["C", "E", "G", "I", "K"]
-    pbs = ["D", "F", "H", "J", "L"]
-    pa = head in pas
-    pb = head in pbs
-    ps = pas if pa else pbs if pb else None
-    ps_other = pbs if pa else pas if pb else None
-    pi = ps.index(head)
-    p_plus = ps[(pi + 1) % 5]  # for peel shift
-    p_minus = ps[(pi - 1) % 5]  # for peel shift
-    p_other = ps_other[pi]  # switch to top ring or bottom ring (opposite of current one)
-    p_plus_other = ps_other[(pi + 1) % 5]
-    p_minus_other = ps_other[(pi - 1) % 5]
+    initial_points_results = {
+        "C": {1: "A", 2: "K", 3: "L", -1: "D", -2: "E", -3: None},
+        "D": {1: "C", 2: "L", 3: "B", -1: None, -2: "F", -3: "E"},
+        "A": {3: "K"},  # for reversed K-A edge
+        "B": {1: "L"},  # for reversed L-B edge
+    }
 
-    if head in ["A", "B"]:
-        raise ValueError("can't travel direction from pole")
+    print(f"adding {x:+} to {pc}")
 
-    if (last == "1" and x == "3") or (last == "3" and x == "1"):
-        # identity 2
-        res = init + "2"
-    elif pa and all(y == "1" for y in tail) and x == "1":
-        # identity 4
-        res = "A" + "0" * len(tail)
-    elif pb and all(y == "3" for y in tail) and x == "3":
-        # identity 4
-        res = "B" + "0" * len(tail)
-    elif (pa and last == "1" and x == "2") or (pb and last == "3" and x == "2"):
-        # identity 5
-        res = p_minus + tail
-    elif pb and all(y == "1" for y in tail) and x == "1":
-        # identity 6
-        res = p_other + "0" * len(tail)
-    elif pa and all(y == "3" for y in tail) and x == "3":
-        # identity 9: PA3 + 3 = (-)PB0
-        res = p_minus_other + "0" * len(tail)
+    if len(pc) == 1:
+        return initial_points_results[pc][x]
+
+    if x == 2:
+        y1 = add1(pc)
+        y13 = add3(y1)
+        y3 = add3(pc)
+        y31 = add1(y3)
+        assert y13 == y31, f"{pc} +1+3 = {y13} ; {pc} +3+1 = {y31}"
+        res = y13
+    elif x == -2:
+        # special case where it's on C-A edge and we subtract 2 to do peel shift only
+        peel_shift_case = head == "C" and all(y in ["0", "1"] for y in tail)
+        if peel_shift_case:
+            new_head = initial_points_results[head][x]
+            new_tail = tail
+            res = new_head + new_tail
+        else:
+            y1 = sub1(pc)
+            y13 = sub3(y1)
+            y3 = sub3(pc)
+            y31 = sub1(y3)
+            assert y13 == y31, f"{pc} -1-3 = {y13} ; {pc} -3-1 = {y31}"
+            res = y13
     else:
-        # raise NotImplementedError
-        return "?"
+        direction_digit = abs(x)
+        plus = x > 0
+        overflow, new_tail = increment_binary_code(tail, direction_digit, plus)
+        
+        # overflow is used to change watershed by applying to the point letter
+        if overflow == 0:
+            new_head = head
+        elif overflow == 1:
+            assert plus, "shouldn't get positive overflow from subtracting"
+            new_head = add_direction_to_point_code(head, x, fix_edge_polarity=False)
+        elif overflow == -1:
+            assert not plus, "shouldn't get negative overflow from adding"
+            new_head = add_direction_to_point_code(head, x, fix_edge_polarity=False)
+        else:
+            raise ValueError(overflow)
+        
+        if new_head is None:
+            raise ValueError("invalid subtraction operation")
+        res = new_head + new_tail
+
+    # only fix the edge polarity at the very final result
+    if fix_edge_polarity and point_code_is_in_reversed_polarity_encoding(res):
+        res = correct_reversed_edge_polarity(res)
+
+    res = apply_peel_offset(res, peel_offset)
+    assert len(res) == len(pc), f"need same #iterations in result but got {pc} {x:+} = {res}"
+    print(f"result: {pc} {x:+} = {res}\n")
+    return res
+
+    # head = pc[0]
+    # tail = pc[1:]
+    # init = pc[:-1]
+    # last = pc[-1]
+    # pas = NORTHERN_RING
+    # pbs = SOUTHERN_RING
+    # pa = head in pas
+    # pb = head in pbs
+    # ps = pas if pa else pbs if pb else None
+    # ps_other = pbs if pa else pas if pb else None
+    # pi = ps.index(head)
+    # p_plus = ps[(pi + 1) % 5]  # for peel shift
+    # p_minus = ps[(pi - 1) % 5]  # for peel shift
+    # p_other = ps_other[pi]  # switch to top ring or bottom ring (opposite of current one)
+    # p_plus_other = ps_other[(pi + 1) % 5]
+    # p_minus_other = ps_other[(pi - 1) % 5]
+
+    # if head in ["A", "B"]:
+    #     raise ValueError("can't travel direction from pole")
+    # return res
+
+
+add1 = lambda pc: add_direction_to_point_code(pc, 1, fix_edge_polarity=False)
+add3 = lambda pc: add_direction_to_point_code(pc, 3, fix_edge_polarity=False)
+sub1 = lambda pc: add_direction_to_point_code(pc, -1, fix_edge_polarity=False)
+sub3 = lambda pc: add_direction_to_point_code(pc, -3, fix_edge_polarity=False)
+
+
+def increment_binary_code(tail, direction_digit, plus=True):
+    # things like adding 1 or 3 to C102231
+    print(f"increment binary: {tail=}, {direction_digit=}, {plus=}")
+    if direction_digit == 1:
+        colors = [[0, 1], [3, 2]]
+    elif direction_digit == 3:
+        colors = [[0, 3], [1, 2]]
+    else:
+        raise ValueError(direction_digit)
     
-    assert len(res) == len(pc), f"need same #iterations in result but got {pc} + {x} = {res}"
-    return res
+    lst = [int(x) for x in tail]
+    lst_colors = []
+    lst_bits = []
+    for x in lst:
+        # choose which "color" (digit pair) this digit is in
+        # and then choose whether it corresponds to a 0 or a 1 in the binary arithmetic
+        if x in colors[0]:
+            this_color = colors[0]
+        elif x in colors[1]:
+            this_color = colors[1]
+        else:
+            raise ValueError(x)
+        this_bit = this_color.index(x)
+        lst_colors.append(this_color)
+        lst_bits.append(this_bit)
+    print(f"{lst_colors=}, {lst_bits=}")
+
+    overflow, new_bits = binary_up_one(lst_bits) if plus else binary_down_one(lst_bits)
+    print(f"{new_bits=}")
+    
+    # now get the value within the right color for each bit
+    new_lst = []
+    for this_color, this_new_bit in zip(lst_colors, new_bits):
+        new_digit = this_color[this_new_bit]
+        new_lst.append(new_digit)
+    new_tail = "".join(str(x) for x in new_lst)
+    print(f"{new_tail=}")
+
+    return overflow, new_tail
 
 
-def subtract_direction_from_point_code(pc, x):
+def binary_up_one(bits):
+    # add 1, make overflow 1 if we rolled over to 0, 0 otherwise
+    if all(b == 1 for b in bits):
+        overflow = 1
+        new_bits = [0] * len(bits)
+    else:
+        still_adding = True
+        n = len(bits)
+        new_bits = [None for i in range(n)]
+        for i in range(n):
+            j = -(i+1)
+            b = bits[-(i+1)]
+            if still_adding:
+                if b == 1:
+                    new_bits[j] = 0
+                    # and we're still adding, carrying the one to the next place
+                elif b == 0:
+                    new_bits[j] = 1
+                    still_adding = False
+            else:
+                new_bits[j] = b
+        assert not still_adding, "should not have overflowed"
+        overflow = 0
+
+    return overflow, new_bits
+
+
+def binary_down_one(bits):
+    # subtract 1, make overflow -1 if we rolled down past 0, 0 otherwise
+    if all(b == 0 for b in bits):
+        overflow = -1
+        new_bits = [1] * len(bits)
+    else:
+        overflow, new_bits_flipped = binary_up_one(flip_bits(bits))
+        assert overflow == 0, "should not have overflowed"
+        new_bits = flip_bits(new_bits_flipped)
+    return overflow, new_bits
+
+
+def flip_bits(bits):
+    return [1 - b for b in bits]
+
+
+def normalize_peel(point_code):
+    head = point_code[0]
+    tail = point_code[1:]
+    assert head in list("ABCDEFGHIJKL")
+    if head in ["A", "B"]:
+        assert len(head) == 1, f"got pole-child code, which should not happen: {point_code}"
+        cd_code, peel_offset = point_code, 0
+    else:
+        if head in NORTHERN_RING:
+            peel_offset = NORTHERN_RING.index(head)
+            cd_code = "C" + tail
+        else:
+            assert head in SOUTHERN_RING
+            peel_offset = SOUTHERN_RING.index(head)
+            cd_code = "D" + tail
+    # print(f"{point_code=}, {cd_code=}, {peel_offset=}")
+    return cd_code, peel_offset
+
+
+def apply_peel_offset(pc, peel_offset):
+    print(f"applying peel offset {peel_offset} to {pc}")
+    if peel_offset == 0 or pc[0] in ["A", "B"]:
+        return pc
     head = pc[0]
     tail = pc[1:]
-    init = pc[:-1]
-    last = pc[-1]
-    pas = ["C", "E", "G", "I", "K"]
-    pbs = ["D", "F", "H", "J", "L"]
-    pa = head in pas
-    pb = head in pbs
-    ps = pas if pa else pbs if pb else None
-    p_plus = ps[(1 + ps.index(head)) % 5]  # for peel shift
-    p_minus = ps[(-1 + ps.index(head)) % 5]  # for peel shift
 
-    if head in ["A", "B"]:
-        raise ValueError("can't travel direction from pole")
-
-    if pc[-1] == x:
-        # identity 1
-        # pc = P alpha x
-        prefix = pc[:-1]
-        res = prefix + "0"
-    elif last == "2" and x == "3":
-        # identity 2
-        res = init + "1"
-    elif last == "2" and x == "1":
-        # identity 2
-        res = init + "3"
-    elif (pa and last == "1" and x == "3") or (pb and last == "3" and x == "1"):
-        # identity 3
-        res = None
-    elif (pa and last == "1" and x == "2") or (pb and last == "3" and x == "2"):
-        # identity 5
-        res = p_plus + tail
+    if head in NORTHERN_RING:
+        ps = NORTHERN_RING
+    elif head in SOUTHERN_RING:
+        ps = SOUTHERN_RING
     else:
-        # raise NotImplementedError
-        return "?"
-
-    if res is not None:
-        assert len(res) == len(pc), f"need same #iterations in result but got {pc} + {x} = {res}"
-    return res
-
+        raise ValueError(f"invalid original ancestor: {head}, from cd_code {pc}, peel_offset {peel_offset}")
+    
+    new_head = ps[(ps.index(head) + peel_offset) % 5]
+    return new_head + tail

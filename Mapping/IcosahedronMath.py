@@ -13,7 +13,7 @@ import networkx as nx
 import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
 import BoxCornerMapping as bc
-from PointCodeArithmetic import add_direction_to_point_code, subtract_direction_from_point_code
+from PointCodeArithmetic import add_direction_to_point_code, normalize_peel, apply_peel_offset
 
 
 
@@ -622,14 +622,6 @@ def get_parent_from_point_code(pc):
     return strip_trailing_zeros(pc[:-1])
 
 
-def get_grandparent_from_point_code(pc):
-    if len(pc) <= 2:
-        return None
-    enforce_no_trailing_zeros(pc)
-    par = get_parent_from_point_code(pc)
-    return get_parent_from_point_code(par)
-
-
 def get_directional_parent_from_point_code(pc):
     enforce_no_trailing_zeros(pc)
     if len(pc) == 1:
@@ -649,7 +641,7 @@ def get_directional_parent_from_point_code(pc):
     if bc.point_code_is_in_reversed_polarity_encoding(cd_dpar):
         cd_dpar = bc.correct_reversed_edge_polarity(cd_dpar)
 
-    dpar = reapply_peel_offset(cd_dpar, peel_offset)
+    dpar = apply_peel_offset(cd_dpar, peel_offset)
     return dpar
 
 
@@ -699,47 +691,6 @@ def get_directional_parent_via_inheritance(point_number):
     previous_point_at_that_index = parent_adjacency_in_previous_iteration[index_of_this_point_from_parent]
     return previous_point_at_that_index
     # this avoids problems with indexing directions from the 12 initial points which only have 5 adjacencies with ill-defined directions
-
-
-def normalize_peel(point_code):
-    x = point_code[0]
-    y = point_code[1:]
-    assert x in list("ABCDEFGHIJKL")
-    if x in ["A", "B"]:
-        assert len(x) == 1, f"got pole-child code, which should not happen: {point_code}"
-        cd_code, peel_offset = x, 0
-    else:
-        northern_ring = list("CEGIK")
-        southern_ring = list("DFHJL")
-        if x in northern_ring:
-            peel_offset = northern_ring.index(x)
-            cd_code = "C" + y
-        else:
-            assert x in southern_ring
-            peel_offset = southern_ring.index(x)
-            cd_code = "D" + y
-    return cd_code, peel_offset
-
-
-def reapply_peel_offset(cd_code, peel_offset):
-    # print(f"reapplying peel offset {peel_offset} to {cd_code}")
-    if peel_offset == 0 or cd_code in ["A", "B"]:
-        return cd_code
-    northern_ring = list("CEGIK")
-    southern_ring = list("DFHJL")
-    x = cd_code[0]
-    y = cd_code[1:]
-    if x == "C":
-        x2 = northern_ring[peel_offset]
-    elif x == "K":
-        x2 = northern_ring[peel_offset - 1]
-    elif x == "D":
-        x2 = southern_ring[peel_offset]
-    elif x == "L":
-        x2 = southern_ring[peel_offset - 1]
-    else:
-        raise ValueError(f"invalid original ancestor: {x}, from cd_code {cd_code}, peel_offset {peel_offset}")
-    return x2 + y
 
 
 def test_directional_parent_correctness(point_numbers):
@@ -987,12 +938,12 @@ def get_adjacency_from_point_code(pc, iteration, use_existing_method=False):
         adj = [x.ljust(len(pc), "0") for x in adj]
         return adj
 
-    neighL = add_direction_to_point_code(pc, "1")
-    neighDL = add_direction_to_point_code(pc, "2")
-    neighD = add_direction_to_point_code(pc, "3")
-    neighR = subtract_direction_from_point_code(pc, "1")
-    neighUR = subtract_direction_from_point_code(pc, "2")
-    neighU = subtract_direction_from_point_code(pc, "3")
+    neighL = add_direction_to_point_code(pc, 1)
+    neighDL = add_direction_to_point_code(pc, 2)
+    neighD = add_direction_to_point_code(pc, 3)
+    neighR = add_direction_to_point_code(pc, -1)
+    neighUR = add_direction_to_point_code(pc, -2)
+    neighU = add_direction_to_point_code(pc, -3)
     return [neighL, neighDL, neighD, neighR, neighUR, neighU]
 
 
@@ -1872,8 +1823,6 @@ if __name__ == "__main__":
     i = 0
     while True:
         pc = get_random_point_code(min_iterations=3, expected_iterations=3, max_iterations=3)
-        if pc[-1] != "1":
-            continue
         # in the point database as of 2022-07-15, there are 1625217 points with average iterations around 13
         par = get_parent_from_point_code(pc)
         dpar = get_directional_parent_from_point_code(pc)
@@ -1888,7 +1837,7 @@ if __name__ == "__main__":
             print(f"{pc}\t{par}\t{dpar}\t{adj_str}")
         for neigh_known, neigh_test in zip(adj_known, adj_test):
             if neigh_test not in [None, "?"] and neigh_known != neigh_test:
-                print(f"Warning: {neigh_test=}, {neigh_known=}")
+                input(f"Warning: {neigh_test=}, {neigh_known=}")
         print("----")
         i += 1
 
