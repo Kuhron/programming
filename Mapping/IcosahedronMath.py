@@ -3,7 +3,7 @@
 
 
 import math
-import functools
+# import functools  # only use caching if you have to, really try to make things more efficient
 import random
 import time
 import numpy as np
@@ -12,6 +12,8 @@ import networkx as nx
 
 import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
+import BoxCornerMapping as bc
+from PointCodeArithmetic import add_direction_to_point_code, subtract_direction_from_point_code
 
 
 
@@ -20,7 +22,7 @@ CADA_II_RADIUS_FACTOR = 2.116
 CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
 
 
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_point_number_from_point_code(point_code):
     # base cases
     if point_code is None:
@@ -41,30 +43,15 @@ def get_point_number_from_point_code(point_code):
             child_number = ancestor_number
         else:
             child_index = int(n) - 1
-            child_number = get_child(ancestor_number, child_index, iteration)
+            child_number = get_child_from_point_number(ancestor_number, child_index, iteration)
         # print(f"new child number {child_number} for ancestor code {ancestor_number}")
         ancestor_number = child_number
 
     res = ancestor_number
-
-    # debug
-    # brute_force = get_point_number_from_point_code_brute_force(point_code)
-    # assert res == brute_force, f"math-based {res} != brute-force {brute_force}"
-
     return res
 
 
-def get_point_number_from_point_code_brute_force(point_code):
-    print("brute-forcing pn from pc")
-    if point_code is None:
-        return None
-    for i, code in enumerate(get_all_point_codes_in_order()):
-        # print(f"checking {i} {code} for {point_code}")
-        if code == point_code:
-            return i
-
-
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_point_code_from_point_number(point_number):
     # base cases
     if point_number is None:
@@ -89,37 +76,23 @@ def get_point_code_from_point_number(point_number):
             child_index_code = "0" if this_ancestors_child_index is None else str(this_ancestors_child_index + 1)
             res += child_index_code
     
-    # debug
-    # brute_force = get_point_code_from_point_number_brute_force(point_number)
-    # assert res == brute_force, f"math-based {res} != brute-force {brute_force}"
     assert len(res) > 0, res
     return res
 
 
-def get_point_code_from_point_number_brute_force(point_number):
-    print("brute-forcing pc from pn")
-    if point_number is None:
-        return None
-    for i, code in enumerate(get_all_point_codes_in_order()):
-        # print(f"checking {code} {i} for {point_number}")
-        if i == point_number:
-            return code
-    raise RuntimeError("should never get here")
-
-
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_latlon_from_point_code(point_code):
     xyz = get_xyz_from_point_code_recursive(point_code)
     return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
 
 
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_xyz_from_point_code(point_code):
     xyz = get_xyz_from_point_code_recursive(point_code)
     return xyz
 
 
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_latlon_from_point_number(point_number):
     xyz = get_xyz_from_point_number_recursive(point_number)
     return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
@@ -133,7 +106,7 @@ def get_latlons_from_point_codes(point_codes):
     return [get_latlon_from_point_code(pc) for pc in point_codes]
 
 
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_xyz_from_point_number(point_number):
     xyz = get_xyz_from_point_number_recursive(point_number)
     return xyz
@@ -210,30 +183,44 @@ def get_all_point_codes_in_order_up_to_iteration_with_trailing_zeros(iteration):
             yield code
 
 
-def get_random_point_code(min_iterations, expected_iterations):
-    if expected_iterations <= min_iterations:
-        raise ValueError(f"expected_iterations ({expected_iterations}) must be greater than min_iterations ({min_iterations})")
+def get_random_point_code(min_iterations, expected_iterations, max_iterations):
+    assert min_iterations <= expected_iterations <= max_iterations
+    
+    # start the string off with the minimum iterations needed
     s = random.choice("CDEFGHIJKL")
-    for i in range(min_iterations):
+    for i in range(min_iterations - 1):
         s += random.choice("0123")
-    while True:
-        s += random.choice("0123")
-        if random.random() < 1/(expected_iterations - min_iterations):
-            break
+    backup_digit = random.choice("123")  # prevent trailing zeros from taking s back below min_iterations
+
+    iterations_used = get_iteration_number_from_point_code(s)
+    if iterations_used < expected_iterations:
+        while True:
+            s += random.choice("0123")
+            iterations_used = get_iteration_number_from_point_code(s)
+            if iterations_used >= max_iterations:
+                break
+            if random.random() < 1/(expected_iterations - min_iterations):
+                break
 
     # based on the number of points in this iteration, maybe replace with one of the poles
     iterations_used = get_iteration_number_from_point_code(s)
     n_points_this_iteration = get_n_points_from_iterations(iterations_used)
     prob_of_pole = 2 / n_points_this_iteration
-    if random.random() < prob_of_pole:
+    if min_iterations == 0 and random.random() < prob_of_pole:
         return random.choice(["A", "B"])
+    
+    iteration_born = get_iteration_born_from_point_code(strip_trailing_zeros(s))
+    if iteration_born < min_iterations:
+        # replace the last zero with backup_digit
+        s = s[:-1] + backup_digit
     else:
         s = strip_trailing_zeros(s)
-        return s
+
+    return s
 
 
-def get_random_point_number(min_iterations, expected_iterations):
-    pc = get_random_point_code(min_iterations, expected_iterations)
+def get_random_point_number(min_iterations, expected_iterations, max_iterations):
+    pc = get_random_point_code(min_iterations, expected_iterations, max_iterations)
     pn = get_point_number_from_point_code(pc)
     return pn
 
@@ -268,7 +255,6 @@ def get_exact_n_points_from_iterations(n_iters):
     return 2 + 10 * (4 ** n_iters)
 
 
-@functools.lru_cache(maxsize=10000)
 def get_exact_iterations_from_n_points(n_points):
     return np.log((n_points - 2)/10) / np.log(4)  # just use change of base since np.log(arr, b) doesn't like arrays
 
@@ -293,11 +279,18 @@ def verify_valid_point_numbers(point_numbers, n_iterations):
             raise ValueError("point number {} too high for {} iterations, which has {} points".format(p, n_iterations, points_at_iter))
 
 
-def verify_can_have_children(point_number, n_iterations):
-    if point_number in [0, 1]:
-        raise ValueError("point {} cannot have children".format(point_number))
+def verify_can_have_children_from_point_number(pn, iteration):
+    if pn in [0, 1]:
+        raise ValueError(f"point {pn} cannot have children")
     # point cannot have children in the same iteration when it is born, so require that the point existed one iteration ago (or earlier)
-    verify_valid_point_numbers([point_number], n_iterations-1)
+    return iteration > get_iteration_born_from_point_number(pn)
+
+
+def verify_can_have_children_from_point_code(pc, iteration):
+    # iteration must be greater than point's born iteration
+    if pc in ["A", "B"]:
+        raise ValueError(f"point {pc} cannot have children")
+    return iteration > get_iteration_born_from_point_code(pc)
 
 
 def is_valid_point_number(point_number, n_iterations):
@@ -308,9 +301,9 @@ def is_valid_point_number(point_number, n_iterations):
     return True
 
 
-def can_have_children(point_number, n_iterations):
+def can_have_children_from_point_number(point_number, n_iterations):
     try:
-        verify_can_have_children(point_number, n_iterations)
+        verify_can_have_children_from_point_number(point_number, n_iterations)
     except ValueError:
         return False
     return True
@@ -594,275 +587,79 @@ def get_opposite_neighbor_direction(i):
 
 
 # @functools.lru_cache(maxsize=10000)
-def get_child(parent, child_index, iteration):
-    if parent in [0, 1]:
-        raise ValueError("point {} cannot have children".format(parent))
-    verify_can_have_children(parent, iteration)  # make sure parent exists and is old enough to have children
+def get_child_from_point_number(pn, child_index, iteration):
+    if pn in [0, 1]:
+        raise ValueError(f"point {pn} cannot have children")
+    verify_can_have_children_from_point_number(pn, iteration)  # make sure parent exists and is old enough to have children
     adder = get_3adder_for_iteration(iteration)
-    return 3 * (parent + adder) + child_index
+    return 3 * (pn + adder) + child_index
+
+
+def get_child_from_point_code(pc, child_index, iteration):
+    if pc in ["A", "B"]:
+        raise ValueError(f"point {pc} cannot have children")
+    verify_can_have_children_from_point_code(pc, iteration)
+    # pad with zeros if needed to get child at this iteration
+    pc0 = pc.ljust(iteration, "0")
+    child_index_str = str(child_index + 1)  # "0" is reserved for not moving and then making later child
+    assert child_index_str in ["1", "2", "3"], child_index_str
+    return pc0 + child_index_str
 
 
 # @functools.lru_cache(maxsize=10000)
-def get_children(parent, iteration):
-    if parent in [0, 1]:
-        raise ValueError("point {} cannot have children".format(parent))
-    verify_can_have_children(parent, iteration)  # make sure parent exists and is old enough to have children
+def get_children_from_point_number(pn, iteration):
+    if pn in [0, 1]:
+        raise ValueError("point {} cannot have children".format(pn))
+    verify_can_have_children_from_point_number(pn, iteration)  # make sure parent exists and is old enough to have children
     adder = get_3adder_for_iteration(iteration)
-    return [3 * (parent + adder) + child_index for child_index in [0, 1, 2]]
+    return [3 * (pn + adder) + child_index for child_index in [0, 1, 2]]
 
 
-# @functools.lru_cache(maxsize=10000)
-def get_parent_from_point_code(point_code):
-    return strip_trailing_zeros(point_code[:-1])
+def get_parent_from_point_code(pc):
+    if len(pc) == 1:
+        return None
+    enforce_no_trailing_zeros(pc)
+    return strip_trailing_zeros(pc[:-1])
 
 
-def get_directional_parent_from_point_code(point_code):
-    assert point_code[-1] != "0", f"point code shouldn't have trailing zeros, got {point_code}"
-    if point_code in list("ABCDEFGHIJKL"):
+def get_grandparent_from_point_code(pc):
+    if len(pc) <= 2:
+        return None
+    enforce_no_trailing_zeros(pc)
+    par = get_parent_from_point_code(pc)
+    return get_parent_from_point_code(par)
+
+
+def get_directional_parent_from_point_code(pc):
+    enforce_no_trailing_zeros(pc)
+    if len(pc) == 1:
         return None
     else:
         # convert it to the C-D peel and then convert the answer back to the correct peel
-        cd_code, peel_offset = normalize_peel(point_code)
+        cd_code, peel_offset = normalize_peel(pc)
         assert cd_code[0] in ["C", "D"], "peel normalization failed"
 
-    cd_dpar = get_directional_parent_from_point_code_using_box_corner_mapping(cd_code)
+    cd_dpar = bc.get_directional_parent_from_point_code_using_box_corner_mapping(cd_code)
     
     # keep trailing zeros during the recursive calls to box corner mapping
     # but no longer need them here now that we have our final answer
     cd_dpar = strip_trailing_zeros(cd_dpar)
 
     # similarly undo reversed-polarity encoding if we got one of those
-    if point_code_is_in_reversed_polarity_encoding(cd_dpar):
-        # print(f"cd_dpar {cd_dpar} is in reverse-polarity encoding")
-        cd_dpar = correct_reversed_edge_polarity(cd_dpar)
-        # print(f"cd_dpar re-encoded to {cd_dpar}")
+    if bc.point_code_is_in_reversed_polarity_encoding(cd_dpar):
+        cd_dpar = bc.correct_reversed_edge_polarity(cd_dpar)
 
     dpar = reapply_peel_offset(cd_dpar, peel_offset)
-
-    # debug while coding all these conditions
-    # dpar_brute_force = get_directional_parent_from_point_code_brute_force(point_code)
-    # # assert dpar == dpar_brute_force, f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}"
-    # if dpar != dpar_brute_force:
-    #     print(f"pattern-based answer {dpar} does not match brute force (correct) answer: {dpar_brute_force}")
-    #     input("acknowledge")
-
     return dpar
-
-
-def get_directional_parent_from_point_code_using_box_corner_mapping(point_code, mapping_stack=None):
-    # box-corner mapping is where you take an original half-peel
-    # e.g. the square (two triangle faces) with C at the upper right
-    # C at upper right has upper left of A, lower left of K, lower right of L
-    # D at upper right has upper left of C, lower left of L, lower right of B
-    # other half-peel boxes are the same, just add the peel-analogue offset (C,D=E,F=G,H=I,J=K,L)
-    # see what happens to the corners of the boxes (which are dpars of parts of the path)
-    # if we replace the upper right corner (ancestor) with one of its children
-    # e.g. we want to compare the paths to get to C2131 vs C131,
-    # which is a C vs C2 mapping for the first step
-    # C -> C2 makes the corners A -> K1, K -> K (=K0), and L -> L1
-    # these mappings exist for all four steps you can take from an ancestor (0, 1, 2, and 3)
-    # corresponding to the quadrant of the half-peel box where that step is the upper right
-    # so for C -> C0 you just shrink to the upper right box quadrant
-    # and that gives you A -> C1, K -> C2, L -> C3
-    # etc. Now I will just list the mappings.
-    if mapping_stack is None:
-        mapping_stack = []
-    # assumes the peel is normalized to CD
-    mappings = {
-        # need A0 and B0 for when we're dealing with lengthening of reverse-polarity codes
-        # similarly with using A3 instead of K1 and B1 instead of L3
-        "C0": [("C","C0"), ("A","C1"), ("K","C2"), ("L","C3")],
-        "C1": [("C","C1"), ("A","A0"), ("K","A3"), ("L","C2")],
-        "C2": [("C","C2"), ("A","A3"), ("K","K0"), ("L","L1")],
-        "C3": [("C","C3"), ("A","C2"), ("K","L1"), ("L","L0")],
-        "D0": [("D","D0"), ("C","D1"), ("L","D2"), ("B","D3")],
-        "D1": [("D","D1"), ("C","C0"), ("L","C3"), ("B","D2")],
-        "D2": [("D","D2"), ("C","C3"), ("L","L0"), ("B","B1")],
-        "D3": [("D","D3"), ("C","D2"), ("L","B1"), ("B","B0")],
-    }
-    iter1 = {
-        "C1":"A", "C2":"K", "C3":"L",
-        "D1":"C", "D2":"L", "D3":"B",
-    }
-
-    try:
-        dpar = iter1[point_code]
-        # print(f"known type: iteration 1, giving dpar {dpar} of point {point_code}")
-        return dpar
-    except KeyError:
-        pass
-    
-    assert len(point_code) >= 3, f"shouldn't use box corner mapping with point from iteration 0 or 1, but got {point_code}"
-    new_point_code, mapping_stack = shorten_by_box_corner_mapping(point_code, mapping_stack, mappings)
-    new_dpar = get_directional_parent_from_point_code_using_box_corner_mapping(new_point_code, mapping_stack)
-    # print(f"got new_dpar {new_dpar}")
-
-    if dpar_is_on_reversed_edge_from_perspective_of_point(new_dpar, point_code):
-        # print(f"dpar {new_dpar} is on reversed edge (but not in reverse-polarity encoding")
-        new_dpar = reverse_edge_polarity(new_dpar)
-        # print(f"dpar reverse-encoded to {new_dpar}")
-    
-    dpar, mapping_stack = lengthen_by_box_corner_mapping(new_dpar, mapping_stack, mappings)
-    
-    # try leaving it in reverse-polarity-encoding for recursive calls
-    # then clean it up by stripping zeros and correcting polarity encoding once have answer
-    return dpar
-
-
-def shorten_by_box_corner_mapping(point_code, mapping_stack, mappings):
-    prefix = point_code[:2]
-    tail = point_code[2:]
-    mapping = mappings[prefix]
-
-    # apply the mapping to the point
-    # the shorter ones are first in the tuples
-    new_prefix = None
-    for shorter, longer in mapping:
-        if longer == prefix:
-            new_prefix = shorter
-            break
-    assert new_prefix is not None, f"failed to get new prefix for shortening code {point_code} by mapping {mapping}"
-    new_point_code = new_prefix + tail
-
-    # add the mapping to the stack (using the prefix as shorthand)
-    mapping_stack = mapping_stack + [prefix]
-    # print(f"shortened {point_code} to {new_point_code} using mapping {mapping}")
-    return new_point_code, mapping_stack
-
-
-def lengthen_by_box_corner_mapping(point_code, mapping_stack, mappings):
-    # use the last mapping on the stack
-    prefix = mapping_stack[-1]
-    # remove the mapping from the stack so it's not reused
-    mapping_stack = mapping_stack[:-1]
-    mapping = mappings[prefix]
-
-    point_prefix = point_code[0]
-    tail = point_code[1:]
-    new_prefix = None
-    for shorter, longer in mapping:
-        if shorter == point_prefix:
-            new_prefix = longer
-            break
-    assert new_prefix is not None, f"failed to get new prefix for lengthening code {point_code} by mapping {mapping}"
-    new_point_code = new_prefix + tail
-    # print(f"lengthened {point_code} to {new_point_code} using mapping {mapping}")
-    return new_point_code, mapping_stack
-
-
-def dpar_is_on_reversed_edge_from_perspective_of_point(dpar, reference_point_code):
-    # get peel of reference point, it should be normalized to C-D peel
-    orig = reference_point_code[0]
-    if orig not in ["C", "D"]:
-        raise ValueError(f"please normalize peel for point {reference_point_code} to C-D")
-
-    # e.g. from the perspective of the C-D peel, the K-A edge runs the wrong way
-    # you'd want it to run down (toward K) from A (so in the 3 direction from A)
-    # but instead it runs up (toward A) from K (so in the 1 direction from K)
-    # similarly the L-B edge runs to the right, in the 3 direction from L
-    # but we want it to run to the left, in the 1 direction from B
-    # so we will code points on these *as if* they do this,
-    # for the purposes of box corner mapping to find dpars
-    # and then convert the result back to the correct notation
-
-    # don't treat K/L as being reversed, just the points on the edge itself
-    if len(dpar) == 1:
-        return False
-
-    tail = dpar[1:]
-    uses_ones = all(x in ["0", "1"] for x in tail)
-    uses_threes = all(x in ["0", "3"] for x in tail)
-    has_non_zero = any(x != "0" for x in tail)
-    is_on_k_a_edge = dpar[0] == "K" and uses_ones and has_non_zero
-    is_on_l_b_edge = dpar[0] == "L" and uses_threes and has_non_zero
-    return is_on_k_a_edge or is_on_l_b_edge
-
-
-def flip_prefix_for_edge_reversal(x):
-    assert len(x) == 1, x
-    return {"A":"K", "K":"A", "B":"L", "L":"B"}[x]
-
-
-def flip_tail_for_edge_reversal(tail):
-    # convert the non-zeros to ones and treat as a binary decimal, then subtract from 1
-    if all(x in ["0", "1"] for x in tail):
-        tail_has_ones_or_threes = "1"
-    elif all(x in ["0", "3"] for x in tail):
-        tail_has_ones_or_threes = "3"
-        tail = tail.replace("3", "1")
-    else:
-        raise Exception("shouldn't happen, tail is " + tail)
-    
-    assert all(x in ["0", "1"] for x in tail), tail
-    # just subtract from binary the way I know how to subtract from power of 10
-    # where every pair adds up to the base-1 except the last one, which adds to the base
-    new_tail = ""
-    for x in tail[:-1]:
-        if x == "0":
-            # flip the ones and threes
-            if tail_has_ones_or_threes == "1":
-                new_tail += "3"
-            elif tail_has_ones_or_threes == "3":
-                new_tail += "1"
-            else:
-                raise Exception("shouldn't happen")
-        elif x == "1":
-            new_tail += "0"
-        else:
-            raise Exception("shouldn't happen")
-    
-    # now do the last one
-    assert tail[-1] == "1", f"tail can't have trailing zeros: {tail}"
-    if tail_has_ones_or_threes == "1":
-        new_tail += "3"
-    elif tail_has_ones_or_threes == "3":
-        new_tail += "1"
-    else:
-        raise Exception("shouldn't happen")
-    
-    return new_tail
-
-
-def reverse_edge_polarity(point_code):
-    # points of form K{0,1}+ can be reverse-polarity-coded as A{0,3}+
-    # similarly L{0,3}+ can be reverse-polarity-coded as B{0,1}+
-    # (this is because of the reversed edges messing up dpar finding)
-    # this function allows it to go either way
-    prefix = point_code[0]
-    tail = point_code[1:]
-    new_prefix = flip_prefix_for_edge_reversal(prefix)
-    new_tail = flip_tail_for_edge_reversal(tail)
-    new_point_code = new_prefix + new_tail
-    assert len(new_point_code) == len(point_code), f"got wrong length code {new_point_code} from reversing {point_code}"
-    return new_point_code
-
-
-def correct_reversed_edge_polarity(point_code):
-    # this function only wants codes that are already in reverse-polarity-coded form
-    if not point_code_is_in_reversed_polarity_encoding(point_code):
-        # it's not in improper-polarity mode
-        raise ValueError(f"code {point_code} is not in reverse-polarity-coded form")
-    return reverse_edge_polarity(point_code)
-
-
-def point_code_is_in_reversed_polarity_encoding(point_code):
-    prefix = point_code[0]
-    tail = point_code[1:]
-    uses_ones = all(x in ["0", "1"] for x in tail)
-    uses_threes = all(x in ["0", "3"] for x in tail)
-    has_non_zero = any(x != "0" for x in tail)
-    is_on_k_a_edge = prefix == "A" and uses_threes and has_non_zero
-    is_on_l_b_edge = prefix == "B" and uses_ones and has_non_zero
-    return is_on_k_a_edge or is_on_l_b_edge
 
 
 # @functools.lru_cache(maxsize=10000)
-def get_directional_parent_from_point_code_brute_force(point_code):
-    print("brute-forcing dpar from pc")
-    point_number = get_point_number_from_point_code(point_code)
-    dp_number = get_directional_parent_from_point_number(point_number)
-    dp_code = get_point_code_from_point_number(dp_number)
-    return dp_code
+# def get_directional_parent_from_point_code_brute_force(point_code):
+#     print("brute-forcing dpar from pc")
+#     point_number = get_point_number_from_point_code(point_code)
+#     dp_number = get_directional_parent_from_point_number(point_number)
+#     dp_code = get_point_code_from_point_number(dp_number)
+#     return dp_code
 
 
 # @functools.lru_cache(maxsize=10000)
@@ -949,7 +746,8 @@ def test_directional_parent_correctness(point_numbers):
     failures = []
     for p in point_numbers:
         dp_inheritance = get_directional_parent_via_inheritance(p)
-        dp_numerology = get_directional_parent_via_numerology(p)
+        # dp_numerology = get_directional_parent_via_numerology(p)
+        raise
         if dp_inheritance != dp_numerology:
             failure_tup = (p, dp_inheritance, dp_numerology)
     if len(failures) == 0:
@@ -994,7 +792,7 @@ def get_parent_chain(point_number):
         return [d]
     else:
         iteration_born = get_iteration_born_from_point_number(point_number)
-        child_index = get_child_index(point_number)
+        child_index = get_child_index_from_point_number(point_number)
         parent = get_parent_from_point_number(point_number)
         parent_iteration_born = get_iteration_born_from_point_number(parent)
         previous_chain = get_parent_chain(parent)
@@ -1171,11 +969,31 @@ def unify_five_and_six(adjacency, point_number):
 
 
 def get_adjacency_from_point_number(pn, iteration):
-    raise NotImplementedError
+    return get_adjacency_recursive(pn, iteration)
 
 
-def get_adjacency_from_point_code(pc, iteration):
-    raise NotImplementedError
+def get_adjacency_from_point_code(pc, iteration, use_existing_method=False):
+    # TODO get it more directly using the point code format
+    # manipulating the symbols to easily tell where the parent is, etc.
+
+    # par = get_parent_from_point_code(pc)
+    # dpar = get_directional_parent_from_point_code(pc)
+
+    if use_existing_method:
+        # just copy existing logic for point numbers (works, but slow)
+        pn = get_point_number_from_point_code(pc)
+        pns = get_adjacency_from_point_number(pn, iteration)
+        adj = [get_point_code_from_point_number(pn1) for pn1 in pns]
+        adj = [x.ljust(len(pc), "0") for x in adj]
+        return adj
+
+    neighL = add_direction_to_point_code(pc, "1")
+    neighDL = add_direction_to_point_code(pc, "2")
+    neighD = add_direction_to_point_code(pc, "3")
+    neighR = subtract_direction_from_point_code(pc, "1")
+    neighUR = subtract_direction_from_point_code(pc, "2")
+    neighU = subtract_direction_from_point_code(pc, "3")
+    return [neighL, neighDL, neighD, neighR, neighUR, neighU]
 
 
 # @functools.lru_cache(maxsize=10000)
@@ -1185,7 +1003,7 @@ def get_adjacency_recursive(point_number, iteration):
     # print("getting adjacency recursive for p#{} in i#{}".format(point_number, iteration))
 
     if iteration == get_iteration_born_from_point_number(point_number):
-        return get_adjacency_when_born(point_number)
+        return get_adjacency_when_born_from_point_number(point_number)
 
     if point_number in [0, 1]:
         if iteration == 0:
@@ -1203,9 +1021,9 @@ def get_adjacency_recursive(point_number, iteration):
     # print("reached lower cases for p#{} i#{}".format(point_number, iteration))
 
     # children born this iteration are easy to find for points >= 2
-    childL = get_child(point_number, 0, iteration)
-    childDL = get_child(point_number, 1, iteration)
-    childD = get_child(point_number, 2, iteration)
+    childL = get_child_from_point_number(point_number, 0, iteration)
+    childDL = get_child_from_point_number(point_number, 1, iteration)
+    childD = get_child_from_point_number(point_number, 2, iteration)
     neighbors = [childL, childDL, childD]
     if point_number < 12:
         neighbors += [None, None]
@@ -1270,7 +1088,7 @@ def get_index_clockwise_step(original_index, n_steps, n_neighbors):
 
 
 # @functools.lru_cache(maxsize=10000)
-def get_adjacency_when_born(point_number):
+def get_adjacency_when_born_from_point_number(point_number):
     # print("get_adjacency_when_born({})".format(point_number))
     iteration = get_iteration_born_from_point_number(point_number)
 
@@ -1284,7 +1102,7 @@ def get_adjacency_when_born(point_number):
     # --- new stuff with attempts at unification
 
     parent = get_parent_from_point_number(point_number)
-    child_index = get_child_index(point_number)
+    child_index = get_child_index_from_point_number(point_number)
     parent_previous_adjacency = get_adjacency_recursive(parent, iteration-1)  # adjacency of parent in PREVIOUS iteration
     # the child index of this new point is the same as what its actual index in the adjacency list will be (of its parent)
     # since the adjacency list is in the order L,DL,D,R,UR,U
@@ -1352,13 +1170,18 @@ def get_adjacency_when_born(point_number):
     return neighbors  # try populating it as list by index rather than using direction labels at all
 
 
+def get_adjacency_when_born_from_point_code(pc):
+    pc1 = strip_trailing_zeros(pc)
+    return get_adjacency_from_point_code(pc1)
+
+
 def is_on_northern_seam(p):
     # the seams are the edges touching the north pole, from the pole to its five original neighbors
     if is_initial_northern_ring_point(p):
         return True
     else:
         parent = get_parent_from_point_number(p)
-        child_index = get_child_index(p)
+        child_index = get_child_index_from_point_number(p)
         return child_index == 0 and is_on_northern_seam(parent)
 
 
@@ -1367,7 +1190,7 @@ def is_on_southern_seam(p):
         return True
     else:
         parent = get_parent_from_point_number(p)
-        child_index = get_child_index(p)
+        child_index = get_child_index_from_point_number(p)
         return child_index == 2 and is_on_southern_seam(parent)
 
 
@@ -1383,14 +1206,14 @@ def get_north_pole_neighbor(previous_neighbor_in_direction, iteration):
     if iteration < 1:
         raise ValueError("can't get north pole neighbor before iteration 1; use the initial adjacency for iteration 0")
     # the north pole's neighbor in this direction will be the left child of the previous neighbor
-    return get_child(previous_neighbor_in_direction, child_index=0, iteration=iteration)
+    return get_child_from_point_number(previous_neighbor_in_direction, child_index=0, iteration=iteration)
 
 
 def get_south_pole_neighbor(previous_neighbor_in_direction, iteration):
     if iteration < 1:
         raise ValueError("can't get south pole neighbor before iteration 1; use the initial adjacency for iteration 0")
     # the south pole's neighbor in this direction will be the down child of the previous neighbor
-    return get_child(previous_neighbor_in_direction, child_index=2, iteration=iteration)
+    return get_child_from_point_number(previous_neighbor_in_direction, child_index=2, iteration=iteration)
 
 
 def get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration):
@@ -1414,11 +1237,11 @@ def get_generic_point_neighbor(point, previous_neighbor_in_direction, iteration)
         # child index should equal the adjacency index since adjacency is in order L,DL,D,R,UR,U and child index is in order L,DL,D
         index_of_point_from_neighbor_perspective = previous_neighbor_adjacency.index(point)
         child_index = index_of_point_from_neighbor_perspective
-        return get_child(previous_neighbor_in_direction, child_index, iteration)
+        return get_child_from_point_number(previous_neighbor_in_direction, child_index, iteration)
     elif desired_point_is_in_child_direction_from_point:
         index_of_neighbor_from_point_perspective = previous_point_adjacency.index(previous_neighbor_in_direction)
         child_index = index_of_neighbor_from_point_perspective
-        return get_child(point, child_index, iteration)
+        return get_child_from_point_number(point, child_index, iteration)
     else:
         raise Exception("generic neighbor from {} to {} at i={} has no parent-child relation".format(point, previous_neighbor_in_direction, iteration-1))
 
@@ -1449,15 +1272,20 @@ def convert_adjacency_label_dict_to_list(neighbors):
     return adj
 
 
-def get_child_index(point_number):
+def get_child_index_from_point_number(pn):
     # index that the point is for its parent in the generation it was born
     # if it was the Left child, 0; if it was the DownLeft child, 1; if it was the Down child, 2
-    if point_number < 12:
+    if pn < 12:
         return None
-    return point_number % 3
+    return pn % 3
 
 
-@functools.lru_cache(maxsize=10000)
+def get_child_index_from_point_code(pc):
+    s = pc[-1]
+    return {"1": 0, "2": 1, "3": 2}[s]
+
+
+# @functools.lru_cache(maxsize=10000)
 def get_parent_xyzs_from_point_code(point_code):
     p0, p1 = get_parents_from_point_code(point_code)
     xyz0 = get_xyz_from_point_code_recursive(p0)
@@ -1465,7 +1293,7 @@ def get_parent_xyzs_from_point_code(point_code):
     return xyz0, xyz1
 
 
-@functools.lru_cache(maxsize=10000)
+# @functools.lru_cache(maxsize=10000)
 def get_parent_xyzs_from_point_number(point_number):
     p0, p1 = get_parents_from_point_number(point_number)
     xyz0 = get_xyz_from_point_number_recursive(p0)
@@ -1499,12 +1327,12 @@ def get_xyz_of_child_from_parent_xyzs(xyz0, xyz1):
     return mcm.get_unit_sphere_midpoint_from_xyz(xyz0, xyz1)
 
 
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_xyz_from_point_code_recursive(point_code):
     return get_xyz_of_point_code_using_parents(point_code)
 
 
-@functools.lru_cache(maxsize=100000)
+# @functools.lru_cache(maxsize=100000)
 def get_xyz_from_point_number_recursive(point_number):
     return get_xyz_of_point_number_using_parents(point_number)
 
@@ -1540,7 +1368,7 @@ def get_3adder_for_iteration(i):
     # the 3adder is a function of iteration number, such that child_number = 3*(parent+adder)+child_index
     numer = (10 * (4 ** (i-1)) - 4)
     denom = 3
-    assert numer % denom == 0, "iteration {} gave non-int 3adder: {}".format(i, res)
+    assert numer % denom == 0, "iteration {} gave non-int 3adder: {}".format(i, numer / denom)
     return numer // denom  # avoid int() flooring for floats like x.9999
 
 
@@ -1552,8 +1380,8 @@ def get_iteration_born_from_point_number(point_number):
     return math.ceil(get_exact_iterations_from_n_points(point_number+1))
 
 
-def get_iteration_born_from_point_code(point_code):
-    pc = strip_trailing_zeros(point_code)
+def get_iteration_born_from_point_code(pc):
+    enforce_no_trailing_zeros(pc)
     return get_iteration_number_from_point_code(pc)
 
 
@@ -1840,6 +1668,10 @@ def strip_trailing_zeros(s):
     return s
 
 
+def enforce_no_trailing_zeros(pc):
+    assert pc[-1] != "0", f"point code shouldn't have trailing zeros, got {pc}"
+
+
 def print_first_dchildren(iteration):
     dpar_by_point, children_by_dpar = get_dpar_dicts_up_to_iteration(iteration, first_dchildren_only=True)
     for dpar, children in children_by_dpar.items():
@@ -1909,7 +1741,7 @@ def get_region_around_point(point_number, iteration, max_distance_gc_normalized)
     new_points = [point_number]
     while len(new_points) > 0:
         pn = new_points[0]
-        neighbors = get_adjacency_recursive(pn, iteration)
+        neighbors = get_adjacency_from_point_number(pn, iteration)
         print(f"got neighbors of {pn}: {neighbors}")
         for neighbor in neighbors:
             if neighbor not in res:
@@ -1944,7 +1776,7 @@ def test_children_are_correct_neighbors():
             adj = get_adjacency_from_point_number(point_number, n_iterations)
             # print("p{} i{} adj: {}".format(point_number, n_iterations, adj))
             if n_iterations > born_iteration:
-                children = [get_child(point_number, child_index, n_iterations) for child_index in [0,1,2]]
+                children = [get_child_from_point_number(point_number, child_index, n_iterations) for child_index in [0,1,2]]
                 # print("children", children)
                 assert children == adj[:3]
     print("test succeeded: children are the correct neighbor nodes")
@@ -1954,7 +1786,7 @@ def test_adjacency_when_born():
     for i in range(162):
         point_number = i
         print("checking adjacency when born of p#{}".format(point_number))
-        res_no_memo = get_adjacency_when_born(point_number)
+        res_no_memo = get_adjacency_when_born_from_point_number(point_number)
     print("test succeeded: adjacency calculated from scratch")
 
 
@@ -2037,18 +1869,30 @@ if __name__ == "__main__":
     # n_points = get_n_points_from_iterations(iterations)
     # for i, pc in enumerate(get_all_point_codes_in_order_up_to_iteration(iterations)):
     # for i, pc in enumerate(get_all_point_codes_in_order()):
-    for i in range(1625217):
-        pc = get_random_point_code(min_iterations=4, expected_iterations=13)
+    i = 0
+    while True:
+        pc = get_random_point_code(min_iterations=3, expected_iterations=3, max_iterations=3)
+        if pc[-1] != "1":
+            continue
         # in the point database as of 2022-07-15, there are 1625217 points with average iterations around 13
-        # dpar = get_directional_parent_from_point_code(pc)
-        # for speed comparison, MEMORY LEAK beware:
-        # dpar = get_directional_parent_from_point_code_brute_force(pc)
+        par = get_parent_from_point_code(pc)
+        dpar = get_directional_parent_from_point_code(pc)
         # latlon = get_latlon_from_point_code(pc)
         iteration_born = get_iteration_born_from_point_code(pc)
-        adjacency = get_adjacency_from_point_code(pc, iteration_born)
-        # if i % 1000 == 0 and i != 0:
-            # print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
+        adj_test = get_adjacency_from_point_code(pc, iteration_born, use_existing_method=False)
+        adj_known = get_adjacency_from_point_code(pc, iteration_born, use_existing_method=True)
+        # print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
+        print("p\tpar\tdpar\t+1\t+2\t+3\t-1\t-2\t-3")
+        for adj in [adj_known, adj_test]:
+            adj_str = "\t".join(str(x) for x in adj)
+            print(f"{pc}\t{par}\t{dpar}\t{adj_str}")
+        for neigh_known, neigh_test in zip(adj_known, adj_test):
+            if neigh_test not in [None, "?"] and neigh_known != neigh_test:
+                print(f"Warning: {neigh_test=}, {neigh_known=}")
+        print("----")
+        i += 1
 
+    raise
     point_number = get_random_point_number(min_iterations=6, expected_iterations=8)
     iteration = get_iteration_born_from_point_number(point_number)
     region = get_region_around_point(point_number, iteration, max_distance_gc_normalized=0.01)

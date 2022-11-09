@@ -199,7 +199,7 @@ def get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle
             if should_check_descendants:
                 # print("should check descendants")
                 to_check_next_round.append(pn)
-                children = icm.get_children(pn, iteration+1)
+                children = icm.get_children_from_point_number(pn, iteration+1)
                 # print(f"children: {children}")
                 to_check_next_round += children
 
