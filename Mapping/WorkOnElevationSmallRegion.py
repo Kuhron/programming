@@ -312,9 +312,9 @@ if __name__ == "__main__":
     # region_center_latlondeg, region_radius_great_circle_km = (90, 0), 2000  # North Pole
     # region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
     # region_center_latlondeg, region_radius_great_circle_km = (86.5, -13), 250  # small region in Tomar Strait in Mienta, for testing on smaller regions
-    # region_center_latlondeg, region_radius_great_circle_km = (25, -84), 2000  # Jhorju
+    region_center_latlondeg, region_radius_great_circle_km = (25, -84), 2000  # Jhorju
     # region_center_latlondeg, region_radius_great_circle_km = (-54.28119589256169, 175.64265081464623), 250  # random from 2022-07-16
-    region_center_latlondeg, region_radius_great_circle_km = (26.083351229768834, 94.04570559120195), 2000  # northern Mienta, from a random point
+    # region_center_latlondeg, region_radius_great_circle_km = (26.083351229768834, 94.04570559120195), 2000  # northern Mienta, from a random point
     region_center_point_code = icm.get_nearest_icosa_point_to_latlon(region_center_latlondeg, maximum_distance=1, planet_radius=icm.CADA_II_RADIUS_KM)
 
     # to choose random one
@@ -333,7 +333,7 @@ if __name__ == "__main__":
     el_stdev = 15
     n_circles = 10000
 
-    # just test how fast it is to get the positions of all points in the database
+    # # just test how fast it is to get the positions of all points in the database
     # point_numbers_in_database = db.get_all_point_numbers_with_data()
     # for i, pn in enumerate(point_numbers_in_database):
     #     xyz = icm.get_xyz_from_point_number(pn)
@@ -341,8 +341,6 @@ if __name__ == "__main__":
     #         print(i, pn, xyz)
 
     point_numbers_in_db = db.get_all_point_numbers_with_data()
-    for pn in point_numbers_in_db:
-        pc = icm.get_point_code_from_point_number(pn)
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
     # DEBUG
