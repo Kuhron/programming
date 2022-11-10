@@ -986,7 +986,7 @@ def get_adjacency_recursive(pn, iteration, force_six_directions=False):
             raise ValueError("shouldn't happen")
 
     else:
-        # print("reached lower cases for p#{} i#{}".format(point_number, iteration))
+        # print("reached lower cases for p#{} i#{}".format(pn, iteration))
         # children born this iteration are easy to find for points >= 2
         childL = get_child_from_point_number(pn, 0, iteration)
         childDL = get_child_from_point_number(pn, 1, iteration)
@@ -1826,6 +1826,58 @@ def test_get_nearest_point_to_latlon():
     print("test succeeded: got sufficiently near icosa points for various latlons; largest point number encountered was {}, which requires {} iterations, having a total of {} points".format(max_point_number, max_iter, points_needed))
 
 
+def test_adjacency_recursive_vs_arithmetic():
+    i = 2
+    while True:
+        # in the point database as of 2022-07-15, there are 1625217 points with average iterations around 13
+        # pc = get_random_point_code(min_iterations=3, expected_iterations=3, max_iterations=3)
+        # pc = random.choice(["C", "D"]) + pc[1:]
+        # pc = ("C" + "".join(random.choice("01") for i in range(3))) if random.random() < 0.5 else ("D" + "".join(random.choice("03") for i in range(3)))
+        pc = get_point_code_from_point_number(i).ljust(5, "0")
+        par = get_parent_from_point_code(pc)
+        dpar = get_directional_parent_from_point_code(pc)
+        # latlon = get_latlon_from_point_code(pc)
+        iteration = get_iteration_number_from_point_code(pc)
+        adj_test = get_adjacency_from_point_code(pc, iteration, use_existing_method=False)
+        adj_known = get_adjacency_from_point_code(pc, iteration, use_existing_method=True)
+        # print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
+        print("p\tpar\tdpar\t+1\t+2\t+3\t-1\t-2\t-3")
+        for adj in [adj_known, adj_test]:
+            adj_str = "\t".join(str(x) for x in adj)
+            print(f"{pc}\t{par}\t{dpar}\t{adj_str}")
+        for neigh_known, neigh_test in zip(adj_known, adj_test):
+            if neigh_test not in [None, "?"] and neigh_known != neigh_test:
+                raise RuntimeError(f"Warning: {neigh_test=}, {neigh_known=}")
+        print("----")
+        i += 1
+
+
+def test_speed_adjacency_recursive_vs_arithmetic(iterations):
+    n = get_n_points_from_iterations(iterations)
+    assert n > 2
+    print_every_n_seconds = 2
+
+    funcs = {
+        "adjacency_recursive": lambda pc, iteration: get_adjacency_from_point_code(pc, iteration, use_existing_method=True),
+        "adjacency_arithmetic": lambda pc, iteration: get_adjacency_from_point_code(pc, iteration, use_existing_method=False),
+    }
+
+    for func_name, func in funcs.items():
+        t0 = time.time()
+        last_print_time = t0
+        i = 2
+        while i < n:
+            if time.time() - last_print_time > print_every_n_seconds:
+                print(f"i = {i}/{n}")
+                last_print_time = time.time()
+            pc = get_point_code_from_point_number(i).ljust(iterations, "0")
+            iteration = get_iteration_number_from_point_code(pc)
+            adj = func(pc, iteration)
+            i += 1
+        dt = time.time() - t0
+        print(f"{func_name} took {dt} seconds")
+
+
 STARTING_POINTS = get_starting_points_immutable()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
 STARTING_POINTS_ORDERED, STARTING_POINTS_ADJACENCY = STARTING_POINTS
 # is it a bad idea to define the global later than the functions?
@@ -1855,29 +1907,9 @@ if __name__ == "__main__":
     # for i, pc in enumerate(get_all_point_codes_in_order_up_to_iteration(iterations)):
     # for i, pc in enumerate(get_all_point_codes_in_order()):
     # for pc in get_all_point_codes_in_iteration(1):
-    i = 2
-    while True:
-        # in the point database as of 2022-07-15, there are 1625217 points with average iterations around 13
-        # pc = get_random_point_code(min_iterations=3, expected_iterations=3, max_iterations=3)
-        # pc = random.choice(["C", "D"]) + pc[1:]
-        # pc = ("C" + "".join(random.choice("01") for i in range(3))) if random.random() < 0.5 else ("D" + "".join(random.choice("03") for i in range(3)))
-        pc = get_point_code_from_point_number(i).ljust(5, "0")
-        par = get_parent_from_point_code(pc)
-        dpar = get_directional_parent_from_point_code(pc)
-        # latlon = get_latlon_from_point_code(pc)
-        iteration = get_iteration_number_from_point_code(pc)
-        adj_test = get_adjacency_from_point_code(pc, iteration, use_existing_method=False)
-        adj_known = get_adjacency_from_point_code(pc, iteration, use_existing_method=True)
-        # print(f"i={i}, {pc} <- {dpar}, point is located at {latlon}")
-        print("p\tpar\tdpar\t+1\t+2\t+3\t-1\t-2\t-3")
-        for adj in [adj_known, adj_test]:
-            adj_str = "\t".join(str(x) for x in adj)
-            print(f"{pc}\t{par}\t{dpar}\t{adj_str}")
-        for neigh_known, neigh_test in zip(adj_known, adj_test):
-            if neigh_test not in [None, "?"] and neigh_known != neigh_test:
-                raise RuntimeError(f"Warning: {neigh_test=}, {neigh_known=}")
-        print("----")
-        i += 1
+
+    # test_adjacency_recursive_vs_arithmetic()
+    test_speed_adjacency_recursive_vs_arithmetic(4)
 
     raise
     point_number = get_random_point_number(min_iterations=6, expected_iterations=8)
