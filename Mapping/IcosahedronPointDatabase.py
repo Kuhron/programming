@@ -327,38 +327,38 @@ class IcosahedronPointDatabase:
             res.add(block_number)
         return res
 
-    def get_int_from_line_label(self, line_label):
-        N = self.metadata["n_point_code_chars_per_level"]
-        assert 1 <= len(line_label) <= N, repr(line_label)
-        # base-4 number
-        # note that if it is less than N chars long, it has trailing zeros, not leading
-        # so 1 acts like 100 and 11 acts like 110 (for N=3)
-        to_n = lambda c: "0123".index(c)
-        x = 0
-        for i, c in enumerate(line_label):
-            n = to_n(c)
-            x += n * (4 ** ((N-1)-i))
-        # print(f"{line_label=} gave {x=}")
-        return x
+    # def get_int_from_line_label(self, line_label):
+    #     N = self.metadata["n_point_code_chars_per_level"]
+    #     assert 1 <= len(line_label) <= N, repr(line_label)
+    #     # base-4 number
+    #     # note that if it is less than N chars long, it has trailing zeros, not leading
+    #     # so 1 acts like 100 and 11 acts like 110 (for N=3)
+    #     to_n = lambda c: "0123".index(c)
+    #     x = 0
+    #     for i, c in enumerate(line_label):
+    #         n = to_n(c)
+    #         x += n * (4 ** ((N-1)-i))
+    #     # print(f"{line_label=} gave {x=}")
+    #     return x
 
-    def get_filepath_and_line_label_for_point_code(self, pc):
-        root_dir = self.root_dir
-        N = self.metadata["n_point_code_chars_per_level"]
-        parent_dir = os.path.join(root_dir, "data_by_point_code/")
-        head = pc[0]
-        tail = pc[1:]
-        assert head in "ABCDEFGHIJKL"
-        n_subdirs = (len(tail) - 1) // N
-        chars_remaining = len(tail)
-        subdirs = []
-        for i in range(n_subdirs):
-            digits = tail[N*i : N*i+N]
-            subdirs.append(digits)
-            chars_remaining -= N
-        filename = "data.h5"
-        line_label = tail[-chars_remaining:]
-        fp = os.path.join(parent_dir, head, *subdirs, filename)
-        return fp, line_label
+    # def get_filepath_and_line_label_for_point_code(self, pc):
+    #     root_dir = self.root_dir
+    #     N = self.metadata["n_point_code_chars_per_level"]
+    #     parent_dir = os.path.join(root_dir, "data_by_point_code/")
+    #     head = pc[0]
+    #     tail = pc[1:]
+    #     assert head in "ABCDEFGHIJKL"
+    #     n_subdirs = (len(tail) - 1) // N
+    #     chars_remaining = len(tail)
+    #     subdirs = []
+    #     for i in range(n_subdirs):
+    #         digits = tail[N*i : N*i+N]
+    #         subdirs.append(digits)
+    #         chars_remaining -= N
+    #     filename = "data.h5"
+    #     line_label = tail[-chars_remaining:]
+    #     fp = os.path.join(parent_dir, head, *subdirs, filename)
+    #     return fp, line_label
 
     def get_variable_number_from_name(self, name):
         return self.variables_dict[name]
@@ -497,31 +497,55 @@ if __name__ == "__main__":
     # where should poles go? in their own file maybe? probably best to just do that
     root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
     db = IcosahedronPointDatabase.load(root_dir)
-    pns = db.get_all_point_numbers_with_data()
+    pns = list(db.get_all_point_numbers_with_data())
     # pcs = db.get_all_point_codes_with_data_with_prefix(prefix)
-    for pn in pns:
+
+    var_dict = db.get_variables_dict()
+    variable_indices = sorted(var_dict.keys(int, str))
+
+
+    df = pd.DataFrame(columns=variable_indices, dtype=int)
+    n_pns = len(pns)
+
+    for i, pn in enumerate(pns):
+        # if df has 1001 rows, last i written was 1000, so next i needs to be 1001, so skip i < n
+        if i < len(df.index):
+            continue
+        if i % 100 == 0:
+            print(f"{i}/{n_pns} points done")
+            print(df)
         pc = icm.get_point_code_from_point_number(pn)
         variables = db.get_single_point_all_variables(pn)
-        fp, line_label = db.get_filepath_and_line_label_for_point_code(pc)
-        line_to_write = IcosahedronPointDatabase.get_line_from_dict(line_label, variables)
-        print(pn, pc)
+        row_index = pc
+        df.loc[row_index, variables.keys()] = variables.values()
+    #     fp, line_label = db.get_filepath_and_line_label_for_point_code(pc)
+    #     line_to_write = IcosahedronPointDatabase.get_line_from_dict(line_label, variables)
+    #     print(pn, pc)
         
-        assert fp.endswith("data.h5")
-        path = pathlib.Path(fp)
+    #     assert fp.endswith("data.h5")
+    #     path = pathlib.Path(fp)
 
-        if path.exists():
-            df = pd.read_hdf(fp)
-        else:
-            parent_path = path.parents[0]  # dir in which data.txt is located
-            parent_path.mkdir(parents=True, exist_ok=True)
-            var_dict = db.get_variables_dict()
-            variable_indices = sorted(var_dict.keys(int, str))
-            df = pd.DataFrame(columns=variable_indices)
-            # path.touch()
+    #     if path.exists():
+    #         df = pd.read_hdf(fp)
+    #     else:
+    #         parent_path = path.parents[0]  # dir in which data.txt is located
+    #         parent_path.mkdir(parents=True, exist_ok=True)
+    #         var_dict = db.get_variables_dict()
+    #         variable_indices = sorted(var_dict.keys(int, str))
+    #         df = pd.DataFrame(columns=variable_indices, dtype=int)
+    #         # path.touch()
         
-        row_index = db.get_int_from_line_label(line_label)
-        df.loc[row_index] = variables
-        # print(df)
-        df.to_hdf(fp, key="df")
+    #     row_index = db.get_int_from_line_label(line_label)
+    #     df.loc[row_index] = variables
+    #     # print(df)
+        if i % 10000 == 0 or i >= n_pns - 1:
+            df_in_file = pd.read_hdf("data.h5")
+            df = pd.concat([df_in_file, df])
+            df.to_hdf("data.h5", key="df")
+            print("wrote h5")
+            print("total rows so far:", len(df.index))
+            df = pd.DataFrame(columns=variable_indices, dtype=int)  # start clean one for next round
     
         # input("check")
+    df_in_file = pd.read_hdf("data.h5")
+    assert len(df_in_file.index) == n_pns
