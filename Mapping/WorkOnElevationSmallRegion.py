@@ -99,12 +99,15 @@ def write_point_numbers_to_cache(point_numbers, region_center_latlondeg, region_
 
 def read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km):
     point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
+    print(f"looking for {point_number_cache_fp}")
     if os.path.exists(point_number_cache_fp):
+        print(f"reading from cache file")
         with open(point_number_cache_fp) as f:
             lines = f.readlines()
         point_numbers = [int(l.strip()) for l in lines]
         return point_numbers
     else:
+        print("cache file not found")
         raise FileNotFoundError(point_number_cache_fp)
 
 
@@ -143,9 +146,15 @@ def get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_gre
 
 def get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations):
     fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
-    with open(fp) as f:
-        lines = f.readlines()
-    return [int(l.strip()) for l in lines]
+    print(f"looking for {fp}")
+    if os.path.exists(fp):
+        print(f"reading from cache file")
+        with open(fp) as f:
+            lines = f.readlines()
+            return [int(l.strip()) for l in lines]
+    else:
+        print("cache file not found")
+        raise FileNotFoundError(fp)
 
 
 def get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
@@ -305,7 +314,6 @@ def plot_latlons(point_numbers):
 if __name__ == "__main__":
     root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
     db = IcosahedronPointDatabase.load(root_dir)
-    print("loaded db")
 
     # region_center_latlondeg, region_radius_great_circle_km = (10, -87), 1000  # Western Amphoto
     # region_center_latlondeg, region_radius_great_circle_km = (-87, 10), 1000  # somewhere in O-Z because I originally mixed up latlon

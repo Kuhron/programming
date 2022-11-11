@@ -9,6 +9,11 @@
 
 
 import os
+import pathlib
+import random
+import pandas as pd
+
+import IcosahedronMath as icm
 from BiDict import BiDict
 
 
@@ -17,7 +22,7 @@ class IcosahedronPointDatabase:
         pass
 
     @staticmethod
-    def new(root_dir, block_size):
+    def new(root_dir, block_size, n_point_code_chars_per_level):
         db = IcosahedronPointDatabase()
         db.root_dir = root_dir
         if os.path.exists(db.root_dir):
@@ -36,6 +41,7 @@ class IcosahedronPointDatabase:
         db.variables_dict = BiDict(int, str)
         db.metadata = {
             "block_size": block_size,
+            "n_point_code_chars_per_level": n_point_code_chars_per_level,
         }
         db.cache = {}
         touch(db.variables_file)
@@ -45,6 +51,7 @@ class IcosahedronPointDatabase:
 
     @staticmethod
     def load(root_dir):
+        print(f"loading database from {root_dir}")
         db = IcosahedronPointDatabase()
         db.root_dir = root_dir
         db.variables_file = os.path.join(root_dir, "variables.txt")
@@ -54,6 +61,7 @@ class IcosahedronPointDatabase:
         db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
         db.cache = {}
         db.verify_blocks()
+        print(f"done loading database from {root_dir}")
         return db
 
     @staticmethod
@@ -131,54 +139,71 @@ class IcosahedronPointDatabase:
             d[var] = int(val)
         return d
 
-    def get_single_point(self, point_number, variable_name):
-        if point_number in self.cache:
-            return self.cache[point_number].get(variable_name)
+    def get_single_point(self, pn, variable_name):
+        if pn in self.cache:
+            return self.cache[pn].get(variable_name)
         else:
-            return self.get_single_point_from_file(point_number, variable_name)
+            return self.get_single_point_from_file(pn, variable_name)
 
-    def get_multiple_points(self, point_numbers, variable_name):
-        pn_set = set(point_numbers)
-        cached_point_numbers = set(self.cache.keys()) & pn_set
-        cached_point_numbers = set(pn for pn in cached_point_numbers if variable_name in self.cache[pn])  # if this var not found, read from file (because sometimes the point is only cached with some variables but not others)
-        non_cached_point_numbers = pn_set - cached_point_numbers
+    def get_single_point_multiple_variables(self, pn, variable_names):
+        if pn in self.cache:
+            d = self.cache[pn]
+        else:
+            d = self.get_single_point_all_variables_from_file(pn)
+        return {vn: d.get(vn) for vn in variable_names}
+
+    def get_multiple_points(self, pns, variable_name):
+        pn_set = set(pns)
+        cached_pns = set(self.cache.keys()) & pn_set
+        cached_pns = set(pn for pn in cached_pns if variable_name in self.cache[pn])  # if this var not found, read from file (because sometimes the point is only cached with some variables but not others)
+        non_cached_pns = pn_set - cached_pns
         d = {}
-        for pn in cached_point_numbers:
+        for pn in cached_pns:
             d[pn] = self.cache[pn].get(variable_name)
-        d_from_file = self.get_multiple_points_from_file(non_cached_point_numbers, variable_name)
+        d_from_file = self.get_multiple_points_from_file(non_cached_pns, variable_name)
         d.update(d_from_file)
         return d
 
-    def get_multiple_points_multiple_variables(self, point_numbers, variable_names):
+    def get_multiple_points_multiple_variables(self, pns, variable_names):
         raise NotImplementedError
 
-    def get_single_point_from_file(self, point_number, variable_name):
+    def get_single_point_from_file(self, pn, variable_name):
+        d = self.get_single_point_all_variables_from_file(pn)
         variable_number = self.get_variable_number_from_name(variable_name)
-        block_fp = self.get_block_fp_for_point_number(point_number)
+        return d.get(variable_name)
+
+    def get_single_point_all_variables(self, pn):
+        if pn in self.cache:
+            return self.cache[pn]
+        else:
+            return self.get_single_point_all_variables_from_file(pn)
+        
+    def get_single_point_all_variables_from_file(self, pn):
+        block_fp = self.get_block_fp_for_point_number(pn)
         if not os.path.exists(block_fp):
-            # raise KeyError(f"no data for point {point_number}")
+            # raise KeyError(f"no data for point {pn}")
             return None
         with open(block_fp) as f:
             lines = f.readlines()
 
         # find the line starting with this point, if any
         block_size = self.metadata["block_size"]
-        block_number = point_number // block_size
+        block_number = pn // block_size
         block_start = block_number * block_size
-        adjusted_point_number = point_number - block_start
-        assert 0 <= adjusted_point_number < block_size, (point_number, block_size, block_number, block_start, adjusted_point_number)
+        adjusted_pn = pn - block_start
+        assert 0 <= adjusted_pn < block_size, (pn, block_size, block_number, block_start, adjusted_pn)
         lines = [l.strip().split(",") for l in lines]
-        lines_this_point = [l for l in lines if int(l[0]) == adjusted_point_number]
+        lines_this_point = [l for l in lines if int(l[0]) == adjusted_pn]
         if len(lines_this_point) == 0:
-            # raise KeyError(f"no data for point {point_number}")
+            # raise KeyError(f"no data for point {pn}")
             return None
         elif len(lines_this_point) > 1:
-            raise RuntimeError(f"point {point_number} found more than once!")
+            raise RuntimeError(f"point {pn} found more than once!")
         else:
             l, = lines_this_point
-            val = IcosahedronPointDatabase.get_variable_from_line(l, variable_number)
-            self.add_to_cache(point_number, variable_name, val)
-            return val
+            d = IcosahedronPointDatabase.get_all_variables_from_line(l)
+            self.add_to_cache(pn, d)
+            return d
 
     def get_multiple_points_from_file(self, pns, variable_name):
         variable_number = self.get_variable_number_from_name(variable_name)
@@ -212,7 +237,7 @@ class IcosahedronPointDatabase:
         return res_by_pn
 
     @staticmethod
-    def get_variable_from_line(l, variable_number):
+    def get_all_variables_from_line(l):
         # the first index (0) in l is the point number
         d_this_line = {}
         for x in l[1:]:
@@ -220,40 +245,42 @@ class IcosahedronPointDatabase:
             k = int(k)
             v = int(v)
             d_this_line[k] = v
-        val = d_this_line.get(variable_number)
+        return d_this_line
+
+    @staticmethod
+    def get_variable_from_line(l, variable_number):
+        d = IcosahedronPointDatabase.get_all_variables_from_line(l)
+        val = d.get(variable_number)
         # typ = self.get_variable_type_from_name(variable_name)
         # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
         return val
 
-    def add_to_cache(self, point_number, variable_name, value):
-        if point_number not in self.cache:
-            self.cache[point_number] = {variable_name: value}
-        else:
-            self.cache[point_number][variable_name] = value
+    def add_to_cache(self, pn, variable_dict):
+        self.cache[pn] = variable_dict
 
-    def set_single_point(self, point_number, variable_name, value, write=False):
+    def set_single_point(self, pn, variable_name, value, write=False):
         check_int(value)
         variable_number = self.get_variable_number_from_name(variable_name)
-        self.add_to_cache(point_number, variable_name, value)
+        self.add_to_cache(pn, variable_name, value)
         if write:
             self.write()  # don't do this too often or it will be slow
 
-    def set_multiple_points(self, point_numbers, variable_name, values, write=False):
+    def set_multiple_points(self, pns, variable_name, values, write=False):
         variable_number = self.get_variable_number_from_name(variable_name)
-        for pn, val in zip(point_numbers, values):
+        for pn, val in zip(pns, values):
             check_int(val)
             self.add_to_cache(pn, variable_name, val)
         if write:
             self.write()
 
-    def get_block_number_for_point_number(self, point_number):
+    def get_block_number_for_point_number(self, pn):
         block_size = self.metadata["block_size"]
-        block_number = point_number // block_size
+        block_number = pn // block_size
         return block_number
 
-    def get_block_fp_for_point_number(self, point_number):
+    def get_block_fp_for_point_number(self, pn):
         # assume numeric for now, can try ancestry approach later if we are dealing with too many different files and want contiguous points to be more likely to be in the same file
-        block_number = self.get_block_number_for_point_number(point_number)
+        block_number = self.get_block_number_for_point_number(pn)
         return self.get_block_fp_for_block_number(block_number)
 
     def get_block_fp_for_block_number(self, block_number):
@@ -269,9 +296,9 @@ class IcosahedronPointDatabase:
         res = set()
         for block_number in block_numbers:
             # print(f"reading block {block_number}")
-            point_numbers = self.get_point_numbers_with_data_in_block(block_number)
-            assert res & point_numbers == set(), "overlap"
-            res |= point_numbers
+            pns = self.get_point_numbers_with_data_in_block(block_number)
+            assert res & pns == set(), "overlap"
+            res |= pns
         print("done getting points with data")
         return res
 
@@ -300,6 +327,39 @@ class IcosahedronPointDatabase:
             res.add(block_number)
         return res
 
+    def get_int_from_line_label(self, line_label):
+        N = self.metadata["n_point_code_chars_per_level"]
+        assert 1 <= len(line_label) <= N, repr(line_label)
+        # base-4 number
+        # note that if it is less than N chars long, it has trailing zeros, not leading
+        # so 1 acts like 100 and 11 acts like 110 (for N=3)
+        to_n = lambda c: "0123".index(c)
+        x = 0
+        for i, c in enumerate(line_label):
+            n = to_n(c)
+            x += n * (4 ** ((N-1)-i))
+        # print(f"{line_label=} gave {x=}")
+        return x
+
+    def get_filepath_and_line_label_for_point_code(self, pc):
+        root_dir = self.root_dir
+        N = self.metadata["n_point_code_chars_per_level"]
+        parent_dir = os.path.join(root_dir, "data_by_point_code/")
+        head = pc[0]
+        tail = pc[1:]
+        assert head in "ABCDEFGHIJKL"
+        n_subdirs = (len(tail) - 1) // N
+        chars_remaining = len(tail)
+        subdirs = []
+        for i in range(n_subdirs):
+            digits = tail[N*i : N*i+N]
+            subdirs.append(digits)
+            chars_remaining -= N
+        filename = "data.h5"
+        line_label = tail[-chars_remaining:]
+        fp = os.path.join(parent_dir, head, *subdirs, filename)
+        return fp, line_label
+
     def get_variable_number_from_name(self, name):
         return self.variables_dict[name]
 
@@ -307,34 +367,34 @@ class IcosahedronPointDatabase:
         return self.variables_dict[number]
 
     def __getitem__(self, tup):
-        point_numbers, variable_name = tup
-        if type(point_numbers) is int:
-            point_number = point_numbers
-            return self.get_single_point(point_number, variable_name)
+        pns, variable_name = tup
+        if type(pns) is int:
+            pn = pns
+            return self.get_single_point(pn, variable_name)
         else:
-            return self.get_multiple_points(point_numbers, variable_name)
+            return self.get_multiple_points(pns, variable_name)
 
     def __setitem__(self, tup, val):
-        point_numbers, variable_name = tup
-        if type(point_numbers) is int:
-            point_number = point_numbers
-            self.set_single_point(point_number, variable_name, val)
+        pns, variable_name = tup
+        if type(pns) is int:
+            pn = pns
+            self.set_single_point(pn, variable_name, val)
         else:
-            self.set_multiple_points(point_numbers, variable_name, val)
+            self.set_multiple_points(pns, variable_name, val)
 
-    def add_values(self, point_numbers, varname, vals):
+    def add_values(self, pns, varname, vals):
         # instead of db[pns, varname] += vals, since that won't work with the dictionary return value and I can't do __iadd__ on the database object itself because I'm not saying db += vals
-        current_vals = self[point_numbers, varname]
-        if type(point_numbers) is int:
-            point_numbers = [point_numbers]
+        current_vals = self[pns, varname]
+        if type(pns) is int:
+            pns = [pns]
         if type(vals) is int:
             vals = [vals]
-        assert len(point_numbers) == len(vals)
+        assert len(pns) == len(vals)
         new_vals = []
-        for pn, val in zip(point_numbers, vals):
+        for pn, val in zip(pns, vals):
             new_val = current_vals[pn] + val
             new_vals.append(new_val)
-        self[point_numbers, varname] = new_vals
+        self[pns, varname] = new_vals
 
     def clear_cache(self):
         self.cache = {}
@@ -343,12 +403,12 @@ class IcosahedronPointDatabase:
     def write(self, clear_cache=True):
         # update the block files on disk
         block_size = self.metadata["block_size"]
-        blocks_in_cache = set(point_number // block_size for point_number in self.cache.keys())
+        blocks_in_cache = set(pn // block_size for pn in self.cache.keys())
         for block_number in blocks_in_cache:
             print("writing block_number", block_number)
             block_start = block_number * block_size
-            point_numbers = set([p for p in self.cache.keys() if p // block_size == block_number])
-            fps = set(self.get_block_fp_for_point_number(p) for p in point_numbers)
+            pns = set([p for p in self.cache.keys() if p // block_size == block_number])
+            fps = set(self.get_block_fp_for_point_number(p) for p in pns)
             assert len(fps) == 1, "problem getting block number from point numbers"
             fp, = list(fps)
             # for each point, read what's in the file into a dict, update the dict with what's in the cache (but don't delete stuff that's there but isn't in the cache), save line as string, then write them all to the file
@@ -370,7 +430,7 @@ class IcosahedronPointDatabase:
             # if fp doesn't exist then just leave data_on_disk empty
 
             lines_to_write = []
-            all_points_to_write = sorted(set(data_on_disk.keys()) | set(point_numbers))
+            all_points_to_write = sorted(set(data_on_disk.keys()) | set(pns))
             for p in all_points_to_write:
                 if p in data_on_disk:
                     d = data_on_disk[p]
@@ -381,9 +441,9 @@ class IcosahedronPointDatabase:
                         var_num = self.get_variable_number_from_name(var)
                         d[var_num] = val
                 assert len(d) > 0
-                adjusted_point_number = p - block_start
-                assert 0 <= adjusted_point_number < block_size, (p, block_size, block_number, block_start, adjusted_point_number)
-                new_l = IcosahedronPointDatabase.line_from_dict(adjusted_point_number, d)
+                adjusted_pn = p - block_start
+                assert 0 <= adjusted_pn < block_size, (p, block_size, block_number, block_start, adjusted_pn)
+                new_l = IcosahedronPointDatabase.get_line_from_dict(adjusted_pn, d)
                 lines_to_write.append(new_l)
             with open(fp, "w") as f:
                 for l in lines_to_write:
@@ -394,8 +454,8 @@ class IcosahedronPointDatabase:
         self.verify_blocks()
 
     @staticmethod
-    def line_from_dict(point_number, d):
-        items = [str(point_number)]
+    def get_line_from_dict(line_label, d):
+        items = [line_label]
         for k,v in sorted(d.items()):
             items.append(f"{k}={v}")
         return ",".join(items)
@@ -426,3 +486,42 @@ def check_int(value):
     if type(value) is not int:
         raise TypeError(f"Database only accepts int values (you gave {value} of type {type(value)}).\nIf you want enum, make them int shorthands in the condition_array_dir.\nIf you want floats, choose the precision you want and make ints of that, e.g. elevation in millimeters.")
 
+
+if __name__ == "__main__":
+    # trying to see how best to convert the data from point number to point code organization
+    # idea to have folders for each group of digits to some size?
+    # e.g. C103231 is found in C/102/data.txt, under the line label "231"
+    # and C10323102 is found in C/102/231/data.txt, under the line label "02"
+    # don't store trailing zeros in point codes here, each point code should be a unique place
+    # so 12 top-level directories
+    # where should poles go? in their own file maybe? probably best to just do that
+    root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
+    db = IcosahedronPointDatabase.load(root_dir)
+    pns = db.get_all_point_numbers_with_data()
+    # pcs = db.get_all_point_codes_with_data_with_prefix(prefix)
+    for pn in pns:
+        pc = icm.get_point_code_from_point_number(pn)
+        variables = db.get_single_point_all_variables(pn)
+        fp, line_label = db.get_filepath_and_line_label_for_point_code(pc)
+        line_to_write = IcosahedronPointDatabase.get_line_from_dict(line_label, variables)
+        print(pn, pc)
+        
+        assert fp.endswith("data.h5")
+        path = pathlib.Path(fp)
+
+        if path.exists():
+            df = pd.read_hdf(fp)
+        else:
+            parent_path = path.parents[0]  # dir in which data.txt is located
+            parent_path.mkdir(parents=True, exist_ok=True)
+            var_dict = db.get_variables_dict()
+            variable_indices = sorted(var_dict.keys(int, str))
+            df = pd.DataFrame(columns=variable_indices)
+            # path.touch()
+        
+        row_index = db.get_int_from_line_label(line_label)
+        df.loc[row_index] = variables
+        # print(df)
+        df.to_hdf(fp, key="df")
+    
+        # input("check")
