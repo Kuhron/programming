@@ -1502,3 +1502,13 @@ if __name__ == "__main__":
     # test_report_cada_ii_iteration_requirements()
     # test_position_recursive(compare_memo=False)
     # test_get_nearest_point_to_latlon()
+
+    # TODO: find latlon using trig, 
+    # like the point code tells you how far along a certain edge the point is located
+    # e.g. K022020022 is some proportion along the great-circle curve between K and I
+
+    # TODO: find nearest and farthest points within a given watershed
+    # can do some geometry like it's one of the corners or it's along a certain edge (binary search?)
+    # distance from a certain reference point
+    # use this to determine whether we should even consider that watershed when finding points in region
+    

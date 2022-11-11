@@ -475,6 +475,48 @@ class IcosahedronPointDatabase:
             raise RuntimeError("points misplaced in blocks")
         else:
             print("blocks verified")
+    
+    def write_blocks_to_hdf5(self):
+        pns = list(db.get_all_point_numbers_with_data())
+        var_dict = db.get_variables_dict()
+        variable_indices = sorted(var_dict.keys(int, str))
+
+        if os.path.exists("data.h5"):
+            df = pd.read_hdf("data.h5")
+            n_points_in_file = (~df.index.duplicated()).sum()
+        else:
+            n_points_in_file = 0
+        
+        n_pns = len(pns)
+        print(f"{n_points_in_file=} / {n_pns=}")
+
+        df = pd.DataFrame(columns=variable_indices, dtype=int)  # blank df for adding points quicker
+        for i, pn in enumerate(pns):
+            # if df in file has 1001 rows, last i written was 1000, 
+            # so next i needs to be 1001, so skip i < n
+            if i < n_points_in_file:
+                continue
+            if i % 100 == 0:
+                print(f"{i}/{n_pns} points done")
+                print(df)
+            pc = icm.get_point_code_from_point_number(pn)
+            variables = db.get_single_point_all_variables(pn)
+            row_index = pc
+            df.loc[row_index, variables.keys()] = variables.values()
+
+            if i % 10000 == 0 or i >= n_pns - 1:
+                df_in_file = pd.read_hdf("data.h5")
+                df = pd.concat([df_in_file, df])
+                df = df[~df.index.duplicated()]
+                n_points_in_file = len(df.index)
+                df.to_hdf("data.h5", key="df")
+                print("wrote h5")
+                print("total rows so far:", n_points_in_file)
+                df = pd.DataFrame(columns=variable_indices, dtype=int)  # start clean one for next round
+        
+        df_in_file = pd.read_hdf("data.h5")
+        assert len(df_in_file.index) == n_pns
+        print("process complete; all data is stored in data.h5")
 
 
 def touch(fp):
@@ -497,55 +539,6 @@ if __name__ == "__main__":
     # where should poles go? in their own file maybe? probably best to just do that
     root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
     db = IcosahedronPointDatabase.load(root_dir)
-    pns = list(db.get_all_point_numbers_with_data())
     # pcs = db.get_all_point_codes_with_data_with_prefix(prefix)
 
-    var_dict = db.get_variables_dict()
-    variable_indices = sorted(var_dict.keys(int, str))
-
-
-    df = pd.DataFrame(columns=variable_indices, dtype=int)
-    n_pns = len(pns)
-
-    for i, pn in enumerate(pns):
-        # if df has 1001 rows, last i written was 1000, so next i needs to be 1001, so skip i < n
-        if i < len(df.index):
-            continue
-        if i % 100 == 0:
-            print(f"{i}/{n_pns} points done")
-            print(df)
-        pc = icm.get_point_code_from_point_number(pn)
-        variables = db.get_single_point_all_variables(pn)
-        row_index = pc
-        df.loc[row_index, variables.keys()] = variables.values()
-    #     fp, line_label = db.get_filepath_and_line_label_for_point_code(pc)
-    #     line_to_write = IcosahedronPointDatabase.get_line_from_dict(line_label, variables)
-    #     print(pn, pc)
-        
-    #     assert fp.endswith("data.h5")
-    #     path = pathlib.Path(fp)
-
-    #     if path.exists():
-    #         df = pd.read_hdf(fp)
-    #     else:
-    #         parent_path = path.parents[0]  # dir in which data.txt is located
-    #         parent_path.mkdir(parents=True, exist_ok=True)
-    #         var_dict = db.get_variables_dict()
-    #         variable_indices = sorted(var_dict.keys(int, str))
-    #         df = pd.DataFrame(columns=variable_indices, dtype=int)
-    #         # path.touch()
-        
-    #     row_index = db.get_int_from_line_label(line_label)
-    #     df.loc[row_index] = variables
-    #     # print(df)
-        if i % 10000 == 0 or i >= n_pns - 1:
-            df_in_file = pd.read_hdf("data.h5")
-            df = pd.concat([df_in_file, df])
-            df.to_hdf("data.h5", key="df")
-            print("wrote h5")
-            print("total rows so far:", len(df.index))
-            df = pd.DataFrame(columns=variable_indices, dtype=int)  # start clean one for next round
-    
-        # input("check")
-    df_in_file = pd.read_hdf("data.h5")
-    assert len(df_in_file.index) == n_pns
+    db.write_blocks_to_hdf5()
