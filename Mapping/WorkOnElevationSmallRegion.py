@@ -164,7 +164,7 @@ def get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle
     # if that distance - max_distance_of_descendant is still too far away, then throw this point out and don't bother looking at its descendants
 
     region_center_xyz = mcm.unit_vector_lat_lon_to_cartesian(*region_center_latlondeg, deg=True)
-    distance = lambda pn: icm.get_distance_icosa_point_to_xyz_great_circle(pn, region_center_xyz, radius=planet_radius_km)
+    distance = lambda pn: icm.get_distance_point_number_to_xyz_great_circle(pn, region_center_xyz, radius=planet_radius_km)
     points_in_region = []
     points_whose_children_could_be_in_region = []
 
@@ -221,7 +221,7 @@ def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_rad
     # print(f"checking descendant min distance to region center, pn={pn}, iteration_of_next_child={iteration_of_next_child}")
     farthest_distance_descendant_can_be_from_pn = icm.get_farthest_distance_descendant_can_be(pn, radius=planet_radius_km, iteration_of_next_child=iteration_of_next_child)
     # print(f"farthest distance of descendant from pn: {farthest_distance_descendant_can_be_from_pn}")
-    current_distance = icm.get_distance_icosa_point_to_xyz_great_circle(pn, region_center_xyz, radius=planet_radius_km)
+    current_distance = icm.get_distance_point_number_to_xyz_great_circle(pn, region_center_xyz, radius=planet_radius_km)
     # print(f"current distance from pn to region center: {current_distance}")
     closest_descendant_can_be_to_region_center = max(0, current_distance - farthest_distance_descendant_can_be_from_pn)
     # print(f"closest descendant can be to region center: {closest_descendant_can_be_to_region_center}")

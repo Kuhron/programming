@@ -15,6 +15,7 @@ def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
     assert x in [1, 2, 3, -1, -2, -3], repr(x)
 
     pc, peel_offset = normalize_peel(pc)
+    reference_peel = "CD"  # since we normalized
     head = pc[0]
     tail = pc[1:]
     initial_points_results = {
@@ -99,9 +100,10 @@ def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
             
             res = new_head + new_tail
 
-    # only fix the edge polarity at the very final result
+    # only fix the edge polarity at the very final result, 
+    # but before reapplying offset (so we still know reference peel is CD)
     if res is not None and fix_edge_polarity and point_code_is_in_reversed_polarity_encoding(res):
-        res = correct_reversed_edge_polarity(res)
+        res = correct_reversed_edge_polarity(res, reference_peel)
 
     if res not in [None, "?"]:
         res = apply_peel_offset(res, peel_offset)

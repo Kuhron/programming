@@ -1,5 +1,4 @@
-# store data indexed by icosahedral lattice point number
-# multiple csvs by some block size e.g. 2**14
+# store data according to point code
 # all of them need the same header
 # but need to allow sparseness, e.g. many points won't have values for certain variables, e.g. suppose "salt flat" is undefined most places but has values in small regions of the world, don't want to waste space having that defined as zero for almost every point
 # maybe have a format that indexes the variables, every time a new variable is added it gets the next index number
@@ -22,7 +21,7 @@ class IcosahedronPointDatabase:
         pass
 
     @staticmethod
-    def new(root_dir, block_size, n_point_code_chars_per_level):
+    def new(root_dir, n_point_code_chars_per_level):
         db = IcosahedronPointDatabase()
         db.root_dir = root_dir
         if os.path.exists(db.root_dir):
@@ -36,17 +35,14 @@ class IcosahedronPointDatabase:
             f.write("This is an IcosahedronPointDatabase.")
         db.variables_file = os.path.join(root_dir, "variables.txt")
         db.metadata_file = os.path.join(root_dir, "metadata.txt")
-        db.blocks_dir = os.path.join(root_dir, "blocks/")
 
         db.variables_dict = BiDict(int, str)
         db.metadata = {
-            "block_size": block_size,
             "n_point_code_chars_per_level": n_point_code_chars_per_level,
         }
         db.cache = {}
         touch(db.variables_file)
         db.write_metadata()
-        os.mkdir(db.blocks_dir)
         return db
 
     @staticmethod
@@ -56,7 +52,6 @@ class IcosahedronPointDatabase:
         db.root_dir = root_dir
         db.variables_file = os.path.join(root_dir, "variables.txt")
         db.metadata_file = os.path.join(root_dir, "metadata.txt")
-        db.blocks_dir = os.path.join(root_dir, "blocks/")
         db.variables_dict = IcosahedronPointDatabase.get_variables_dict_from_file(db.variables_file)
         db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
         db.cache = {}
@@ -273,59 +268,42 @@ class IcosahedronPointDatabase:
         if write:
             self.write()
 
-    def get_block_number_for_point_number(self, pn):
-        block_size = self.metadata["block_size"]
-        block_number = pn // block_size
-        return block_number
+    # def get_all_point_numbers_with_data(self):
+    #     print("getting points with data in database")
+    #     block_numbers = self.get_all_block_numbers_with_data()
+    #     res = set()
+    #     for block_number in block_numbers:
+    #         # print(f"reading block {block_number}")
+    #         pns = self.get_point_numbers_with_data_in_block(block_number)
+    #         assert res & pns == set(), "overlap"
+    #         res |= pns
+    #     print("done getting points with data")
+    #     return res
 
-    def get_block_fp_for_point_number(self, pn):
-        # assume numeric for now, can try ancestry approach later if we are dealing with too many different files and want contiguous points to be more likely to be in the same file
-        block_number = self.get_block_number_for_point_number(pn)
-        return self.get_block_fp_for_block_number(block_number)
+    # def get_point_numbers_with_data_in_block(self, block_number):
+    #     block_size = self.metadata["block_size"]
+    #     block_start = block_number * block_size
+    #     block_fp = self.get_block_fp_for_block_number(block_number)
+    #     with open(block_fp) as f:
+    #         lines = f.readlines()
+    #     res = set()
+    #     for l in lines:
+    #         l = l.strip().split(",")
+    #         adjusted_pn = int(l[0])
+    #         pn = block_start + adjusted_pn
+    #         assert pn not in res
+    #         # print(f"got point number {pn}")
+    #         res.add(pn)
+    #     return res
 
-    def get_block_fp_for_block_number(self, block_number):
-        block_size = self.metadata["block_size"]
-        min_in_block = block_number * block_size
-        max_in_block = (block_number + 1) * block_size - 1
-        fname = f"Block{block_number}_points_{min_in_block}_to_{max_in_block}.txt"
-        return os.path.join(self.blocks_dir, fname)
-
-    def get_all_point_numbers_with_data(self):
-        print("getting points with data in database")
-        block_numbers = self.get_all_block_numbers_with_data()
-        res = set()
-        for block_number in block_numbers:
-            # print(f"reading block {block_number}")
-            pns = self.get_point_numbers_with_data_in_block(block_number)
-            assert res & pns == set(), "overlap"
-            res |= pns
-        print("done getting points with data")
-        return res
-
-    def get_point_numbers_with_data_in_block(self, block_number):
-        block_size = self.metadata["block_size"]
-        block_start = block_number * block_size
-        block_fp = self.get_block_fp_for_block_number(block_number)
-        with open(block_fp) as f:
-            lines = f.readlines()
-        res = set()
-        for l in lines:
-            l = l.strip().split(",")
-            adjusted_pn = int(l[0])
-            pn = block_start + adjusted_pn
-            assert pn not in res
-            # print(f"got point number {pn}")
-            res.add(pn)
-        return res
-
-    def get_all_block_numbers_with_data(self):
-        block_files = os.listdir(self.blocks_dir)
-        res = set()
-        for fname in block_files:
-            block_number = int(fname.split("_")[0].replace("Block", ""))
-            assert block_number not in res
-            res.add(block_number)
-        return res
+    # def get_all_block_numbers_with_data(self):
+    #     block_files = os.listdir(self.blocks_dir)
+    #     res = set()
+    #     for fname in block_files:
+    #         block_number = int(fname.split("_")[0].replace("Block", ""))
+    #         assert block_number not in res
+    #         res.add(block_number)
+    #     return res
 
     # def get_int_from_line_label(self, line_label):
     #     N = self.metadata["n_point_code_chars_per_level"]
@@ -459,24 +437,8 @@ class IcosahedronPointDatabase:
         for k,v in sorted(d.items()):
             items.append(f"{k}={v}")
         return ",".join(items)
-
-    def verify_blocks(self):
-        # verify that the block files contain the correct point numbers
-        block_numbers = self.get_all_block_numbers_with_data()
-        failed = False
-        for block_number in block_numbers:
-            pns = self.get_point_numbers_with_data_in_block(block_number)
-            for pn in pns:
-                correct_bn = self.get_block_number_for_point_number(pn)
-                if correct_bn != block_number:
-                    failed = True
-                    print(f"found point {pn} in block {block_number} but it belongs in block {correct_bn}")
-        if failed:
-            raise RuntimeError("points misplaced in blocks")
-        else:
-            print("blocks verified")
     
-    def write_blocks_to_hdf5(self):
+    def write_old_block_format_to_hdf5(self):
         pns = list(db.get_all_point_numbers_with_data())
         var_dict = db.get_variables_dict()
         variable_indices = sorted(var_dict.keys(int, str))
@@ -541,4 +503,3 @@ if __name__ == "__main__":
     db = IcosahedronPointDatabase.load(root_dir)
     # pcs = db.get_all_point_codes_with_data_with_prefix(prefix)
 
-    db.write_blocks_to_hdf5()

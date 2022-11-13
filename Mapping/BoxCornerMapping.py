@@ -187,12 +187,12 @@ def reverse_edge_polarity(point_code, reference_peel="KL"):
     return new_point_code
 
 
-def correct_reversed_edge_polarity(point_code):
+def correct_reversed_edge_polarity(point_code, reference_peel):
     # this function only wants codes that are already in reverse-polarity-coded form
     if not point_code_is_in_reversed_polarity_encoding(point_code):
         # it's not in improper-polarity mode
         raise ValueError(f"code {point_code} is not in reverse-polarity-coded form")
-    return reverse_edge_polarity(point_code)
+    return reverse_edge_polarity(point_code, reference_peel)
 
 
 def point_code_is_in_reversed_polarity_encoding(point_code):
@@ -213,3 +213,7 @@ def separate_trailing_zeros(s):
         s = s[:-1]
     return s, zeros
 
+
+def get_peel_containing_point_code(pc):
+    res, = [peel for peel in PEELS if pc[0] in peel]  # should be exactly one of CD, EF, GH, IJ, KL
+    return res
