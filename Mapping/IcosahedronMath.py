@@ -808,7 +808,9 @@ def get_adjacency_from_point_code(pc):
     neighR = add_direction_to_point_code(pc, -1)
     neighUR = add_direction_to_point_code(pc, -2)
     neighU = add_direction_to_point_code(pc, -3)
-    return [neighL, neighDL, neighD, neighR, neighUR, neighU]
+    adj = [neighL, neighDL, neighD, neighR, neighUR, neighU]
+    print(f"{pc=} has {adj=}")
+    return adj
 
 
 def get_neighbor_clockwise_step(central_point, central_point_adjacency, reference_neighbor, n_steps):
@@ -1401,20 +1403,38 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc):
     # I think there should be at most one critical point of distance along a given edge
     # so it will have only one local extremum if any? (endpoints don't count as local extrema here)
 
-    n_bits = 5
-    binary_arrays = get_binary_arrays(n_bits)
-
     edges = [
-        {"p0": pc0, "p1": pc1, "b": "01", "c": "r"},  # edge 1
-        {"p0": pc0, "p1": pc3, "b": "03", "c": "b"},  # edge 3
-        {"p0": pc3, "p1": pc2, "b": "01", "c": "k"},  # edge 1-opposite
-        {"p0": pc1, "p1": pc2, "b": "03", "c": "g"},  # edge 3-opposite
+        {"p0": pc0, "p1": pc1, "c": "r"},  # edge 1
+        {"p0": pc0, "p1": pc3, "c": "b"},  # edge 3
+        {"p0": pc3, "p1": pc2, "c": "k"},  # edge 1-opposite
+        {"p0": pc1, "p1": pc2, "c": "g"},  # edge 3-opposite
     ]
 
+    n_bits = 4
+    binary_arrays = get_binary_arrays(n_bits)
+
+    ax1 = plt.subplot(1,2,1)
+    ax2 = plt.subplot(1,2,2)
+    rll = get_latlon_from_point_code(rpc)
+
     for edge_dict in edges:
+        print(f"{edge_dict=}")
         p0 = edge_dict["p0"]
         p1 = edge_dict["p1"]
-        bit_symbols = edge_dict["b"]
+
+        switch_edge_due_to_pole = p0[0] in ["A", "B"]
+        if switch_edge_due_to_pole:
+            assert p1[0] not in ["A", "B"], f"can't have both {p0=} and {p1=} be in the pseudo-watershed of a pole"
+            # switch them so we can define the direction along the edge
+            p0, p1 = p1, p0
+
+        direction = get_direction_between_point_codes(p0, p1)
+        if direction in ["-1", "-2", "-3"]:
+            p0, p1 = p1, p0
+            direction = get_direction_between_point_codes(p0, p1)
+        assert direction in ["1", "2", "3"], f"{p0} -> {p1} gave {direction=}"
+
+        bit_symbols = ["0", direction]
         color = edge_dict["c"]
         pcs = []
         for arr in binary_arrays:
@@ -1424,13 +1444,31 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc):
             pcs.append(pc)
         pcs.append(p1)
         ds = [get_distance_point_codes_great_circle(rpc, pc) for pc in pcs]
-        print("---")
+        lls = [get_latlon_from_point_code(pc) for pc in pcs]
+        if switch_edge_due_to_pole:
+            ds = ds[::-1]
+        print("----")
         for pc, d in zip(pcs, ds):
             print(pc, d)
-        plt.plot(ds, c=color)
+        ax1.plot(ds, c=color)
+        ax2.scatter([rll[1]], [rll[0]], marker="x", c="purple")
+        ax2.scatter([ll[1] for ll in lls], [ll[0] for ll in lls], c=color)
     
+    text = lambda pc, ax=ax2: (lambda ll: ax.text(ll[1]+5, ll[0], pc))(get_latlon_from_point_code(pc))
+    for pc in [rpc, pc0, pc1, pc2, pc3]:
+        text(pc)
     plt.show()
-    
+
+
+def get_direction_between_point_codes(p0, p1):
+    # only works when one is in the other's adjacency
+    adj = get_adjacency_from_point_code(p0)
+    try:
+        i = adj.index(p1)
+        return ["1", "2", "3", "-1", "-2", "-3"][i]
+    except ValueError:
+        raise Exception(f"{p1=} not found as neighbor of {p0=}, which has neighbors {adj}")
+
 
 def get_binary_arrays(n_bits):
     # e.g. if n_bits is 3, return [(0, 0, 0), (0, 0, 1), (0, 1 ,0), etc.]
@@ -1442,7 +1480,7 @@ def get_binary_arrays(n_bits):
         prev = get_binary_arrays(n_bits - 1)
         res = []
         for i in [0, 1]:
-            res += [[i] + arr for arr in prev]  # FIXME this doesn't give the correct point codes, e.g. from I1 to G0 is not just I13, I133, I1333, etc. (only get halfway there)
+            res += [[i] + arr for arr in prev]
         return res
 
 
@@ -1591,7 +1629,9 @@ STARTING_POINTS_ORDERED, STARTING_POINTS_ADJACENCY = STARTING_POINTS
 
 if __name__ == "__main__":
     pc = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=4)
+    # pc = "A"
     watershed_parent = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=4)
+    # watershed_parent = "C1"
     # iteration = get_iteration_born_from_point_number(point_number)
     # region = get_region_around_point(point_number, iteration, max_distance_gc_normalized=0.3)
     # scatter_icosa_points_by_number(region, show=True)
