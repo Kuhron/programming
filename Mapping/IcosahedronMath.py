@@ -334,11 +334,11 @@ def scatter_icosa_points_by_number(point_numbers, show=True):
     scatter_icosa_points_by_code(point_codes, show=show)
 
 
-def scatter_icosa_points_by_code(point_codes, show=True):
+def scatter_icosa_points_by_code(point_codes, show=True, **kwargs):
     latlons = get_latlons_from_point_codes(point_codes)
     lats = [ll[0] for ll in latlons]
     lons = [ll[1] for ll in latlons]
-    plt.scatter(lons, lats)
+    plt.scatter(lons, lats, **kwargs)
     if show:
         plt.show()
 
@@ -641,7 +641,8 @@ def get_children_from_point_code(pc):
         # pole can't have children
         if all(y == "0" for y in pc[1:]):
             # it's actually the pole
-            return []
+            # but we need to return the pole itself at this iteration (pseudo-child)
+            return [pc + "0"]
         else:
             raise ValueError(f"got reverse-encoded or invalid point code {pc}")
     else:
@@ -1381,13 +1382,13 @@ def plot_directional_parent_graph(iteration):
 
 def get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, resolution_iterations=None):
     # follow adjacency paths at this iteration resolution until you get every point within the radius
-    print(f"getting region around {pc}")
     if resolution_iterations is not None:
         pc_iterations = get_iteration_number_from_point_code(pc)
         if pc_iterations > resolution_iterations:
             raise ValueError("center point has more iterations than desired resolution")
         pc += "0" * (resolution_iterations - pc_iterations)
     
+    print(f"getting region around {pc} of radius {max_distance_gc_normalized} and resolution of {resolution_iterations} iterations")
     res = {pc}
     new_points = [pc]
     known_neighbors = {}
@@ -1429,7 +1430,7 @@ def get_region_around_point_code_by_narrowing(pc, max_distance_gc_normalized, na
     inside, outside, split = narrow_watersheds_by_distance(pc, max_distance_gc_normalized, narrowing_iterations)
     res = []
     for wpc in inside:
-        res = get_descendants_of_point_code(wpc, resolution_iterations)
+        res += get_descendants_of_point_code(wpc, resolution_iterations)
     n = len(split)
     t0 = time.time()
     for i, wpc in enumerate(split):
@@ -1451,7 +1452,9 @@ def get_descendants_of_point_code(pc, max_iterations):
     if max_iterations < starting_iteration:
         raise ValueError(f"{pc=} of iteration {starting_iteration} has no descendants at iteration {max_iterations}")
     elif max_iterations == starting_iteration:
-        return []
+        # base case of empty causes problems, I think it should be itself only
+        # len 1 also makes sense because the next iterations are len 4 ** k
+        return [pc]
     else:
         parents = [pc]
         for i in range(starting_iteration + 1, max_iterations + 1):
@@ -1460,7 +1463,6 @@ def get_descendants_of_point_code(pc, max_iterations):
                 c1 = get_children_from_point_code(pc1)
                 children += c1
             parents = children
-        assert len(children) == 4 ** (max_iterations - starting_iteration)
         return children
 
 
@@ -1820,36 +1822,48 @@ def test_directional_parent_position_in_adjacency():
         print(k, v)
 
 
+def test_spreading_vs_narrowing():
+    while True:
+        min_pc_iterations = random.randint(0, 3)
+        max_pc_iterations = min_pc_iterations + random.randint(0, 2)
+        expected_pc_iterations = (min_pc_iterations + max_pc_iterations) / 2
+        pc = get_random_point_code(min_pc_iterations, expected_pc_iterations, max_pc_iterations)
+        pc_iterations = get_iteration_number_from_point_code(pc)
+        resolution_iterations = pc_iterations + random.randint(2, 4)
+        narrowing_iterations = min(resolution_iterations - 1, random.randint(0, 3))
+        max_distance_gc_normalized = abs(np.random.normal(0, 0.5))
+        # inside, outside, split = narrow_watersheds_by_distance(pc, max_distance_gc_normalized, max_iterations=4)
+        # plot_watershed_inclusion_in_region(inside, outside, split)
+        t0 = time.time()
+        region1 = get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, resolution_iterations)
+        t1 = time.time() - t0
+        t0 = time.time()
+        region2 = get_region_around_point_code_by_narrowing(pc, max_distance_gc_normalized, narrowing_iterations, resolution_iterations)
+        t2 = time.time() - t0
+        r1not2 = sorted(set(region1) - set(region2))
+        r2not1 = sorted(set(region2) - set(region1))
+        print("points from spreading but not narrowing:", r1not2)
+        print("points from narrowing but not spreading:", r2not1)
+        print(f"spreading took {t1} seconds")
+        print(f"narrowing took {t2} seconds")
+        scatter_icosa_points_by_code(region1, show=False, marker="o", facecolors="none", edgecolors="b")
+        scatter_icosa_points_by_code(region2, show=False, marker="x")
+        plt.show()
+        print()
+
+
 STARTING_POINTS = get_starting_points_immutable()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
 STARTING_POINTS_ORDERED, STARTING_POINTS_ADJACENCY = STARTING_POINTS
 
 
 if __name__ == "__main__":
-    while True:
-        # pc = get_random_point_code(min_iterations=4, expected_iterations=6, max_iterations=8)
-        pc = "H1"
-        max_distance_gc_normalized = 0.5
-        # inside, outside, split = narrow_watersheds_by_distance(pc, max_distance_gc_normalized, max_iterations=4)
-        # print(f"{inside=}")
-        # print(f"{outside=}")
-        # print(f"{split=}")
-        # plot_watershed_inclusion_in_region(inside, outside, split)
-        region1 = get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, resolution_iterations=3)
-        region2 = get_region_around_point_code_by_narrowing(pc, max_distance_gc_normalized, narrowing_iterations=1, resolution_iterations=3)
-        assert sorted(region1) == sorted(region2)
-        scatter_icosa_points_by_code(region1, show=True)
-        scatter_icosa_points_by_code(region2, show=True)
-
-
-    # while True:
-    #     pc = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=5)
-    #     watershed_parent = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=5)
-    #     # plot_adjacency_on_map(pc)
-    #     # plot_parents_on_map(pc)
-    #     dmin, dmax = find_distances_to_watershed(pc, watershed_parent, plot=False)
-    #     print(f"{dmin=}, {dmax=}")
-    # narrow_watersheds_that_could_overlap_region()  # use find_distances_to_watershed()
+    # test_spreading_vs_narrowing()
 
     # TODO: find latlon using trig, 
     # like the point code tells you how far along a certain edge the point is located
     # e.g. K022020022 is some proportion along the great-circle curve between K and I
+
+    # TODO constrain how much closer/farther a point in the middle of an edge could be
+    # also constrain which edges we even need to subdivide in watershed distance measuring
+    # this can help us do watershed narrowing more efficiently
+    # don't need to check some number of points on all four edges
