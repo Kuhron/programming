@@ -341,8 +341,10 @@ if __name__ == "__main__":
     el_stdev = 15
     n_circles = 10000
 
+
+
     # point_numbers_in_db = db.get_all_point_numbers_with_data()
-    points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
+    # points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
     # DEBUG
     # points_with_data_in_region = random.sample(points_with_data_in_region, 100)

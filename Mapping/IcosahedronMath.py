@@ -635,6 +635,19 @@ def get_children_from_point_number(pn, iteration):
     return [3 * (pn + adder) + child_index for child_index in [0, 1, 2]]
 
 
+def get_children_from_point_code(pc):
+    # including the null child where we keep the point in the same place
+    if pc[0] in ["A", "B"]:
+        # pole can't have children
+        if all(y == "0" for y in pc[1:]):
+            # it's actually the pole
+            return []
+        else:
+            raise ValueError(f"got reverse-encoded or invalid point code {pc}")
+    else:
+        return [pc + x for x in "0123"]
+
+
 def get_parent_from_point_code(pc):
     if len(pc) == 1:
         return None
@@ -707,20 +720,34 @@ def get_parent_from_point_number(point_number):
     return point_number // 3 - get_3adder_for_iteration(get_iteration_born_from_point_number(point_number))
 
 
-def get_parents_from_point_code(point_code):
-    p0 = get_parent_from_point_code(point_code)
-    p1 = get_directional_parent_from_point_code(point_code)
-    return [p0, p1]
+def get_parents_from_point_code(pc):
+    if len(pc) == 1:
+        par = None
+        dpar = None
+    elif pc[-1] == "0":
+        par = pc[:-1]
+        dpar = pc[:-1]
+    else:
+        adj = get_adjacency_from_point_code(pc)
+        ci = get_child_index_from_point_code(pc)
+        par = adj[3+ci]
+        dpar = adj[ci]
+        assert par[-1] == "0", par
+        assert dpar[-1] == "0", dpar
+        par = par[:-1]
+        dpar = dpar[:-1]
+    # print(f"parents of {pc} are {par=}, {dpar=}")
+    return [par, dpar]
+
+    # old way
+    # p0 = get_parent_from_point_code(pc)
+    # p1 = get_directional_parent_from_point_code(pc)
+    # return [p0, p1]
 
 
 def get_parents_from_point_number(point_number):
     pc = get_point_code_from_point_number(point_number)
-    p0_code = get_parent_from_point_code(pc)
-    p1_code = get_directional_parent_from_point_code(pc)
-    p0 = get_point_number_from_point_code(p0_code)
-    p1 = get_point_number_from_point_code(p1_code)
-    # print(f"#{point_number} = {pc} has parents #{p0} = {p0_code} and #{p1} = {p1_code}")
-    return [p0, p1]
+    return get_parent_from_point_code(pc)
 
 
 def is_parent_and_child(parent, child):
@@ -786,6 +813,7 @@ def get_unordered_neighbors_from_point_number(pn, iteration):
 
 
 def get_unordered_neighbors_from_point_code(pc):
+    iteration = get_iteration_number_from_point_code(pc)
     if pc[0] == "A":
         # just do this manually, it's only one special case type
         assert all(x == "0" for x in pc[1:]), f"invalid point code {pc}"
@@ -926,6 +954,7 @@ def get_child_index_from_point_code(pc):
 
 
 def get_parent_xyzs_from_point_code(pc):
+    # print(f"getting parent xyzs for {pc=}")
     p0, p1 = get_parents_from_point_code(pc)
     xyz0 = get_xyz_from_point_code(p0)
     xyz1 = get_xyz_from_point_code(p1)
@@ -1350,9 +1379,15 @@ def plot_directional_parent_graph(iteration):
     plt.show()
 
 
-def get_region_around_point_code(pc, max_distance_gc_normalized):
+def get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, resolution_iterations=None):
     # follow adjacency paths at this iteration resolution until you get every point within the radius
     print(f"getting region around {pc}")
+    if resolution_iterations is not None:
+        pc_iterations = get_iteration_number_from_point_code(pc)
+        if pc_iterations > resolution_iterations:
+            raise ValueError("center point has more iterations than desired resolution")
+        pc += "0" * (resolution_iterations - pc_iterations)
+    
     res = {pc}
     new_points = [pc]
     known_neighbors = {}
@@ -1382,8 +1417,51 @@ def get_region_around_point_code(pc, max_distance_gc_normalized):
         if time.time() - t0 > 2:
             print(f"creating region around {pc}: {len(res)} points so far")
             t0 = time.time()
-    # print(f"got region: {res}")
+    print(f"got {len(res)} points in region: {res}")
     return res
+
+
+def get_region_around_point_code_by_narrowing(pc, max_distance_gc_normalized, narrowing_iterations=None, resolution_iterations=None):
+    if narrowing_iterations is None:
+        narrowing_iterations = get_iteration_number_from_point_code(pc)
+    if resolution_iterations is None:
+        resolution_iterations = get_iteration_number_from_point_code(pc) + 1
+    inside, outside, split = narrow_watersheds_by_distance(pc, max_distance_gc_normalized, narrowing_iterations)
+    res = []
+    for wpc in inside:
+        res = get_descendants_of_point_code(wpc, resolution_iterations)
+    n = len(split)
+    t0 = time.time()
+    for i, wpc in enumerate(split):
+        candidates = get_descendants_of_point_code(wpc, resolution_iterations)
+        m = len(candidates)
+        for j, pc1 in enumerate(candidates):
+            d = get_distance_point_codes_great_circle(pc, pc1)
+            if d <= max_distance_gc_normalized:
+                res.append(pc1)
+            if time.time() - t0 >= 2:
+                print(f"checking points in split watersheds for inclusion in region: {i=}/{n=}, {j=}/{m=}")
+                t0 = time.time()
+    print(f"got {len(res)} points in region: {res}")
+    return res
+
+
+def get_descendants_of_point_code(pc, max_iterations):
+    starting_iteration = get_iteration_number_from_point_code(pc)
+    if max_iterations < starting_iteration:
+        raise ValueError(f"{pc=} of iteration {starting_iteration} has no descendants at iteration {max_iterations}")
+    elif max_iterations == starting_iteration:
+        return []
+    else:
+        parents = [pc]
+        for i in range(starting_iteration + 1, max_iterations + 1):
+            children = []
+            for pc1 in parents:
+                c1 = get_children_from_point_code(pc1)
+                children += c1
+            parents = children
+        assert len(children) == 4 ** (max_iterations - starting_iteration)
+        return children
 
 
 def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
@@ -1393,6 +1471,14 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
     # use this to determine whether we should even consider that watershed when finding points in region
     rpc = reference_pc
     pc0 = watershed_parent_pc
+
+    if pc0[0] in ["A", "B"]:
+        assert all(y == "0" for y in pc0[1:]), f"got reverse-encoded or invalid watershed parent {pc0}"
+        d = get_distance_point_codes_great_circle(rpc, pc0)
+        dmin = d
+        dmax = d
+        return dmin, dmax
+
     reference_peel = bc.get_peel_containing_point_code(pc0)  # for re-encoding reversed edges
     # print(f"{rpc=}, {pc0=}")
     watershed_adj = get_adjacency_from_point_code(pc0)  # keep trailing zeros, maybe we want e.g. J00X
@@ -1480,6 +1566,37 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
     return dmin, dmax
 
 
+def narrow_watersheds_by_distance(pc, d, max_iterations):
+    # go through the watersheds starting from the initial points
+    # treat the poles each as a watershed consisting only of a single point
+
+    print(f"narrowing watersheds within {d=} of {pc}")
+    watersheds_to_check = list("ABCDEFGHIJKL")
+    inside = []
+    outside = []
+    split = []
+    while len(watersheds_to_check) > 0:
+        wpc = watersheds_to_check[0]
+        dmin, dmax = find_distances_to_watershed(pc, wpc)
+        print(f"{wpc=} has {dmin=}, {dmax=}")
+        if dmin > d:
+            outside.append(wpc)
+        elif dmax <= d:
+            inside.append(wpc)
+        else:
+            # it's split, some of it is within the distance and some is not
+            children = get_children_from_point_code(wpc)
+            if get_iteration_number_from_point_code(wpc) < max_iterations:
+                for child in children:
+                    watersheds_to_check.append(child)
+            else:
+                # if the children would have too many iterations
+                # then don't split watershed any more
+                split += children
+        watersheds_to_check = watersheds_to_check[1:]
+    return inside, outside, split
+
+
 def point_is_descendant(pc, ancestor_pc):
     return pc.startswith(ancestor_pc)
 
@@ -1534,6 +1651,32 @@ def plot_parents_on_map(pc):
     plt.text(plon, plat, f"{par}(p)")
     plt.scatter([dplon], [dplat], c="g")
     plt.text(dplon, dplat, f"{dpar}(dp)")
+    plt.gca().set_aspect("equal")
+    plt.show()
+
+
+def plot_watershed_inclusion_in_region(inside, outside, split):
+    inside_color = "r"
+    outside_color = "k"
+    split_color = "g"
+    inside_pcs = []
+    outside_pcs = []
+    split_pcs = []
+    for wpc in inside:
+        # only get the direct children (so 1 iteration later than this point code)
+        children = get_children_from_point_code(wpc)
+        inside_pcs += children
+    for wpc in outside:
+        children = get_children_from_point_code(wpc)
+        outside_pcs += children
+    for wpc in split:
+        children = get_children_from_point_code(wpc)
+        split_pcs += children
+    for pc_list, color in zip([inside_pcs, outside_pcs, split_pcs], [inside_color, outside_color, split_color]):
+        lls = [get_latlon_from_point_code(pc) for pc in pc_list]
+        lats = [ll[0] for ll in lls]
+        lons = [ll[1] for ll in lls]
+        plt.scatter(lons, lats, c=color)
     plt.gca().set_aspect("equal")
     plt.show()
 
@@ -1683,9 +1826,20 @@ STARTING_POINTS_ORDERED, STARTING_POINTS_ADJACENCY = STARTING_POINTS
 
 if __name__ == "__main__":
     while True:
-        pc = get_random_point_code(min_iterations=4, expected_iterations=6, max_iterations=8)
-        region = get_region_around_point_code(pc, max_distance_gc_normalized=0.3)
-        scatter_icosa_points_by_code(region, show=True)
+        # pc = get_random_point_code(min_iterations=4, expected_iterations=6, max_iterations=8)
+        pc = "H1"
+        max_distance_gc_normalized = 0.5
+        # inside, outside, split = narrow_watersheds_by_distance(pc, max_distance_gc_normalized, max_iterations=4)
+        # print(f"{inside=}")
+        # print(f"{outside=}")
+        # print(f"{split=}")
+        # plot_watershed_inclusion_in_region(inside, outside, split)
+        region1 = get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, resolution_iterations=3)
+        region2 = get_region_around_point_code_by_narrowing(pc, max_distance_gc_normalized, narrowing_iterations=1, resolution_iterations=3)
+        assert sorted(region1) == sorted(region2)
+        scatter_icosa_points_by_code(region1, show=True)
+        scatter_icosa_points_by_code(region2, show=True)
+
 
     # while True:
     #     pc = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=5)
