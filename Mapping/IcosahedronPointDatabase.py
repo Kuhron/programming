@@ -52,10 +52,11 @@ class IcosahedronPointDatabase:
         db.root_dir = root_dir
         db.variables_file = os.path.join(root_dir, "variables.txt")
         db.metadata_file = os.path.join(root_dir, "metadata.txt")
+        db.data_file = os.path.join(root_dir, "data.h5")
         db.variables_dict = IcosahedronPointDatabase.get_variables_dict_from_file(db.variables_file)
         db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
         db.cache = {}
-        db.verify_blocks()
+        db.read_hdf()
         print(f"done loading database from {root_dir}")
         return db
 
@@ -106,6 +107,9 @@ class IcosahedronPointDatabase:
         s = "\n".join(lines)
         with open(self.metadata_file, "w") as f:
             f.write(s)
+
+    def read_hdf(self):
+        self.df = pd.read_hdf(self.data_file)
 
     def get_variables_dict(self):
         if self.variables_dict is not None:
@@ -429,7 +433,6 @@ class IcosahedronPointDatabase:
         print("db written")
         if clear_cache:
             self.clear_cache()
-        self.verify_blocks()
 
     @staticmethod
     def get_line_from_dict(line_label, d):

@@ -341,14 +341,7 @@ if __name__ == "__main__":
     el_stdev = 15
     n_circles = 10000
 
-    # # just test how fast it is to get the positions of all points in the database
-    # point_numbers_in_database = db.get_all_point_numbers_with_data()
-    # for i, pn in enumerate(point_numbers_in_database):
-    #     xyz = icm.get_xyz_from_point_number(pn)
-    #     if i % 100 == 0:
-    #         print(i, pn, xyz)
-
-    point_numbers_in_db = db.get_all_point_numbers_with_data()
+    # point_numbers_in_db = db.get_all_point_numbers_with_data()
     points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
 
     # DEBUG

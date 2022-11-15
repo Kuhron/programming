@@ -81,9 +81,14 @@ def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
             # do the refracting last, so do -2 = -1-3 NOT -3-1
             y1 = sub1(pc)
             if y1[0] == "C" and all (y == "0" for y in y1[1:]):
-                raise ValueError("ran across pc-1 = C0*, will get pc-1-3 = None, need to fix")
-            y13 = sub3(y1)
-            res = y13
+                # since C lacks the -3 direction, 
+                # but we are subtracting 2 from something on the edge,
+                # we can use p-3+3 due to refraction
+                res = add3(sub3(pc))
+                # raise ValueError(f"ran across pc-1 = C0* in input {pc}{x:+}, will get pc-1-3 = None, need to fix")
+            else:
+                y13 = sub3(y1)
+                res = y13
             # print(f"case: on edge CA, x=-2; {res=}")
         elif on_edge_DB and x == -1:
             if all(y == "0" for y in tail):
@@ -98,8 +103,12 @@ def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
         elif on_edge_DB and x == -2:
             # do the refracting last, so do -2 = -3-1 NOT -1-3
             y3 = sub3(pc)
-            if y3[0] == "D" and all (y == "0" for y in y1[1:]):
-                raise ValueError("ran across pc-3 = D0*, will get pc-3-1 = None, need to fix")
+            if y3[0] == "D" and all (y == "0" for y in y3[1:]):
+                # since D lacks the -1 direction, 
+                # but we are subtracting 2 from something on the edge,
+                # we can use p-1+1 due to refraction
+                res = add1(sub1(pc))
+                # raise ValueError(f"ran across pc-3 = D0* in input {pc}{x:+}, will get pc-3-1 = None, need to fix")
             y31 = sub1(y3)
             res = y31
             # print(f"case: on edge DB, x=-2; {res=}")

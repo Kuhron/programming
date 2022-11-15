@@ -288,15 +288,15 @@ def get_iterations_needed_for_point_number(point_number):
     return math.ceil(iters_exact)
 
 
-def verify_valid_point_numbers(point_numbers, n_iterations):
+def verify_valid_point_numbers(pns, n_iterations):
     points_at_iter = get_exact_n_points_from_iterations(n_iterations)
-    for p in point_numbers:
-        if type(p) is not int:
-            raise TypeError("invalid point number, expected int: {}".format(p))
-        if p < 0:
-            raise ValueError("point number should be non-negative: {}".format(p))
-        if p >= points_at_iter:
-            raise ValueError("point number {} too high for {} iterations, which has {} points".format(p, n_iterations, points_at_iter))
+    for pn in pns:
+        if type(pn) is not int:
+            raise TypeError("invalid point number, expected int: {}".format(pn))
+        if pn < 0:
+            raise ValueError("point number should be non-negative: {}".format(pn))
+        if pn >= points_at_iter:
+            raise ValueError("point number {} too high for {} iterations, which has {} points".format(pn, n_iterations, points_at_iter))
 
 
 def verify_can_have_children_from_point_number(pn, iteration):
@@ -662,10 +662,13 @@ def get_directional_parent_from_point_code(pc):
     
     # faster than using adjacency and getting dpar at same index as this point's child_index
     # convert it to the C-D peel and then convert the answer back to the correct peel
-    cd_code, peel_offset = normalize_peel(pc)
-    assert cd_code[0] in ["C", "D"], "peel normalization failed"
+    pc, peel_offset = normalize_peel(pc)
+    assert pc[0] in ["C", "D"], "peel normalization failed"
 
-    cd_dpar = bc.get_directional_parent_from_point_code_using_box_corner_mapping(cd_code)
+    # cd_dpar = bc.get_directional_parent_from_point_code_using_box_corner_mapping(pc)
+    child_index = get_child_index_from_point_code(pc)
+    adj = get_adjacency_from_point_code(pc)
+    cd_dpar = adj[child_index]
     
     # keep trailing zeros during the recursive calls to box corner mapping
     # but no longer need them here now that we have our final answer
@@ -673,9 +676,12 @@ def get_directional_parent_from_point_code(pc):
 
     # similarly undo reversed-polarity encoding if we got one of those
     if bc.point_code_is_in_reversed_polarity_encoding(cd_dpar):
-        cd_dpar = bc.correct_reversed_edge_polarity(cd_dpar, reference_peel)
+        rev_cd_dpar = bc.correct_reversed_edge_polarity(cd_dpar, reference_peel)
+        # print(f"reversed {cd_dpar} to {rev_cd_dpar}")
+        cd_dpar = rev_cd_dpar
 
     dpar = apply_peel_offset(cd_dpar, peel_offset)
+    # print(f"offset {cd_dpar} to {dpar}")
     return dpar
 
 
@@ -779,7 +785,7 @@ def get_unordered_neighbors_from_point_number(pn, iteration):
         return set(get_adjacency_from_point_number(pn, iteration))
 
 
-def get_unordered_neighbors_from_point_code(pc, iteration):
+def get_unordered_neighbors_from_point_code(pc):
     if pc[0] == "A":
         # just do this manually, it's only one special case type
         assert all(x == "0" for x in pc[1:]), f"invalid point code {pc}"
@@ -788,7 +794,7 @@ def get_unordered_neighbors_from_point_code(pc, iteration):
         assert all(x == "0" for x in pc[1:]), f"invalid point code {pc}"
         return {p + "3" * iteration for p in "DFHJL"}
     else:
-        return set(get_adjacency_from_point_code(pc, iteration))
+        return set(get_adjacency_from_point_code(pc))
 
 
 def get_adjacency_from_point_number(pn, iteration=None):
@@ -809,7 +815,7 @@ def get_adjacency_from_point_code(pc):
     neighUR = add_direction_to_point_code(pc, -2)
     neighU = add_direction_to_point_code(pc, -3)
     adj = [neighL, neighDL, neighD, neighR, neighUR, neighU]
-    print(f"{pc=} has {adj=}")
+    # print(f"{pc=} has {adj=}")
     return adj
 
 
@@ -923,6 +929,7 @@ def get_parent_xyzs_from_point_code(pc):
     p0, p1 = get_parents_from_point_code(pc)
     xyz0 = get_xyz_from_point_code(p0)
     xyz1 = get_xyz_from_point_code(p1)
+    # print(f"\n{pc=} has parents {p0} with {xyz0=} and {p1} with {xyz1=}")
     return xyz0, xyz1
 
 
@@ -960,7 +967,9 @@ def get_xyz_of_point_number_using_parents(pn):
 def get_xyz_of_child_from_parent_xyzs(xyz0, xyz1):
     # reduce use of UnitSpherePoint objects where they are unnecessary
     # also reduce use of latlon and conversion to/from it where it is unnecessary
-    return mcm.get_unit_sphere_midpoint_from_xyz(xyz0, xyz1)
+    res = mcm.get_unit_sphere_midpoint_from_xyz(xyz0, xyz1)
+    # print(f"midpoint of\n{xyz0=} and\n{xyz1} is\n{res}")
+    return res
 
 
 # @functools.lru_cache(maxsize=100000)
@@ -1341,64 +1350,62 @@ def plot_directional_parent_graph(iteration):
     plt.show()
 
 
-def get_region_around_point(point_number, iteration, max_distance_gc_normalized):
+def get_region_around_point_code(pc, max_distance_gc_normalized):
     # follow adjacency paths at this iteration resolution until you get every point within the radius
-    verify_valid_point_numbers([point_number], iteration)
-    res = {point_number}
-    new_points = [point_number]
+    print(f"getting region around {pc}")
+    res = {pc}
+    new_points = [pc]
     known_neighbors = {}
     checked_points = set()
     t0 = time.time()
     while len(new_points) > 0:
-        pn = new_points[0]
-        if pn in known_neighbors:
-            neighbors = known_neighbors[pn]
+        pc1 = new_points[0]
+        if pc1 in known_neighbors:
+            neighbors = known_neighbors[pc1]
         else:
-            neighbors = get_unordered_neighbors_from_point_number(pn, iteration)
-            known_neighbors[pn] = neighbors
-        # print(f"got neighbors of {pn}: {neighbors}")
+            neighbors = get_unordered_neighbors_from_point_code(pc1)
+            known_neighbors[pc1] = neighbors
+        # print(f"got neighbors of {pc1}: {neighbors}")
         for neighbor in neighbors:
             if neighbor is None:
                 continue
             if neighbor not in res and neighbor not in checked_points:
-                d = get_distance_point_numbers_great_circle(point_number, neighbor, radius=1)
+                d = get_distance_point_codes_great_circle(pc, neighbor, radius=1)
                 if d <= max_distance_gc_normalized:
                     # print(f"adding {neighbor} to new points")
                     new_points.append(neighbor)
                     res.add(neighbor)
+                else:
+                    pass # print(f"not adding neighbor {neighbor} because distance {d} is too far (need <= {max_distance_gc_normalized})")
         new_points = new_points[1:]
-        checked_points.add(pn)
+        checked_points.add(pc1)
         if time.time() - t0 > 2:
-            print(f"creating region around {point_number}: {len(res)} points so far")
+            print(f"creating region around {pc}: {len(res)} points so far")
             t0 = time.time()
+    # print(f"got region: {res}")
     return res
 
 
-def find_distances_to_watershed(reference_pc, watershed_parent_pc):
-    # TODO: find nearest and farthest points within a given watershed
+def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
+    # find nearest and farthest points within a given watershed
     # can do some geometry like it's one of the corners or it's along a certain edge (binary search?)
     # distance from a certain reference point
     # use this to determine whether we should even consider that watershed when finding points in region
     rpc = reference_pc
     pc0 = watershed_parent_pc
     reference_peel = bc.get_peel_containing_point_code(pc0)  # for re-encoding reversed edges
-    print(f"{rpc=}, {pc0=}")
+    # print(f"{rpc=}, {pc0=}")
     watershed_adj = get_adjacency_from_point_code(pc0)  # keep trailing zeros, maybe we want e.g. J00X
     pc1, pc2, pc3, _, _, _ = watershed_adj
     watershed_corners = [pc0, pc1, pc2, pc3]
-    print("corner pcs:", watershed_corners)
-    ds_to_corners = [get_distance_point_codes_great_circle(rpc, pc) for pc in watershed_corners]
-    print("distances to corners:", ds_to_corners)
+    # print("corner pcs:", watershed_corners)
+    # ds_to_corners = [get_distance_point_codes_great_circle(rpc, pc) for pc in watershed_corners]
+    # print("distances to corners:", ds_to_corners)
 
     # we know that anything in the interior of the watershed
     # must be bounded by the min and max distances to the edges
+    # ! IF the reference point is outside the watershed
     # but maybe one of those extrema is in the middle of an edge rather than on a corner
-
-    # get some points along the edges
-    # the edge in the 1 direction is just P{0,1}*
-    # simil in the 3 direction is P{0,3}*
-    # opposite the 1 edge is (P+3){0,1}*
-    # opposite the 3 edge is (P+1){0,3}*
 
     # I think there should be at most one critical point of distance along a given edge
     # so it will have only one local extremum if any? (endpoints don't count as local extrema here)
@@ -1413,12 +1420,19 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc):
     n_bits = 4
     binary_arrays = get_binary_arrays(n_bits)
 
-    ax1 = plt.subplot(1,2,1)
-    ax2 = plt.subplot(1,2,2)
-    rll = get_latlon_from_point_code(rpc)
+    if plot:
+        ax1 = plt.subplot(1,2,1)
+        ax2 = plt.subplot(1,2,2)
+        rll = get_latlon_from_point_code(rpc)
+
+    if point_is_descendant(rpc, watershed_parent_pc):
+        dmin = 0  # the watershed contains the reference point
+    else:
+        dmin = None
+    dmax = None
 
     for edge_dict in edges:
-        print(f"{edge_dict=}")
+        # print(f"{edge_dict=}")
         p0 = edge_dict["p0"]
         p1 = edge_dict["p1"]
 
@@ -1444,20 +1458,30 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc):
             pcs.append(pc)
         pcs.append(p1)
         ds = [get_distance_point_codes_great_circle(rpc, pc) for pc in pcs]
-        lls = [get_latlon_from_point_code(pc) for pc in pcs]
-        if switch_edge_due_to_pole:
-            ds = ds[::-1]
-        print("----")
-        for pc, d in zip(pcs, ds):
-            print(pc, d)
-        ax1.plot(ds, c=color)
-        ax2.scatter([rll[1]], [rll[0]], marker="x", c="purple")
-        ax2.scatter([ll[1] for ll in lls], [ll[0] for ll in lls], c=color)
+        dmin = min(dmin, min(ds)) if dmin is not None else min(ds)
+        dmax = max(dmax, max(ds)) if dmax is not None else max(ds)
+        if plot:
+            lls = [get_latlon_from_point_code(pc) for pc in pcs]
+            # print("----")
+            # for pc, d in zip(pcs, ds):
+            #     print(pc, d)
+            ax1.plot(ds, c=color)
+            ax2.scatter([rll[1]], [rll[0]], marker="x", c="purple")
+            ax2.scatter([ll[1] for ll in lls], [ll[0] for ll in lls], c=color)
     
-    text = lambda pc, ax=ax2: (lambda ll: ax.text(ll[1]+5, ll[0], pc))(get_latlon_from_point_code(pc))
-    for pc in [rpc, pc0, pc1, pc2, pc3]:
-        text(pc)
-    plt.show()
+    if plot:
+        text = lambda name, pc, ax=ax2: (lambda ll: ax.text(ll[1]+5, ll[0], f"{pc} ({name})"))(get_latlon_from_point_code(pc))
+        for name,pc in [("ref",rpc), ("0",pc0), ("1",pc1), ("2",pc2), ("3",pc3)]:
+            text(name, pc)
+        ax2.set_aspect("equal")
+        print(f"{dmin=}, {dmax=}")
+        plt.show()
+    
+    return dmin, dmax
+
+
+def point_is_descendant(pc, ancestor_pc):
+    return pc.startswith(ancestor_pc)
 
 
 def get_direction_between_point_codes(p0, p1):
@@ -1482,6 +1506,36 @@ def get_binary_arrays(n_bits):
         for i in [0, 1]:
             res += [[i] + arr for arr in prev]
         return res
+
+
+def plot_adjacency_on_map(pc):
+    # for debugging
+    adj = get_adjacency_from_point_code(pc)
+    lat0, lon0 = get_latlon_from_point_code(pc)
+    lls = [get_latlon_from_point_code(pc1) for pc1 in adj]
+    colors = ["yellow", "red", "blue", "purple", "green", "orange"]
+    lats = [ll[0] for ll in lls]
+    lons = [ll[1] for ll in lls]
+    plt.scatter([lon0], [lat0], c="k")
+    plt.scatter(lons, lats, c=colors)
+    plt.gca().set_aspect("equal")
+    plt.show()
+
+
+def plot_parents_on_map(pc):
+    # for debugging
+    par, dpar = get_parents_from_point_code(pc)
+    lat, lon = get_latlon_from_point_code(pc)
+    plat, plon = get_latlon_from_point_code(par)
+    dplat, dplon = get_latlon_from_point_code(dpar)
+    plt.scatter([lon], [lat], c="k")
+    plt.text(lon, lat, f"{pc}(0)")
+    plt.scatter([plon], [plat], c="r")
+    plt.text(plon, plat, f"{par}(p)")
+    plt.scatter([dplon], [dplat], c="g")
+    plt.text(dplon, dplat, f"{dpar}(dp)")
+    plt.gca().set_aspect("equal")
+    plt.show()
 
 
 def test_parent_is_correct_neighbor():
@@ -1628,15 +1682,19 @@ STARTING_POINTS_ORDERED, STARTING_POINTS_ADJACENCY = STARTING_POINTS
 
 
 if __name__ == "__main__":
-    pc = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=4)
-    # pc = "A"
-    watershed_parent = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=4)
-    # watershed_parent = "C1"
-    # iteration = get_iteration_born_from_point_number(point_number)
-    # region = get_region_around_point(point_number, iteration, max_distance_gc_normalized=0.3)
-    # scatter_icosa_points_by_number(region, show=True)
+    while True:
+        pc = get_random_point_code(min_iterations=4, expected_iterations=6, max_iterations=8)
+        region = get_region_around_point_code(pc, max_distance_gc_normalized=0.3)
+        scatter_icosa_points_by_code(region, show=True)
 
-    find_distances_to_watershed(pc, watershed_parent)
+    # while True:
+    #     pc = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=5)
+    #     watershed_parent = get_random_point_code(min_iterations=1, expected_iterations=2, max_iterations=5)
+    #     # plot_adjacency_on_map(pc)
+    #     # plot_parents_on_map(pc)
+    #     dmin, dmax = find_distances_to_watershed(pc, watershed_parent, plot=False)
+    #     print(f"{dmin=}, {dmax=}")
+    # narrow_watersheds_that_could_overlap_region()  # use find_distances_to_watershed()
 
     # TODO: find latlon using trig, 
     # like the point code tells you how far along a certain edge the point is located
