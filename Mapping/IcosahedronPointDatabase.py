@@ -10,10 +10,15 @@
 import os
 import pathlib
 import random
+import time
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
 import IcosahedronMath as icm
 from BiDict import BiDict
+from PointCodeTrie import PointCodeTrie
+import FindPointsInCircle as find
 
 
 class IcosahedronPointDatabase:
@@ -378,6 +383,38 @@ class IcosahedronPointDatabase:
             new_vals.append(new_val)
         self[pns, varname] = new_vals
 
+    def get_mask_point_codes_with_prefix(self, prefix, pandas_method=True):
+        # want to return true for things like "D" starting with "D00"
+
+        if pandas_method:
+            return self.df.index.str.ljust(len(prefix), "0").str.startswith(prefix)
+        else:
+            return self.get_mask_point_codes_with_prefixes([prefix], pandas_method=False)
+
+    def get_all_point_codes_with_prefix(self, prefix):
+        mask = self.get_mask_point_codes_with_prefix(prefix)
+        return self.df.index[mask]
+
+    def get_mask_point_codes_with_prefixes(self, prefixes, pandas_method=True):
+        print(f"creating point code prefix mask")
+        mask = pd.Series([False] * len(self.df.index), index=self.df.index)
+        # without setting the mask's index to be the same as the df's it will error
+
+        if pandas_method:
+            for prefix in prefixes:
+                mask |= self.get_mask_point_codes_with_prefix(prefix, pandas_method=True)
+        else:
+            max_prefix_len = max(len(x) for x in prefixes)
+            for pc in self.df.index:
+                pc = pc.ljust(max_prefix_len, "0")
+                for prefix in prefixes:
+                    if pc.startswith(prefix):
+                        mask[pc] = True
+                        break
+
+        print(f"done creating point code prefix mask, has {mask.sum()} items")
+        return mask
+
     def clear_cache(self):
         self.cache = {}
         print("db cache cleared")
@@ -504,5 +541,63 @@ if __name__ == "__main__":
     # where should poles go? in their own file maybe? probably best to just do that
     root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
     db = IcosahedronPointDatabase.load(root_dir)
-    # pcs = db.get_all_point_codes_with_data_with_prefix(prefix)
+    df = db.df
+    # prefix = "I"
+    # pcs = db.get_all_point_codes_with_prefix(prefix)
+    
+    min_pc_iterations = random.randint(0, 3)
+    max_pc_iterations = min_pc_iterations + random.randint(0, 2)
+    expected_pc_iterations = (min_pc_iterations + max_pc_iterations) / 2
+    pc = icm.get_random_point_code(min_pc_iterations, expected_pc_iterations, max_pc_iterations)
+    pc_iterations = icm.get_iteration_number_from_point_code(pc)
+    resolution_iterations = pc_iterations + random.randint(2, 4)
+    narrowing_iterations = 3 #min(resolution_iterations - 1, random.randint(0, 3))
+    d_gc = abs(np.random.normal(0, 0.5))
 
+    # use narrowing to get which watersheds are all inside, all outside, and split
+    t0 = time.time()
+    inside, outside, split = icm.narrow_watersheds_by_distance(pc, d_gc, narrowing_iterations)
+    print("inside", inside)
+    print("outside", outside)
+    print("split", split)
+
+    # now get point codes that are in each of these
+    # label the inside ones as True, the outside ones as False
+    # then filter rows by prefix to get the split ones and check them one by one
+    # (see how many there are to check as well, how long this will take)
+    df["in_region"] = np.nan
+    df["in_region"] = df["in_region"].astype("boolean")
+    for pandas_method in [True, False]:
+        pt0 = time.time()
+        inside_mask = db.get_mask_point_codes_with_prefixes(inside)
+        outside_mask = db.get_mask_point_codes_with_prefixes(outside)
+        split_mask = db.get_mask_point_codes_with_prefixes(split)
+        pt1 = time.time() - pt0
+        print(f"getting masks with {pandas_method=} took {pt1} seconds\n")
+    df.loc[inside_mask, "in_region"] = True
+    df.loc[outside_mask, "in_region"] = False
+    split_pcs = df.index[split_mask]
+    split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, pc, d_gc)
+    for pc1 in split_pcs:
+        if pc1 in split_pcs_in_region:
+            df.loc[pc1, "in_region"] = True
+        else:
+            df.loc[pc1, "in_region"] = False
+    print(df)
+    in_region_mask = df["in_region"]
+    print(f"there are {in_region_mask.sum()} points in the region")
+    pcs_in_region = df.loc[in_region_mask].index
+    print(sorted(pcs_in_region))
+    t1 = time.time() - t0
+    print(f"with narrowing took {t1} seconds")
+
+    # direct filtering one by one is still really slow (over an hour for one test of reasonable size)
+    # whereas combination of narrowing and filtering the split region is a few minutes
+    # t0 = time.time()
+    # print("\n----\nnow just filtering directly")
+    # pcs_in_region = find.filter_point_codes_in_region_one_by_one(df.index, pc, d_gc)
+    # print(f"there are {in_region_mask.sum()} points in the region")
+    # print(list(pcs_in_region))
+    # t2 = time.time() - t0
+    # print(f"with narrowing took {t1} seconds")
+    # print(f"direct filtering took {t2} seconds")

@@ -6,6 +6,7 @@ from GreatCircleDistanceMatrix import GreatCircleDistanceMatrix
 from BiDict import BiDict
 import LoadMapData
 import PlottingUtil as pu
+import FindPointsInCircle as find
 
 import random
 import os
@@ -14,44 +15,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 
-
-def filter_point_numbers_in_region_one_by_one(point_numbers, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
-    # goes over all point numbers you pass in, gets their distance from the center,
-    # and returns the ones that are within the radius
-
-    # gc = great-circle distance
-    region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
-    point_numbers_in_region = set()
-    t0 = time.time()
-    n_points = len(point_numbers)
-    for i, pn in enumerate(point_numbers):
-        # pc = icm.get_point_code_from_point_number(pn)
-        # print(pc)  # to see what kind of iteration precision we are dealing with here
-        if i % 100 == 0 and i != 0:
-            dt = time.time() - t0
-            rate = i / dt
-            time_remaining = (n_points - i) / rate
-            print(f"i = {i} / {len(point_numbers)}; estimated {time_remaining:.2f} seconds remaining")
-            print("TODO there has got to be a way to use the point codes to infer from ancestry that the point is too far away from the region, so I can filter them faster without actually calculating their position")
-        latlondeg = icm.get_latlon_from_point_number(pn)
-        d_gc = UnitSpherePoint.distance_great_circle_latlondeg_static(region_center_latlondeg, latlondeg)
-        # print(f"distance from center {region_center_latlondeg}\nto point #{pn} {latlondeg}\nis {d_gc} normalized to sphere radius 1")
-        if d_gc <= region_radius_gc_normalized:
-            point_numbers_in_region.add(pn)
-            print("added point", pn)
-    point_numbers_in_region = sorted(point_numbers_in_region)
-    return point_numbers_in_region
-
-
-def filter_point_numbers_in_region_all_at_once(point_numbers, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
-    raise Exception("deprecated; one-by-one should be fast enough now")
-    # # try doing like nearest neighbors or large-scale distance query or something
-    # region_radius_gc_normalized = region_radius_great_circle_km / planet_radius_km
-    # xyzs = icm.get_xyzs_from_point_numbers(point_numbers)
-    # xyz = mcm.unit_vector_lat_lon_to_cartesian(region_center_latlondeg)
-    # distances = UnitSpherePoint.distance_3d_xyzs_to_xyz_static(xyzs, xyz)
-    # mask = distances <= region_radius_gc_normalized
-    # return point_numbers[mask]
 
 
 def get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km):
@@ -63,7 +26,7 @@ def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radi
     print(f"checking {len(point_numbers_in_db)} points")
     
     # try different algorithms for finding the correct set of points
-    filter_point_numbers_in_region = filter_point_numbers_in_region_one_by_one
+    filter_point_numbers_in_region = find.filter_point_codes_in_region_one_by_one
     # filter_point_numbers_in_region = filter_point_numbers_in_region_all_at_once
     
     point_numbers_in_region_in_db = filter_point_numbers_in_region(point_numbers_in_db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
@@ -262,7 +225,7 @@ def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
     print(f"plotting variable scattered: {var_to_plot}")
     pn_to_val = db[point_numbers, var_to_plot]
     # print(pn_to_val)
-    latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
+    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     vals = [pn_to_val.get(pn) for pn in point_numbers]
@@ -284,7 +247,7 @@ def plot_variables_scattered(db, point_numbers, vars_to_plot):
 
 def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=True):
     print(f"plotting variable interpolated: {var_to_plot}")
-    latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
+    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
     values_dict = db[point_numbers, var_to_plot]
     # print(values_dict)
     values = [values_dict.get(pn) for pn in point_numbers]
@@ -303,7 +266,7 @@ def plot_variables_interpolated(db, point_numbers, vars_to_plot, resolution):
 
 
 def plot_latlons(point_numbers):
-    latlons = [icm.get_latlon_from_point_number(pn) for pn in point_numbers]
+    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     plt.scatter(lons, lats)

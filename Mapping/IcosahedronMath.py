@@ -3,7 +3,7 @@
 
 
 import math
-# import functools  # only use caching if you have to, really try to make things more efficient
+import functools  # only use caching if you have to, really try to make things more efficient
 import random
 import time
 import numpy as np
@@ -79,10 +79,11 @@ def get_latlon_from_point_code(pc):
     if len(pc) == 1:
         return get_latlon_of_initial_point_code(pc)
     else:
-        xyz = get_xyz_from_point_code_recursive(pc)
+        xyz = get_xyz_from_point_code(pc)
         return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
 
 
+@functools.lru_cache(maxsize=10000)  # for avoiding recalculating the same parents over again
 def get_xyz_from_point_code(pc):
     if len(pc) == 1:
         pn = get_point_number_from_point_code(pc)
@@ -108,7 +109,7 @@ def get_latlon_from_point_number(pn):
 
 
 def get_latlons_from_point_numbers(pns):
-    return [get_latlon_from_point_number(pn) for pn in pns]
+    return [get_latlon_from_point_code(pn) for pn in pns]
 
 
 def get_latlons_from_point_codes(pcs):
@@ -1005,7 +1006,8 @@ def get_xyz_of_child_from_parent_xyzs(xyz0, xyz1):
 # @functools.lru_cache(maxsize=100000)
 def get_xyz_from_point_code_recursive(pc):
     assert len(pc) > 1, "should get latlon/xyz of initial point directly"
-    return get_xyz_of_point_code_using_parents(pc)
+    res = get_xyz_of_point_code_using_parents(pc)
+    return res
 
 
 # @functools.lru_cache(maxsize=100000)
@@ -1226,7 +1228,7 @@ def get_latlon_generator(iterations):
     print(f"getting latlon generator for {iterations} iterations")
     n_points = get_n_points_from_iterations(iterations)
     for pi in range(n_points):
-        latlon = get_latlon_from_point_number(pi)
+        latlon = get_latlon_from_point_code(pi)
         yield latlon
     print(f"getting latlon generator for {iterations} iterations")
 
@@ -1572,7 +1574,7 @@ def narrow_watersheds_by_distance(pc, d, max_iterations):
     # go through the watersheds starting from the initial points
     # treat the poles each as a watershed consisting only of a single point
 
-    print(f"narrowing watersheds within {d=} of {pc}")
+    print(f"narrowing watersheds within {d=} of {pc} up to {max_iterations} iterations of precision")
     watersheds_to_check = list("ABCDEFGHIJKL")
     inside = []
     outside = []
@@ -1580,11 +1582,12 @@ def narrow_watersheds_by_distance(pc, d, max_iterations):
     while len(watersheds_to_check) > 0:
         wpc = watersheds_to_check[0]
         dmin, dmax = find_distances_to_watershed(pc, wpc)
-        print(f"{wpc=} has {dmin=}, {dmax=}")
         if dmin > d:
             outside.append(wpc)
+            inside_str = "outside"
         elif dmax <= d:
             inside.append(wpc)
+            inside_str = "inside"
         else:
             # it's split, some of it is within the distance and some is not
             children = get_children_from_point_code(wpc)
@@ -1595,6 +1598,8 @@ def narrow_watersheds_by_distance(pc, d, max_iterations):
                 # if the children would have too many iterations
                 # then don't split watershed any more
                 split += children
+            inside_str = "split"
+        print(f"{wpc=} has {dmin=}, {dmax=} ({inside_str})")
         watersheds_to_check = watersheds_to_check[1:]
     return inside, outside, split
 
@@ -1867,3 +1872,26 @@ if __name__ == "__main__":
     # also constrain which edges we even need to subdivide in watershed distance measuring
     # this can help us do watershed narrowing more efficiently
     # don't need to check some number of points on all four edges
+
+    # TODO I don't trust that the narrowing is correct always
+    # because dmin and dmax are just estimates based on sampling 2**k points from each edge
+    # of the watershed. I want a much more accurate idea of these extrema.
+    # and also should have a tolerance amount where, if the region is just barely all in
+    # or all out, by a margin less than that tolerance, then we're paranoid and put it in split
+    # so we check all its points just in case
+
+    # can check lengths of points in df, to know max iteration, 
+    # if the number of points at a certain iteration is small enough 
+    # then can check if they are in region or not, 
+    # rather than building huge region at large resolution and then throwing most points away
+
+    # once find points with data for this variable in region, 
+    # don't have to edit them all, can edit a grid with lower resolution 
+    # but still have it influenced by the existing data points
+
+    # when load a specific region to work on, 
+    # keep its points and their adjacencies in RAM 
+    # to make it faster to select circles within the region by spreading 
+    # (still have to check distances to circle center)
+
+    pass
