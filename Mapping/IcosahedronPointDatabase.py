@@ -19,6 +19,7 @@ import IcosahedronMath as icm
 from BiDict import BiDict
 from PointCodeTrie import PointCodeTrie
 import FindPointsInCircle as find
+import PlottingUtil as pu
 
 
 class IcosahedronPointDatabase:
@@ -400,6 +401,7 @@ class IcosahedronPointDatabase:
         mask = pd.Series([False] * len(self.df.index), index=self.df.index)
         # without setting the mask's index to be the same as the df's it will error
 
+        # times for using pandas method vs manually are very similar (e.g. 86 s and 87 s)
         if pandas_method:
             for prefix in prefixes:
                 mask |= self.get_mask_point_codes_with_prefix(prefix, pandas_method=True)
@@ -567,13 +569,9 @@ if __name__ == "__main__":
     # (see how many there are to check as well, how long this will take)
     df["in_region"] = np.nan
     df["in_region"] = df["in_region"].astype("boolean")
-    for pandas_method in [True, False]:
-        pt0 = time.time()
-        inside_mask = db.get_mask_point_codes_with_prefixes(inside)
-        outside_mask = db.get_mask_point_codes_with_prefixes(outside)
-        split_mask = db.get_mask_point_codes_with_prefixes(split)
-        pt1 = time.time() - pt0
-        print(f"getting masks with {pandas_method=} took {pt1} seconds\n")
+    inside_mask = db.get_mask_point_codes_with_prefixes(inside)
+    outside_mask = db.get_mask_point_codes_with_prefixes(outside)
+    split_mask = db.get_mask_point_codes_with_prefixes(split)
     df.loc[inside_mask, "in_region"] = True
     df.loc[outside_mask, "in_region"] = False
     split_pcs = df.index[split_mask]
@@ -587,9 +585,14 @@ if __name__ == "__main__":
     in_region_mask = df["in_region"]
     print(f"there are {in_region_mask.sum()} points in the region")
     pcs_in_region = df.loc[in_region_mask].index
-    print(sorted(pcs_in_region))
     t1 = time.time() - t0
     print(f"with narrowing took {t1} seconds")
+
+    with open("points.txt", "w") as f:
+        for pc in pcs_in_region:
+            f.write(pc + "\n")
+
+    pu.scatter_icosa_points_by_code(pcs_in_region)
 
     # direct filtering one by one is still really slow (over an hour for one test of reasonable size)
     # whereas combination of narrowing and filtering the split region is a few minutes

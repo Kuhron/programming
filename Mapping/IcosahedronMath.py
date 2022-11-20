@@ -330,78 +330,6 @@ def can_have_children_from_point_number(point_number, n_iterations):
     return True
 
 
-def scatter_icosa_points_by_number(point_numbers, show=True):
-    point_codes = [get_point_code_from_point_number(pn) for pn in point_numbers]
-    scatter_icosa_points_by_code(point_codes, show=show)
-
-
-def scatter_icosa_points_by_code(point_codes, show=True, **kwargs):
-    latlons = get_latlons_from_point_codes(point_codes)
-    lats = [ll[0] for ll in latlons]
-    lons = [ll[1] for ll in latlons]
-    plt.scatter(lons, lats, **kwargs)
-    if show:
-        plt.show()
-
-
-def plot_neighbor_relationships(n_iterations):
-    d = get_adjacency_memo_dict(n_iterations)
-    n_points = get_exact_n_points_from_iterations(n_iterations)
-    point_numbers = range(12, n_points)
-    neighbor_indices = range(6)
-    colors = ["red","yellow","green","blue","purple","black"]
-    for ni, c in zip(neighbor_indices, colors):
-        neighbor_numbers_at_index = [d[pi][ni] for pi in point_numbers]
-        plt.scatter(point_numbers, neighbor_numbers_at_index, color=c, alpha=0.4)
-    plt.show()
-
-
-def plot_xyzs(n_iterations):
-    d = get_position_memo_dict(n_iterations)
-    n_points = get_exact_n_points_from_iterations(n_iterations)
-    point_numbers = range(12, n_points)
-    xs = [d[pi]["xyz"][0] for pi in point_numbers]
-    ys = [d[pi]["xyz"][1] for pi in point_numbers]
-    zs = [d[pi]["xyz"][2] for pi in point_numbers]
-
-    plt.scatter(point_numbers, xs)
-    plt.title("x")
-    plt.show()
-
-    plt.scatter(point_numbers, ys)
-    plt.title("y")
-    plt.show()
-
-    plt.scatter(point_numbers, zs)
-    plt.title("z")
-    plt.show()
-
-
-def plot_latlons(n_iterations):
-    d = get_position_memo_dict(n_iterations)
-    n_points = get_exact_n_points_from_iterations(n_iterations)
-    point_numbers = range(12, n_points)
-    lats = [d[pi]["latlondeg"][0] for pi in point_numbers]
-    lons = [d[pi]["latlondeg"][1] for pi in point_numbers]
-    
-    plt.scatter(point_numbers, lats)
-    plt.title("lat")
-    plt.show()
-
-    plt.scatter(point_numbers, lons)
-    plt.title("lon")
-    plt.show()
-
-
-def plot_coordinate_patterns(n_iterations):
-    # for trying to get some pattern recognition and figure out what the functions are that determine the positions and adjacencies of the icosahedron points
-    # right now it seems pretty hopeless; there are a lot of complicated patterns, they look cool but I don't understand them
-    # the X plot has Sierpinski fractals, lots of other fractal structures visible at high iteration numbers (~7)
-    plot_neighbor_relationships(n_iterations)
-    plot_xyzs(n_iterations)
-    plot_latlons(n_iterations)
-
-
 def get_starting_points_latlon_named():
     icosahedron_original_points_latlon = {
         # north pole
@@ -1893,5 +1821,8 @@ if __name__ == "__main__":
     # keep its points and their adjacencies in RAM 
     # to make it faster to select circles within the region by spreading 
     # (still have to check distances to circle center)
+
+    # use narrowing and filtering to get the region to work on for the session
+    # within a session of generating elevation, use spreading to get the circles (much faster)
 
     pass
