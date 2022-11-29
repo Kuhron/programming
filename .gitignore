@@ -22,6 +22,7 @@ primes.txt
 # mapping memoization files
 Mapping/MemoIcosa*.txt
 Mapping/MemoIcosa/
+Mapping/PointFiles/
 
 # giant map files
 *ElevationGenerationOutputData*.txt

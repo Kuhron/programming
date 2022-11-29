@@ -300,6 +300,18 @@ def verify_valid_point_numbers(pns, n_iterations):
             raise ValueError("point number {} too high for {} iterations, which has {} points".format(pn, n_iterations, points_at_iter))
 
 
+def verify_valid_point_codes(pcs):
+    for pc in pcs:
+        verify_valid_point_code(pc)
+
+
+def verify_valid_point_code(pc):
+    head = pc[0]
+    tail = pc[1:]
+    assert head in list("ABCDEFGHIJKL"), head
+    assert all(x in list("0123") for x in tail), tail
+
+
 def verify_can_have_children_from_point_number(pn, iteration):
     if pn in [0, 1]:
         raise ValueError(f"point {pn} cannot have children")
@@ -1345,6 +1357,9 @@ def get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, re
                     pass # print(f"not adding neighbor {neighbor} because distance {d} is too far (need <= {max_distance_gc_normalized})")
         new_points = new_points[1:]
         checked_points.add(pc1)
+        # TODO reduce memory usage by keeping checked_points as just a "fairy ring"
+        # only the ones we just checked in this ring, 
+        # since the neighbors of the ring outside this one can't pass through it to get back inside
         if time.time() - t0 > 2:
             print(f"creating region around {pc}: {len(res)} points so far")
             t0 = time.time()

@@ -5,7 +5,7 @@ import itertools
 import scipy
 from scipy import interpolate  # it seems on WSL I have to do this, importing the submodule, while on my Ubuntu laptop this is not necessary
 
-from IcosahedronMath import get_latlon_from_point_code, get_latlon_from_point_number, get_point_code_from_point_number, get_latlons_from_point_codes, get_latlons_from_point_numbers, get_exact_n_points_from_iterations
+import IcosahedronMath as icm
 
 
 def get_land_and_sea_colormap():
@@ -181,12 +181,12 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
 
 
 def scatter_icosa_points_by_number(point_numbers, show=True):
-    point_codes = [get_point_code_from_point_number(pn) for pn in point_numbers]
+    point_codes = [icm.get_point_code_from_point_number(pn) for pn in point_numbers]
     scatter_icosa_points_by_code(point_codes, show=show)
 
 
 def scatter_icosa_points_by_code(point_codes, show=True, **kwargs):
-    latlons = get_latlons_from_point_codes(point_codes)
+    latlons = icm.get_latlons_from_point_codes(point_codes)
     lats = [ll[0] for ll in latlons]
     lons = [ll[1] for ll in latlons]
     plt.scatter(lons, lats, **kwargs)
@@ -195,8 +195,8 @@ def scatter_icosa_points_by_code(point_codes, show=True, **kwargs):
 
 
 def plot_neighbor_relationships(n_iterations):
-    d = get_adjacency_memo_dict(n_iterations)
-    n_points = get_exact_n_points_from_iterations(n_iterations)
+    d = icm.get_adjacency_memo_dict(n_iterations)
+    n_points = icm.get_exact_n_points_from_iterations(n_iterations)
     point_numbers = range(12, n_points)
     neighbor_indices = range(6)
     colors = ["red","yellow","green","blue","purple","black"]
@@ -207,8 +207,8 @@ def plot_neighbor_relationships(n_iterations):
 
 
 def plot_xyzs(n_iterations):
-    d = get_position_memo_dict(n_iterations)
-    n_points = get_exact_n_points_from_iterations(n_iterations)
+    d = icm.get_position_memo_dict(n_iterations)
+    n_points = icm.get_exact_n_points_from_iterations(n_iterations)
     point_numbers = range(12, n_points)
     xs = [d[pi]["xyz"][0] for pi in point_numbers]
     ys = [d[pi]["xyz"][1] for pi in point_numbers]
@@ -228,8 +228,8 @@ def plot_xyzs(n_iterations):
 
 
 def plot_latlons(n_iterations):
-    d = get_position_memo_dict(n_iterations)
-    n_points = get_exact_n_points_from_iterations(n_iterations)
+    d = icm.get_position_memo_dict(n_iterations)
+    n_points = icm.get_exact_n_points_from_iterations(n_iterations)
     point_numbers = range(12, n_points)
     lats = [d[pi]["latlondeg"][0] for pi in point_numbers]
     lons = [d[pi]["latlondeg"][1] for pi in point_numbers]
@@ -251,3 +251,13 @@ def plot_coordinate_patterns(n_iterations):
     plot_xyzs(n_iterations)
     plot_latlons(n_iterations)
 
+
+def plot_variable_at_point_codes(pcs, db, variable_index):
+    df = db.df
+    df2 = df.loc[pcs,:]
+    lls = [icm.get_latlon_from_point_code(pc) for pc in pcs]
+    lats = [ll[0] for ll in lls]
+    lons = [ll[1] for ll in lls]
+    variable_values = df2.loc[:, variable_index]
+    plt.scatter(lons, lats, c=variable_values)
+    plt.colorbar()

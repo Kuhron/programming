@@ -9,8 +9,10 @@
 
 import os
 import pathlib
+import re
 import random
 import time
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -533,32 +535,34 @@ def check_int(value):
         raise TypeError(f"Database only accepts int values (you gave {value} of type {type(value)}).\nIf you want enum, make them int shorthands in the condition_array_dir.\nIf you want floats, choose the precision you want and make ints of that, e.g. elevation in millimeters.")
 
 
-if __name__ == "__main__":
-    # trying to see how best to convert the data from point number to point code organization
-    # idea to have folders for each group of digits to some size?
-    # e.g. C103231 is found in C/102/data.txt, under the line label "231"
-    # and C10323102 is found in C/102/231/data.txt, under the line label "02"
-    # don't store trailing zeros in point codes here, each point code should be a unique place
-    # so 12 top-level directories
-    # where should poles go? in their own file maybe? probably best to just do that
-    root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
-    db = IcosahedronPointDatabase.load(root_dir)
-    df = db.df
-    # prefix = "I"
-    # pcs = db.get_all_point_codes_with_prefix(prefix)
-    
-    min_pc_iterations = random.randint(0, 3)
-    max_pc_iterations = min_pc_iterations + random.randint(0, 2)
-    expected_pc_iterations = (min_pc_iterations + max_pc_iterations) / 2
-    pc = icm.get_random_point_code(min_pc_iterations, expected_pc_iterations, max_pc_iterations)
-    pc_iterations = icm.get_iteration_number_from_point_code(pc)
+def get_point_codes_from_file(fp):
+    with open(fp) as f:
+        lines = f.readlines()
+    pcs = [l.strip() for l in lines]
+    icm.verify_valid_point_codes(pcs)
+    return pcs
+
+
+def make_point_code_file_for_random_region(df):
+    # min_pc_iterations = random.randint(0, 8)
+    # max_pc_iterations = min_pc_iterations + random.randint(0, 2)
+    # expected_pc_iterations = (min_pc_iterations + max_pc_iterations) / 2
+    # pc = icm.get_random_point_code(min_pc_iterations, expected_pc_iterations, max_pc_iterations)
+    center_pc = random.choice(df.index)  # use a point we know is in the database
+    pc_iterations = icm.get_iteration_number_from_point_code(center_pc)
     resolution_iterations = pc_iterations + random.randint(2, 4)
-    narrowing_iterations = 3 #min(resolution_iterations - 1, random.randint(0, 3))
-    d_gc = abs(np.random.normal(0, 0.5))
+    narrowing_iterations = 5 #min(resolution_iterations - 1, random.randint(0, 3))
+    d_gc = np.random.uniform(0.02, 0.15)
+
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+    fname_prefix = f"pcs_in_db_{today}"
+    if point_code_file_exists(center_pc, d_gc, fname_prefix):
+        print("file exists, not going to calculate this region")
+        return
 
     # use narrowing to get which watersheds are all inside, all outside, and split
     t0 = time.time()
-    inside, outside, split = icm.narrow_watersheds_by_distance(pc, d_gc, narrowing_iterations)
+    inside, outside, split = icm.narrow_watersheds_by_distance(center_pc, d_gc, narrowing_iterations)
     print("inside", inside)
     print("outside", outside)
     print("split", split)
@@ -571,11 +575,11 @@ if __name__ == "__main__":
     df["in_region"] = df["in_region"].astype("boolean")
     inside_mask = db.get_mask_point_codes_with_prefixes(inside)
     outside_mask = db.get_mask_point_codes_with_prefixes(outside)
-    split_mask = db.get_mask_point_codes_with_prefixes(split)
+    split_mask = (~inside_mask) & (~outside_mask)
     df.loc[inside_mask, "in_region"] = True
     df.loc[outside_mask, "in_region"] = False
     split_pcs = df.index[split_mask]
-    split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, pc, d_gc)
+    split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, center_pc, d_gc)
     for pc1 in split_pcs:
         if pc1 in split_pcs_in_region:
             df.loc[pc1, "in_region"] = True
@@ -588,11 +592,66 @@ if __name__ == "__main__":
     t1 = time.time() - t0
     print(f"with narrowing took {t1} seconds")
 
-    with open("points.txt", "w") as f:
-        for pc in pcs_in_region:
-            f.write(pc + "\n")
+    write_point_codes_to_file(pcs_in_region, center_pc, d_gc, fname_prefix, parent_dir="PointFiles")
+    df.drop(["in_region"], axis=1)
 
-    pu.scatter_icosa_points_by_code(pcs_in_region)
+
+def write_point_codes_to_file(pcs_in_region, center_pc, d_gc, prefix_str, parent_dir="PointFiles"):
+    pc_fp = get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir)
+    with open(pc_fp, "w") as f:
+        for center_pc in pcs_in_region:
+            f.write(center_pc + "\n")
+    print(f"point codes written to {pc_fp}")
+
+
+def point_code_file_exists(center_pc, d_gc, prefix_str, parent_dir=None):
+    fp = get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir)
+    return os.path.exists(fp)
+
+
+def get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir=None):
+    fname = f"{prefix_str}_{center_pc}_{d_gc}.txt"
+    if parent_dir is None:
+        fp = fname
+    else:
+        fp = os.path.join(parent_dir, fname)
+    return fp
+
+
+
+if __name__ == "__main__":
+    root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
+    db = IcosahedronPointDatabase.load(root_dir)
+    df = db.df
+
+    pc_dir = "PointFiles"
+    pattern = "pcs_in_db_(?P<date>[\d\-]+)_(?P<pc>[A-L][0123]*)_(?P<d>[.\d]+).txt"
+    fnames = [x for x in os.listdir(pc_dir) if re.match(pattern, x)]
+    fname = random.choice(fnames)
+    print(fname)
+    fp = os.path.join(pc_dir, fname)
+    match = re.match(pattern, fname)
+    center_pc = match.group("pc")
+    region_radius_gc = float(match.group("d"))
+    if point_code_file_exists(center_pc, region_radius_gc, "all_pcs"):
+        print("file exists, not calculating this region")
+    control_pcs = get_point_codes_from_file(fp)
+    max_iterations = max(len(pc) for pc in control_pcs) - 1
+    all_pcs = icm.get_region_around_point_code_by_spreading(center_pc, region_radius_gc, max_iterations)
+    write_point_codes_to_file(all_pcs, center_pc, region_radius_gc, "all_pcs")
+
+
+
+    # random.shuffle(fps)
+    # variable_index = 0
+    # for fp in fps:
+    #     print(fp)
+    #     pcs = get_point_codes_from_file(fp)
+    #     pu.plot_variable_at_point_codes(pcs, db, variable_index)
+    #     plt.show()
+
+    # while True:
+    #     make_point_code_file_for_random_region(df)
 
     # direct filtering one by one is still really slow (over an hour for one test of reasonable size)
     # whereas combination of narrowing and filtering the split region is a few minutes
