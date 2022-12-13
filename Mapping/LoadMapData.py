@@ -7,34 +7,41 @@ import pandas as pd
 import os
 import csv
 import random
+from PIL import Image
 
-from ImageMetadata import get_image_metadata_dict, get_world_metadata_dict
+from Lattice import Lattice
+from LatitudeLongitudeLattice import LatitudeLongitudeLattice
+from IcosahedralGeodesicLattice import IcosahedralGeodesicLattice
+import IcosahedronMath
+import MapCoordinateMath as mcm
+from ReadMetadata import get_region_metadata_dict, get_world_metadata_dict, get_latlon_dict, get_icosa_distance_tolerance_normalized
 import PlottingUtil as pu
 
 
-def get_image_pixel_to_icosa_point_number_from_calculation(image_name, pixels=None):
+
+def get_image_pixel_to_icosa_point_number_from_calculation(region_name, pixels=None):
     # if specify pixels, it will only do those
-    print(f"getting image pixel to icosa point number dict for {image_name}")
-    metadata = get_image_metadata_dict()[image_name]
-    image_fp = metadata["image_fp"]
-    icosa_distance_tolerance_normalized = get_icosa_distance_tolerance_normalized(image_name)
+    print(f"getting image pixel to icosa point number dict for {region_name}")
+    image_fp = get_region_template_image_fp(region_name)
+    icosa_distance_tolerance_normalized = get_icosa_distance_tolerance_normalized(region_name)
 
-    image_lattice = get_lattice_from_image(image_name)
-    print(f"image lattice has {image_lattice.n_points} points")
+    lattice = get_lattice_for_region(region_name)
+    print(f"region's template image lattice has {lattice.n_points} points")
 
-    rc_to_usp = image_lattice.get_points_by_lattice_position(pixels)
+    rc_to_usp = lattice.get_points_by_lattice_position(pixels)
     rcs = sorted(rc_to_usp.keys())
     usps = [rc_to_usp[rc] for rc in rcs]
 
     point_numbers = get_approx_icosa_point_numbers_from_usps(usps, icosa_distance_tolerance_normalized)
     rc_to_point_number = {rc: p_i for rc, p_i in zip(rcs, point_numbers)}  # assumes the orders match, which they should if you get usps in the same order as rcs they correspond to
-    print(f"done getting image pixel to icosa point number dict for {image_name}")
+    print(f"done getting image pixel to icosa point number dict for {region_name}")
     return rc_to_point_number
 
 
-def get_image_pixel_to_icosa_point_number_from_memo(image_name):
-    print(f"reading image pixel to icosa point number correspondence for image_name {image_name}")
-    pixel_to_icosa_fp = get_image_metadata_dict()[image_name]["pixel_to_icosa_fp"]
+def get_image_pixel_to_icosa_point_number_from_memo(region_name):
+    print(f"reading image pixel to icosa point number correspondence for {region_name=}")
+    pixel_to_icosa_fp = get_region_metadata_dict()[region_name]["pixel_to_icosa_fp"]
+    print(f"reading memo at {pixel_to_icosa_fp}")
     if not os.path.exists(pixel_to_icosa_fp):
         raise FileNotFoundError(f"pixel to icosa point number file not found: {pixel_to_icosa_fp}")
     with open(pixel_to_icosa_fp) as f:
@@ -54,7 +61,7 @@ def get_image_pixel_to_icosa_point_number_from_memo(image_name):
             assert (r,c) not in d
             d[(r,c)] = ints[r][c]
     assert len(d) == n_pixels
-    print(f"done reading image pixel to icosa point number correspondence for image_name {image_name}")
+    print(f"done reading image pixel to icosa point number correspondence for {region_name=}")
     return d
 
 
@@ -70,42 +77,64 @@ def get_rc_size(rcs):
     return r_size, c_size
 
 
-def get_condition_array_categorical(image_name, world_name, map_variable):
-    strs = get_condition_array_shorthand(image_name, world_name, map_variable)
-    # assume all shorthands are non-negative ints, give -1 to the absent condition
-    ints = []
-    for str_row in strs:
-        int_row = []
-        for s in str_row:
-            if s == "":
-                n = -1
-            else:
-                n = int(s)
-                assert n >= 0
-            int_row.append(n)
-        ints.append(int_row)
-
-    return ints
+def get_condition_image_fp(region_name, map_variable):
+    root_dir = get_root_dir_for_world_of_region(region_name)
+    fname = f"{region_name}_{map_variable}_condition.png"
+    fp = os.path.join(root_dir, "ControlConditions", fname)
+    return fp
 
 
-def get_condition_array_shorthand(image_name, world_name, map_variable):
+def get_region_and_world_metadata(region_name):
+    region_metadata = get_region_metadata_dict()[region_name]
+    world_name = region_metadata["world_name"]
     world_metadata = get_world_metadata_dict()[world_name]
-    condition_array_dir = world_metadata["condition_array_dir"]
+    return region_metadata, world_metadata
 
-    filename = f"{image_name}_{map_variable}_condition_shorthand.txt"
-    fp = os.path.join(condition_array_dir, filename)
 
-    with open(fp) as f:
-        lines = f.readlines()
-    strs = [l.strip().split(",") for l in lines]
-    return strs
+def cast_condition_array_to_int(strs):
+    n_rows = len(strs)
+    n_cols = len(strs[0])
+    assert all(len(row) == n_cols for row in strs)
+
+    arr = np.full((n_rows, n_cols), fill_value=-1, dtype=int)
+    for ri, row in enumerate(strs):
+        for ci, s in enumerate(row):
+            if s == "":
+                pass
+            else:
+                # force it to be parseable as int
+                try:
+                    v = int(s)
+                except ValueError as e:
+                    print("condition array must be all ints")
+                    raise e
+                if v < 0:
+                    raise ValueError("condition array must be all ints >= 0")
+                arr[ri, ci] = v
+    return arr
+
+
+def get_condition_shorthand_fp(world_name, map_variable):
+    root_dir = get_root_dir_for_world(world_name)
+    shorthand_filename = f"ImageKey_{map_variable}_condition.csv"
+    fp = os.path.join(root_dir, "ControlConditions", shorthand_filename)
+    return fp
+
+
+def get_root_dir_for_world(world_name):
+    world_metadata = get_world_metadata_dict()[world_name]
+    root_dir = world_metadata["root_dir"]
+    return root_dir
+
+
+def get_root_dir_for_world_of_region(region_name):
+    region_metadata, world_metadata = get_region_and_world_metadata(region_name)
+    root_dir = world_metadata["root_dir"]
+    return root_dir
 
 
 def get_condition_shorthand_dict(world_name, map_variable):
-    world_metadata = get_world_metadata_dict()[world_name]
-    condition_array_dir = world_metadata["condition_array_dir"]
-    shorthand_filename = f"ImageKey_{map_variable}_condition.csv"
-    shorthand_fp = os.path.join(condition_array_dir, shorthand_filename)
+    shorthand_fp = get_condition_shorthand_fp(world_name, map_variable)
 
     d = {}
     dict_key_colname = "shorthand"
@@ -151,16 +180,28 @@ def parse_colors_rgba(rgbas_str):
 
 
 def get_default_values_of_conditions(world_name, map_variable):
+    print(f"getting default values of conditions for {map_variable=} in {world_name=}")
     shorthand_dict = get_condition_shorthand_dict(world_name, map_variable)
-    shorthand_to_default_value = {sh: get_default_value_from_min_and_max(shorthand_dict[sh]["min"], shorthand_dict[sh]["max"]) for sh in shorthand_dict}
+    shorthand_to_default_value = {-1: 0}  # undefined condition always defaults to 0 for any variable
+    for sh in shorthand_dict:
+        assert type(sh) is int and sh >= 0, sh
+        min_val = shorthand_dict[sh]["min"]
+        max_val = shorthand_dict[sh]["max"]
+        default_val = get_default_value_from_min_and_max(min_val, max_val)
+        shorthand_to_default_value[sh] = default_val
     return shorthand_to_default_value
 
 
-def get_default_value_array(image_name, world_name, map_variable):
-    condition_shorthand_array = get_condition_array_shorthand(image_name, world_name, map_variable)
-    convert = np.vectorize(lambda x: shorthand_to_default_value[x])  # don't do .get because we want to raise for invalid key
-    default_values = convert(condition_shorthand_array)
-    return default_values
+def get_default_value_array(region_name, map_variable):
+    world_name = get_world_name_from_region_name(region_name)
+    default_value_by_condition = get_default_values_of_conditions(world_name, map_variable)
+    condition_arr = get_condition_int_array_for_region(region_name, map_variable)
+    default_value_arr = translate_array_by_dict(condition_arr, default_value_by_condition)
+    return default_value_arr
+
+
+def get_world_name_from_region_name(region_name):
+    return get_region_metadata_dict()[region_name]["world_name"]
 
 
 def get_default_value_from_min_and_max(min_val, max_val):
@@ -182,27 +223,281 @@ def get_default_value_from_min_and_max(min_val, max_val):
 def create_cada_ii_default_value_dict(map_variable):
     # create dict of icosa point : default elevation value (or other map variable)
     print(f"creating Cada II default value dict for {map_variable}")
-    image_metadata = get_image_metadata_dict()
+    world_name = "Cada II"
+    default_value_by_condition = get_default_values_of_conditions(world_name, map_variable)
+    return default_value_by_condition
+
+
+def translate_array_by_dict(arr, d):
+    # look up each element in the dict and put its value in the corresponding place in new array
+    return np.vectorize(d.__getitem__)(arr)
+
+
+def get_rgba_color_array_from_image_array(arr):
+    # collapse the last dimension into tuples; maybe np has a better way to do this but I can't find it
+    color_arr = np.empty(shape=arr.shape[:-1], dtype=object)  # object is better dtype so np not trying to iterate
+    assert len(color_arr.shape) == 2, color_arr.shape
+    for xi in range(color_arr.shape[0]):
+        for yi in range(color_arr.shape[1]):
+            color_arr[xi,yi] = tuple(arr[xi,yi,:])
+    return color_arr
+
+
+def get_condition_string_array_from_image_array(arr, color_to_str):
+    print("getting condition string array")
+    color_arr = get_rgba_color_array_from_image_array(arr)
+    r_size, c_size, rgba_len = arr.shape
+    assert rgba_len == 4
+    str_arr = [["" for c in range(c_size)] for r in range(r_size)]
+    # I'm gonna try using a python list instead of np stuff because dtype=object makes it too huge in memory
+    # if using np array, needs to be dtype object, not str or tuple, so np not trying to iterate (it will just put the first char of the str if you do that)
+    # something like str_arr[color_arr == color] would be nice, but it complains about elementwise comparison and doesn't give the correct result (they all come up false)
+    for r in range(r_size):
+        if r % 100 == 0:
+            print(f"row {r}/{r_size}")
+        for c in range(c_size):
+            color = color_arr[r,c]
+            # assert type(color_in_img) is tuple  # this must be true since it's a dict key, don't bother checking each time
+            try:
+                s = color_to_str[color]
+            except KeyError:
+                print(f"Warning: Color {color} was found in the image at (r,c) = ({r},{c}), but it is not in the color_to_str dict.")
+                # s = input("Please type a value to be used for this color (default empty string): ").strip()
+                # color_to_str[color] = s
+                s = ""
+                color_to_str[color] = s
+            str_arr[r][c] = s
+    print("done getting condition string array")
+    return str_arr
+
+
+def get_rc_size_of_image(image_fp):
+    im = Image.open(image_fp)
+    width, height = im.size
+    r_size = height
+    c_size = width
+    return r_size, c_size
+
+
+def get_region_template_image_fp(region_name):
+    raise NotImplementedError
+
+
+def get_lattice_for_region(region_name):
+    image_fp = get_region_template_image_fp(region_name)
+    latlon00, latlon01, latlon10, latlon11 = get_latlon_dict()[region_name]
+    im = Image.open(image_fp)
+
+    shrink_debug = False
+    if shrink_debug:
+        im = shrink_resolution(im)
+    else:
+        print("opened image with PIL; check memory usage")
+
+    width, height = im.size
+    print(f"image of region {region_name} has shape ({width}, {height}), total of {width*height} pixels")
+
+    image_lattice = LatitudeLongitudeLattice(
+        height, width,  # rows, columns
+        latlon00, latlon01, latlon10, latlon11
+    )
+    return image_lattice
+
+
+def get_lattice_and_df_for_region(region_name, map_variable, with_coords=False):
+    lattice = get_lattice_for_region(region_name)
+
+    rgba_to_condition_dict = get_rgba_to_condition_dict(region_name, map_variable)
+    color_to_shorthand = {rgba: row["shorthand"] for rgba, row in rgba_to_condition_dict.items()}
+
+    image_fp = get_condition_image_fp(region_name, map_variable)
+    im = Image.open(image_fp)
+    arr = np.array(im)
+    assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
+    str_arr = get_condition_string_array_from_image_array(arr, color_to_shorthand)
+
+    df = lattice.create_dataframe(with_coords=with_coords)
+
+    df_index = df.index
+    point_indices = lattice.get_point_indices()
+    assert len(df_index) == len(point_indices)
+    assert list(df_index) == list(point_indices)
+    df[map_variable] = ["" for p_i in point_indices]
+    original_df_size = df.size
+    str_lst = []
+
+    print("strings found in image:", np.unique(str_arr))
+    print("adding condition values to DataFrame")
+    for (r,c), point_number in zip(lattice.get_rc_generator(), point_indices):
+        if c == 0:
+            print(f"row {r}/{lattice.r_size} ({100*r/lattice.r_size :.2f}%)")
+        assert df.size == original_df_size, "df growing out of control"  # catching assignment bug that tries to make new column/multi-index on every assignment
+        str_val = str_arr[r][c]
+        # df[map_variable][point_number] = str_val  # too slow?
+        str_lst.append(str_val)
+        # print("str_val is {}".format(str_val))
+        # print("df size is now {}".format(df.size))
+    df[map_variable] = str_lst
+
+    print("done adding condition values to DataFrame")
+    return lattice, df
+
+
+def shrink_resolution(im):
+    # so giant images don't take up huge amounts of memory just for the purposes of plotting where they go on the globe (high resolution not necessary for this)
+    print("Notice: shrinking resolution of image. If you do not want this, remove calls to shrink_resolution(im)")
+    max_len = 100
+    r,c = im.size
+    new_r = min(max_len, r)
+    new_c = min(max_len, c)
+    r_factor = new_r/r
+    c_factor = new_c/c
+    # choose the SMALLER factor and shrink the whole image that amount
+    factor = min(r_factor, c_factor)
+    new_r = int(r*factor)
+    new_c = int(r*factor)
+    im = im.resize((new_r, new_c), Image.NEAREST)
+    return im
+
+
+def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance, planet_radius):
+    print("finding icosa points near image lattice points")
     d = {}
-    for image_name in image_metadata.keys():
-    # for image_name in ["Sertorisun Islands"]:  # debug
-        default_value_arr = get_default_values_of_conditions(image_name, map_variable)
-        icosa_point_number_dict = get_image_pixel_to_icosa_point_number_from_memo(image_name)
-        r_size, c_size = get_rc_size(icosa_point_number_dict.keys())
-        for r in range(r_size):
-            for c in range(c_size):
-                default_value = default_value_arr[r][c]
-                icosa_pn = icosa_point_number_dict[(r,c)]
-                assert icosa_pn not in d
-                d[icosa_pn] = default_value
-    print(f"done creating Cada II default value dict for {map_variable}")
+    for r in range(image_lattice.r_size):
+        print(f"row {r}/{image_lattice.r_size} ({100*r/image_lattice.r_size :.2f}%)")
+        for c in range(image_lattice.c_size):
+            point_number = image_lattice.get_point_number_from_lattice_position(r,c)
+            point = image_lattice.points[point_number]
+            latlon = point.latlondeg()
+            nearest_icosa_point, distance_normalized, distance_km = IcosahedronMath.get_nearest_icosa_point_to_latlon(latlon, icosa_point_tolerance, planet_radius)
+            # print(f"\nimage ({r},{c}); point #{point_number}; point {point}; icosa point within {icosa_point_tolerance_km} km = {nearest_icosa_point} at distance of {distance_km} km away")
+            d[point_number] = nearest_icosa_point
+    print("done finding icosa points near image lattice points")
     return d
 
 
-def plot_default_values_by_image():
-    image_metadata = get_image_metadata_dict()
-    for image_name in image_metadata.keys():
-        default_value_arr = get_default_values_of_conditions(image_name, map_variable)
+def get_approx_icosa_point_numbers_from_usps(usps, icosa_distance_tolerance_normalized):
+    print("getting approx icosa points for USPs")
+    approx_icosa_point_numbers = []
+    for pi, p in enumerate(usps):
+        if pi % 1000 == 0 and pi != 0:
+            print(f"point {pi}/{len(usps)} ({100*pi/len(usps) :.2f}%)")
+        approx_p, d_norm, d_units = IcosahedronMath.get_nearest_icosa_point_to_latlon(p.latlondeg(), icosa_distance_tolerance_normalized, planet_radius=1)
+        approx_p_i = approx_p.point_number
+        approx_icosa_point_numbers.append(approx_p_i)
+    print("done getting approx icosa points for USPs")
+    return approx_icosa_point_numbers
+
+
+def write_image_pixel_to_icosa_point_number(region_name, overwrite_existing=False):
+    print(f"writing image pixel to icosa point number correspondence for {region_name=}")
+    pixel_to_icosa_fp = get_region_metadata_dict()[region_name]["pixel_to_icosa_fp"]
+
+    try:
+        existing_rc_to_pn_dict = get_image_pixel_to_icosa_point_number_from_memo(region_name)
+    except FileNotFoundError:
+        existing_rc_to_pn_dict = {}
+
+    if overwrite_existing:
+        if len(existing_rc_to_pn_dict) > 0:
+            print(f"Warning: overwriting existing icosa point numbers at {pixel_to_icosa_fp}")
+        rc_to_point_number = get_image_pixel_to_icosa_point_number_from_calculation(region_name)
+    else:
+        # fill in the missing pixels, if any
+        # I added this here because I originally made a fencepost error and missed the final king on every image
+        r_size, c_size = get_rc_size_of_image(region_name)
+        missing_pixels = []
+        for r in range(r_size):
+            for c in range(c_size):
+                if (r,c) not in existing_rc_to_pn_dict:
+                    missing_pixels.append((r,c))
+        remaining_rc_to_point_number = get_image_pixel_to_icosa_point_number_from_calculation(region_name, pixels=missing_pixels)
+        print(f"only calculating {len(remaining_rc_to_point_number)} point numbers")
+        rc_to_point_number = existing_rc_to_pn_dict
+        rc_to_point_number.update(remaining_rc_to_point_number)
+
+    # now write the whole array
+    lines = []
+    for r in range(r_size):
+        row_points = []
+        for c in range(c_size):
+            rc = (r, c)
+            p_i = rc_to_point_number[rc]
+            row_points.append(p_i)
+        row_str = ",".join(str(x) for x in row_points) + "\n"
+        lines.append(row_str)
+    with open(pixel_to_icosa_fp, "w") as f:
+        for line in lines:
+            f.write(line)
+
+    print(f"done writing image pixel to icosa point number correspondence for {region_name=}")
+
+
+def get_point_numbers_in_order_from_memo(region_name):
+    rc_to_pn = get_image_pixel_to_icosa_point_number_from_memo(region_name)
+    r_size, c_size = get_rc_size(rc_to_pn.keys())
+    # create flat list
+    pns = []
+    for r in range(r_size):
+        for c in range(c_size):
+            pn = rc_to_pn[(r,c)]
+            pns.append(pn)
+    assert len(pns) == r_size * c_size
+    return pns
+
+
+def get_condition_int_array_for_region(region_name, map_variable):
+    region_metadata = get_region_metadata_dict()[region_name]
+    image_fp = get_condition_image_fp(region_name, map_variable)
+    world_name = region_metadata["world_name"]
+    world_metadata = get_world_metadata_dict()[world_name]
+
+    rgba_to_condition_dict = get_rgba_to_condition_dict(world_name, map_variable)
+    color_to_shorthand = {rgba: row["shorthand"] for rgba, row in rgba_to_condition_dict.items()}
+    
+    im = Image.open(image_fp)
+    arr = np.array(im)
+    assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
+    str_arr = get_condition_string_array_from_image_array(arr, color_to_shorthand)
+    int_arr = cast_condition_array_to_int(str_arr)
+    return int_arr
+
+
+def write_image_conditions_as_image_shape_in_shorthand(region_name, map_variable):
+    raise Exception("deprecated; just read conditions from the image directly so it's easier to edit without having to re-run this")
+    # writes a file like:
+    # 0,0,0,1,2
+    # 1,0,0,1,3
+    # etc.
+    # where this array of numbers has same shape as the image itself (rows/columns of pixels)
+    # and each number is a "shorthand" for some condition on this map variable
+    # e.g. for map_variable of elevation, we might have "0" meaning "sea", etc.
+    # these conventions should be kept in a file
+
+    region_metadata = get_region_metadata_dict()[region_name]
+    world_name = region_metadata["world_name"]
+    world_metadata = get_world_metadata_dict()[world_name]
+    int_arr = get_condition_int_array_for_region(region_name, map_variable)
+    condition_array_dir = world_metadata["condition_array_dir"]
+    output_filename = f"{region_name}_{map_variable}_condition_shorthand.txt"
+    output_fp = os.path.join(condition_array_dir, output_filename)
+
+    lines = []
+    for row in int_arr:
+        row_str = ",".join(str(x) for x in row) + "\n"
+        lines.append(row_str)
+    if os.path.exists(output_fp):
+        input(f"Warning: file exists: {output_fp}\nPress enter to overwrite or interrupt to abort")
+    with open(output_fp, "w") as f:
+        for l in lines:
+            f.write(l)
+    print(f"success writing image conditions as image shape array in shorthand, for {region_name=} and variable {map_variable}\nfile is located at: {output_fp}")
+
+
+def plot_default_values_by_region(world_name, map_variable):
+    region_metadata = get_region_metadata_dict()
+    for region_name in region_metadata.keys():
+        default_value_arr = get_default_value_array(region_name, map_variable)
         plt.imshow(default_value_arr)
         plt.colorbar()
         plt.show()
@@ -228,27 +523,58 @@ def plot_icosa_point_number_to_value_dict(pn_to_val):
 
 
 if __name__ == "__main__":
-    image_metadata = get_image_metadata_dict()
+    world_name = "Cada II"
+    region_metadata = get_region_metadata_dict()
     world_metadata = get_world_metadata_dict()["Cada II"]
-    print(world_metadata)
-    map_variable = "elevation"
+    map_variable = "volcanism"
 
-    pn_to_default_value = create_cada_ii_default_value_dict(map_variable)
-    plot_icosa_point_number_to_value_dict(pn_to_default_value)
+    plot_default_values_by_region(world_name, map_variable)
 
-    # old stuff
-    # df = pd.read_csv(input_fp, index_col="icosa_point_number")
-    # n_rows = len(df.index)
-    # iterations = im.get_iterations_from_points(n_rows)
-    # lattice = IcosahedralGeodesicLattice(iterations=iterations)
-    # lattice_df = lattice.create_dataframe()
+    # for region_name in region_metadata.keys():
+    #     # write_image_conditions_as_image_shape_in_shorthand(region_name, map_variable)
+    #     arr = get_condition_int_array_for_region(region_name, map_variable)
+    #     plt.imshow(arr)
+    #     plt.show()
 
-    # print(lattice_df)
-    # input("a")
+    # image_lattice, df = get_lattice_and_df_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, color_to_str, map_variable)
+    # icosa_points = find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_tolerance_km, planet_radius_km)
 
-    # needed_columns = ["usp", "xyz", "latlondeg"]  # things left out of the written df
-    # df[needed_columns] = lattice_df[needed_columns]  # populate with values from the lattice computation
+    # icosa_iterations_of_precision = IcosahedronMath.get_iterations_needed_for_edge_length(icosa_point_tolerance_km, planet_radius_km)
+    # n_icosa_points = IcosahedronMath.get_points_from_iterations(icosa_iterations_of_precision)
 
-    # lattice.plot_data(df, "elevation", equirectangular=True, size_inches=(48, 24))
+    # # now get map lattice points which are inside the image lattice
+    # image_lattice_points_in_order = image_lattice.points
+    # point_values_to_assign = {}
+    # t0 = time.time()
+    # for p_i in range(n_icosa_points):
+    #     if p_i % 1000 == 0 and p_i != 0:
+    #         progress_proportion = p_i / n_icosa_points
+    #         elapsed = time.time() - t0
+    #         rate = progress_proportion / elapsed
+    #         remaining_proportion = 1 - progress_proportion
+    #         eta = remaining_proportion / rate
+    #         eta_str = str(datetime.timedelta(seconds=eta))
+    #         print("icosa point {} of {} ({}%), ETA {}".format(p_i, n_icosa_points, 100*progress_proportion, eta_str))
+    #     usp = IcosahedronMath.get_usp_from_point_number(p_i)
+    #     in_image = image_lattice.contains_point_latlon(usp)
+    #     if in_image:
+    #         closest_image_point_index, closest_image_point = image_lattice.closest_point_to(usp)
+    #         value_to_assign = df[map_variable][closest_image_point_index]
+    #         point_values_to_assign[p_i] = value_to_assign
+    #         # print("point {} now has value {}".format(p_i, value_to_assign))
+
+    # for each of those, associate it with the image lattice point which is closest to it
+    # then assign the image lattice point's color/str to the map lattice point
+    # then write these map lattice data strs to database file by point index
+
+    # map_df = map_lattice.create_dataframe()
+    # condition_labels = []
+    # with open("TestTransformImageIntoMapDataResult.txt", "w") as f:
+    #     for p_i, val in sorted(point_values_to_assign.items()):
+    #         f.write("{},{}\n".format(p_i, val))
+    #         condition_labels.append(val)
+    # map_df["condition_label"] = condition_labels
+
+    # category_labels = [None] + sorted(color_to_str.values())
+    # map_lattice.plot_data(df, "condition_label", category_labels=category_labels, equirectangular=True)
     # plt.show()
-

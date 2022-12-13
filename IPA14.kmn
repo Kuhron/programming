@@ -1,4 +1,8 @@
-﻿c IPAUni14.KMN
+﻿c TODO make normal exclamation point happen first, then != is the IPA one
+c TODO make normal space, get rid of whatever weird space character this keyboard has
+c TODO make asterisk and other punctuation chars typeable here, then ** is the first IPA char from pressing asterisk, simil with $, %
+
+c IPAUni14.KMN
 c IPA Unicode Keyboard for Tavultesoft Keyboard Manager 6.0
 c Keyboard: FF Keying for use with SIL Unicode IPA fonts
 c Author:   M. Hosken & D. Bevan

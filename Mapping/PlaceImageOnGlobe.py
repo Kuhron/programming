@@ -10,7 +10,7 @@ import MapCoordinateMath as mcm
 import PlottingUtil as pu
 from LatitudeLongitudeLattice import LatitudeLongitudeLattice
 from TransformImageIntoMapData import shrink_resolution
-from ImageMetadata import get_image_metadata_dict, get_latlon_dict
+from ReadMetadata import get_region_metadata_dict, get_latlon_dict
 
 
 import sys
@@ -35,7 +35,7 @@ def get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, lat
 def get_latlon_to_color_dict(image_name, shrink=True):
     latlon_dict = get_latlon_dict()
     latlon00, latlon01, latlon10, latlon11 = latlon_dict[image_name]
-    image_fp = get_image_metadata_dict()[image_name]["image_fp"]
+    image_fp = get_region_metadata_dict()[image_name]["image_fp"]
 
     lattice, image_arr = get_lattice_and_array_from_image(image_fp, latlon00, latlon01, latlon10, latlon11, shrink=shrink)
     r_size, c_size, rgba_len = image_arr.shape
@@ -134,7 +134,7 @@ def plot_images_on_globe_imshow(image_names, save_fp=None, show=True, shrink=Tru
 
 
 if __name__ == "__main__":
-    metadata = get_image_metadata_dict()
+    metadata = get_region_metadata_dict()
     image_names = sorted(metadata.keys())
     # save_fp = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/ContinentsPlacedOutput.png"
     save_fp = None

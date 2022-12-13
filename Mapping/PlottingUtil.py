@@ -261,3 +261,55 @@ def plot_variable_at_point_codes(pcs, db, variable_index):
     variable_values = df2.loc[:, variable_index]
     plt.scatter(lons, lats, c=variable_values)
     plt.colorbar()
+
+
+def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
+    print(f"plotting variable scattered: {var_to_plot}")
+    pn_to_val = db[point_numbers, var_to_plot]
+    # print(pn_to_val)
+    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
+    lats = [latlon[0] for latlon in latlons]
+    lons = [latlon[1] for latlon in latlons]
+    vals = [pn_to_val.get(pn) for pn in point_numbers]
+    plt.scatter(lons, lats, c=vals)
+    plt.colorbar()
+    plt.title(var_to_plot)
+    if show:
+        plt.show()
+
+
+def plot_variables_scattered(db, point_numbers, vars_to_plot):
+    print("plotting variables scattered")
+    n_plots = len(vars_to_plot)
+    for i, var in enumerate(vars_to_plot):
+        plt.subplot(1, n_plots, i+1)
+        plot_variable_scattered(db, point_numbers, var, show=False)
+    plt.show()
+
+
+def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=True):
+    print(f"plotting variable interpolated: {var_to_plot}")
+    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
+    values_dict = db[point_numbers, var_to_plot]
+    # print(values_dict)
+    values = [values_dict.get(pn) for pn in point_numbers]
+    pu.plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
+    if show:
+        plt.show()
+
+
+def plot_variables_interpolated(db, point_numbers, vars_to_plot, resolution):
+    print("plotting variables interpolated")
+    for var in vars_to_plot:
+        plot_variable_interpolated(db, point_numbers, var, resolution, show=False)
+        plt.title(var)
+        plt.show()
+    # don't do subplots here because the PlottingUtil code sets its own fig/ax
+
+
+def plot_latlons(point_numbers):
+    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
+    lats = [latlon[0] for latlon in latlons]
+    lons = [latlon[1] for latlon in latlons]
+    plt.scatter(lons, lats)
+    plt.show()

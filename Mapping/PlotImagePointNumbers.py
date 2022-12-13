@@ -5,11 +5,11 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from ImageMetadata import get_image_metadata_dict
+from ReadMetadata import get_region_metadata_dict
 
 
 if __name__ == "__main__":
-    metadata = get_image_metadata_dict()
+    metadata = get_region_metadata_dict()
     image_names = sorted(metadata.keys())
     image_name = random.choice(image_names)
     point_number_fp = metadata[image_name]["pixel_to_icosa_fp"]

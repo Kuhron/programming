@@ -9,6 +9,7 @@ import time
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
+from scipy.spatial import KDTree
 
 import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
@@ -51,6 +52,10 @@ def get_point_number_from_point_code(point_code):
     return res
 
 
+def get_point_numbers_from_point_codes(pcs):
+    return [get_point_number_from_point_code(pc) for pc in pcs]
+
+
 # @functools.lru_cache(maxsize=100000)
 def get_point_code_from_point_number(pn):
     # base cases
@@ -73,6 +78,10 @@ def get_point_code_from_point_number(pn):
     res = pc
     assert len(res) > 0, res
     return res
+
+
+def get_point_codes_from_point_numbers(pns):
+    return [get_point_code_from_point_number(pn) for pn in pns]
 
 
 def get_latlon_from_point_code(pc):
@@ -1034,6 +1043,24 @@ def get_direction_label_from_number(i):
     return ["L", "DL", "D", "R", "UR", "U"][i]
 
 
+def get_nearest_icosa_point_at_lower_iteration(pc, iterations):
+    pc_iter = get_iteration_number_from_point_code(pc)
+    if iterations == pc_iter:
+        return pc
+    elif iterations > pc_iter:
+        return pc + "0"*(iterations - pc_iter)
+    else:
+        ancestor = pc[:iterations+1]
+        adj = get_adjacency_from_point_code(ancestor)
+        pcs = adj + [ancestor]
+        # find the closest of these, it shouldn't be anything else (I think, haven't proven that)
+        xyzs = get_xyzs_from_point_codes(pcs)
+        xyz = get_xyz_from_point_code(pc)
+        ds = [mcm.xyz_distance(xyz, xyz1) for xyz1 in xyzs]
+        index = np.argmin(ds)
+        return pcs[index]
+
+
 def get_nearest_icosa_point_to_latlon(latlon, maximum_distance, planet_radius):
     lat, lon = latlon
     xyz = mcm.unit_vector_lat_lon_to_cartesian(lat, lon)
@@ -1106,28 +1133,34 @@ def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
     return nn_xyz, min_d
 
 
-def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_neighbors=1):
-    pn_to_xyz = {}
-    print("getting pn -> xyz mapping")
-    all_pns = list(set(query_pns) | set(candidate_pns))
-    for i, pn in enumerate(all_pns):
+def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors=1):
+    pc_to_xyz = {}
+    print("getting pc -> xyz mapping")
+    all_pcs = list(set(query_pcs) | set(candidate_pcs))
+    for i, pc in enumerate(all_pcs):
         if i % 100 == 0:
-            print(f"pn -> xyz progress {i}/{len(all_pns)}")
-        xyz = get_xyz_from_point_number(pn)
-        pn_to_xyz[pn] = xyz
-    candidate_xyzs = [pn_to_xyz[pn] for pn in candidate_pns]
-    query_xyzs = [pn_to_xyz[pn] for pn in query_pns]
+            print(f"pc -> xyz progress {i}/{len(all_pcs)}")
+        xyz = get_xyz_from_point_code(pc)
+        pc_to_xyz[pc] = xyz
+    candidate_xyzs = [pc_to_xyz[pc] for pc in candidate_pcs]
+    query_xyzs = [pc_to_xyz[pc] for pc in query_pcs]
 
     print("creating KDTree")
-    kdtree = KDTree(candidate_xyzs)  # ensure order is same as the pn list
+    kdtree = KDTree(candidate_xyzs)  # ensure order is same as the point list
     print("-- done creating KDTree")
     distances, nn_indices = kdtree.query(query_xyzs, k=k_neighbors)
     print("done querying KDTree")
-    nn_index_lookup = {pn_query: nn_indices[i] for i, pn_query in enumerate(query_pns)}
-    nn_index_to_pn = {index: points_to_interpolate_from[index] for index in nn_indices}
-    nn_pn_lookup = {pn_query: nn_index_to_pn[nn_index_lookup[pn_query]] for pn_query in query_pns}
-    d_lookup = {pn_query: distances[i] for i, pn_query in enumerate(qury_pns)}
-    return nn_pn_lookup, d_lookup
+    nn_index_lookup = {pc_query: nn_indices[i] for i, pc_query in enumerate(query_pcs)}
+    nn_index_to_pc = {index: candidate_pcs[index] for index in nn_indices}
+    nn_pc_lookup = {pc_query: nn_index_to_pc[nn_index_lookup[pc_query]] for pc_query in query_pcs}
+    d_lookup = {pc_query: distances[i] for i, pc_query in enumerate(query_pcs)}
+    return nn_pc_lookup, d_lookup
+
+
+def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_neighbors=1):
+    query_pcs = get_point_codes_from_point_numbers(query_pns)
+    candidate_pcs = get_point_codes_from_point_numbers(candidate_pns)
+    return get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors)
 
 
 def _old_iterative_get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
@@ -1322,17 +1355,22 @@ def plot_directional_parent_graph(iteration):
     plt.show()
 
 
-def get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, resolution_iterations=None):
+def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normalized, resolution_iterations=None):
     # follow adjacency paths at this iteration resolution until you get every point within the radius
+    # measure distance to center_pc, but can spread from a nearby point if needed to fit lower resolution
     if resolution_iterations is not None:
-        pc_iterations = get_iteration_number_from_point_code(pc)
+        pc_iterations = get_iteration_number_from_point_code(center_pc)
         if pc_iterations > resolution_iterations:
-            raise ValueError("center point has more iterations than desired resolution")
-        pc += "0" * (resolution_iterations - pc_iterations)
+            starting_pc = get_nearest_icosa_point_at_lower_iteration(center_pc, resolution_iterations)
+            # raise ValueError("center point has more iterations than desired resolution")
+        else:
+            starting_pc = center_pc + "0" * (resolution_iterations - pc_iterations)
+    else:
+        starting_pc = center_pc
     
-    print(f"getting region around {pc} of radius {max_distance_gc_normalized} and resolution of {resolution_iterations} iterations")
-    res = {pc}
-    new_points = [pc]
+    print(f"getting region around {starting_pc} of radius {max_distance_gc_normalized} from {center_pc} and resolution of {resolution_iterations} iterations")
+    res = {starting_pc}
+    new_points = [starting_pc]
     known_neighbors = {}
     checked_points = set()
     t0 = time.time()
@@ -1348,7 +1386,7 @@ def get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, re
             if neighbor is None:
                 continue
             if neighbor not in res and neighbor not in checked_points:
-                d = get_distance_point_codes_great_circle(pc, neighbor, radius=1)
+                d = get_distance_point_codes_great_circle(center_pc, neighbor, radius=1)
                 if d <= max_distance_gc_normalized:
                     # print(f"adding {neighbor} to new points")
                     new_points.append(neighbor)
@@ -1361,9 +1399,9 @@ def get_region_around_point_code_by_spreading(pc, max_distance_gc_normalized, re
         # only the ones we just checked in this ring, 
         # since the neighbors of the ring outside this one can't pass through it to get back inside
         if time.time() - t0 > 2:
-            print(f"creating region around {pc}: {len(res)} points so far")
+            print(f"creating region around {center_pc}: {len(res)} points so far")
             t0 = time.time()
-    print(f"got {len(res)} points in region: {res}")
+    print(f"got {len(res)} points in region")
     return res
 
 

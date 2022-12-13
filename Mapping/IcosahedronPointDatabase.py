@@ -10,12 +10,15 @@
 import os
 import pathlib
 import re
+import sys
+import math
 import random
 import time
 from datetime import datetime
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from PIL import Image
 
 import IcosahedronMath as icm
 from BiDict import BiDict
@@ -48,7 +51,6 @@ class IcosahedronPointDatabase:
         db.metadata = {
             "n_point_code_chars_per_level": n_point_code_chars_per_level,
         }
-        db.cache = {}
         touch(db.variables_file)
         db.write_metadata()
         return db
@@ -63,7 +65,6 @@ class IcosahedronPointDatabase:
         db.data_file = os.path.join(root_dir, "data.h5")
         db.variables_dict = IcosahedronPointDatabase.get_variables_dict_from_file(db.variables_file)
         db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
-        db.cache = {}
         db.read_hdf()
         print(f"done loading database from {root_dir}")
         return db
@@ -73,7 +74,7 @@ class IcosahedronPointDatabase:
         if not os.path.exists(root_dir):
             return False
         contents = os.listdir(root_dir)
-        necessary_contents = ["IcosahedronPointDatabase.txt", "variables.txt", "metadata.txt", "blocks"]  # dirs don't end with slash in the listing
+        necessary_contents = ["IcosahedronPointDatabase.txt", "variables.txt", "metadata.txt", "data.h5"]  # dirs don't end with slash in the listing
         found = [x in contents for x in necessary_contents]
         if all(found):
             return True
@@ -116,6 +117,9 @@ class IcosahedronPointDatabase:
         with open(self.metadata_file, "w") as f:
             f.write(s)
 
+    def write_hdf(self):
+        self.df.to_hdf(self.data_file)
+
     def read_hdf(self):
         self.df = pd.read_hdf(self.data_file)
 
@@ -123,7 +127,8 @@ class IcosahedronPointDatabase:
         if self.variables_dict is not None:
             return self.variables_dict
         else:
-            return IcosahedronPointDatabase.get_variables_dict_from_file(self.variables_file)
+            d = IcosahedronPointDatabase.get_variables_dict_from_file(self.variables_file)
+            self.variables_dict = d
 
     @staticmethod
     def get_variables_dict_from_file(fp):
@@ -136,6 +141,35 @@ class IcosahedronPointDatabase:
             d[index] = name
         return BiDict.from_dict(d)
 
+    def get_n_variables(self):
+        return len(self.get_variables_dict())
+
+    def get_variable_encoding_types(self):
+        # based on the values in the df
+        # e.g. uint3 (unsigned int with 3 bits), sint4 (signed int with 4 bits other than the sign)
+        res = []
+        for var_i in range(self.get_n_variables()):
+            col = self.df.loc[:, var_i]
+            col = col[~pd.isna(col)]  # don't count NaN in min/max
+            assert (col % 1 == 0).all(), "values should be ints (even though we need to store as floats since we can't write pd.NA to hdf5"
+            min_val = col.min()
+            max_val = col.max()
+            print(f"variable {var_i} has min val {min_val}, max val {max_val}")
+            bits = math.ceil(max(math.log2(abs(min_val)+1), math.log2(abs(max_val)+1)))  # note we need n+1 bits to store 2**n, e.g. 1000 = 8
+            signed = min_val < 0
+            t = ("s" if signed else "u") + "int" + str(bits)
+            res.append(t)
+        return res
+
+    @staticmethod
+    def get_n_bits_for_encoding_type(t):
+        s = t[0]
+        assert s in ["s", "u"]
+        signed = s == "s"
+        assert t[1:4] == "int"
+        n = int(t[4:])
+        return n + int(signed)
+
     @staticmethod
     def get_metadata_from_file(fp):
         with open(fp) as f:
@@ -146,102 +180,8 @@ class IcosahedronPointDatabase:
             d[var] = int(val)
         return d
 
-    def get_single_point(self, pn, variable_name):
-        if pn in self.cache:
-            return self.cache[pn].get(variable_name)
-        else:
-            return self.get_single_point_from_file(pn, variable_name)
-
-    def get_single_point_multiple_variables(self, pn, variable_names):
-        if pn in self.cache:
-            d = self.cache[pn]
-        else:
-            d = self.get_single_point_all_variables_from_file(pn)
-        return {vn: d.get(vn) for vn in variable_names}
-
-    def get_multiple_points(self, pns, variable_name):
-        pn_set = set(pns)
-        cached_pns = set(self.cache.keys()) & pn_set
-        cached_pns = set(pn for pn in cached_pns if variable_name in self.cache[pn])  # if this var not found, read from file (because sometimes the point is only cached with some variables but not others)
-        non_cached_pns = pn_set - cached_pns
-        d = {}
-        for pn in cached_pns:
-            d[pn] = self.cache[pn].get(variable_name)
-        d_from_file = self.get_multiple_points_from_file(non_cached_pns, variable_name)
-        d.update(d_from_file)
-        return d
-
-    def get_multiple_points_multiple_variables(self, pns, variable_names):
-        raise NotImplementedError
-
-    def get_single_point_from_file(self, pn, variable_name):
-        d = self.get_single_point_all_variables_from_file(pn)
-        variable_number = self.get_variable_number_from_name(variable_name)
-        return d.get(variable_name)
-
-    def get_single_point_all_variables(self, pn):
-        if pn in self.cache:
-            return self.cache[pn]
-        else:
-            return self.get_single_point_all_variables_from_file(pn)
-        
-    def get_single_point_all_variables_from_file(self, pn):
-        block_fp = self.get_block_fp_for_point_number(pn)
-        if not os.path.exists(block_fp):
-            # raise KeyError(f"no data for point {pn}")
-            return None
-        with open(block_fp) as f:
-            lines = f.readlines()
-
-        # find the line starting with this point, if any
-        block_size = self.metadata["block_size"]
-        block_number = pn // block_size
-        block_start = block_number * block_size
-        adjusted_pn = pn - block_start
-        assert 0 <= adjusted_pn < block_size, (pn, block_size, block_number, block_start, adjusted_pn)
-        lines = [l.strip().split(",") for l in lines]
-        lines_this_point = [l for l in lines if int(l[0]) == adjusted_pn]
-        if len(lines_this_point) == 0:
-            # raise KeyError(f"no data for point {pn}")
-            return None
-        elif len(lines_this_point) > 1:
-            raise RuntimeError(f"point {pn} found more than once!")
-        else:
-            l, = lines_this_point
-            d = IcosahedronPointDatabase.get_all_variables_from_line(l)
-            self.add_to_cache(pn, d)
-            return d
-
-    def get_multiple_points_from_file(self, pns, variable_name):
-        variable_number = self.get_variable_number_from_name(variable_name)
-        block_size = self.metadata["block_size"]
-        block_number_to_pns = {}
-        for pn in pns:
-            block_number = pn // block_size
-            if block_number not in block_number_to_pns:
-                block_number_to_pns[block_number] = []
-            block_number_to_pns[block_number].append(pn)
-        block_number_to_fp = {bn: self.get_block_fp_for_block_number(bn) for bn in block_number_to_pns.keys()}
-        res_by_pn = {}
-        for block_number, pns_this_block in block_number_to_pns.items():
-            block_fp = block_number_to_fp[block_number]
-            block_start = block_number * block_size
-            adjusted_pns_this_block = [pn - block_start for pn in pns_this_block]
-            assert all(0 <= apn < block_size for apn in adjusted_pns_this_block), "bad adjusted point number"
-            with open(block_fp) as f:
-                lines = f.readlines()
-            lines = [l.strip().split(",") for l in lines]
-            line_dict = {int(l[0]): l for l in lines}
-            for apn in adjusted_pns_this_block:
-                pn = apn + block_start
-                l = line_dict.get(apn)
-                if l is None:
-                    res_by_pn[pn] = None
-                else:
-                    val = IcosahedronPointDatabase.get_variable_from_line(l, variable_number)
-                    self.add_to_cache(pn, variable_name, val)
-                    res_by_pn[pn] = val
-        return res_by_pn
+    def get_variables_at_points(self, pcs, variable_indices):
+        return self.df.loc[pcs, variable_indices]
 
     @staticmethod
     def get_all_variables_from_line(l):
@@ -262,107 +202,42 @@ class IcosahedronPointDatabase:
         # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
         return val
 
-    def add_to_cache(self, pn, variable_dict):
-        self.cache[pn] = variable_dict
-
     def set_single_point(self, pn, variable_name, value, write=False):
         check_int(value)
         variable_number = self.get_variable_number_from_name(variable_name)
-        self.add_to_cache(pn, variable_name, value)
         if write:
-            self.write()  # don't do this too often or it will be slow
+            self.write_hdf()  # don't do this too often or it will be slow
 
     def set_multiple_points(self, pns, variable_name, values, write=False):
         variable_number = self.get_variable_number_from_name(variable_name)
         for pn, val in zip(pns, values):
             check_int(val)
-            self.add_to_cache(pn, variable_name, val)
         if write:
-            self.write()
-
-    # def get_all_point_numbers_with_data(self):
-    #     print("getting points with data in database")
-    #     block_numbers = self.get_all_block_numbers_with_data()
-    #     res = set()
-    #     for block_number in block_numbers:
-    #         # print(f"reading block {block_number}")
-    #         pns = self.get_point_numbers_with_data_in_block(block_number)
-    #         assert res & pns == set(), "overlap"
-    #         res |= pns
-    #     print("done getting points with data")
-    #     return res
-
-    # def get_point_numbers_with_data_in_block(self, block_number):
-    #     block_size = self.metadata["block_size"]
-    #     block_start = block_number * block_size
-    #     block_fp = self.get_block_fp_for_block_number(block_number)
-    #     with open(block_fp) as f:
-    #         lines = f.readlines()
-    #     res = set()
-    #     for l in lines:
-    #         l = l.strip().split(",")
-    #         adjusted_pn = int(l[0])
-    #         pn = block_start + adjusted_pn
-    #         assert pn not in res
-    #         # print(f"got point number {pn}")
-    #         res.add(pn)
-    #     return res
-
-    # def get_all_block_numbers_with_data(self):
-    #     block_files = os.listdir(self.blocks_dir)
-    #     res = set()
-    #     for fname in block_files:
-    #         block_number = int(fname.split("_")[0].replace("Block", ""))
-    #         assert block_number not in res
-    #         res.add(block_number)
-    #     return res
-
-    # def get_int_from_line_label(self, line_label):
-    #     N = self.metadata["n_point_code_chars_per_level"]
-    #     assert 1 <= len(line_label) <= N, repr(line_label)
-    #     # base-4 number
-    #     # note that if it is less than N chars long, it has trailing zeros, not leading
-    #     # so 1 acts like 100 and 11 acts like 110 (for N=3)
-    #     to_n = lambda c: "0123".index(c)
-    #     x = 0
-    #     for i, c in enumerate(line_label):
-    #         n = to_n(c)
-    #         x += n * (4 ** ((N-1)-i))
-    #     # print(f"{line_label=} gave {x=}")
-    #     return x
-
-    # def get_filepath_and_line_label_for_point_code(self, pc):
-    #     root_dir = self.root_dir
-    #     N = self.metadata["n_point_code_chars_per_level"]
-    #     parent_dir = os.path.join(root_dir, "data_by_point_code/")
-    #     head = pc[0]
-    #     tail = pc[1:]
-    #     assert head in "ABCDEFGHIJKL"
-    #     n_subdirs = (len(tail) - 1) // N
-    #     chars_remaining = len(tail)
-    #     subdirs = []
-    #     for i in range(n_subdirs):
-    #         digits = tail[N*i : N*i+N]
-    #         subdirs.append(digits)
-    #         chars_remaining -= N
-    #     filename = "data.h5"
-    #     line_label = tail[-chars_remaining:]
-    #     fp = os.path.join(parent_dir, head, *subdirs, filename)
-    #     return fp, line_label
+            self.write_hdf()
 
     def get_variable_number_from_name(self, name):
         return self.variables_dict[name]
+    
+    def get_variable_numbers_from_names(self, names):
+        return [self.variables_dict[name] for name in names]
 
     def get_variable_name_from_number(self, number):
         return self.variables_dict[number]
+    
+    def get_variable_names_from_numbers(self, numbers):
+        return [self.variables_dict[number] for number in numbers]
 
     def __getitem__(self, tup):
-        pns, variable_name = tup
-        if type(pns) is int:
-            pn = pns
-            return self.get_single_point(pn, variable_name)
-        else:
-            return self.get_multiple_points(pns, variable_name)
+        pcs, varnames = tup
+        
+        if type(pcs) is str:
+            pc = pcs
+            pcs = [pc]
+        if type(varnames) is str:
+            vn = varnames
+            varnames = [vn]
+        variable_indices = self.get_variable_numbers_from_names(varnames)
+        return self.get_variables_at_points(pcs, variable_indices)
 
     def __setitem__(self, tup, val):
         pns, variable_name = tup
@@ -385,6 +260,39 @@ class IcosahedronPointDatabase:
             new_val = current_vals[pn] + val
             new_vals.append(new_val)
         self[pns, varname] = new_vals
+
+    def write_as_images(self):
+        # hacky experiment: write data in pixel RGB values in PNG files for certain iterations
+        # e.g. elevation_condition has some small number of values that takes e.g. 3 bits
+        # and RGB is 3*8 bits
+        # so the first 3 bits of this is the elevation condition value at the point
+        # we'll need to know what the possible values of the variables are
+        # I know they're all ints, some variables can be signed
+        # so you could have a variable with data signed int4, taking 5 bits
+        # (first one for sign, rest big-endian)
+        # so we have a bunch of variables and know how many bits they each take
+        # and we can make a scheme to fit them together into blocks of 24
+        # e.g. one image encodes variables 0, 2, 3, 4, and 8 in the bits like 00222223 33333444 44488888
+
+        var_dict = self.get_variables_dict()
+        # print(var_dict)
+        variable_encoding_types = self.get_variable_encoding_types()  # indexed in list by variable index
+        # print(variable_encoding_types)
+        bits_by_variable_index = [IcosahedronPointDatabase.get_n_bits_for_encoding_type(t) for t in variable_encoding_types]
+        # print(bits_by_variable_index)
+        
+        # now partition these bit numbers into groups of 24 (greedy algorithm)
+        partitions = partition_into_max_sum_groups(bits_by_variable_index, max_sum=24)
+        # TODO assign point codes to pixels in images
+        # TODO make images at certain resolution
+        # TODO store the poles as their own image, just two pixels
+        # TODO figure out how big the images should be (probably not one huge one at high iterations)
+        #      e.g. divide it into watersheds
+        resolution_iterations = 4
+        # now make the bit arrays for each image we will write
+        for variable_indices in partitions:
+            arr
+        im = Image.fromarray(arr)
 
     def get_mask_point_codes_with_prefix(self, prefix, pandas_method=True):
         # want to return true for things like "D" starting with "D00"
@@ -418,62 +326,6 @@ class IcosahedronPointDatabase:
 
         print(f"done creating point code prefix mask, has {mask.sum()} items")
         return mask
-
-    def clear_cache(self):
-        self.cache = {}
-        print("db cache cleared")
-
-    def write(self, clear_cache=True):
-        # update the block files on disk
-        block_size = self.metadata["block_size"]
-        blocks_in_cache = set(pn // block_size for pn in self.cache.keys())
-        for block_number in blocks_in_cache:
-            print("writing block_number", block_number)
-            block_start = block_number * block_size
-            pns = set([p for p in self.cache.keys() if p // block_size == block_number])
-            fps = set(self.get_block_fp_for_point_number(p) for p in pns)
-            assert len(fps) == 1, "problem getting block number from point numbers"
-            fp, = list(fps)
-            # for each point, read what's in the file into a dict, update the dict with what's in the cache (but don't delete stuff that's there but isn't in the cache), save line as string, then write them all to the file
-            data_on_disk = {}
-            if os.path.exists(fp):
-                with open(fp) as f:
-                    lines = f.readlines()
-                for l in lines:
-                    l_split = l.strip().split(",")
-                    adjusted_p_i = int(l_split[0])
-                    p_i = adjusted_p_i + block_start
-                    d = {}
-                    for item in l_split[1:]:
-                        k,v = item.split("=")
-                        k = int(k)
-                        v = int(v)
-                        d[k] = v
-                    data_on_disk[p_i] = d
-            # if fp doesn't exist then just leave data_on_disk empty
-
-            lines_to_write = []
-            all_points_to_write = sorted(set(data_on_disk.keys()) | set(pns))
-            for p in all_points_to_write:
-                if p in data_on_disk:
-                    d = data_on_disk[p]
-                else:
-                    d = {}
-                if p in self.cache:
-                    for var, val in self.cache[p].items():
-                        var_num = self.get_variable_number_from_name(var)
-                        d[var_num] = val
-                assert len(d) > 0
-                adjusted_pn = p - block_start
-                assert 0 <= adjusted_pn < block_size, (p, block_size, block_number, block_start, adjusted_pn)
-                new_l = IcosahedronPointDatabase.get_line_from_dict(adjusted_pn, d)
-                lines_to_write.append(new_l)
-            with open(fp, "w") as f:
-                for l in lines_to_write:
-                    f.write(l + "\n")
-        print("db written")
-        if clear_cache:
-            self.clear_cache()
 
     @staticmethod
     def get_line_from_dict(line_label, d):
@@ -618,28 +470,73 @@ def get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir=None):
     return fp
 
 
+def get_point_code_file_regex():
+    return "pcs_in_db_(?P<date>[\d\-]+)_(?P<pc>[A-L][0123]*)_(?P<d>[.\d]+).txt"
 
-if __name__ == "__main__":
-    root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
-    db = IcosahedronPointDatabase.load(root_dir)
-    df = db.df
 
-    pc_dir = "PointFiles"
-    pattern = "pcs_in_db_(?P<date>[\d\-]+)_(?P<pc>[A-L][0123]*)_(?P<d>[.\d]+).txt"
+def get_random_point_code_file(pc_dir):
+    pattern = get_point_code_file_regex()
     fnames = [x for x in os.listdir(pc_dir) if re.match(pattern, x)]
     fname = random.choice(fnames)
-    print(fname)
     fp = os.path.join(pc_dir, fname)
+    return fname, fp
+
+
+def get_point_code_and_distance_from_filename(fname):
+    pattern = get_point_code_file_regex()
     match = re.match(pattern, fname)
     center_pc = match.group("pc")
     region_radius_gc = float(match.group("d"))
+    return center_pc, region_radius_gc
+
+
+def partition_into_max_sum_groups(ints, max_sum):
+    # e.g. if you get a list like [4, 9, 5, 12, 1, 2, 3] with max_sum 15
+    # then use greedy approach to put them into the first "box" they'll fit in
+    # 4 and 9 go in first box, making its sum 13
+    # 5 can't fit so it goes in a new box (2nd)
+    # 12 can't fit in either box so it goes in a new box (3rd)
+    # 1 can fit in the first box, 2 and 3 can fit in the 2nd box
+    # result: [4, 9, 1], [5, 2, 3], [12]
+    boxes = []
+    for n in ints:
+        placed = False
+        for box in boxes:
+            s = sum(box)
+            fits = s + n <= max_sum
+            if fits:
+                box.append(n)
+                placed = True
+                break
+        if not placed:
+            # it didn't fit anywhere, make a new box
+            new_box = [n]
+            boxes.append(new_box)
+    return boxes
+
+
+
+if __name__ == "__main__":
+    db_root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
+    db = IcosahedronPointDatabase.load(db_root_dir)
+    df = db.df
+
+    db.write_as_images()
+    sys.exit()
+
+    pc_dir = "PointFiles"
+    fname, fp = get_random_point_code_file(pc_dir)
+    center_pc, region_radius_gc = get_point_code_and_distance_from_filename(fname)
+
+    max_iterations = 10
+    
     if point_code_file_exists(center_pc, region_radius_gc, "all_pcs"):
         print("file exists, not calculating this region")
     control_pcs = get_point_codes_from_file(fp)
-    max_iterations = max(len(pc) for pc in control_pcs) - 1
     all_pcs = icm.get_region_around_point_code_by_spreading(center_pc, region_radius_gc, max_iterations)
-    write_point_codes_to_file(all_pcs, center_pc, region_radius_gc, "all_pcs")
-
+    new_fname_prefix = f"pcs_iter{max_iterations}"
+    pu.scatter_icosa_points_by_code(all_pcs, show=True)
+    write_point_codes_to_file(all_pcs, center_pc, region_radius_gc, new_fname_prefix)
 
 
     # random.shuffle(fps)

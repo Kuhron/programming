@@ -55,6 +55,11 @@ class BiDict:
     def __setitem__(self, k, v):
         self.add_pair(k, v)
 
+    def __len__(self):
+        l = len(self.a_to_b)
+        assert len(self.b_to_a) == l
+        return l
+
     def get_sub_dict(self, type1, type2):
         if type1 is self.type_a:
             assert type2 is self.type_b

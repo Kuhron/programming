@@ -1,13 +1,13 @@
 import csv
 
-METADATA_FP = "MapImageMetadata.csv"
+REGION_METADATA_FP = "RegionMetadata.csv"
 WORLD_METADATA_FP = "WorldMetadata.csv"
 
 
-def get_image_metadata_dict():
-    key_column = "image_name"
+def get_region_metadata_dict():
+    key_column = "region_name"
     d = {}
-    with open(METADATA_FP) as f:
+    with open(REGION_METADATA_FP) as f:
         reader = csv.DictReader(f)
         for row in reader:
             key = row[key_column]
@@ -27,21 +27,21 @@ def get_world_metadata_dict():
 
 
 def get_latlon_dict():
-    metadata = get_image_metadata_dict()
+    metadata = get_region_metadata_dict()
     d = {}
-    for image_name, row in metadata.items():
+    for region_name, row in metadata.items():
         latlon00 = (float(row["lat00"]), float(row["lon00"]))
         latlon01 = (float(row["lat01"]), float(row["lon01"]))
         latlon10 = (float(row["lat10"]), float(row["lon10"]))
         latlon11 = (float(row["lat11"]), float(row["lon11"]))
         latlons = [latlon00, latlon01, latlon10, latlon11]
-        d[image_name] = latlons
+        d[region_name] = latlons
     return d
 
 
-def get_icosa_distance_tolerance_normalized(image_name):
+def get_icosa_distance_tolerance_normalized(region_name):
     # scaling the distance as though planet radius is 1
-    metadata = get_image_metadata_dict()[image_name]
+    metadata = get_region_metadata_dict()[region_name]
     icosa_point_tolerance_km = float(metadata["icosa_point_tolerance_km"])
     world_name = metadata["world_name"]
     planet_radius_km = float(get_world_metadata_dict()[world_name]["planet_radius_km"])
@@ -50,5 +50,5 @@ def get_icosa_distance_tolerance_normalized(image_name):
 
 
 if __name__ == "__main__":
-    d = get_image_metadata_dict()
+    d = get_region_metadata_dict()
     print(d)

@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from ImageMetadata import get_image_metadata_dict
+from ReadMetadata import get_region_metadata_dict
 from LoadMapData import get_condition_array_categorical
 
 
@@ -18,7 +18,7 @@ def plot_condition_array(image_name, map_variable):
 
 
 if __name__ == "__main__":
-    image_names = sorted(get_image_metadata_dict().keys())
+    image_names = sorted(get_region_metadata_dict().keys())
     for image_name in image_names:
         map_variable = "elevation"
         plot_condition_array(image_name, map_variable)

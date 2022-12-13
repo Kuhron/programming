@@ -1,6 +1,6 @@
 from IcosahedronPointDatabase import IcosahedronPointDatabase
 from LoadMapData import get_condition_shorthand_dict
-from ImageMetadata import get_image_metadata_dict, get_world_metadata_dict
+from ReadMetadata import get_region_metadata_dict, get_world_metadata_dict
 import os
 
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         print("new db created")
 
     # get the land/sea values from images at some icosahedron point resolution
-    image_metadata = get_image_metadata_dict()
+    image_metadata = get_region_metadata_dict()
     world_metadata = get_world_metadata_dict()
     for image_name in image_metadata.keys():
         print(image_name)

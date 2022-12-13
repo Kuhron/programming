@@ -1,4 +1,5 @@
 from IcosahedronPointDatabase import IcosahedronPointDatabase
+import IcosahedronPointDatabase as icdb
 import IcosahedronMath as icm
 from UnitSpherePoint import UnitSpherePoint
 import MapCoordinateMath as mcm
@@ -13,6 +14,7 @@ import os
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 from scipy.spatial import KDTree
 
 
@@ -24,13 +26,13 @@ def get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circl
 def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
     point_numbers_in_db = db.get_all_point_numbers_with_data()
     print(f"checking {len(point_numbers_in_db)} points")
-    
+
     # try different algorithms for finding the correct set of points
     filter_point_numbers_in_region = find.filter_point_codes_in_region_one_by_one
     # filter_point_numbers_in_region = filter_point_numbers_in_region_all_at_once
-    
+
     point_numbers_in_region_in_db = filter_point_numbers_in_region(point_numbers_in_db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
-    
+
     # in case of crash
     print("---- point_numbers_in_region_in_db ----")
     print(point_numbers_in_region_in_db)
@@ -41,37 +43,39 @@ def get_point_numbers_in_region_from_db(db, region_center_latlondeg, region_radi
 
 
 def write_point_numbers_to_cache(point_numbers, region_center_latlondeg, region_radius_great_circle_km):
-    point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
-    # keep everything that's already there
-    try:
-        with open(point_number_cache_fp) as f:
-            lines = f.readlines()
-    except FileNotFoundError:
-        lines = []
-    existing_pns = set(int(l.strip()) for l in lines)
-    point_numbers = set(point_numbers)
-    if len(point_numbers - existing_pns) == 0:
-        print("all points are already cached")
-        return
+    raise Exception("deprecated")
+    # point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
+    # # keep everything that's already there
+    # try:
+    #     with open(point_number_cache_fp) as f:
+    #         lines = f.readlines()
+    # except FileNotFoundError:
+    #     lines = []
+    # existing_pns = set(int(l.strip()) for l in lines)
+    # point_numbers = set(point_numbers)
+    # if len(point_numbers - existing_pns) == 0:
+    #     print("all points are already cached")
+    #     return
 
-    point_numbers |= existing_pns
-    with open(point_number_cache_fp, "w") as f:
-        for pn in sorted(point_numbers):
-            f.write(f"{pn}\n")
+    # point_numbers |= existing_pns
+    # with open(point_number_cache_fp, "w") as f:
+    #     for pn in sorted(point_numbers):
+    #         f.write(f"{pn}\n")
 
 
 def read_point_numbers_from_cache(region_center_latlondeg, region_radius_great_circle_km):
-    point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
-    print(f"looking for {point_number_cache_fp}")
-    if os.path.exists(point_number_cache_fp):
-        print(f"reading from cache file")
-        with open(point_number_cache_fp) as f:
-            lines = f.readlines()
-        point_numbers = [int(l.strip()) for l in lines]
-        return point_numbers
-    else:
-        print("cache file not found")
-        raise FileNotFoundError(point_number_cache_fp)
+    raise Exception("deprecated")
+    # point_number_cache_fp = get_point_number_cache_fp(region_center_latlondeg, region_radius_great_circle_km)
+    # print(f"looking for {point_number_cache_fp}")
+    # if os.path.exists(point_number_cache_fp):
+    #     print(f"reading from cache file")
+    #     with open(point_number_cache_fp) as f:
+    #         lines = f.readlines()
+    #     point_numbers = [int(l.strip()) for l in lines]
+    #     return point_numbers
+    # else:
+    #     print("cache file not found")
+    #     raise FileNotFoundError(point_number_cache_fp)
 
 
 def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km):
@@ -87,20 +91,21 @@ def get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_ra
     return res
 
 
-def get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
-    print("getting points in region")
-    try:
-        res = get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations)
-        print("got points from file")
-    except FileNotFoundError:
-        print("calculating points in region using icosa math")
-        points = get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations)
-        fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
-        with open(fp, "w") as f:
-            f.write("\n".join(str(pn) for pn in points))
-        res = points
-    print("-- done getting points in region")
-    return res
+def get_points_in_region_old(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
+    raise Exception("deprecated")
+    # print("getting points in region")
+    # try:
+    #     res = get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations)
+    #     print("got points from file")
+    # except FileNotFoundError:
+    #     print("calculating points in region using icosa math")
+    #     points = get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations)
+    #     fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
+    #     with open(fp, "w") as f:
+    #         f.write("\n".join(str(pn) for pn in points))
+    #     res = points
+    # print("-- done getting points in region")
+    # return res
 
 
 def get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations):
@@ -108,76 +113,80 @@ def get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_gre
 
 
 def get_points_in_region_from_file(region_center_latlondeg, region_radius_great_circle_km, iterations):
-    fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
-    print(f"looking for {fp}")
-    if os.path.exists(fp):
-        print(f"reading from cache file")
-        with open(fp) as f:
-            lines = f.readlines()
-            return [int(l.strip()) for l in lines]
-    else:
-        print("cache file not found")
-        raise FileNotFoundError(fp)
+    raise Exception("deprecated")
+    # fp = get_points_at_resolution_cache_fp(region_center_latlondeg, region_radius_great_circle_km, iterations)
+    # print(f"looking for {fp}")
+    # if os.path.exists(fp):
+    #     print(f"reading from cache file")
+    #     with open(fp) as f:
+    #         lines = f.readlines()
+    #         return [int(l.strip()) for l in lines]
+    # else:
+    #     print("cache file not found")
+    #     raise FileNotFoundError(fp)
 
 
-def get_points_in_region_raw(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations):
+def get_points_in_region(center_pc, region_radius_gc, max_iterations):
+    return icm.get_region_around_point_code_by_spreading(center_pc, region_radius_gc, max_iterations)
+
+    # old
     # procedure: start with icosa starting points
     # have function which tells you the farthest a point's descendants can get from it
     # calculate the point's distance from the region center
     # if that distance - max_distance_of_descendant is still too far away, then throw this point out and don't bother looking at its descendants
 
-    region_center_xyz = mcm.unit_vector_lat_lon_to_cartesian(*region_center_latlondeg, deg=True)
-    distance = lambda pn: icm.get_distance_point_number_to_xyz_great_circle(pn, region_center_xyz, radius=planet_radius_km)
-    points_in_region = []
-    points_whose_children_could_be_in_region = []
+    # region_center_xyz = mcm.unit_vector_lat_lon_to_cartesian(*region_center_latlondeg, deg=True)
+    # distance = lambda pn: icm.get_distance_point_number_to_xyz_great_circle(pn, region_center_xyz, radius=planet_radius_km)
+    # points_in_region = []
+    # points_whose_children_could_be_in_region = []
 
-    # for the poles, just check whether they're in the region or not, since they don't have descendants
-    for pn in range(2):
-        # print(f"checking point {pn}")
-        d = distance(pn)
-        # print(f"distance from {pn} to region center is {d}")
-        if d < region_radius_great_circle_km:
-            # print(f"{pn} is in the region")
-            points_in_region.append(pn)
+    # # for the poles, just check whether they're in the region or not, since they don't have descendants
+    # for pn in range(2):
+    #     # print(f"checking point {pn}")
+    #     d = distance(pn)
+    #     # print(f"distance from {pn} to region center is {d}")
+    #     if d < region_radius_great_circle_km:
+    #         # print(f"{pn} is in the region")
+    #         points_in_region.append(pn)
 
-    starting_points = list(range(2, 12))
-    to_check = starting_points
-    for iteration in range(0, iterations+1):
-        n_to_check = len(to_check)
-        if n_to_check == 0:
-            break
-        to_check_next_round = []
-        print(f"checking iteration {iteration}")
-        # for each point, only check its actual distance on the first time you see it
-        for i, pn in enumerate(to_check):
-            if i % 100 == 0 and i != 0:
-                print(f"{i}/{n_to_check} this round (iteration {iteration})")
-            # print(f"checking point {pn}")
-            if iteration == icm.get_iteration_born_from_point_number(pn):
-                # check its distance, put it in points_in_region if it fits
-                d = distance(pn)
-                # print(f"distance from {pn} to region center is {d}")
-                if d < region_radius_great_circle_km:
-                    # print(f"{pn} is in the region")
-                    points_in_region.append(pn)
-            else:
-                # print(f"already seen point {pn} by iteration {iteration} because it was born at iteration {icm.get_iteration_born(pn)}")
-                pass
+    # starting_points = list(range(2, 12))
+    # to_check = starting_points
+    # for iteration in range(0, iterations+1):
+    #     n_to_check = len(to_check)
+    #     if n_to_check == 0:
+    #         break
+    #     to_check_next_round = []
+    #     print(f"checking iteration {iteration}")
+    #     # for each point, only check its actual distance on the first time you see it
+    #     for i, pn in enumerate(to_check):
+    #         if i % 100 == 0 and i != 0:
+    #             print(f"{i}/{n_to_check} this round (iteration {iteration})")
+    #         # print(f"checking point {pn}")
+    #         if iteration == icm.get_iteration_born_from_point_number(pn):
+    #             # check its distance, put it in points_in_region if it fits
+    #             d = distance(pn)
+    #             # print(f"distance from {pn} to region center is {d}")
+    #             if d < region_radius_great_circle_km:
+    #                 # print(f"{pn} is in the region")
+    #                 points_in_region.append(pn)
+    #         else:
+    #             # print(f"already seen point {pn} by iteration {iteration} because it was born at iteration {icm.get_iteration_born(pn)}")
+    #             pass
 
-            # now, if its children *starting after this iteration* can ever get into the region, keep it in to_check and add the children as well, else throw it out
-            
-            iteration_of_next_child = iteration + 1
-            should_check_descendants = descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_radius_great_circle_km, planet_radius_km, iteration_of_next_child)
-            if should_check_descendants:
-                # print("should check descendants")
-                to_check_next_round.append(pn)
-                children = icm.get_children_from_point_number(pn, iteration+1)
-                # print(f"children: {children}")
-                to_check_next_round += children
+    #         # now, if its children *starting after this iteration* can ever get into the region, keep it in to_check and add the children as well, else throw it out
 
-        to_check = to_check_next_round
+    #         iteration_of_next_child = iteration + 1
+    #         should_check_descendants = descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_radius_great_circle_km, planet_radius_km, iteration_of_next_child)
+    #         if should_check_descendants:
+    #             # print("should check descendants")
+    #             to_check_next_round.append(pn)
+    #             children = icm.get_children_from_point_number(pn, iteration+1)
+    #             # print(f"children: {children}")
+    #             to_check_next_round += children
 
-    return points_in_region
+    #     to_check = to_check_next_round
+
+    # return points_in_region
 
 
 def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_radius_great_circle_km, planet_radius_km, iteration_of_next_child):
@@ -191,102 +200,58 @@ def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_rad
     return closest_descendant_can_be_to_region_center <= region_radius_great_circle_km
 
 
-def interpolate_at_points_nearest_neighbor(points_to_interpolate_at, points_to_interpolate_from, variable_name, db, max_nn_distance=None):
+def interpolate_at_points_nearest_neighbor(pcs_to_interpolate_at, pcs_to_interpolate_from, variable_name, db, max_nn_distance=None):
     # interpolate the conditions at the points_at_this_resolution
     print("interpolating nearest neighbor")
-    known_values = db[points_to_interpolate_from, variable_name]
-    assert type(known_values) is dict
-    if len(set(points_to_interpolate_at) - set(points_to_interpolate_from)) == 0:
+    known_values = db[pcs_to_interpolate_from, variable_name]
+    if len(set(pcs_to_interpolate_at) - set(pcs_to_interpolate_from)) == 0:
         # already know values of all these points, don't bother getting xyz or doing nearest neighbor calculation
-        return {pn: known_values[pn] for pn in points_to_interpolate_at}
+        return {pc: known_values[pc] for pc in pcs_to_interpolate_at}
 
-    nn_pn_lookup, d_lookup = icm.get_nearest_neighbors_pn_to_pn_with_distance(query_pns=points_to_interpolate_at, candidate_pns=points_to_interpolate_from)
-    interpolated = {}
-    for i, pn in enumerate(points_to_interpolate_at):
+    nn_pc_lookup, d_lookup = icm.get_nearest_neighbors_pc_to_pc_with_distance(query_pcs=pcs_to_interpolate_at, candidate_pcs=pcs_to_interpolate_from)
+    interpolated = pd.Series(dtype=int)
+    for i, pc in enumerate(pcs_to_interpolate_at):
         if i % 100 == 0:
-            print(f"interpolating at points; progress {i}/{len(points_to_interpolate_at)}")
-        if pn in known_values:
+            print(f"interpolating at points; progress {i}/{len(pcs_to_interpolate_at)}")
+        if pc in known_values.index:
             # we already know its condition, no need to do nearest neighbors
-            interpolated[pn] = known_values[pn]
+            interpolated[pc] = known_values[pc]
+            print(interpolated)
+            print("a")
         else:
-            d = d_lookup[pn]
-            nn_pn = nn_pn_lookup[pn]
+            d = d_lookup[pc]
+            nn_pc = nn_pc_lookup[pc]
             if max_nn_distance is None or d <= max_nn_distance:
-                el_cond = db[nn_pn, variable_name]
-                interpolated[pn] = el_cond
+                el_cond = db[nn_pc, variable_name]
+                interpolated[pc] = el_cond
             else:
                 # don't interpolate here, the nearest neighbor is too far away
-                interpolated[pn] = None
+                interpolated[pc] = None
     print("-- done interpolating nearest neighbor")
+    
+    # debug
+    print(f"interpolated result of type {type(interpolated)}:")
+    print(interpolated)
+    raise Exception("check")
     return interpolated
-
-
-def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
-    print(f"plotting variable scattered: {var_to_plot}")
-    pn_to_val = db[point_numbers, var_to_plot]
-    # print(pn_to_val)
-    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
-    lats = [latlon[0] for latlon in latlons]
-    lons = [latlon[1] for latlon in latlons]
-    vals = [pn_to_val.get(pn) for pn in point_numbers]
-    plt.scatter(lons, lats, c=vals)
-    plt.colorbar()
-    plt.title(var_to_plot)
-    if show:
-        plt.show()
-
-
-def plot_variables_scattered(db, point_numbers, vars_to_plot):
-    print("plotting variables scattered")
-    n_plots = len(vars_to_plot)
-    for i, var in enumerate(vars_to_plot):
-        plt.subplot(1, n_plots, i+1)
-        plot_variable_scattered(db, point_numbers, var, show=False)
-    plt.show()
-
-
-def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=True):
-    print(f"plotting variable interpolated: {var_to_plot}")
-    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
-    values_dict = db[point_numbers, var_to_plot]
-    # print(values_dict)
-    values = [values_dict.get(pn) for pn in point_numbers]
-    pu.plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
-    if show:
-        plt.show()
-
-
-def plot_variables_interpolated(db, point_numbers, vars_to_plot, resolution):
-    print("plotting variables interpolated")
-    for var in vars_to_plot:
-        plot_variable_interpolated(db, point_numbers, var, resolution, show=False)
-        plt.title(var)
-        plt.show()
-    # don't do subplots here because the PlottingUtil code sets its own fig/ax
-
-
-def plot_latlons(point_numbers):
-    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
-    lats = [latlon[0] for latlon in latlons]
-    lons = [latlon[1] for latlon in latlons]
-    plt.scatter(lons, lats)
-    plt.show()
 
 
 
 if __name__ == "__main__":
-    root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
-    db = IcosahedronPointDatabase.load(root_dir)
+    db_root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
+    db = IcosahedronPointDatabase.load(db_root_dir)
+    df = db.df
+    planet_radius_km = icm.CADA_II_RADIUS_KM
 
     # region_center_latlondeg, region_radius_great_circle_km = (10, -87), 1000  # Western Amphoto
     # region_center_latlondeg, region_radius_great_circle_km = (-87, 10), 1000  # somewhere in O-Z because I originally mixed up latlon
     # region_center_latlondeg, region_radius_great_circle_km = (90, 0), 2000  # North Pole
     # region_center_latlondeg, region_radius_great_circle_km = (-14, -115), 2000  # Thiuy-Rainia Bay
     # region_center_latlondeg, region_radius_great_circle_km = (86.5, -13), 250  # small region in Tomar Strait in Mienta, for testing on smaller regions
-    region_center_latlondeg, region_radius_great_circle_km = (25, -84), 2000  # Jhorju
+    # region_center_latlondeg, region_radius_great_circle_km = (25, -84), 2000  # Jhorju
     # region_center_latlondeg, region_radius_great_circle_km = (-54.28119589256169, 175.64265081464623), 250  # random from 2022-07-16
     # region_center_latlondeg, region_radius_great_circle_km = (26.083351229768834, 94.04570559120195), 2000  # northern Mienta, from a random point
-    region_center_point_code = icm.get_nearest_icosa_point_to_latlon(region_center_latlondeg, maximum_distance=1, planet_radius=icm.CADA_II_RADIUS_KM)
+    # region_center_point_code = icm.get_nearest_icosa_point_to_latlon(region_center_latlondeg, maximum_distance=1, planet_radius=icm.CADA_II_RADIUS_KM)
 
     # to choose random one
     # region_center_point_code = icm.get_random_point_code(min_iterations=3, expected_iterations=6)
@@ -295,33 +260,34 @@ if __name__ == "__main__":
     # region_center_latlondeg, region_radius_great_circle_km = (
     #    UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
     # )
-    print(f"region centered at {region_center_point_code} {region_center_latlondeg} deg with radius {region_radius_great_circle_km} km")
 
-    planet_radius_km = icm.CADA_II_RADIUS_KM
+    # to choose random point file
+    pc_dir = "PointFiles"
+    # fname, fp = icdb.get_random_point_code_file(pc_dir)
+    fname = "pcs_in_db_2022-11-22_K003201212211_0.02438586135795968.txt"  # small region
+    fp = os.path.join(pc_dir, fname)
+    points_with_data_in_region = icdb.get_point_codes_from_file(fp)
+    center_pc, radius_gc = icdb.get_point_code_and_distance_from_filename(fname)
+    radius_gc_km = radius_gc * planet_radius_km
+    center_latlondeg = icm.get_latlon_from_point_code(center_pc)
+
+    print(f"region centered at {center_pc} {center_latlondeg} deg with radius {radius_gc_km} km")
+
     power_law_param = 0.25  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
     power_law = lambda: np.random.power(power_law_param)
-    circle_radius_dist = lambda: power_law() * region_radius_great_circle_km
+    circle_radius_dist = lambda: power_law() * radius_gc_km
     el_stdev = 15
     n_circles = 10000
 
-
-
-    # point_numbers_in_db = db.get_all_point_numbers_with_data()
-    # points_with_data_in_region = get_point_numbers_with_data_in_region(db, region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)
-
-    # DEBUG
-    # points_with_data_in_region = random.sample(points_with_data_in_region, 100)
-
-    # use this to check if the point locations look right 
-    # (is it actually interpolating conditions onto icosa lattice points, for instance? 
-    # (which should locally look like a triangular/hexagonal lattice 
-    # with random interloping image pixel points) 
-    # or is it just taking the image pixels? 
+    # use this to check if the point locations look right
+    # (is it actually interpolating conditions onto icosa lattice points, for instance?
+    # (which should locally look like a triangular/hexagonal lattice
+    # with random interloping image pixel points)
+    # or is it just taking the image pixels?
     # (which should locally look like a rectangular lattice))
-    # plot_variable_scattered(db, points_with_data_in_region, "elevation") 
+    # pu.plot_variables_scattered(db, points_with_data_in_region, ["elevation_condition", "elevation"])
 
-    # plot_variable_scattered(db, points_with_data_in_region, "elevation_condition")
-    # plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
+    # pu.plot_variable_interpolated(db, points_with_data_in_region, "elevation", resolution=1000)
     # input("press enter to continue")
 
     # edit the region and then plot again
@@ -330,33 +296,33 @@ if __name__ == "__main__":
     if interpolate:
         # raise Exception("FIXME! It will overwrite the existing data with default elevation values if you use interpolate=True")
         # interpolate condition at other points as nearest neighbor
-        # (with some max distance to that neighbor so we don't get things like 
-        # the middle of the ocean thinking it has to be a coast/shallow 
+        # (with some max distance to that neighbor so we don't get things like
+        # the middle of the ocean thinking it has to be a coast/shallow
         # because that's what's on the edge of the nearest image thousands of km away)
         edge_length_of_resolution_km = 100
         iterations_of_resolution = icm.get_iterations_needed_for_edge_length(edge_length_of_resolution_km, planet_radius_km)
         print(f"resolution needs {iterations_of_resolution} iterations of icosa")
-        print("TODO maybe cache this too (in a file like the point numbers, so we have one cache of point numbers with data and another of point numbers in certain region at certain resolution, although maybe only the latter is necessary and then you can easily check the database for which ones have the variable defined)")
         n_points_total_at_this_iteration = icm.get_n_points_from_iterations(iterations_of_resolution)
         # points_at_this_resolution_in_region = filter_point_numbers_in_region(list(range(n_points_total_at_this_iteration)), region_center_latlondeg, region_radius_great_circle_km, planet_radius_km)  # include points of previous iterations  # too long, brute force over the whole planet
-        points_at_this_resolution_in_region = get_points_in_region(region_center_latlondeg, region_radius_great_circle_km, planet_radius_km, iterations=iterations_of_resolution)
+        points_at_this_resolution_in_region = get_points_in_region(center_pc, radius_gc, iterations_of_resolution)
+        
         print(f"{len(points_at_this_resolution_in_region)} points in region")
-        # plot_latlons(points_at_this_resolution_in_region)
+        # pu.plot_latlons(points_at_this_resolution_in_region)
 
         # so using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
         points_to_interpolate_at = list(set(points_at_this_resolution_in_region) | set(points_with_data_in_region))
 
         interpolated_elevation_conditions = interpolate_at_points_nearest_neighbor(
-            points_to_interpolate_at=points_to_interpolate_at,
-            points_to_interpolate_from=points_with_data_in_region,
+            pcs_to_interpolate_at=points_to_interpolate_at,
+            pcs_to_interpolate_from=points_with_data_in_region,
             variable_name="elevation_condition",
             db=db,
             max_nn_distance=100/planet_radius_km,
         )
         # write these to the db
         print(f"got interpolated elevation conditions, writing {len(interpolated_elevation_conditions)} items to db")
+        print(interpolated_elevation_conditions)
         # input("press enter to continue")
-        point_numbers_to_cache = points_at_this_resolution_in_region
         for pn, el_cond in interpolated_elevation_conditions.items():
             if el_cond is None:
                 # interpolation failed because neighbors were too far away
@@ -366,11 +332,9 @@ if __name__ == "__main__":
                 raise RuntimeError(f"elevation condition changed: {old_el_cond} -> {el_cond}")
             if old_el_cond is None:
                 db[pn, "elevation_condition"] = el_cond
-            point_numbers_to_cache.append(pn)
             print(f"p #{pn} had old elevation condition {old_el_cond}, new {el_cond}")
         if input("write these results? y/n (default n)") == "y":
             db.write()
-        write_point_numbers_to_cache(point_numbers_to_cache, region_center_latlondeg, region_radius_great_circle_km)
         points_to_edit = list(set(interpolated_elevation_conditions.keys()) | set(points_with_data_in_region))  # want both the new points and the points already having data
     else:
         print("not interpolating, just using points that already have db data")
@@ -488,7 +452,7 @@ if __name__ == "__main__":
     assert n_passed + n_failed == n_circles
     print(f"condition pass rate {n_passed / n_circles}")
 
-    plot_variable_interpolated(db, points_to_edit, "elevation", resolution=1000)
+    pu.plot_variable_interpolated(db, points_to_edit, "elevation", resolution=1000)
     if input("write these results? y/n (default n)") == "y":
-        db.write()
+        db.write_hdf()
 

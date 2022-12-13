@@ -1,0 +1,4 @@
+- make template control images that are just outlines, for making it easier to make control maps for other variables e.g. volcanism, climate (as long as the template colors are never used to encode control values)
+- try making control images for some other variables and reading them using LoadMapData.py
+- read the control images into a dataframe, so we can distinguish control points from generated data
+
