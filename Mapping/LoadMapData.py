@@ -151,15 +151,17 @@ def get_condition_shorthand_dict(world_name, map_variable):
     return d
 
 
-def get_rgba_to_condition_dict(world_name, map_variable):
+def get_rgb_int_to_condition_dict(world_name, map_variable):
     shorthand_dict = get_condition_shorthand_dict(world_name, map_variable)
     d = {}
     for sh, row in shorthand_dict.items():
         colors_rgba = row["colors_rgba"]
         for tup in colors_rgba:
             r,g,b,a = tup  # just to check that they're 4-tuples
-            assert tup not in d, f"duplicate color {tup}"
-            d[tup] = row
+            assert a == 255, a
+            n = 1000000*r + 1000*g + b
+            assert n not in d, f"duplicate color {n}"
+            d[n] = row
     return d
 
 
@@ -228,45 +230,66 @@ def create_cada_ii_default_value_dict(map_variable):
     return default_value_by_condition
 
 
-def translate_array_by_dict(arr, d):
+def translate_array_by_dict(arr, d, default_value=None):
     # look up each element in the dict and put its value in the corresponding place in new array
-    return np.vectorize(d.__getitem__)(arr)
+    contains = np.vectorize(d.__contains__)(arr)
+    bad_colors = np.unique(arr[~contains])
+    if len(bad_colors) > 0:
+        print(f"unrecognized colors defaulting to {default_value}:", ", ".join(str(x) for x in bad_colors))
+    return np.vectorize(lambda x: d.get(x, default_value))(arr)
+
+
+def rgb_to_int(arr):
+    # represent e.g. (212, 85, 305) as 212085305
+    assert len(arr.shape) == 3
+    assert arr.shape[-1] == 3
+    return arr[:,:,2] + 1000*arr[:,:,1] + 1000000*arr[:,:,0]
 
 
 def get_rgba_color_array_from_image_array(arr):
     # collapse the last dimension into tuples; maybe np has a better way to do this but I can't find it
+    print("getting rgba tuple array")
     color_arr = np.empty(shape=arr.shape[:-1], dtype=object)  # object is better dtype so np not trying to iterate
     assert len(color_arr.shape) == 2, color_arr.shape
     for xi in range(color_arr.shape[0]):
         for yi in range(color_arr.shape[1]):
             color_arr[xi,yi] = tuple(arr[xi,yi,:])
+    print("done getting rgba tuple array")
     return color_arr
 
 
-def get_condition_string_array_from_image_array(arr, color_to_str):
+def get_condition_int_array_from_image_array(arr, color_to_int):
     print("getting condition string array")
     color_arr = get_rgba_color_array_from_image_array(arr)
     r_size, c_size, rgba_len = arr.shape
     assert rgba_len == 4
-    str_arr = [["" for c in range(c_size)] for r in range(r_size)]
-    # I'm gonna try using a python list instead of np stuff because dtype=object makes it too huge in memory
-    # if using np array, needs to be dtype object, not str or tuple, so np not trying to iterate (it will just put the first char of the str if you do that)
-    # something like str_arr[color_arr == color] would be nice, but it complains about elementwise comparison and doesn't give the correct result (they all come up false)
-    for r in range(r_size):
-        if r % 100 == 0:
-            print(f"row {r}/{r_size}")
-        for c in range(c_size):
-            color = color_arr[r,c]
-            # assert type(color_in_img) is tuple  # this must be true since it's a dict key, don't bother checking each time
-            try:
-                s = color_to_str[color]
-            except KeyError:
-                print(f"Warning: Color {color} was found in the image at (r,c) = ({r},{c}), but it is not in the color_to_str dict.")
-                # s = input("Please type a value to be used for this color (default empty string): ").strip()
-                # color_to_str[color] = s
-                s = ""
-                color_to_str[color] = s
-            str_arr[r][c] = s
+    assert (arr[:,:,3] == 255).all(), "don't put transparent stuff in the images"
+    # use uint32 to prevent overflow when making the integer representations of colors
+    # (max value 255255255, which is about 2**28)
+    arr = arr[:,:,:3].astype(np.uint32)  
+    arr = rgb_to_int(arr)
+    print(color_to_int)
+    return translate_array_by_dict(arr, color_to_int, default_value=-1)
+
+    # str_arr = [["" for c in range(c_size)] for r in range(r_size)]
+    # # I'm gonna try using a python list instead of np stuff because dtype=object makes it too huge in memory
+    # # if using np array, needs to be dtype object, not str or tuple, so np not trying to iterate (it will just put the first char of the str if you do that)
+    # # something like str_arr[color_arr == color] would be nice, but it complains about elementwise comparison and doesn't give the correct result (they all come up false)
+    # for r in range(r_size):
+    #     if r % 100 == 0:
+    #         print(f"row {r}/{r_size}")
+    #     for c in range(c_size):
+    #         color = color_arr[r,c]
+    #         # assert type(color_in_img) is tuple  # this must be true since it's a dict key, don't bother checking each time
+    #         try:
+    #             s = color_to_str[color]
+    #         except KeyError:
+    #             print(f"Warning: Color {color} was found in the image at (r,c) = ({r},{c}), but it is not in the color_to_str dict.")
+    #             # s = input("Please type a value to be used for this color (default empty string): ").strip()
+    #             # color_to_str[color] = s
+    #             s = ""
+    #             color_to_str[color] = s
+    #         str_arr[r][c] = s
     print("done getting condition string array")
     return str_arr
 
@@ -304,17 +327,21 @@ def get_lattice_for_region(region_name):
     return image_lattice
 
 
+def get_color_to_shorthand_int_dict(rgb_int_to_condition_dict):
+    return {n: int(row["shorthand"]) for n, row in rgb_int_to_condition_dict.items()}
+
+
 def get_lattice_and_df_for_region(region_name, map_variable, with_coords=False):
     lattice = get_lattice_for_region(region_name)
 
-    rgba_to_condition_dict = get_rgba_to_condition_dict(region_name, map_variable)
-    color_to_shorthand = {rgba: row["shorthand"] for rgba, row in rgba_to_condition_dict.items()}
+    rgb_int_to_condition_dict = get_rgb_int_to_condition_dict(region_name, map_variable)
+    color_to_shorthand_int = get_color_to_shorthand_int_dict(rgb_int_to_condition_dict)
 
     image_fp = get_condition_image_fp(region_name, map_variable)
     im = Image.open(image_fp)
     arr = np.array(im)
     assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
-    str_arr = get_condition_string_array_from_image_array(arr, color_to_shorthand)
+    str_arr = get_condition_int_array_from_image_array(arr, color_to_shorthand_int)
 
     df = lattice.create_dataframe(with_coords=with_coords)
 
@@ -452,14 +479,13 @@ def get_condition_int_array_for_region(region_name, map_variable):
     world_name = region_metadata["world_name"]
     world_metadata = get_world_metadata_dict()[world_name]
 
-    rgba_to_condition_dict = get_rgba_to_condition_dict(world_name, map_variable)
-    color_to_shorthand = {rgba: row["shorthand"] for rgba, row in rgba_to_condition_dict.items()}
+    rgb_int_to_condition_dict = get_rgb_int_to_condition_dict(world_name, map_variable)
+    color_to_shorthand_int = get_color_to_shorthand_int_dict(rgb_int_to_condition_dict)
     
     im = Image.open(image_fp)
     arr = np.array(im)
     assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
-    str_arr = get_condition_string_array_from_image_array(arr, color_to_shorthand)
-    int_arr = cast_condition_array_to_int(str_arr)
+    int_arr = get_condition_int_array_from_image_array(arr, color_to_shorthand_int)
     return int_arr
 
 
@@ -526,7 +552,7 @@ if __name__ == "__main__":
     world_name = "Cada II"
     region_metadata = get_region_metadata_dict()
     world_metadata = get_world_metadata_dict()["Cada II"]
-    map_variable = "volcanism"
+    map_variable = "elevation"
 
     plot_default_values_by_region(world_name, map_variable)
 
