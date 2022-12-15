@@ -1,3 +1,5 @@
-- read the control images into a dataframe, so we can distinguish control points from generated data
-- double check where north pole is on Imis Tolin map
-- double check where south pole is on Oligra-Zitomo map (this one matters less)
+- convert point number icosa files to point codes; done
+- double check where north pole is on Imis Tolin map: cell NQ211 in the csv of point codes = row 211, col 381, it is farther up in the image from where I originally marked it, but it is close enough, northwest of Vergensi and still on the land of Eawortis
+- double check where south pole is on Oligra-Zitomo map (this one matters less): cell PE279 in csv = row 279, col 421, this is good, very close
+
+

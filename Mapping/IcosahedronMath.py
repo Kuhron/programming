@@ -81,7 +81,10 @@ def get_point_code_from_point_number(pn):
 
 
 def get_point_codes_from_point_numbers(pns):
-    return [get_point_code_from_point_number(pn) for pn in pns]
+    print(f"getting point codes for {len(pns)} point numbers")
+    pcs = [get_point_code_from_point_number(pn) for pn in pns]
+    print(f"got point codes")
+    return pcs
 
 
 def get_latlon_from_point_code(pc):
@@ -122,6 +125,8 @@ def get_latlons_from_point_numbers(pns):
 
 
 def get_latlons_from_point_codes(pcs):
+    # maybe can use the PointCodeTrie to make this faster at some point
+    # e.g. storing the latlon of the parent in the trie node above
     return [get_latlon_from_point_code(pc) for pc in pcs]
 
 

@@ -263,14 +263,14 @@ def plot_variable_at_point_codes(pcs, db, variable_index):
     plt.colorbar()
 
 
-def plot_variable_scattered(db, point_numbers, var_to_plot, show=True):
+def plot_variable_scattered(db, point_codes, var_to_plot, show=True):
     print(f"plotting variable scattered: {var_to_plot}")
-    pn_to_val = db[point_numbers, var_to_plot]
+    pn_to_val = db[point_codes, var_to_plot]
     # print(pn_to_val)
-    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
+    latlons = [icm.get_latlon_from_point_code(pc) for pc in point_codes]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
-    vals = [pn_to_val.get(pn) for pn in point_numbers]
+    vals = [pn_to_val.get(pc) for pc in point_codes]
     plt.scatter(lons, lats, c=vals)
     plt.colorbar()
     plt.title(var_to_plot)
