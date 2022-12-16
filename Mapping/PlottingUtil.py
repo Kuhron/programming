@@ -122,17 +122,19 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
     interpolation_lats = np.linspace(min_lat, max_lat, n_lats)
     interpolation_lons = np.linspace(min_lon, max_lon, n_lons)
     interpolation_grid_latlon = np.array(list(itertools.product(interpolation_lats, interpolation_lons)))
-    print(f"interpolation lats has shape {interpolation_lats.shape}")
-    print(f"interpolation lons has shape {interpolation_lons.shape}")
-    print(f"interpolation grid has shape {interpolation_grid_latlon.shape}")
+    # print(f"interpolation lats has shape {interpolation_lats.shape}")
+    # print(f"interpolation lons has shape {interpolation_lons.shape}")
+    # print(f"interpolation grid has shape {interpolation_grid_latlon.shape}")
     data_coords = np.array(data_coords)
     values = np.array(values)
-    print(f"data_coords has shape {data_coords.shape}")
-    print(f"values has shape {values.shape}")
+    # print(f"data_coords has shape {data_coords.shape}")
+    # print(f"values has shape {values.shape}")
+    # print("values:", values)
 
     # interpolate
     interpolated = scipy.interpolate.griddata(data_coords, values, interpolation_grid_latlon, method="linear")
     print(f"interpolated has shape {interpolated.shape}")
+    # print("interpolated:", interpolated)
     len_interp, = interpolated.shape
     len_lats, = interpolation_lats.shape
     len_lons, = interpolation_lons.shape
@@ -263,14 +265,14 @@ def plot_variable_at_point_codes(pcs, db, variable_index):
     plt.colorbar()
 
 
-def plot_variable_scattered(db, point_codes, var_to_plot, show=True):
+def plot_variable_scattered(db, pcs, var_to_plot, show=True):
     print(f"plotting variable scattered: {var_to_plot}")
-    pn_to_val = db[point_codes, var_to_plot]
+    pc_to_val = db.get_dict(pcs, var_to_plot)
     # print(pn_to_val)
-    latlons = [icm.get_latlon_from_point_code(pc) for pc in point_codes]
+    latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
-    vals = [pn_to_val.get(pc) for pc in point_codes]
+    vals = [pc_to_val.get(pc) for pc in pcs]
     plt.scatter(lons, lats, c=vals)
     plt.colorbar()
     plt.title(var_to_plot)
@@ -278,37 +280,37 @@ def plot_variable_scattered(db, point_codes, var_to_plot, show=True):
         plt.show()
 
 
-def plot_variables_scattered(db, point_numbers, vars_to_plot):
+def plot_variables_scattered(db, pcs, vars_to_plot):
     print("plotting variables scattered")
     n_plots = len(vars_to_plot)
     for i, var in enumerate(vars_to_plot):
         plt.subplot(1, n_plots, i+1)
-        plot_variable_scattered(db, point_numbers, var, show=False)
+        plot_variable_scattered(db, pcs, var, show=False)
     plt.show()
 
 
-def plot_variable_interpolated(db, point_numbers, var_to_plot, resolution, show=True):
+def plot_variable_interpolated(db, pcs, var_to_plot, resolution, show=True):
     print(f"plotting variable interpolated: {var_to_plot}")
-    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
-    values_dict = db[point_numbers, var_to_plot]
+    latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
+    values_dict = db.get_dict(pcs, var_to_plot)
     # print(values_dict)
-    values = [values_dict.get(pn) for pn in point_numbers]
-    pu.plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
+    values = [values_dict.get(pc) for pc in pcs]
+    plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
     if show:
         plt.show()
 
 
-def plot_variables_interpolated(db, point_numbers, vars_to_plot, resolution):
+def plot_variables_interpolated(db, pcs, vars_to_plot, resolution):
     print("plotting variables interpolated")
     for var in vars_to_plot:
-        plot_variable_interpolated(db, point_numbers, var, resolution, show=False)
+        plot_variable_interpolated(db, pcs, var, resolution, show=False)
         plt.title(var)
         plt.show()
     # don't do subplots here because the PlottingUtil code sets its own fig/ax
 
 
-def plot_latlons(point_numbers):
-    latlons = [icm.get_latlon_from_point_code(pn) for pn in point_numbers]
+def plot_latlons(pcs):
+    latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     plt.scatter(lons, lats)

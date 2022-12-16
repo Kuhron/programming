@@ -25,6 +25,7 @@ from BiDict import BiDict
 from PointCodeTrie import PointCodeTrie
 import FindPointsInCircle as find
 import PlottingUtil as pu
+from LoadMapData import get_default_values_of_conditions, translate_array_by_dict
 
 
 class IcosahedronPointDatabase:
@@ -44,14 +45,12 @@ class IcosahedronPointDatabase:
 
         with open(os.path.join(root_dir, "IcosahedronPointDatabase.txt"), "w") as f:
             f.write("This is an IcosahedronPointDatabase.")
-        db.variables_file = os.path.join(root_dir, "variables.txt")
         db.metadata_file = os.path.join(root_dir, "metadata.txt")
 
         db.variables_dict = BiDict(int, str)
         db.metadata = {
             "n_point_code_chars_per_level": n_point_code_chars_per_level,
         }
-        touch(db.variables_file)
         db.write_metadata()
         return db
 
@@ -60,10 +59,8 @@ class IcosahedronPointDatabase:
         print(f"loading database from {root_dir}")
         db = IcosahedronPointDatabase()
         db.root_dir = root_dir
-        db.variables_file = os.path.join(root_dir, "variables.txt")
         db.metadata_file = os.path.join(root_dir, "metadata.txt")
         db.data_file = os.path.join(root_dir, "data.h5")
-        db.variables_dict = IcosahedronPointDatabase.get_variables_dict_from_file(db.variables_file)
         db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
         db.read_hdf()
         print(f"done loading database from {root_dir}")
@@ -84,27 +81,8 @@ class IcosahedronPointDatabase:
             raise Exception(f"database partially exists: {root_dir}")
 
     def add_variable(self, variable_name):
-        var_dict = self.get_variables_dict()
-        if variable_name in var_dict.keys(str, int):
-            print("cannot add existing variable", variable_name)
-            return
-        indexes = var_dict.keys(int, str)
-        if len(indexes) == 0:
-            new_index = 0
-        else:
-            new_index = max(indexes) + 1
-        var_dict[new_index] = variable_name
-        self.variables_dict = var_dict
-        self.write_variables_dict()
-
-    def write_variables_dict(self):
-        lines = []
-        for index, name in sorted(self.variables_dict.items(int, str)):
-            l = f"{index}:{name}"
-            lines.append(l)
-        s = "\n".join(lines)
-        with open(self.variables_file, "w") as f:
-            f.write(s)
+        assert variable_name not in self.df.columns, f"variable {variable_name} already in database"
+        self.df.insert(len(self.df.columns), variable_name, value=np.nan)
 
     def write_metadata(self):
         d = self.metadata
@@ -123,26 +101,17 @@ class IcosahedronPointDatabase:
     def read_hdf(self):
         self.df = pd.read_hdf(self.data_file)
 
-    def get_variables_dict(self):
-        if self.variables_dict is not None:
-            return self.variables_dict
-        else:
-            d = IcosahedronPointDatabase.get_variables_dict_from_file(self.variables_file)
-            self.variables_dict = d
-
-    @staticmethod
-    def get_variables_dict_from_file(fp):
-        with open(fp) as f:
-            lines = f.readlines()
-        d = {}
-        for l in lines:
-            index, name = l.strip().split(":")
-            index = int(index)
-            d[index] = name
-        return BiDict.from_dict(d)
+    def get_variables(self):
+        return sorted(self.df.columns)
 
     def get_n_variables(self):
-        return len(self.get_variables_dict())
+        return len(self.get_variables())
+    
+    def get_condition_variables(self):
+        return sorted(x for x in self.df.columns if x.endswith("_condition"))
+    
+    def get_value_variables(self):
+        return sorted(x for x in self.df.columns if not x.endswith("_condition"))
 
     def get_variable_encoding_types(self):
         # based on the values in the df
@@ -180,8 +149,8 @@ class IcosahedronPointDatabase:
             d[var] = int(val)
         return d
 
-    def get_variables_at_points(self, pcs, variable_indices):
-        return self.df.loc[pcs, variable_indices]
+    def get_variables_at_points(self, pcs, variable_names):
+        return self.df.loc[pcs, variable_names]
 
     @staticmethod
     def get_all_variables_from_line(l):
@@ -195,37 +164,23 @@ class IcosahedronPointDatabase:
         return d_this_line
 
     @staticmethod
-    def get_variable_from_line(l, variable_number):
+    def get_variable_from_line(l, varname):
         d = IcosahedronPointDatabase.get_all_variables_from_line(l)
-        val = d.get(variable_number)
+        val = d.get(varname)
         # typ = self.get_variable_type_from_name(variable_name)
         # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
         return val
 
     def set_single_point(self, pn, variable_name, value, write=False):
         check_int(value)
-        variable_number = self.get_variable_number_from_name(variable_name)
         if write:
             self.write_hdf()  # don't do this too often or it will be slow
 
     def set_multiple_points(self, pns, variable_name, values, write=False):
-        variable_number = self.get_variable_number_from_name(variable_name)
         for pn, val in zip(pns, values):
             check_int(val)
         if write:
             self.write_hdf()
-
-    def get_variable_number_from_name(self, name):
-        return self.variables_dict[name]
-    
-    def get_variable_numbers_from_names(self, names):
-        return [self.variables_dict[name] for name in names]
-
-    def get_variable_name_from_number(self, number):
-        return self.variables_dict[number]
-    
-    def get_variable_names_from_numbers(self, numbers):
-        return [self.variables_dict[number] for number in numbers]
 
     def __getitem__(self, tup):
         pcs, varnames = tup
@@ -236,8 +191,7 @@ class IcosahedronPointDatabase:
         if type(varnames) is str:
             vn = varnames
             varnames = [vn]
-        variable_indices = self.get_variable_numbers_from_names(varnames)
-        return self.get_variables_at_points(pcs, variable_indices)
+        return self.get_variables_at_points(pcs, varnames)
 
     def __setitem__(self, tup, val):
         pns, variable_name = tup
@@ -247,19 +201,18 @@ class IcosahedronPointDatabase:
         else:
             self.set_multiple_points(pns, variable_name, val)
 
-    def add_values(self, pns, varname, vals):
-        # instead of db[pns, varname] += vals, since that won't work with the dictionary return value and I can't do __iadd__ on the database object itself because I'm not saying db += vals
-        current_vals = self[pns, varname]
-        if type(pns) is int:
-            pns = [pns]
-        if type(vals) is int:
-            vals = [vals]
-        assert len(pns) == len(vals)
-        new_vals = []
-        for pn, val in zip(pns, vals):
-            new_val = current_vals[pn] + val
-            new_vals.append(new_val)
-        self[pns, varname] = new_vals
+    def get_dict(self, pcs, varname):
+        # return a dict of pc:value for just this one variable
+        column = self[pcs, varname].to_dict()
+        return column[varname]
+    
+    def get_single_value(self, pc, varname):
+        sub_df = self[pc, varname]
+        assert sub_df.size == 1, f"got more than one value at [{pc}, {varname}]"
+        return sub_df.values[0,0]
+
+    def add_value(self, pcs, varname, val):
+        self.df.loc[pcs, varname] += val
 
     def write_as_images(self):
         # hacky experiment: write data in pixel RGB values in PNG files for certain iterations
@@ -274,8 +227,6 @@ class IcosahedronPointDatabase:
         # and we can make a scheme to fit them together into blocks of 24
         # e.g. one image encodes variables 0, 2, 3, 4, and 8 in the bits like 00222223 33333444 44488888
 
-        var_dict = self.get_variables_dict()
-        # print(var_dict)
         variable_encoding_types = self.get_variable_encoding_types()  # indexed in list by variable index
         # print(variable_encoding_types)
         bits_by_variable_index = [IcosahedronPointDatabase.get_n_bits_for_encoding_type(t) for t in variable_encoding_types]
@@ -335,9 +286,8 @@ class IcosahedronPointDatabase:
         return ",".join(items)
     
     def write_old_block_format_to_hdf5(self):
+        raise Exception("should not have to use again")
         pns = list(db.get_all_point_numbers_with_data())
-        var_dict = db.get_variables_dict()
-        variable_indices = sorted(var_dict.keys(int, str))
 
         if os.path.exists("data.h5"):
             df = pd.read_hdf("data.h5")
@@ -515,14 +465,29 @@ def partition_into_max_sum_groups(ints, max_sum):
     return boxes
 
 
+def initialize_default_value_dataframe_from_control_points(db_root_dir):
+    # might need to use this later once more variables are added as control point images
+    control_data_fp = os.path.join(db_root_dir, "control_data.h5")
+    data_fp = os.path.join(db_root_dir, "data.h5")
+    df = pd.read_hdf(control_data_fp).copy(deep=True)
+    default_values = {
+        "elevation": get_default_values_of_conditions("Cada II", "elevation"),
+        "volcanism": get_default_values_of_conditions("Cada II", "volcanism")
+    }
+    df.insert(list(df.columns).index("elevation_condition")+1, "elevation", [default_values["elevation"][x] for x in df["elevation_condition"]])
+    df.insert(list(df.columns).index("volcanism_condition")+1, "volcanism", [default_values["volcanism"][x] for x in df["volcanism_condition"]])
+    print(df)
+    df.to_hdf(data_fp, "data")
+    print("wrote default values to data.h5")
 
-if __name__ == "__main__":
+
+
+if __name__ == "__main__":  
     db_root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
     db = IcosahedronPointDatabase.load(db_root_dir)
     df = db.df
 
-    db.write_as_images()
-    sys.exit()
+    # db.write_as_images()  # experimental, not working yet
 
     pc_dir = "PointFiles"
     fname, fp = get_random_point_code_file(pc_dir)

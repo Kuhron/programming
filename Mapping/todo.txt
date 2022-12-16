@@ -1,4 +1,7 @@
-- convert point number icosa files to point codes; done
+- generate some elevation finally!
+- figure out math for orthographic projection of stuff near the poles, so I can see better maps of IT and O-Z
+
+done (and I want to remember that I did them already so I don't repeat them):
 - double check where north pole is on Imis Tolin map: cell NQ211 in the csv of point codes = row 211, col 381, it is farther up in the image from where I originally marked it, but it is close enough, northwest of Vergensi and still on the land of Eawortis
 - double check where south pole is on Oligra-Zitomo map (this one matters less): cell PE279 in csv = row 279, col 421, this is good, very close
 

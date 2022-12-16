@@ -125,8 +125,10 @@ def get_latlons_from_point_numbers(pns):
 
 
 def get_latlons_from_point_codes(pcs):
+    # TODO use the fact that many of the point codes will share some ancestry
     # maybe can use the PointCodeTrie to make this faster at some point
     # e.g. storing the latlon of the parent in the trie node above
+    # do something similar for getting xyzs
     return [get_latlon_from_point_code(pc) for pc in pcs]
 
 
@@ -137,7 +139,7 @@ def get_xyz_from_point_number(pn):
     return xyz
 
 
-def get_xyzs_from_point_numbers(pns):
+def get_xyzs_from_point_codes(pns):
     return [get_xyz_from_point_number(pn) for pn in pns]
 
 
@@ -145,8 +147,8 @@ def get_xyzs_from_point_codes(pcs):
     return [get_xyz_from_point_code(pc) for pc in pcs]
 
 
-def get_xyz_array_from_point_numbers(pns):
-    xyzs = get_xyzs_from_point_numbers(pns)
+def get_xyz_array_from_point_codes(pns):
+    xyzs = get_xyzs_from_point_codes(pns)
     arr = np.array(xyzs)
     assert arr.shape == (len(pns), 3), arr.shape
     return arr
