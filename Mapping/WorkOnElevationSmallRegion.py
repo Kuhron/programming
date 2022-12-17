@@ -202,14 +202,24 @@ def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_rad
 
 def interpolate_at_points_nearest_neighbor(pcs_to_interpolate_at, pcs_to_interpolate_from, variable_name, db, max_nn_distance=None):
     # interpolate the conditions at the points_at_this_resolution
+
+    interpolated = pd.Series(dtype=int)
+    if len(pcs_to_interpolate_from) == 0:
+        print("no points to interpolate from; returning condition -1 for all query points")
+        # no point getting coordinates, etc.
+        for pc in pcs_to_interpolate_at:
+            interpolated[pc] = -1
+        return interpolated
+
     print("interpolating nearest neighbor")
     known_values = db.get_dict(pcs_to_interpolate_from, variable_name)
     if len(set(pcs_to_interpolate_at) - set(pcs_to_interpolate_from)) == 0:
         # already know values of all these points, don't bother getting xyz or doing nearest neighbor calculation
-        return {pc: known_values[pc] for pc in pcs_to_interpolate_at}
+        return pd.Series({pc: known_values[pc] for pc in pcs_to_interpolate_at}, dtype=int)
 
+    db.verify_df_dtype()  # debug
     nn_pc_lookup, d_lookup = icm.get_nearest_neighbors_pc_to_pc_with_distance(query_pcs=pcs_to_interpolate_at, candidate_pcs=pcs_to_interpolate_from, k_neighbors=1, allow_self=False)
-    interpolated = pd.Series(dtype=int)
+    
     for i, pc in enumerate(pcs_to_interpolate_at):
         if i % 100 == 0:
             print(f"interpolating at points; progress {i}/{len(pcs_to_interpolate_at)}")
@@ -252,20 +262,31 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
     # the middle of the ocean thinking it has to be a coast/shallow
     # because that's what's on the edge of the nearest image thousands of km away)
 
+    db.verify_df_dtype()  # debug
     # using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
     points_to_interpolate_at = list(set(pcs_in_region_at_resolution) | set(pcs_with_data_in_region))
+
+    # interpolate only from points that have a defined condition
+    existing_el_conds = db.get_series(pcs_with_data_in_region, "elevation_condition")
+    # but also want to make sure we are up to date with the images, TODO read conditions from images
+    points_to_interpolate_from = existing_el_conds[existing_el_conds != -1].index
+
+    db.verify_df_dtype()  # debug
     interpolated_el_conds = interpolate_at_points_nearest_neighbor(
         pcs_to_interpolate_at=points_to_interpolate_at,
-        pcs_to_interpolate_from=pcs_with_data_in_region,
+        pcs_to_interpolate_from=points_to_interpolate_from,
         variable_name="elevation_condition",
         db=db,
         max_nn_distance=100/planet_radius_km,
     )
+
+    db.verify_df_dtype()  # debug
     # write these to the db
     print(f"got interpolated elevation conditions at {len(interpolated_el_conds)} points")
     print(interpolated_el_conds)
     pcs = interpolated_el_conds.index
     old_el_conds = db.get_series(pcs, "elevation_condition")
+    db.verify_df_dtype()  # debug
     old_na_mask = old_el_conds == -1
     new_na_mask = interpolated_el_conds == -1
     
@@ -285,8 +306,10 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
     pu.plot_variable_scattered_from_dict(interpolated_el_conds)
     if input("commit these results to db in RAM? y/n (default n)") == "y":
         db[interpolated_el_conds.index, "elevation_condition"] = interpolated_el_conds
+        db.verify_df_dtype()  # debug
         default_els = [elevation_condition_to_default_value[el_cond] for el_cond in interpolated_el_conds]
         db[interpolated_el_conds.index, "elevation"] = default_els
+        db.verify_df_dtype()  # debug
     if input("write these results to file? y/n (default n)") == "y":
         db.write_hdf()
     points_to_edit = points_to_interpolate_at
@@ -310,9 +333,10 @@ if __name__ == "__main__":
     ## region_center_point_code = icm.get_nearest_icosa_point_to_latlon(region_center_latlondeg, maximum_distance=1, planet_radius=icm.CADA_II_RADIUS_KM)
 
     # to choose random one
-    ## region_center_point_code = icm.get_random_point_code(min_iterations=3, expected_iterations=6)
+    region_center_pc = icm.get_random_point_code(min_iterations=1, expected_iterations=6, max_iterations=9)
+    region_radius_gc = random.randint(100, 1000)/10000
+    ## region_radius_gc = 0.05
     ## region_center_latlondeg = icm.get_latlon_from_point_code(region_center_point_code)
-    ## region_radius_great_circle_km = 2000
     ## region_center_latlondeg, region_radius_great_circle_km = (
     #    UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
     # )
@@ -327,12 +351,19 @@ if __name__ == "__main__":
     # db.verify_points_exist(pcs_with_data_in_region)
     ## region_center_pc, region_radius_gc = icdb.get_point_code_and_distance_from_filename(fname)
 
-    region_center_pc, region_radius_gc = "D030022203113", 0.11116449190061897
+    ## region_center_pc, region_radius_gc = "D030022203113", 0.11116449190061897
     ## region_center_pc, region_radius_gc = "B", 0.01
     ## region_center_pc, region_radius_gc = "D3", 0.05  # all-land area of Oligra, for testing condition interpolation
+    ## region_center_pc, region_radius_gc = "C1", 0.05
+    ## region_center_pc, region_radius_gc = "A", 0.01
 
-    pc_fp = icdb.get_point_code_filename(region_center_pc, region_radius_gc, prefix_str="pcs_in_db_2022-12-16", parent_dir=pc_dir)
-    if not os.path.exists(pc_fp):
+    # turn interpolation on if you're doing a new region so it can get the elevation conditions at all the points you want
+    # should probably always do this anyway to double check that we have conditions everywhere
+    interpolate_condition_variables = True
+
+    pc_fp = icdb.get_point_code_filename(region_center_pc, region_radius_gc, prefix_str="pcs_in_db", parent_dir=pc_dir)
+    if True: #not os.path.exists(pc_fp):
+        # should probably just redo this all the time anyway in case another run added some points
         icdb.make_point_code_file_for_region(db, region_center_pc, region_radius_gc)
     pcs_with_data_in_region = icdb.get_point_codes_from_file(pc_fp)
 
@@ -348,17 +379,23 @@ if __name__ == "__main__":
     el_stdev = 15
     resolution_iterations = 9
     n_circles = 10000
-    interpolate_condition_variables = False  # turn this on if you're doing a new region so it can get the elevation conditions at all the points you want
     pcs_in_region_at_resolution = icm.get_region_around_point_code_by_spreading(region_center_pc, region_radius_gc, resolution_iterations)
 
     # add missing points to the dataframe
     missing_pcs = [x for x in pcs_in_region_at_resolution if x not in df.index]
-    missing_df = pd.DataFrame(index=missing_pcs, columns=df.columns)
+    missing_df = pd.DataFrame(index=missing_pcs, columns=df.columns, dtype=IcosahedronPointDatabase.DTYPE)
     condition_variables = db.get_condition_variables()
     value_variables = db.get_value_variables()
     missing_df.loc[:, condition_variables] = -1
     missing_df.loc[:, value_variables] = 0
-    db.df = pd.concat([df, missing_df]).sort_index()
+    missing_df = missing_df.astype(int)  # why is it float even when I declared dtype int and set the values as ints? I have no idea
+    print(missing_df)
+    print(missing_df.dtypes)
+    db.verify_df_dtype()  # debug
+    concat_df = pd.concat([df, missing_df]).sort_index()
+    icdb.verify_df_dtype(concat_df)
+    db.df = concat_df
+    db.verify_df_dtype()  # debug
 
     # use this to check if the point locations look right
     # (is it actually interpolating conditions onto icosa lattice points, for instance?
@@ -380,6 +417,7 @@ if __name__ == "__main__":
 
     if interpolate_condition_variables:
         points_to_edit = interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolution, planet_radius_km, elevation_condition_to_default_value)
+        icdb.make_point_code_file_for_region(db, region_center_pc, region_radius_gc)  # redo this file so we have accurate point list after adding pcs_in_region_at_resolution
     else:
         points_to_edit = list(pcs_in_region_at_resolution)
     

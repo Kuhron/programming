@@ -1,7 +1,9 @@
 import csv
+import os
 
-REGION_METADATA_FP = "RegionMetadata.csv"
-WORLD_METADATA_FP = "WorldMetadata.csv"
+METADATA_DIR = "/home/wesley/programming/Mapping/"
+REGION_METADATA_FP = os.path.join(METADATA_DIR, "RegionMetadata.csv")
+WORLD_METADATA_FP = os.path.join(METADATA_DIR, "WorldMetadata.csv")
 
 
 def get_region_metadata_dict():

@@ -1,4 +1,4 @@
-- generate some elevation finally!
+- fix dataframe format, need to enforce ints (dtype "int64") for the values, and if it's unknown then it's the default value for its condition (and if that condition is unspecified then it defaults to 0; should be no null values or non-int64 types anywhere)
 - figure out math for orthographic projection of stuff near the poles, so I can see better maps of IT and O-Z
 
 done (and I want to remember that I did them already so I don't repeat them):

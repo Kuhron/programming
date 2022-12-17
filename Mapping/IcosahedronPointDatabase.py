@@ -29,6 +29,9 @@ from LoadMapData import get_default_values_of_conditions, translate_array_by_dic
 
 
 class IcosahedronPointDatabase:
+    DTYPE = np.dtype("int64")  # all values must always be int
+    VAL_TYPES = [DTYPE, int]
+
     def __init__(self):
         pass
 
@@ -96,10 +99,15 @@ class IcosahedronPointDatabase:
             f.write(s)
 
     def write_hdf(self):
+        self.verify_df_dtype()
         self.df.to_hdf(self.data_file, key="data")
 
     def read_hdf(self):
         self.df = pd.read_hdf(self.data_file)
+        self.verify_df_dtype()
+
+    def verify_df_dtype(self):
+        verify_df_dtype(self.df)
 
     def get_variables(self):
         return sorted(self.df.columns)
@@ -344,8 +352,18 @@ def touch(fp):
 
 
 def check_int(value):
-    if type(value) is not int:
-        raise TypeError(f"Database only accepts int values (you gave {value} of type {type(value)}).\nIf you want enum, make them int shorthands in the condition_array_dir.\nIf you want floats, choose the precision you want and make ints of that, e.g. elevation in millimeters.")
+    if type(value) not in IcosahedronPointDatabase.VAL_TYPES:
+        raise TypeError(f"Database only accepts {IcosahedronPointDatabase.VAL_TYPES} values (you gave {value} of type {type(value)}).\nIf you want enum, make them int shorthands in the condition_array_dir.\nIf you want floats, choose the precision you want and make ints of that, e.g. elevation in millimeters.")
+
+
+def verify_df_dtype(df):
+    any_error = False
+    for colname, dtype in zip(df.columns, df.dtypes):
+        if dtype is not IcosahedronPointDatabase.DTYPE:
+            print(f"dtype of column {colname} is {dtype}, should be {IcosahedronPointDatabase.DTYPE}")
+            any_error = True
+    if any_error:
+        raise TypeError("df dtypes wrong; see above")
 
 
 def get_point_codes_from_file(fp):
@@ -371,8 +389,9 @@ def make_point_code_file_for_random_region(db):
 def make_point_code_file_for_region(db, center_pc, d_gc):
     df = db.df
     narrowing_iterations = 5 #min(resolution_iterations - 1, random.randint(0, 3))
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    fname_prefix = f"pcs_in_db_{today}"
+    # today = datetime.utcnow().strftime("%Y-%m-%d")
+    # fname_prefix = f"pcs_in_db_{today}"
+    fname_prefix = "pcs_in_db"
     if point_code_file_exists(center_pc, d_gc, fname_prefix):
         print("file exists, not going to calculate this region")
         return
@@ -388,29 +407,21 @@ def make_point_code_file_for_region(db, center_pc, d_gc):
     # label the inside ones as True, the outside ones as False
     # then filter rows by prefix to get the split ones and check them one by one
     # (see how many there are to check as well, how long this will take)
-    df["in_region"] = np.nan
-    df["in_region"] = df["in_region"].astype("boolean")
+    
     inside_mask = db.get_mask_point_codes_with_prefixes(inside)
     outside_mask = db.get_mask_point_codes_with_prefixes(outside)
     split_mask = (~inside_mask) & (~outside_mask)
-    df.loc[inside_mask, "in_region"] = True
-    df.loc[outside_mask, "in_region"] = False
+    point_in_region_mask = inside_mask  # add them as we find them
     split_pcs = df.index[split_mask]
     split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, center_pc, d_gc)
     for pc1 in split_pcs:
         if pc1 in split_pcs_in_region:
-            df.loc[pc1, "in_region"] = True
-        else:
-            df.loc[pc1, "in_region"] = False
-    print(df)
-    in_region_mask = df["in_region"]
-    print(f"there are {in_region_mask.sum()} points in the region")
-    pcs_in_region = df.loc[in_region_mask].index
+            point_in_region_mask.loc[pc1] = True
+    print(f"there are {point_in_region_mask.sum()} points in the region")
+    pcs_in_region = df.loc[point_in_region_mask].index
     t1 = time.time() - t0
     print(f"with narrowing took {t1} seconds")
-
     write_point_codes_to_file(pcs_in_region, center_pc, d_gc, fname_prefix, parent_dir="PointFiles")
-    df.drop(["in_region"], axis=1)
 
 
 def write_point_codes_to_file(pcs_in_region, center_pc, d_gc, prefix_str, parent_dir="PointFiles"):

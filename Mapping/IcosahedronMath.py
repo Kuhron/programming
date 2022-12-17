@@ -1141,6 +1141,9 @@ def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
 
 
 def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors=1, allow_self=False):
+    if len(candidate_pcs) == 0:
+        # there is no point querying because there are no neighbors
+        raise ValueError("no candidates")
     if not allow_self:
         # going to hack around it returning the point itself as a nearest neighbor
         # so we will get one extra point
@@ -1156,8 +1159,10 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_nei
             print(f"pc -> xyz progress {i}/{len(all_pcs)}")
         xyz = get_xyz_from_point_code(pc)
         pc_to_xyz[pc] = xyz
-    candidate_xyzs = [pc_to_xyz[pc] for pc in candidate_pcs]
-    query_xyzs = [pc_to_xyz[pc] for pc in query_pcs]
+    candidate_xyzs = np.array([pc_to_xyz[pc] for pc in candidate_pcs])
+    print(f"{candidate_xyzs.shape=}")
+    query_xyzs = np.array([pc_to_xyz[pc] for pc in query_pcs])
+    print(f"{query_xyzs.shape=}")
 
     print("creating KDTree")
     kdtree = KDTree(candidate_xyzs)  # ensure order is same as the point list
@@ -1206,6 +1211,9 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_nei
 
 
 def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_neighbors=1, allow_self=False):
+    if len(candidate_pns) == 0:
+        # there is no point querying because there are no neighbors
+        raise ValueError("no candidates")
     query_pcs = get_point_codes_from_point_numbers(query_pns)
     candidate_pcs = get_point_codes_from_point_numbers(candidate_pns)
     return get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors, allow_self)
