@@ -96,7 +96,7 @@ class IcosahedronPointDatabase:
             f.write(s)
 
     def write_hdf(self):
-        self.df.to_hdf(self.data_file)
+        self.df.to_hdf(self.data_file, key="data")
 
     def read_hdf(self):
         self.df = pd.read_hdf(self.data_file)
@@ -171,16 +171,14 @@ class IcosahedronPointDatabase:
         # for now, make everything in the db an int, can capture enums, bools, and floats to some precision, and that way I don't have to parse a file to figure out what the types are supposed to be; put units in the varname if you care about that, e.g. elevation_meters
         return val
 
-    def set_single_point(self, pn, variable_name, value, write=False):
+    def set_single_point(self, pc, variable_name, value):
         check_int(value)
-        if write:
-            self.write_hdf()  # don't do this too often or it will be slow
+        self.df.loc[pc, variable_name] = value
 
-    def set_multiple_points(self, pns, variable_name, values, write=False):
-        for pn, val in zip(pns, values):
+    def set_multiple_points(self, pcs, variable_name, values):
+        for val in values:
             check_int(val)
-        if write:
-            self.write_hdf()
+        self.df.loc[pcs, variable_name] = values
 
     def __getitem__(self, tup):
         pcs, varnames = tup
@@ -189,22 +187,26 @@ class IcosahedronPointDatabase:
             pc = pcs
             pcs = [pc]
         if type(varnames) is str:
-            vn = varnames
-            varnames = [vn]
+            varname = varnames
+            varnames = [varname]
         return self.get_variables_at_points(pcs, varnames)
 
     def __setitem__(self, tup, val):
-        pns, variable_name = tup
-        if type(pns) is int:
-            pn = pns
-            self.set_single_point(pn, variable_name, val)
+        pcs, variable_name = tup
+        if type(pcs) is str:
+            pc = pcs
+            self.set_single_point(pc, variable_name, val)
         else:
-            self.set_multiple_points(pns, variable_name, val)
+            self.set_multiple_points(pcs, variable_name, val)
 
     def get_dict(self, pcs, varname):
         # return a dict of pc:value for just this one variable
         column = self[pcs, varname].to_dict()
         return column[varname]
+    
+    def get_series(self, pcs, varname):
+        # return a pandas Series object for just this one variable
+        return pd.Series(self.get_dict(pcs, varname))
     
     def get_single_value(self, pc, varname):
         sub_df = self[pc, varname]
@@ -213,6 +215,15 @@ class IcosahedronPointDatabase:
 
     def add_value(self, pcs, varname, val):
         self.df.loc[pcs, varname] += val
+
+    def verify_points_exist(self, pcs):
+        missing = []
+        for pc in pcs:
+            if pc not in self.df.index:
+                missing.append(pc)
+        if len(missing) > 0:
+            print("these points are missing from the database:", missing)
+            raise KeyError("missing points; see list above")
 
     def write_as_images(self):
         # hacky experiment: write data in pixel RGB values in PNG files for certain iterations
@@ -345,17 +356,21 @@ def get_point_codes_from_file(fp):
     return pcs
 
 
-def make_point_code_file_for_random_region(df):
+def make_point_code_file_for_random_region(db):
     # min_pc_iterations = random.randint(0, 8)
     # max_pc_iterations = min_pc_iterations + random.randint(0, 2)
     # expected_pc_iterations = (min_pc_iterations + max_pc_iterations) / 2
     # pc = icm.get_random_point_code(min_pc_iterations, expected_pc_iterations, max_pc_iterations)
-    center_pc = random.choice(df.index)  # use a point we know is in the database
+    center_pc = random.choice(db.df.index)  # use a point we know is in the database
     pc_iterations = icm.get_iteration_number_from_point_code(center_pc)
-    resolution_iterations = pc_iterations + random.randint(2, 4)
-    narrowing_iterations = 5 #min(resolution_iterations - 1, random.randint(0, 3))
+    # resolution_iterations = pc_iterations + random.randint(2, 4)
     d_gc = np.random.uniform(0.02, 0.15)
+    return make_point_code_file_for_region(db, center_pc, d_gc)
 
+
+def make_point_code_file_for_region(db, center_pc, d_gc):
+    df = db.df
+    narrowing_iterations = 5 #min(resolution_iterations - 1, random.randint(0, 3))
     today = datetime.utcnow().strftime("%Y-%m-%d")
     fname_prefix = f"pcs_in_db_{today}"
     if point_code_file_exists(center_pc, d_gc, fname_prefix):
@@ -484,6 +499,11 @@ def initialize_default_value_dataframe_from_control_points(db_root_dir):
 
 if __name__ == "__main__":  
     db_root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
+
+    # to start the database over based on just the control point images
+    initialize_default_value_dataframe_from_control_points(db_root_dir)
+    sys.exit()
+
     db = IcosahedronPointDatabase.load(db_root_dir)
     df = db.df
 

@@ -1140,7 +1140,14 @@ def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
     return nn_xyz, min_d
 
 
-def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors=1):
+def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors=1, allow_self=False):
+    if not allow_self:
+        # going to hack around it returning the point itself as a nearest neighbor
+        # so we will get one extra point
+        # if one of the points has distance zero, we'll remove that point
+        # otherwise, remove the farthest-away one
+        k_neighbors += 1
+    
     pc_to_xyz = {}
     print("getting pc -> xyz mapping")
     all_pcs = list(set(query_pcs) | set(candidate_pcs))
@@ -1157,17 +1164,51 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_nei
     print("-- done creating KDTree")
     distances, nn_indices = kdtree.query(query_xyzs, k=k_neighbors)
     print("done querying KDTree")
+
+    if allow_self:
+        assert distances.shape == nn_indices.shape == (len(query_pcs), k_neighbors)
+    else:
+        # just process the distances and nn_indices here so the dict creation code is the same
+        new_distances = []
+        new_nn_indices = []
+        for i in range(len(query_pcs)):
+            distances_row = distances[i]
+            nn_indices_row = nn_indices[i]
+            if distances_row[0] == 0:
+                # remove the point itself
+                new_distances.append(distances_row[1:])
+                new_nn_indices.append(nn_indices_row[1:])
+            else:
+                # remove the farthest away neighbor
+                new_distances.append(distances_row[:-1])
+                new_nn_indices.append(nn_indices_row[:-1])
+        distances = np.array(new_distances)
+        nn_indices = np.array(new_nn_indices)
+        assert distances.shape == nn_indices.shape == (len(query_pcs), k_neighbors-1)
+
     nn_index_lookup = {pc_query: nn_indices[i] for i, pc_query in enumerate(query_pcs)}
-    nn_index_to_pc = {index: candidate_pcs[index] for index in nn_indices}
-    nn_pc_lookup = {pc_query: nn_index_to_pc[nn_index_lookup[pc_query]] for pc_query in query_pcs}
+
+    all_nn_indices = set()  # retain flexibility for k_neighbors > 1, which I might want to use later
+    for indices_list in nn_indices:
+        all_nn_indices |= set(indices_list)
+    
+    nn_index_to_pc = {index: candidate_pcs[index] for index in all_nn_indices}
+
+    nn_pc_lookup = {}
+    for pc_query in query_pcs:
+        these_nn_indices = nn_index_lookup[pc_query]
+        these_nn_pcs = [nn_index_to_pc[index] for index in these_nn_indices]
+        nn_pc_lookup[pc_query] = these_nn_pcs
+    
     d_lookup = {pc_query: distances[i] for i, pc_query in enumerate(query_pcs)}
+
     return nn_pc_lookup, d_lookup
 
 
-def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_neighbors=1):
+def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_neighbors=1, allow_self=False):
     query_pcs = get_point_codes_from_point_numbers(query_pns)
     candidate_pcs = get_point_codes_from_point_numbers(candidate_pns)
-    return get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors)
+    return get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors, allow_self)
 
 
 def _old_iterative_get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):

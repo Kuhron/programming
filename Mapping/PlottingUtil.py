@@ -114,7 +114,7 @@ def get_contour_levels(min_value, max_value, prefer_positive=False, n_sea_contou
     return contour_levels
 
 
-def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons, with_axis=False):
+def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_lons):
     lats = [coords[0] for coords in data_coords]
     lons = [coords[1] for coords in data_coords]
     min_lat, max_lat = lat_range if lat_range is not None else (min(lats), max(lats))
@@ -154,17 +154,15 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
             value = interpolated[value_index]
             Z[row_number, col_number] = value
 
-    if with_axis:
-        fig, ax = plt.subplots()
-        fig.set_size_inches(8,4)
-        fig.add_axes(ax)
-    else:
-        # plot without any axes or frame
-        fig = plt.figure(frameon=False)
-        ax = plt.Axes(fig, [0., 0., 1., 1.])
-        fig.set_size_inches(8,4)
-        ax.set_axis_off()
-        fig.add_axes(ax)
+    if True: # with_axis:
+        plt.gcf().set_size_inches(8,4)
+    # else:
+    #     # plot without any axes or frame
+    #     fig = plt.figure(frameon=False)
+    #     ax = plt.Axes(fig, [0., 0., 1., 1.])
+    #     fig.set_size_inches(8,4)
+    #     ax.set_axis_off()
+    #     fig.add_axes(ax)
 
     Z_finite = Z[np.isfinite(Z)]
     if Z_finite.size == 0:
@@ -174,10 +172,10 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
     max_value = Z[np.isfinite(Z)].max()
     contourf_levels = get_contour_levels(min_value, max_value, prefer_positive=True, n_sea_contours=20, n_land_contours=100)
     cmap = get_land_and_sea_colormap()
-    im = ax.contourf(Z, origin="lower", extent=[min_lon, max_lon, min_lat, max_lat], levels=contourf_levels, cmap=cmap)  # imshow extent is left,right,bottom,top
+    im = plt.gca().contourf(Z, origin="lower", extent=[min_lon, max_lon, min_lat, max_lat], levels=contourf_levels, cmap=cmap)  # imshow extent is left,right,bottom,top
     plt.xlim(min_lon, max_lon)
     plt.ylim(min_lat, max_lat)
-    if with_axis:
+    if True: #with_axis:
         plt.colorbar(im)
     return im
 
@@ -265,48 +263,58 @@ def plot_variable_at_point_codes(pcs, db, variable_index):
     plt.colorbar()
 
 
-def plot_variable_scattered(db, pcs, var_to_plot, show=True):
+def plot_variable_scattered_from_db(db, pcs, var_to_plot, show=True):
     print(f"plotting variable scattered: {var_to_plot}")
     pc_to_val = db.get_dict(pcs, var_to_plot)
-    # print(pn_to_val)
+    plot_variable_scattered_from_dict(pc_to_val, title=var_to_plot, show=show)
+
+
+def plot_variable_scattered_from_dict(pc_to_val, title=None, show=True):
+    pcs = list(pc_to_val.keys())
     latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     vals = [pc_to_val.get(pc) for pc in pcs]
     plt.scatter(lons, lats, c=vals)
     plt.colorbar()
-    plt.title(var_to_plot)
+    plt.title(title)
     if show:
         plt.show()
 
 
-def plot_variables_scattered(db, pcs, vars_to_plot):
-    print("plotting variables scattered")
+def plot_variables_scattered_from_db(db, pcs, vars_to_plot):
+    print(f"plotting variables scattered: {vars_to_plot}")
     n_plots = len(vars_to_plot)
     for i, var in enumerate(vars_to_plot):
         plt.subplot(1, n_plots, i+1)
-        plot_variable_scattered(db, pcs, var, show=False)
+        plot_variable_scattered_from_db(db, pcs, var, show=False)
     plt.show()
 
 
-def plot_variable_interpolated(db, pcs, var_to_plot, resolution, show=True):
+def plot_variable_interpolated_from_db(db, pcs, var_to_plot, resolution, show=True):
     print(f"plotting variable interpolated: {var_to_plot}")
+    pc_to_val = db.get_dict(pcs, var_to_plot)
+    plot_variable_interpolated_from_dict(pc_to_val, resolution, title=None, show=show)
+
+
+def plot_variable_interpolated_from_dict(pc_to_val, resolution, title=None, show=True):
+    pcs = list(pc_to_val.keys())
     latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
-    values_dict = db.get_dict(pcs, var_to_plot)
-    # print(values_dict)
-    values = [values_dict.get(pc) for pc in pcs]
-    plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution, with_axis=True)
+    values = [pc_to_val.get(pc) for pc in pcs]
+    plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution)
     if show:
         plt.show()
 
 
-def plot_variables_interpolated(db, pcs, vars_to_plot, resolution):
-    print("plotting variables interpolated")
-    for var in vars_to_plot:
-        plot_variable_interpolated(db, pcs, var, resolution, show=False)
+def plot_variables_interpolated_from_db(db, pcs, vars_to_plot, resolution, show=False):
+    print(f"plotting variables interpolated: {vars_to_plot}")
+    n_plots = len(vars_to_plot)
+    for i, var in enumerate(vars_to_plot):
+        plt.subplot(1, n_plots, i+1)
+        plot_variable_interpolated_from_db(db, pcs, var, resolution, show=False)
         plt.title(var)
+    if show:
         plt.show()
-    # don't do subplots here because the PlottingUtil code sets its own fig/ax
 
 
 def plot_latlons(pcs):
