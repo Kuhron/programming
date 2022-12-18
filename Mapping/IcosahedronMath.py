@@ -224,12 +224,17 @@ def get_all_point_codes_in_iteration(iteration):
             yield pc
 
 
-def get_random_point_code(min_iterations, expected_iterations, max_iterations):
+def get_random_point_code(min_iterations, expected_iterations, max_iterations, prefix=""):
     assert min_iterations <= expected_iterations <= max_iterations
     
-    # start the string off with the minimum iterations needed
-    s = random.choice("CDEFGHIJKL")
-    for i in range(min_iterations - 1):
+    if len(prefix) == 0:
+        # start the string off with the minimum iterations needed
+        s = random.choice("CDEFGHIJKL")
+    else:
+        assert prefix[0] in "CDEFGHIJKL"
+        s = prefix
+
+    for i in range(min_iterations - len(s)):  # if negative, loop won't run (won't error)
         s += random.choice("0123")
     backup_digit = random.choice("123")  # prevent trailing zeros from taking s back below min_iterations
 
@@ -1482,7 +1487,7 @@ def get_region_around_point_code_by_narrowing(pc, max_distance_gc_normalized, na
             if time.time() - t0 >= 2:
                 print(f"checking points in split watersheds for inclusion in region: {i=}/{n=}, {j=}/{m=}")
                 t0 = time.time()
-    print(f"got {len(res)} points in region: {res}")
+    print(f"got {len(res)} points in region")
     return res
 
 

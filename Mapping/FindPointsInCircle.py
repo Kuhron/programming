@@ -14,6 +14,7 @@ def filter_point_codes_in_region_one_by_one(pcs, center_pc, radius_gc_normalized
     # goes over all point numbers you pass in, gets their distance from the center,
     # and returns the ones that are within the radius
 
+    print(f"filtering {len(pcs)} points for inclusion in region")
     region = set()
     t0 = time.time()
     last_print_time = time.time()
@@ -33,6 +34,7 @@ def filter_point_codes_in_region_one_by_one(pcs, center_pc, radius_gc_normalized
             region.add(pc)
             # print("added point", pc)
     region = sorted(region)
+    print(f"done filtering {len(pcs)} points for inclusion in region")
     return region
 
 

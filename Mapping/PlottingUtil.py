@@ -170,7 +170,7 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
         raise ValueError("no finite values found to plot")
     min_value = Z[np.isfinite(Z)].min()
     max_value = Z[np.isfinite(Z)].max()
-    contourf_levels = get_contour_levels(min_value, max_value, prefer_positive=True, n_sea_contours=20, n_land_contours=100)
+    contourf_levels = get_contour_levels(min_value, max_value, prefer_positive=False, n_sea_contours=20, n_land_contours=100)
     cmap = get_land_and_sea_colormap()
     im = plt.gca().contourf(Z, origin="lower", extent=[min_lon, max_lon, min_lat, max_lat], levels=contourf_levels, cmap=cmap)  # imshow extent is left,right,bottom,top
     plt.xlim(min_lon, max_lon)
@@ -252,15 +252,18 @@ def plot_coordinate_patterns(n_iterations):
     plot_latlons(n_iterations)
 
 
-def plot_variable_at_point_codes(pcs, db, variable_index):
+def plot_variable_at_point_codes(pcs, db, variable_name, show=True):
     df = db.df
     df2 = df.loc[pcs,:]
     lls = [icm.get_latlon_from_point_code(pc) for pc in pcs]
     lats = [ll[0] for ll in lls]
     lons = [ll[1] for ll in lls]
-    variable_values = df2.loc[:, variable_index]
+    variable_values = df2.loc[:, variable_name]
     plt.scatter(lons, lats, c=variable_values)
     plt.colorbar()
+    plt.title(variable_name)
+    if show:
+        plt.show()
 
 
 def plot_variable_scattered_from_db(db, pcs, var_to_plot, show=True):

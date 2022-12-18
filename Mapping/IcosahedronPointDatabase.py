@@ -101,6 +101,7 @@ class IcosahedronPointDatabase:
     def write_hdf(self):
         self.verify_df_dtype()
         self.df.to_hdf(self.data_file, key="data")
+        print("IcosahedronPointDatabase written to file.\n")
 
     def read_hdf(self):
         self.df = pd.read_hdf(self.data_file)
@@ -366,6 +367,44 @@ def verify_df_dtype(df):
         raise TypeError("df dtypes wrong; see above")
 
 
+def get_point_codes_in_database_in_region(db, center_pc, d_gc, use_narrowing=True, pcs_to_consider=None):
+    df = db.df
+    if use_narrowing:
+        assert pcs_to_consider is None, "not implemented"
+        # use narrowing to get which watersheds are all inside, all outside, and split
+        t0 = time.time()
+        narrowing_iterations = 5 #min(resolution_iterations - 1, random.randint(0, 3))
+        inside, outside, split = icm.narrow_watersheds_by_distance(center_pc, d_gc, narrowing_iterations)
+        print("inside", inside)
+        print("outside", outside)
+        print("split", split)
+
+        # now get point codes that are in each of these
+        # label the inside ones as True, the outside ones as False
+        # then filter rows by prefix to get the split ones and check them one by one
+        # (see how many there are to check as well, how long this will take)
+        
+        inside_mask = db.get_mask_point_codes_with_prefixes(inside)
+        outside_mask = db.get_mask_point_codes_with_prefixes(outside)
+        split_mask = (~inside_mask) & (~outside_mask)
+        point_in_region_mask = inside_mask  # add them as we find them
+        split_pcs = df.index[split_mask]
+        split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, center_pc, d_gc)
+        for pc1 in split_pcs:
+            if pc1 in split_pcs_in_region:
+                point_in_region_mask.loc[pc1] = True
+            # else:
+            #     # yes it CAN happen and it's okay; raise Exception("shouldn't happen if it was already filtered?")
+        print(f"there are {point_in_region_mask.sum()} points in the region")
+        pcs_in_region = df.loc[point_in_region_mask].index
+        t1 = time.time() - t0
+        print(f"with narrowing took {t1} seconds")
+    else:
+        assert len(pcs_to_consider) > 0, "can't consider all points without narrowing"
+        pcs_in_region = find.filter_point_codes_in_region_one_by_one(pcs_to_consider, center_pc, d_gc)
+    return pcs_in_region
+
+
 def get_point_codes_from_file(fp):
     with open(fp) as f:
         lines = f.readlines()
@@ -386,42 +425,15 @@ def make_point_code_file_for_random_region(db):
     return make_point_code_file_for_region(db, center_pc, d_gc)
 
 
-def make_point_code_file_for_region(db, center_pc, d_gc):
-    df = db.df
-    narrowing_iterations = 5 #min(resolution_iterations - 1, random.randint(0, 3))
-    # today = datetime.utcnow().strftime("%Y-%m-%d")
-    # fname_prefix = f"pcs_in_db_{today}"
+def make_point_code_file_for_region(db, center_pc, d_gc, parent_dir="PointFiles", pcs_to_consider=None, use_narrowing=True, overwrite=False):
     fname_prefix = "pcs_in_db"
-    if point_code_file_exists(center_pc, d_gc, fname_prefix):
-        print("file exists, not going to calculate this region")
+    fp = get_point_code_filename(center_pc, d_gc, fname_prefix, parent_dir)
+    if (not overwrite) and os.path.exists(fp):
+        print(f"file {fp} exists, not going to calculate this region")
         return
 
-    # use narrowing to get which watersheds are all inside, all outside, and split
-    t0 = time.time()
-    inside, outside, split = icm.narrow_watersheds_by_distance(center_pc, d_gc, narrowing_iterations)
-    print("inside", inside)
-    print("outside", outside)
-    print("split", split)
-
-    # now get point codes that are in each of these
-    # label the inside ones as True, the outside ones as False
-    # then filter rows by prefix to get the split ones and check them one by one
-    # (see how many there are to check as well, how long this will take)
-    
-    inside_mask = db.get_mask_point_codes_with_prefixes(inside)
-    outside_mask = db.get_mask_point_codes_with_prefixes(outside)
-    split_mask = (~inside_mask) & (~outside_mask)
-    point_in_region_mask = inside_mask  # add them as we find them
-    split_pcs = df.index[split_mask]
-    split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, center_pc, d_gc)
-    for pc1 in split_pcs:
-        if pc1 in split_pcs_in_region:
-            point_in_region_mask.loc[pc1] = True
-    print(f"there are {point_in_region_mask.sum()} points in the region")
-    pcs_in_region = df.loc[point_in_region_mask].index
-    t1 = time.time() - t0
-    print(f"with narrowing took {t1} seconds")
-    write_point_codes_to_file(pcs_in_region, center_pc, d_gc, fname_prefix, parent_dir="PointFiles")
+    pcs_in_region = get_point_codes_in_database_in_region(db, center_pc, d_gc, use_narrowing=use_narrowing, pcs_to_consider=pcs_to_consider)
+    write_point_codes_to_file(pcs_in_region, center_pc, d_gc, fname_prefix, parent_dir=parent_dir)
 
 
 def write_point_codes_to_file(pcs_in_region, center_pc, d_gc, prefix_str, parent_dir="PointFiles"):
