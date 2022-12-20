@@ -45,6 +45,7 @@ ImageDatasets/
 
 BasisSpectrumOutput/
 Mapping/NoiseImages/
+Mapping/ElevationImages/
 Emergence/Images/
 Genetics/*.png
 Chaos/Images/**/*.png

@@ -1160,7 +1160,7 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_nei
     print("getting pc -> xyz mapping")
     all_pcs = list(set(query_pcs) | set(candidate_pcs))
     for i, pc in enumerate(all_pcs):
-        if i % 100 == 0:
+        if i % 1000 == 0:
             print(f"pc -> xyz progress {i}/{len(all_pcs)}")
         xyz = get_xyz_from_point_code(pc)
         pc_to_xyz[pc] = xyz
@@ -1416,7 +1416,7 @@ def plot_directional_parent_graph(iteration):
     plt.show()
 
 
-def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normalized, resolution_iterations=None):
+def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normalized, resolution_iterations=None, allow_trailing_zeros=False):
     # follow adjacency paths at this iteration resolution until you get every point within the radius
     # measure distance to center_pc, but can spread from a nearby point if needed to fit lower resolution
     if resolution_iterations is not None:
@@ -1463,6 +1463,10 @@ def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normali
             print(f"creating region around {center_pc}: {len(res)} points so far")
             t0 = time.time()
     print(f"got {len(res)} points in region")
+    if not allow_trailing_zeros:
+        print("stripping zeros from point codes in region")
+        res = {strip_trailing_zeros(s) for s in res}
+        print("done stripping zeros from point codes in region")
     return res
 
 

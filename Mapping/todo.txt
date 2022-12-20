@@ -1,11 +1,12 @@
-- fix bug where interpolation is overwriting existing elevations with default values
+- apparently I was wrong way back when I wrote the original point coordinates! The latitudes of the north and south rings are not 30, they're arctan(1/2) = 26.57, according to Wikipedia (https://en.wikipedia.org/wiki/Regular_icosahedron). Decide if this is worth fixing, and if so, need to recalculate a bunch of coordinates of points. If want to fix it, the best way would seem to be to use the images for control points and recalculate their codes in the new icosahedron directly from where they are in the image, but for the non-control points, get their coordinates and find closest new icosa point to them within a tolerance? This might be a mess. Think about it a lot before doing this.
 - make equirectangular maps centered on their center longitude (matplotlib usually does this, but need to fix it in the case where region crosses the antimeridian)
 - figure out math for orthographic projection of stuff near the poles, so I can see better maps of IT and O-Z
 - I could try gradating the conditions in the map generation to get slope (by adding a higher proportion of pixels of a certain type in an area of the image), like as you go inland it's a 50/50 mix of ocean/shallow, then mostly shallow, then start adding some dots of land, then 70/30 shallow/land mix, and so on
 - once have a bunch of elevation generated, look at a bunch of it and see if anything looks weird/wrong
 -- can use smoothing to get rid of things like pockmarks from intervening higher-iteration points being at default while the grid around them already has data on it
+- find and fix the random points that are zero elevation even though everything around them is high land (seen in some maps)
 
 done (and I want to remember that I did them already so I don't repeat them):
 - double check where north pole is on Imis Tolin map: cell NQ211 in the csv of point codes = row 211, col 381, it is farther up in the image from where I originally marked it, but it is close enough, northwest of Vergensi and still on the land of Eawortis
 - double check where south pole is on Oligra-Zitomo map (this one matters less): cell PE279 in csv = row 279, col 421, this is good, very close
-
+- fix bug where interpolation of elevation condition is overwriting existing elevations with default values

@@ -1,3 +1,12 @@
+import random
+import os
+import time
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from scipy.spatial import KDTree
+from datetime import datetime
+
 from IcosahedronPointDatabase import IcosahedronPointDatabase
 import IcosahedronPointDatabase as icdb
 import IcosahedronMath as icm
@@ -8,14 +17,6 @@ from BiDict import BiDict
 import LoadMapData
 import PlottingUtil as pu
 import FindPointsInCircle as find
-
-import random
-import os
-import time
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-from scipy.spatial import KDTree
 
 
 
@@ -217,11 +218,11 @@ def interpolate_at_points_nearest_neighbor(pcs_to_interpolate_at, pcs_to_interpo
         # already know values of all these points, don't bother getting xyz or doing nearest neighbor calculation
         return pd.Series({pc: known_values[pc] for pc in pcs_to_interpolate_at}, dtype=int)
 
-    db.verify_df_dtype()  # debug
+    # db.validate()  # debug
     nn_pc_lookup, d_lookup = icm.get_nearest_neighbors_pc_to_pc_with_distance(query_pcs=pcs_to_interpolate_at, candidate_pcs=pcs_to_interpolate_from, k_neighbors=1, allow_self=False)
     
     for i, pc in enumerate(pcs_to_interpolate_at):
-        if i % 100 == 0:
+        if i % 1000 == 0:
             print(f"interpolating at points; progress {i}/{len(pcs_to_interpolate_at)}")
         if pc in known_values: # and known_values[pc] != -1:
             # we already know its condition, no need to do nearest neighbors
@@ -262,7 +263,7 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
     # the middle of the ocean thinking it has to be a coast/shallow
     # because that's what's on the edge of the nearest image thousands of km away)
 
-    db.verify_df_dtype()  # debug
+    # db.validate()  # debug
     # using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
     points_to_interpolate_at = list(set(pcs_in_region_at_resolution) | set(pcs_with_data_in_region))
 
@@ -290,7 +291,7 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
     interpolate_from_mask = existing_el_cond_is_defined_mask | existing_el_is_defined_mask
     points_to_interpolate_from = existing_el_conds.index[interpolate_from_mask]
 
-    db.verify_df_dtype()  # debug
+    # db.validate()  # debug
     interpolated_el_conds = interpolate_at_points_nearest_neighbor(
         pcs_to_interpolate_at=points_to_interpolate_at,
         pcs_to_interpolate_from=points_to_interpolate_from,
@@ -299,12 +300,12 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
         max_nn_distance=100/planet_radius_km,
     )
 
-    db.verify_df_dtype()  # debug
+    # db.validate()  # debug
     print(f"got interpolated elevation conditions at {len(interpolated_el_conds)} points")
     print("interpolated_el_conds:\n", interpolated_el_conds)
 
     old_el_conds = db.get_series(interpolated_el_conds.index, "elevation_condition")
-    db.verify_df_dtype()  # debug
+    # db.validate()  # debug
     old_na_mask = old_el_conds == -1
     new_na_mask = interpolated_el_conds == -1
     
@@ -323,15 +324,15 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
     
     # only change anything at points where the elevation condition didn't used to be defined but now is
     change_points = interpolated_el_conds.index[(old_na_mask) & (~new_na_mask)]
-    print("change_points:", change_points)
+    # print("change_points:", change_points)
     if len(change_points) == 0:
         print("no points were changed by interpolation")
     else:
         print(f"{len(change_points)} points have had their elevation condition inferred by interpolation")
         el_conds_at_change_points = interpolated_el_conds[change_points]
-        print("el_conds_at_change_points:\n", el_conds_at_change_points)
+        # print("el_conds_at_change_points:\n", el_conds_at_change_points)
         els_at_change_points = LoadMapData.translate_array_by_dict(el_conds_at_change_points, elevation_condition_to_default_value)
-        print("els_at_change_points:\n", els_at_change_points)
+        # print("els_at_change_points:\n", els_at_change_points)
 
         # debug
         # print("plotting elevation_condition after interpolating conditions")
@@ -339,13 +340,13 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
 
         if True: #input("commit these results to db in RAM? y/n (default n)") == "y":
             db[change_points, "elevation_condition"] = el_conds_at_change_points
-            db.verify_df_dtype()  # debug
+            # db.validate()  # debug
             db[change_points, "elevation"] = els_at_change_points
-            db.verify_df_dtype()  # debug
-            new_els_at_all_points = db.get_series(interpolated_el_conds.index, "elevation")
+            # db.validate()  # debug
 
             # debug
             # print("plotting elevation after interpolating conditions")
+            # new_els_at_all_points = db.get_series(interpolated_el_conds.index, "elevation")
             # pu.plot_variable_scattered_from_dict(new_els_at_all_points, title="elevation")  # so I can see what is already there
 
         if True: #input("write these results to file? y/n (default n)") == "y":
@@ -355,6 +356,7 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
 
 
 def run_region_generation(db, planet_radius_km):
+    db.fill_lookup_numbers()
     df = db.df
     desired_point_prefix = ""
     power_law_param = 0.25  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
@@ -366,12 +368,16 @@ def run_region_generation(db, planet_radius_km):
 
     # to choose random one
     ## region_center_pc = icm.get_random_point_code(min_iterations=6, expected_iterations=9, max_iterations=9, prefix=desired_point_prefix)
-    ## region_radius_gc = random.randint(100, 1000)/10000
+    region_radius_gc = random.randint(600, 1000)/10000
     ## region_radius_gc = 0.05
     ## region_center_latlondeg = icm.get_latlon_from_point_code(region_center_point_code)
     ## region_center_latlondeg, region_radius_great_circle_km = (
     #    UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
     # )
+
+    # to choose based on some condition
+    pcs_on_coast = df.index[df["elevation_condition"] == 1]
+    region_center_pc = random.choice(pcs_on_coast)
 
     # to choose existing point file (they are just lists of the point codes in a given area)
     pc_dir = "PointFiles"
@@ -387,8 +393,8 @@ def run_region_generation(db, planet_radius_km):
     ## region_center_pc, region_radius_gc = "B", 0.01
     ## region_center_pc, region_radius_gc = "D3", 0.05  # all-land area of Oligra, for testing condition interpolation
     ## region_center_pc, region_radius_gc = "C1", 0.05
-    ## region_center_pc, region_radius_gc = "A", 0.01
-    region_center_pc, region_radius_gc = "C102", 0.046
+    ## region_center_pc, region_radius_gc = "A", 0.10
+    ## region_center_pc, region_radius_gc = "C102", 0.046
 
     # turn interpolation on if you're doing a new region so it can get the elevation conditions at all the points you want
     # should probably always do this anyway to double check that we have conditions everywhere
@@ -419,11 +425,10 @@ def run_region_generation(db, planet_radius_km):
     missing_df = missing_df.astype(int)  # why is it float even when I declared dtype int and set the values as ints? I have no idea
     print(missing_df)
     print(missing_df.dtypes)
-    db.verify_df_dtype()  # debug
+    # db.validate()  # debug
     concat_df = pd.concat([df, missing_df]).sort_index()
-    icdb.verify_df_dtype(concat_df)
     db.df = concat_df
-    db.verify_df_dtype()  # debug
+    # db.validate()  # debug
 
     # use this to check if the point locations look right
     # (is it actually interpolating conditions onto icosa lattice points, for instance?
@@ -480,7 +485,10 @@ def run_region_generation(db, planet_radius_km):
         # print("old_els:", old_els)
         # print(f"values in old elevations: {sorted(set(old_els.values()))}")  # debugging when it is overwriting existing data with default elevations
 
-        # keep track of how much each point can move up or down from where it is right now, and adjust d_el toward 0 (but keep its direction) so that the conditions are all still met (unless that change becomes zero in which case just start over)
+        # keep track of how much each point can move up or down from where it is right now, 
+        # and adjust d_el toward 0 (but keep its direction) 
+        # so that the conditions are all still met 
+        # (unless that change becomes zero in which case just start over)
         # just look at absolute value of changes that are in the same direction as d_el
         is_rise = d_el >= 0
         d_el = abs(d_el)
@@ -550,7 +558,12 @@ def run_region_generation(db, planet_radius_km):
 
     # print("plotting elevation after generating noise")
     # pu.plot_variables_scattered_from_db(db, points_to_edit, ["elevation_condition", "elevation"])
-    pu.plot_variables_interpolated_from_db(db, points_to_edit, ["elevation_condition", "elevation"], resolution=1000, show=True)
+    pu.plot_variables_interpolated_from_db(db, points_to_edit, ["elevation_condition", "elevation"], resolution=1000, show=False)
+    plt.gcf().set_size_inches(18, 6)
+    now_str = datetime.utcnow().strftime("%Y-%m-%d-%H%M%S")
+    plt.savefig(f"ElevationImages/GeneratedElevation_{region_center_pc}_{region_radius_gc}_{now_str}.png")
+    plt.gcf().clear()
+
     if True: #input("write these results? y/n (default n)") == "y":
         db.write_hdf()
 
