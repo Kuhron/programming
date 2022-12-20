@@ -1,10 +1,29 @@
 - apparently I was wrong way back when I wrote the original point coordinates! The latitudes of the north and south rings are not 30, they're arctan(1/2) = 26.57, according to Wikipedia (https://en.wikipedia.org/wiki/Regular_icosahedron). Decide if this is worth fixing, and if so, need to recalculate a bunch of coordinates of points. If want to fix it, the best way would seem to be to use the images for control points and recalculate their codes in the new icosahedron directly from where they are in the image, but for the non-control points, get their coordinates and find closest new icosa point to them within a tolerance? This might be a mess. Think about it a lot before doing this.
+
 - make equirectangular maps centered on their center longitude (matplotlib usually does this, but need to fix it in the case where region crosses the antimeridian)
+
 - figure out math for orthographic projection of stuff near the poles, so I can see better maps of IT and O-Z
+
 - I could try gradating the conditions in the map generation to get slope (by adding a higher proportion of pixels of a certain type in an area of the image), like as you go inland it's a 50/50 mix of ocean/shallow, then mostly shallow, then start adding some dots of land, then 70/30 shallow/land mix, and so on
+
 - once have a bunch of elevation generated, look at a bunch of it and see if anything looks weird/wrong
 -- can use smoothing to get rid of things like pockmarks from intervening higher-iteration points being at default while the grid around them already has data on it
+
 - find and fix the random points that are zero elevation even though everything around them is high land (seen in some maps)
+
+- think of ways to make distance calculation faster
+-- including making xyz calculation faster for large sets of points, can try using PointCodeTrie or a similar structure like a graph that allows you to store coordinates at each point and have pointers to its parents
+-- reduce the number of calls to UnitSpherePoint.convert_distance_3d_to_great_circle (not sure anything within that function can be improved, maybe removing some of the asserts or putting them in whatever function is calling this and checking the values vectorizedly there?)
+-- maybe change the calls to convert_distance_3d_to_great_circle to the array form (which already exists: UnitSpherePoint.convert_distance_3d_to_great_circle_array)
+-- but only work on xyz calculation if that is actually the bottleneck (it could be BiDict or GreatCircleDistanceMatrix instead)
+-- I think actually it is recalculating xyz too much when I could just pass those around after getting them for the region in question
+--- like as I'm using narrowing, I should store the xyzs I get for the split points that I check one-by-one, and then get xyzs for whatever else is in the region at this time (points in region with data, and points in region by spreading), and pass that around to everything that needs to know distances between things so xyz is only calculated once per point per call to run_region_generation
+--- yeah getting xyzs isn't actually that bad, I think there's redundant calculation going on
+
+- generate some volcanism (use the noise math that made squiggly lines along the globe)
+
+- add interaction between volcanism and elevation, where volcanism is just like upward pressure on elevation (and negative volcanism is downward pressure on elevation), e.g. make Amphoto's ring island more like a steep wall (since the elevation generation will tend to keep it low because it's so near to coastline)
+
 
 done (and I want to remember that I did them already so I don't repeat them):
 - double check where north pole is on Imis Tolin map: cell NQ211 in the csv of point codes = row 211, col 381, it is farther up in the image from where I originally marked it, but it is close enough, northwest of Vergensi and still on the land of Eawortis

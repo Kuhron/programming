@@ -13,6 +13,7 @@ class BiDict:
 
     @staticmethod
     def from_dict(d):
+        print(f"constructing BiDict from dictionary with {len(d)} entries")
         if len(d) == 0:
             raise ValueError("cannot initialize BiDict from empty dict because we don't know the key/value types")
         items = list(d.items())
@@ -26,6 +27,7 @@ class BiDict:
         type_b = list(value_types)[0]
         bd = BiDict(type_a, type_b)
         bd.update(d)
+        print(f"done constructing BiDict")
         return bd
 
     def update(self, d):

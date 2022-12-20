@@ -17,6 +17,7 @@ from BiDict import BiDict
 import LoadMapData
 import PlottingUtil as pu
 import FindPointsInCircle as find
+from XyzLookupAncestryGraph import XyzLookupAncestryGraph
 
 
 
@@ -375,8 +376,9 @@ def run_region_generation(db, planet_radius_km):
     # )
 
     # to choose based on some condition
-    pcs_on_coast = df.index[df["elevation_condition"] == 1]
-    region_center_pc = random.choice(pcs_on_coast)
+    # pcs_on_coast = df.index[df["elevation_condition"] == 1]
+    pcs_on_land = df.index[df["elevation_condition"] == 2]
+    region_center_pc = random.choice(pcs_on_land)
 
     # to choose existing point file (they are just lists of the point codes in a given area)
     pc_dir = "PointFiles"

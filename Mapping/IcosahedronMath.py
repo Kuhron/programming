@@ -147,10 +147,12 @@ def get_xyzs_from_point_codes(pcs):
     return [get_xyz_from_point_code(pc) for pc in pcs]
 
 
-def get_xyz_array_from_point_codes(pns):
-    xyzs = get_xyzs_from_point_codes(pns)
+def get_xyz_array_from_point_codes(pcs):
+    print(f"getting xyz array for {len(pcs)} point codes")
+    xyzs = get_xyzs_from_point_codes(pcs)
     arr = np.array(xyzs)
-    assert arr.shape == (len(pns), 3), arr.shape
+    assert arr.shape == (len(pcs), 3), arr.shape
+    print("done getting xyz array")
     return arr
 
 

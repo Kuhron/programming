@@ -22,7 +22,6 @@ from PIL import Image
 
 import IcosahedronMath as icm
 from BiDict import BiDict
-from PointCodeTrie import PointCodeTrie
 import FindPointsInCircle as find
 import PlottingUtil as pu
 from LoadMapData import get_default_values_of_conditions, translate_array_by_dict

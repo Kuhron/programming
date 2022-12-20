@@ -39,7 +39,7 @@ def get_image_pixel_to_icosa_point_code_from_calculation(region_name, pixels=Non
 def get_pixel_to_icosa_fp(region_name):
     root_dir = get_root_dir_for_world_of_region(region_name)
     dirpath = os.path.join(root_dir, "PixelToIcosaPointFiles")
-    fname = f"{region_name}_PixelToIcosaPoint.txt"
+    fname = f"{region_name}_PixelToIcosaPointCode.txt"
     fp = os.path.join(dirpath, fname)
     return fp
 
