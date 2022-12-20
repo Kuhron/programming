@@ -32,6 +32,7 @@ class IcosahedronPointDatabase:
     DTYPE = np.dtype("int64")  # all values must always be int
     VAL_TYPES = [DTYPE, int]
     MAX_INT_VALUE = 2**63-1
+    SPECIAL_COLUMN_NAMES = ["index", "prefix_lookup_number"]
 
     def __init__(self):
         pass
@@ -146,7 +147,7 @@ class IcosahedronPointDatabase:
         return sorted(x for x in self.df.columns if x.endswith("_condition"))
     
     def get_value_variables(self):
-        return sorted(x for x in self.df.columns if not x.endswith("_condition"))
+        return sorted(x for x in self.df.columns if not x.endswith("_condition") and x not in IcosahedronPointDatabase.SPECIAL_COLUMN_NAMES)
 
     def get_variable_encoding_types(self):
         # based on the values in the df

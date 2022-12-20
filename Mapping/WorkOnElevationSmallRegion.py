@@ -356,7 +356,6 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
 
 
 def run_region_generation(db, planet_radius_km):
-    db.fill_lookup_numbers()
     df = db.df
     desired_point_prefix = ""
     power_law_param = 0.25  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
@@ -420,14 +419,16 @@ def run_region_generation(db, planet_radius_km):
     missing_df = pd.DataFrame(index=missing_pcs, columns=df.columns, dtype=IcosahedronPointDatabase.DTYPE)
     condition_variables = db.get_condition_variables()
     value_variables = db.get_value_variables()
+    missing_df.loc[:, "prefix_lookup_number"] = -1
     missing_df.loc[:, condition_variables] = -1
     missing_df.loc[:, value_variables] = 0
-    missing_df = missing_df.astype(int)  # why is it float even when I declared dtype int and set the values as ints? I have no idea
-    print(missing_df)
-    print(missing_df.dtypes)
+    missing_df = missing_df.astype("int64")  # why is it float even when I declared dtype int and set the values as ints? I have no idea
+    print(f"\nmissing_df:\n{missing_df}\n")
+    print(f"\nmissing_df.dtypes:\n{missing_df.dtypes}\n")
     # db.validate()  # debug
     concat_df = pd.concat([df, missing_df]).sort_index()
     db.df = concat_df
+    db.fill_lookup_numbers()
     # db.validate()  # debug
 
     # use this to check if the point locations look right
@@ -457,10 +458,12 @@ def run_region_generation(db, planet_radius_km):
         points_to_edit = list(pcs_in_region_at_resolution)
     
     # start by generating random elevation circles in the region
+    print("getting xyzs and distance matrix")
     xyz_array = icm.get_xyz_array_from_point_codes(points_to_edit)
     xyz_tuples = [tuple(xyz) for xyz in xyz_array]
     xyz_dict = BiDict.from_dict(dict(zip(points_to_edit, xyz_tuples)))
     matrix = GreatCircleDistanceMatrix(xyz_array, radius=1)
+    print("done getting xyzs and distance matrix")
 
     # db.add_variable("elevation")
     

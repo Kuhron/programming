@@ -1464,9 +1464,7 @@ def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normali
             t0 = time.time()
     print(f"got {len(res)} points in region")
     if not allow_trailing_zeros:
-        print("stripping zeros from point codes in region")
         res = {strip_trailing_zeros(s) for s in res}
-        print("done stripping zeros from point codes in region")
     return res
 
 
