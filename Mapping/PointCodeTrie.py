@@ -7,11 +7,6 @@ import IcosahedronPointDatabase as icdb
 
 
 class PointCodeTrie:
-    LETTER_TO_NUMBER_DICT = {c:i for i,c in enumerate("CDEFGHIJKL")}
-    LETTER_TO_NUMBER_DICT["A"] = -2
-    LETTER_TO_NUMBER_DICT["B"] = -3
-    NUMBER_TO_LETTER_DICT = {i:c for c,i in LETTER_TO_NUMBER_DICT.items()}
-
     def __init__(self):
         self.dct = {}
         self.count = 0
@@ -22,31 +17,14 @@ class PointCodeTrie:
         for x in lst:
             trie.add_point_code(x)
         return trie
-    
-    @staticmethod
-    def point_code_to_number_array(pc):
-        assert pc[-1] != "0", pc
-        head = pc[0]
-        tail = pc[1:]
-        n0 = PointCodeTrie.LETTER_TO_NUMBER_DICT[head]
-        res = [n0] + [int(x) for x in tail]
-        return res
-    
-    @staticmethod
-    def number_array_to_point_code(nums):
-        head = nums[0]
-        tail = nums[1:]
-        c0 = PointCodeTrie.NUMBER_TO_LETTER_DICT[head]
-        res = c0 + "".join(str(n) for n in tail)
-        return res
 
     def add_point_code(self, pc):
-        nums = PointCodeTrie.point_code_to_number_array(pc)
-        self.add_number_array(nums)
+        pv = icm.get_place_value_array_from_point_code(pc)
+        self.add_place_value_array(pv)
 
-    def add_number_array(self, nums):
+    def add_place_value_array(self, pv):
         d = self.dct
-        for n in nums:
+        for n in pv:
             if n not in d:
                 d[n] = {}
             d = d[n]
@@ -59,12 +37,12 @@ class PointCodeTrie:
             self.count += 1
     
     def contains_point_code(self, pc):
-        nums = PointCodeTrie.point_code_to_number_array(pc)
-        return self.contains_number_array(nums)
+        pv = icm.get_place_value_array_from_point_code(pc)
+        return self.contains_place_value_array(pv)
     
-    def contains_number_array(self, nums):
+    def contains_place_value_array(self, pv):
         d = self.dct
-        for n in nums:
+        for n in pv:
             if n not in d:
                 return False
             d = d[n]
@@ -73,17 +51,17 @@ class PointCodeTrie:
         # it's just a substring of something in the dict
 
     def remove_point_code(self, pc):
-        nums = PointCodeTrie.point_code_to_number_array(pc)
-        self.remove_number_array(nums)
+        pv = icm.get_place_value_array_from_point_code(pc)
+        self.remove_place_value_array(pv)
     
-    def remove_number_array(self, nums):
+    def remove_place_value_array(self, pv):
         d = self.dct
-        for n in nums:
+        for n in pv:
             if n not in d:
-                raise ValueError(f"{nums} not in trie")
+                raise ValueError(f"{pv} not in trie")
             d = d[n]
         if -1 not in d:
-            raise ValueError(f"{nums} not in trie")
+            raise ValueError(f"{pv} not in trie")
         d.remove(-1)
         self.count -= 1
     
@@ -93,12 +71,12 @@ class PointCodeTrie:
 
     @staticmethod
     def get_all_strings_in_trie_dict(d):
-        number_arrays = PointCodeTrie.get_all_number_arrays_in_trie_dict(d)
-        res = [PointCodeTrie.number_array_to_point_code(nums) for nums in number_arrays]
+        pvs = PointCodeTrie.get_all_place_value_arrays_in_trie_dict(d)
+        res = [icm.get_point_code_from_place_value_array(pv) for pv in pvs]
         return res
 
     @staticmethod
-    def get_all_number_arrays_in_trie_dict(d, prefix=None):
+    def get_all_place_value_arrays_in_trie_dict(d, prefix=None):
         if prefix is None:
             prefix = []  # no mutable defaults
         res = []
@@ -109,9 +87,9 @@ class PointCodeTrie:
             else:
                 sub_d = d[k]
                 sub_prefix = [k]
-                res += PointCodeTrie.get_all_number_arrays_in_trie_dict(sub_d, sub_prefix)
+                res += PointCodeTrie.get_all_place_value_arrays_in_trie_dict(sub_d, sub_prefix)
         res = sorted(res)
-        return [prefix + nums for nums in res]
+        return [prefix + pv for pv in res]
 
 
 def test_trie():
@@ -146,4 +124,4 @@ if __name__ == "__main__":
     pcs_with_data_in_region = icdb.get_point_codes_in_database_in_region(db, region_center_pc, region_radius_gc, use_narrowing=True, pcs_to_consider=None)
     trie = PointCodeTrie.from_list(pcs_with_data_in_region)
     print(f"{trie.count=}")
-    input("a")
+    

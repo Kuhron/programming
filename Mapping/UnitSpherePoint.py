@@ -100,28 +100,31 @@ class UnitSpherePoint:
     @staticmethod
     def distance_great_circle_latlondeg_static(latlon1, latlon2, radius=1):
         d0 = UnitSpherePoint.distance_3d_latlondeg_static(latlon1, latlon2, radius=1)
-        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, radius=radius)
+        return UnitSpherePoint.convert_distance_3d_to_great_circle_single_value(d0, radius=radius)
         # don't multiply by radius twice, just do it in the great circle conversion call
 
     @staticmethod
     def distance_great_circle_xyz_static(xyz1, xyz2, radius=1):
         d0 = UnitSpherePoint.distance_3d_xyz_static(xyz1, xyz2, radius=1)
-        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, radius=radius)
+        return UnitSpherePoint.convert_distance_3d_to_great_circle_single_value(d0, radius=radius)
         # don't multiply by radius twice, just do it in the great circle conversion call
 
     @staticmethod
-    def convert_distance_3d_to_great_circle(d0, radius=1):
-        r = radius
-        theta = 2 * np.arcsin(d0 / (2*r))
-        d_gc = r * theta
-        assert 0 <= d_gc <= np.pi * r, f"bad great circle distance {d_gc} from d0={d0}, r={r}"
-        assert d_gc > d0 or abs(d_gc - d0) < 1e-9, f"shortest distance should be a straight line, but got great-circle {d_gc} from Euclidean {d0}"
-        # print(f"d0 = {d0}, r = {r} -> great circle distance {d_gc}")
-        return d_gc
+    def convert_distance_3d_to_great_circle_single_value(d0, radius=1):
+        arr = np.array([d0])
+        return UnitSpherePoint.convert_distance_3d_to_great_circle_array(arr, radius=radius)
 
     @staticmethod
     def convert_distance_3d_to_great_circle_array(d0, radius=1):
-        return (np.vectorize(lambda d: UnitSpherePoint.convert_distance_3d_to_great_circle(d, radius=radius)))(d0)
+        r = radius
+        theta = 2 * np.arcsin(d0 / (2*r))
+        d_gc = r * theta
+        # assert (0 <= d_gc).all(), f"bad great circle distance {d_gc} from d0={d0}, r={r}"
+        # assert (d_gc <= np.pi * r).all(), f"bad great circle distance {d_gc} from d0={d0}, r={r}"
+        # assert ((d_gc > d0) | (abs(d_gc - d0) < 1e-9)).all(), f"shortest distance should be a straight line, but got great-circle {d_gc} from Euclidean {d0}"
+        # print(f"d0 = {d0}, r = {r} -> great circle distance {d_gc}")
+        return d_gc
+        # return (np.vectorize(lambda d: UnitSpherePoint.convert_distance_3d_to_great_circle_single_value(d, radius=radius)))(d0)
     
     @staticmethod
     def convert_distance_great_circle_to_3d(d_gc, radius=1):
@@ -146,7 +149,7 @@ class UnitSpherePoint:
 
     def distance_great_circle(self, other, radius):
         d0 = self.distance_3d(other, radius=1)
-        return UnitSpherePoint.convert_distance_3d_to_great_circle(d0, radius=radius)
+        return UnitSpherePoint.convert_distance_3d_to_great_circle_single_value(d0, radius=radius)
         # multiply by radius once only
 
     def set_data(self, key, value):

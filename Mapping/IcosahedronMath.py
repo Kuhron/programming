@@ -15,12 +15,20 @@ import MapCoordinateMath as mcm
 from UnitSpherePoint import UnitSpherePoint
 import BoxCornerMapping as bc
 from PointCodeArithmetic import add_direction_to_point_code, normalize_peel, apply_peel_offset
+import PlottingUtil as pu
 
 
 
 EARTH_RADIUS_KM = 6371
 CADA_II_RADIUS_FACTOR = 2.116
 CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
+
+# for converting between {point code, number array, lookup number}
+LETTER_TO_NUMBER_DICT = {c:i for i,c in enumerate("CDEFGHIJKL")}
+LETTER_TO_NUMBER_DICT["A"] = -2
+LETTER_TO_NUMBER_DICT["B"] = -3
+NUMBER_TO_LETTER_DICT = {i:c for c,i in LETTER_TO_NUMBER_DICT.items()}
+
 
 
 # @functools.lru_cache(maxsize=100000)
@@ -87,22 +95,29 @@ def get_point_codes_from_point_numbers(pns):
     return pcs
 
 
-def get_latlon_from_point_code(pc):
-    if len(pc) == 1:
-        return get_latlon_of_initial_point_code(pc)
+def get_latlon_from_point_code(pc, xyzg):
+    if xyzg is None:
+        if len(pc) == 1:
+            return get_latlon_of_initial_point_code(pc)
+        else:
+            xyz = get_xyz_from_point_code(pc, xyzg)
     else:
-        xyz = get_xyz_from_point_code(pc)
-        return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
+        xyz = xyzg[pc]
+    
+    return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
 
 
-@functools.lru_cache(maxsize=10000)  # for avoiding recalculating the same parents over again
-def get_xyz_from_point_code(pc):
-    if len(pc) == 1:
-        pn = get_point_number_from_point_code(pc)
-        return get_xyz_from_point_number(pn)
+def get_xyz_from_point_code(pc, xyzg=None):
+    if xyzg is None:
+        if len(pc) == 1:
+            pn = get_point_number_from_point_code(pc)
+            return get_xyz_from_point_number(pn)
+        else:
+            xyz = get_xyz_from_point_code_recursive(pc)
     else:
-        xyz = get_xyz_from_point_code_recursive(pc)
-        return xyz
+        xyz = xyzg[pc]
+
+    return xyz
 
 
 def get_latlon_of_initial_point_number(pn):
@@ -121,15 +136,15 @@ def get_latlon_from_point_number(pn):
 
 
 def get_latlons_from_point_numbers(pns):
-    return [get_latlon_from_point_code(pn) for pn in pns]
+    return [get_latlon_from_point_number(pn) for pn in pns]
 
 
-def get_latlons_from_point_codes(pcs):
+def get_latlons_from_point_codes(pcs, xyzg):
     # TODO use the fact that many of the point codes will share some ancestry
     # maybe can use the PointCodeTrie to make this faster at some point
     # e.g. storing the latlon of the parent in the trie node above
     # do something similar for getting xyzs
-    return [get_latlon_from_point_code(pc) for pc in pcs]
+    return [get_latlon_from_point_code(pc, xyzg) for pc in pcs]
 
 
 def get_xyz_from_point_number(pn):
@@ -139,17 +154,17 @@ def get_xyz_from_point_number(pn):
     return xyz
 
 
-def get_xyzs_from_point_codes(pns):
+def get_xyzs_from_point_numbers(pns):
     return [get_xyz_from_point_number(pn) for pn in pns]
 
 
-def get_xyzs_from_point_codes(pcs):
-    return [get_xyz_from_point_code(pc) for pc in pcs]
+def get_xyzs_from_point_codes(pcs, xyzg):
+    return [get_xyz_from_point_code(pc, xyzg) for pc in pcs]
 
 
-def get_xyz_array_from_point_codes(pcs):
+def get_xyz_array_from_point_codes(pcs, xyzg):
     print(f"getting xyz array for {len(pcs)} point codes")
-    xyzs = get_xyzs_from_point_codes(pcs)
+    xyzs = get_xyzs_from_point_codes(pcs, xyzg)
     arr = np.array(xyzs)
     assert arr.shape == (len(pcs), 3), arr.shape
     print("done getting xyz array")
@@ -800,6 +815,7 @@ def get_adjacency_from_point_number(pn, iteration=None):
     return [get_point_number_from_point_code(pc1) for pc1 in pcs]
 
 
+# @functools.lru_cache(maxsize=1000000)
 def get_adjacency_from_point_code(pc):
     neighL = add_direction_to_point_code(pc, 1)
     neighDL = add_direction_to_point_code(pc, 2)
@@ -1057,7 +1073,7 @@ def get_direction_label_from_number(i):
     return ["L", "DL", "D", "R", "UR", "U"][i]
 
 
-def get_nearest_icosa_point_at_lower_iteration(pc, iterations):
+def get_nearest_icosa_point_at_lower_iteration(pc, iterations, xyzg):
     pc_iter = get_iteration_number_from_point_code(pc)
     if iterations == pc_iter:
         return pc
@@ -1068,8 +1084,8 @@ def get_nearest_icosa_point_at_lower_iteration(pc, iterations):
         adj = get_adjacency_from_point_code(ancestor)
         pcs = adj + [ancestor]
         # find the closest of these, it shouldn't be anything else (I think, haven't proven that)
-        xyzs = get_xyzs_from_point_codes(pcs)
-        xyz = get_xyz_from_point_code(pc)
+        xyzs = get_xyzs_from_point_codes(pcs, xyzg)
+        xyz = get_xyz_from_point_code(pc, xyzg)
         ds = [mcm.xyz_distance(xyz, xyz1) for xyz1 in xyzs]
         index = np.argmin(ds)
         return pcs[index]
@@ -1147,7 +1163,7 @@ def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
     return nn_xyz, min_d
 
 
-def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors=1, allow_self=False):
+def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, xyzg, k_neighbors=1, allow_self=False):
     if len(candidate_pcs) == 0:
         # there is no point querying because there are no neighbors
         raise ValueError("no candidates")
@@ -1158,17 +1174,21 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_nei
         # otherwise, remove the farthest-away one
         k_neighbors += 1
     
-    pc_to_xyz = {}
-    print("getting pc -> xyz mapping")
-    all_pcs = list(set(query_pcs) | set(candidate_pcs))
-    for i, pc in enumerate(all_pcs):
-        if i % 1000 == 0:
-            print(f"pc -> xyz progress {i}/{len(all_pcs)}")
-        xyz = get_xyz_from_point_code(pc)
-        pc_to_xyz[pc] = xyz
-    candidate_xyzs = np.array([pc_to_xyz[pc] for pc in candidate_pcs])
+    # old for when I was using a dict of point code to xyz instead of XyzLookupAncestryGraph
+    # if pc_to_xyz is None:
+    #     # allow user to specify it ahead of time to save on point code calculation
+    #     pc_to_xyz = {}
+    #     print("getting pc -> xyz mapping")
+    #     all_pcs = list(set(query_pcs) | set(candidate_pcs))
+    #     for i, pc in enumerate(all_pcs):
+    #         if i % 1000 == 0:
+    #             print(f"pc -> xyz progress {i}/{len(all_pcs)}")
+    #         xyz = get_xyz_from_point_code(pc)
+    #         pc_to_xyz[pc] = xyz
+
+    candidate_xyzs = np.array([xyzg[pc] for pc in candidate_pcs])
     print(f"{candidate_xyzs.shape=}")
-    query_xyzs = np.array([pc_to_xyz[pc] for pc in query_pcs])
+    query_xyzs = np.array([xyzg[pc] for pc in query_pcs])
     print(f"{query_xyzs.shape=}")
 
     print("creating KDTree")
@@ -1260,11 +1280,11 @@ def get_xyz_generator(iterations):
     print(f"done getting xyz generator for {iterations} iterations")
 
 
-def get_latlon_generator(iterations):
+def get_latlon_generator(iterations, xyzg):
     print(f"getting latlon generator for {iterations} iterations")
     n_points = get_n_points_from_iterations(iterations)
     for pi in range(n_points):
-        latlon = get_latlon_from_point_code(pi)
+        latlon = get_latlon_from_point_code(pi, xyzg)
         yield latlon
     print(f"getting latlon generator for {iterations} iterations")
 
@@ -1323,9 +1343,9 @@ def get_distance_point_number_to_xyz_great_circle(pn, xyz, radius=1):
     return UnitSpherePoint.distance_great_circle_xyz_static(xyz, xyz2, radius=radius)
 
 
-def get_distance_point_codes_great_circle(pc1, pc2, radius=1):
-    xyz1 = get_xyz_from_point_code(pc1)
-    xyz2 = get_xyz_from_point_code(pc2)
+def get_distance_point_codes_great_circle(pc1, pc2, xyzg, radius=1):
+    xyz1 = get_xyz_from_point_code(pc1, xyzg)
+    xyz2 = get_xyz_from_point_code(pc2, xyzg)
     return UnitSpherePoint.distance_great_circle_xyz_static(xyz1, xyz2, radius=radius)
 
 
@@ -1418,13 +1438,13 @@ def plot_directional_parent_graph(iteration):
     plt.show()
 
 
-def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normalized, resolution_iterations=None, allow_trailing_zeros=False):
+def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normalized, xyzg, resolution_iterations=None, allow_trailing_zeros=False):
     # follow adjacency paths at this iteration resolution until you get every point within the radius
     # measure distance to center_pc, but can spread from a nearby point if needed to fit lower resolution
     if resolution_iterations is not None:
         pc_iterations = get_iteration_number_from_point_code(center_pc)
         if pc_iterations > resolution_iterations:
-            starting_pc = get_nearest_icosa_point_at_lower_iteration(center_pc, resolution_iterations)
+            starting_pc = get_nearest_icosa_point_at_lower_iteration(center_pc, resolution_iterations, xyzg)
             # raise ValueError("center point has more iterations than desired resolution")
         else:
             starting_pc = center_pc + "0" * (resolution_iterations - pc_iterations)
@@ -1449,7 +1469,7 @@ def get_region_around_point_code_by_spreading(center_pc, max_distance_gc_normali
             if neighbor is None:
                 continue
             if neighbor not in res and neighbor not in checked_points:
-                d = get_distance_point_codes_great_circle(center_pc, neighbor, radius=1)
+                d = get_distance_point_codes_great_circle(center_pc, neighbor, xyzg, radius=1)
                 if d <= max_distance_gc_normalized:
                     # print(f"adding {neighbor} to new points")
                     new_points.append(neighbor)
@@ -1514,7 +1534,7 @@ def get_descendants_of_point_code(pc, max_iterations):
         return children
 
 
-def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
+def find_distances_to_watershed(reference_pc, watershed_parent_pc, xyzg, plot=False):
     # find nearest and farthest points within a given watershed
     # can do some geometry like it's one of the corners or it's along a certain edge (binary search?)
     # distance from a certain reference point
@@ -1524,7 +1544,7 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
 
     if pc0[0] in ["A", "B"]:
         assert all(y == "0" for y in pc0[1:]), f"got reverse-encoded or invalid watershed parent {pc0}"
-        d = get_distance_point_codes_great_circle(rpc, pc0)
+        d = get_distance_point_codes_great_circle(rpc, pc0, xyzg)
         dmin = d
         dmax = d
         return dmin, dmax
@@ -1559,7 +1579,7 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
     if plot:
         ax1 = plt.subplot(1,2,1)
         ax2 = plt.subplot(1,2,2)
-        rll = get_latlon_from_point_code(rpc)
+        rll = get_latlon_from_point_code(rpc, xyzg)
 
     if point_is_descendant(rpc, watershed_parent_pc):
         dmin = 0  # the watershed contains the reference point
@@ -1593,11 +1613,11 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
                 pc = bc.correct_reversed_edge_polarity(pc, reference_peel)
             pcs.append(pc)
         pcs.append(p1)
-        ds = [get_distance_point_codes_great_circle(rpc, pc) for pc in pcs]
+        ds = [get_distance_point_codes_great_circle(rpc, pc, xyzg) for pc in pcs]
         dmin = min(dmin, min(ds)) if dmin is not None else min(ds)
         dmax = max(dmax, max(ds)) if dmax is not None else max(ds)
         if plot:
-            lls = [get_latlon_from_point_code(pc) for pc in pcs]
+            lls = [get_latlon_from_point_code(pc, xyzg) for pc in pcs]
             # print("----")
             # for pc, d in zip(pcs, ds):
             #     print(pc, d)
@@ -1606,7 +1626,7 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
             ax2.scatter([ll[1] for ll in lls], [ll[0] for ll in lls], c=color)
     
     if plot:
-        text = lambda name, pc, ax=ax2: (lambda ll: ax.text(ll[1]+5, ll[0], f"{pc} ({name})"))(get_latlon_from_point_code(pc))
+        text = lambda name, pc, ax=ax2: (lambda ll: ax.text(ll[1]+5, ll[0], f"{pc} ({name})"))(get_latlon_from_point_code(pc, xyzg))
         for name,pc in [("ref",rpc), ("0",pc0), ("1",pc1), ("2",pc2), ("3",pc3)]:
             text(name, pc)
         ax2.set_aspect("equal")
@@ -1616,7 +1636,7 @@ def find_distances_to_watershed(reference_pc, watershed_parent_pc, plot=False):
     return dmin, dmax
 
 
-def narrow_watersheds_by_distance(pc, d, max_iterations):
+def narrow_watersheds_by_distance(pc, d, max_iterations, xyzg):
     # go through the watersheds starting from the initial points
     # treat the poles each as a watershed consisting only of a single point
 
@@ -1627,7 +1647,7 @@ def narrow_watersheds_by_distance(pc, d, max_iterations):
     split = []
     while len(watersheds_to_check) > 0:
         wpc = watersheds_to_check[0]
-        dmin, dmax = find_distances_to_watershed(pc, wpc)
+        dmin, dmax = find_distances_to_watershed(pc, wpc, xyzg)
         if dmin > d:
             outside.append(wpc)
             inside_str = "outside"
@@ -1678,11 +1698,119 @@ def get_binary_arrays(n_bits):
         return res
 
 
-def plot_adjacency_on_map(pc):
+def get_prefix_lookup_numbers_from_point_codes(pcs):
+    num_to_pcs = {}  # for checking for duplicates
+    res = []
+    duplicates_found = False
+    for pc in pcs:
+        n = get_prefix_lookup_number_from_point_code(pc)
+        if n in num_to_pcs:
+            print(f"{pc=} created duplicate lookup number {n}, also found with pcs {num_to_pcs[n]}")
+            num_to_pcs[n].append(pc)
+            duplicates_found = True
+        else:
+            num_to_pcs[n] = [pc]
+        res.append(n)
+    if duplicates_found:
+        assert all(len(set(strip_trailing_zeros(pc) for pc in these_pcs)) == 1 for num, these_pcs in num_to_pcs.items())
+        raise RuntimeError("duplicate lookup numbers created; see above")
+    return res
+
+
+def check_no_directions_from_poles_in_point_code(pc):
+    if pc[0] in ["A", "B"]:
+        assert all(x == "0" for x in pc[1:])
+
+
+def check_no_directions_from_poles_in_place_value_array(pv):
+    if pv[0] in [-2, -3]:
+        assert all(x == 0 for x in pv[1:])
+
+
+def get_prefix_lookup_number_from_point_code(pc):
+    # print(f"{pc=} -> ln")
+    # reverse the number, treat the point letter as the least significant digit (base 12)
+    # all other digits are base 4
+    # so we can tell if the string starts with a prefix
+    # because it will be congruent to that prefix mod some base
+    check_no_directions_from_poles_in_point_code(pc)
+    pv = get_place_value_array_from_point_code(pc)
+    check_no_directions_from_poles_in_place_value_array(pv)
+    n = get_prefix_lookup_number_from_place_value_array(pv)
+    return n
+
+
+def get_point_code_from_prefix_lookup_number(ln):
+    # print(f"{ln=} -> pc")
+    pv = get_place_value_array_from_prefix_lookup_number(ln)
+    check_no_directions_from_poles_in_place_value_array(pv)
+    pc = get_point_code_from_place_value_array(pv)
+    check_no_directions_from_poles_in_point_code(pc)
+    return pc
+
+
+def get_prefix_lookup_number_from_place_value_array(pv):
+    # print(f"{pv=} -> ln")
+    check_no_directions_from_poles_in_place_value_array(pv)
+    n = pv[0] + 10 * sum(4**(p-1) * pv[p] for p in range(1, len(pv)))
+    return n
+
+
+def get_place_value_array_from_prefix_lookup_number(ln):
+    # print(f"{ln=} -> pv")
+    if ln == -2:
+        return [-2]
+    elif ln == -3:
+        return [-3]
+    else:
+        assert ln >= 0, ln
+    rest, head = divmod(ln, 10)  # want div to give rest and mod to give head, since it's little-endian
+    res = [head]
+    while rest >= 4:
+        rest, digit = divmod(rest, 4)
+        res.append(digit)
+    if rest > 0:
+        res.append(rest)
+    return res
+
+
+def get_place_value_array_from_point_code(pc):
+    # print(f"{pc=} -> pv")
+    check_no_directions_from_poles_in_point_code(pc)
+    head = pc[0]
+    tail = pc[1:]
+    n0 = LETTER_TO_NUMBER_DICT[head]
+    res = [n0] + [int(x) for x in tail]
+    return res
+
+
+def get_point_code_from_place_value_array(pv):
+    # print(f"{pv=} -> pc")
+    check_no_directions_from_poles_in_place_value_array(pv)
+    head = pv[0]
+    tail = pv[1:]
+    c0 = NUMBER_TO_LETTER_DICT[head]
+    res = c0 + "".join(str(n) for n in tail)
+    return res
+
+
+def get_prefix_lookup_modulus(prefix):
+    return 1 if len(prefix) == 0 else 10 * 4**(len(prefix)-1)
+
+
+def lookup_number_matches_prefix_number(lookup_number, modulus, prefix_number):
+    if prefix_number == -2:  # A
+        return lookup_number == -2
+    elif prefix_number == -3:  # B
+        return lookup_number == -3
+    return lookup_number % modulus == prefix_number
+
+
+def plot_adjacency_on_map(pc, xyzg):
     # for debugging
     adj = get_adjacency_from_point_code(pc)
-    lat0, lon0 = get_latlon_from_point_code(pc)
-    lls = [get_latlon_from_point_code(pc1) for pc1 in adj]
+    lat0, lon0 = get_latlon_from_point_code(pc, xyzg)
+    lls = [get_latlon_from_point_code(pc1, xyzg) for pc1 in adj]
     colors = ["yellow", "red", "blue", "purple", "green", "orange"]
     lats = [ll[0] for ll in lls]
     lons = [ll[1] for ll in lls]
@@ -1692,12 +1820,12 @@ def plot_adjacency_on_map(pc):
     plt.show()
 
 
-def plot_parents_on_map(pc):
+def plot_parents_on_map(pc, xyzg):
     # for debugging
     par, dpar = get_parents_from_point_code(pc)
-    lat, lon = get_latlon_from_point_code(pc)
-    plat, plon = get_latlon_from_point_code(par)
-    dplat, dplon = get_latlon_from_point_code(dpar)
+    lat, lon = get_latlon_from_point_code(pc, xyzg)
+    plat, plon = get_latlon_from_point_code(par, xyzg)
+    dplat, dplon = get_latlon_from_point_code(dpar, xyzg)
     plt.scatter([lon], [lat], c="k")
     plt.text(lon, lat, f"{pc}(0)")
     plt.scatter([plon], [plat], c="r")
@@ -1708,7 +1836,7 @@ def plot_parents_on_map(pc):
     plt.show()
 
 
-def plot_watershed_inclusion_in_region(inside, outside, split):
+def plot_watershed_inclusion_in_region(inside, outside, split, xyzg):
     inside_color = "r"
     outside_color = "k"
     split_color = "g"
@@ -1726,7 +1854,7 @@ def plot_watershed_inclusion_in_region(inside, outside, split):
         children = get_children_from_point_code(wpc)
         split_pcs += children
     for pc_list, color in zip([inside_pcs, outside_pcs, split_pcs], [inside_color, outside_color, split_color]):
-        lls = [get_latlon_from_point_code(pc) for pc in pc_list]
+        lls = [get_latlon_from_point_code(pc, xyzg) for pc in pc_list]
         lats = [ll[0] for ll in lls]
         lons = [ll[1] for ll in lls]
         plt.scatter(lons, lats, c=color)
@@ -1809,7 +1937,6 @@ def test_adjacency_recursive_vs_arithmetic():
         pc = get_point_code_from_point_number(i).ljust(5, "0")
         par = get_parent_from_point_code(pc)
         dpar = get_directional_parent_from_point_code(pc)
-        # latlon = get_latlon_from_point_code(pc)
         iteration = get_iteration_number_from_point_code(pc)
         adj_test = get_adjacency_from_point_code(pc, iteration, use_old_method=False)
         adj_known = get_adjacency_from_point_code(pc, iteration, use_old_method=True)
@@ -1897,50 +2024,52 @@ def test_spreading_vs_narrowing():
         print("points from narrowing but not spreading:", r2not1)
         print(f"spreading took {t1} seconds")
         print(f"narrowing took {t2} seconds")
-        scatter_icosa_points_by_code(region1, show=False, marker="o", facecolors="none", edgecolors="b")
-        scatter_icosa_points_by_code(region2, show=False, marker="x")
+        pu.scatter_icosa_points_by_code(region1, show=False, marker="o", facecolors="none", edgecolors="b")
+        pu.scatter_icosa_points_by_code(region2, show=False, marker="x")
         plt.show()
         print()
 
 
+def test_lookup_number_conversion():
+    # test that operations are consistent and invertible
+    for pc in get_all_point_codes_in_order_up_to_iteration(4):
+        pv_from_pc = get_place_value_array_from_point_code(pc)
+        pc_from_pv = get_point_code_from_place_value_array(pv_from_pc)
+        ln_from_pc = get_prefix_lookup_number_from_point_code(pc)
+        pc_from_ln = get_point_code_from_prefix_lookup_number(ln_from_pc)
+        ln_from_pv = get_prefix_lookup_number_from_place_value_array(pv_from_pc)
+        pv_from_ln = get_place_value_array_from_prefix_lookup_number(ln_from_pc)
+        print(pc, pc_from_pv, pc_from_ln)
+        print(pv_from_pc, pv_from_ln)
+        print(ln_from_pc, ln_from_pv)
+        assert pc == pc_from_pv == pc_from_ln
+        assert pv_from_pc == pv_from_ln
+        assert ln_from_pc == ln_from_pv
+        print()
+    
+    # test that correspondence is one-to-one and has no gaps in the number sequence
+    lns_seen = set()
+    for pc in get_all_point_codes_in_order_up_to_iteration(6):
+        ln = get_prefix_lookup_number_from_point_code(pc)
+        assert ln not in lns_seen
+        lns_seen.add(ln)
+    print("no duplicate lookup numbers")
+    pcs_seen = set()
+    for ln in [-2, -3] + list(range(get_n_points_from_iterations(6))):
+        pc = get_point_code_from_prefix_lookup_number(ln)
+        assert pc not in pcs_seen
+        pcs_seen.add(pc)
+        # print(ln, pc)  # so I can see what the ordering looks like
+    print("no duplicate point codes")
+
+
+
+# constants that need to be defined after the function that creates them
 STARTING_POINTS = get_starting_points_immutable()  # since this is called way too many times otherwise, just initialize it as a global constant that can be accessed by further functions, e.g. base case for recursive adjacency algorithm
 STARTING_POINTS_ORDERED, STARTING_POINTS_ADJACENCY = STARTING_POINTS
 
 
 if __name__ == "__main__":
-    # test_spreading_vs_narrowing()
-
-    # TODO: find latlon using trig, 
-    # like the point code tells you how far along a certain edge the point is located
-    # e.g. K022020022 is some proportion along the great-circle curve between K and I
-
-    # TODO constrain how much closer/farther a point in the middle of an edge could be
-    # also constrain which edges we even need to subdivide in watershed distance measuring
-    # this can help us do watershed narrowing more efficiently
-    # don't need to check some number of points on all four edges
-
-    # TODO I don't trust that the narrowing is correct always
-    # because dmin and dmax are just estimates based on sampling 2**k points from each edge
-    # of the watershed. I want a much more accurate idea of these extrema.
-    # and also should have a tolerance amount where, if the region is just barely all in
-    # or all out, by a margin less than that tolerance, then we're paranoid and put it in split
-    # so we check all its points just in case
-
-    # can check lengths of points in df, to know max iteration, 
-    # if the number of points at a certain iteration is small enough 
-    # then can check if they are in region or not, 
-    # rather than building huge region at large resolution and then throwing most points away
-
-    # once find points with data for this variable in region, 
-    # don't have to edit them all, can edit a grid with lower resolution 
-    # but still have it influenced by the existing data points
-
-    # when load a specific region to work on, 
-    # keep its points and their adjacencies in RAM 
-    # to make it faster to select circles within the region by spreading 
-    # (still have to check distances to circle center)
-
-    # use narrowing and filtering to get the region to work on for the session
-    # within a session of generating elevation, use spreading to get the circles (much faster)
+    test_lookup_number_conversion()
 
     pass

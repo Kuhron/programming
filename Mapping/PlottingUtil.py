@@ -252,10 +252,10 @@ def plot_coordinate_patterns(n_iterations):
     plot_latlons(n_iterations)
 
 
-def plot_variable_at_point_codes(pcs, db, variable_name, show=True):
+def plot_variable_at_point_codes(pcs, db, variable_name, xyzg, show=True):
     df = db.df
     df2 = df.loc[pcs,:]
-    lls = [icm.get_latlon_from_point_code(pc) for pc in pcs]
+    lls = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
     lats = [ll[0] for ll in lls]
     lons = [ll[1] for ll in lls]
     variable_values = df2.loc[:, variable_name]
@@ -272,9 +272,9 @@ def plot_variable_scattered_from_db(db, pcs, var_to_plot, show=True):
     plot_variable_scattered_from_dict(pc_to_val, title=var_to_plot, show=show)
 
 
-def plot_variable_scattered_from_dict(pc_to_val, title=None, show=True):
+def plot_variable_scattered_from_dict(pc_to_val, xyzg, title=None, show=True):
     pcs = list(pc_to_val.keys())
-    latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
+    latlons = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     vals = [pc_to_val.get(pc) for pc in pcs]
@@ -294,34 +294,34 @@ def plot_variables_scattered_from_db(db, pcs, vars_to_plot):
     plt.show()
 
 
-def plot_variable_interpolated_from_db(db, pcs, var_to_plot, resolution, show=True):
+def plot_variable_interpolated_from_db(db, pcs, var_to_plot, xyzg, resolution, show=True):
     print(f"plotting variable interpolated: {var_to_plot}")
     pc_to_val = db.get_dict(pcs, var_to_plot)
-    plot_variable_interpolated_from_dict(pc_to_val, resolution, title=None, show=show)
+    plot_variable_interpolated_from_dict(pc_to_val, xyzg, resolution, title=None, show=show)
 
 
-def plot_variable_interpolated_from_dict(pc_to_val, resolution, title=None, show=True):
+def plot_variable_interpolated_from_dict(pc_to_val, xyzg, resolution, title=None, show=True):
     pcs = list(pc_to_val.keys())
-    latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
+    latlons = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
     values = [pc_to_val.get(pc) for pc in pcs]
     plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution)
     if show:
         plt.show()
 
 
-def plot_variables_interpolated_from_db(db, pcs, vars_to_plot, resolution, show=False):
+def plot_variables_interpolated_from_db(db, pcs, vars_to_plot, xyzg, resolution, show=False):
     print(f"plotting variables interpolated: {vars_to_plot}")
     n_plots = len(vars_to_plot)
     for i, var in enumerate(vars_to_plot):
         plt.subplot(1, n_plots, i+1)
-        plot_variable_interpolated_from_db(db, pcs, var, resolution, show=False)
+        plot_variable_interpolated_from_db(db, pcs, var, xyzg, resolution, show=False)
         plt.title(var)
     if show:
         plt.show()
 
 
-def plot_latlons(pcs):
-    latlons = [icm.get_latlon_from_point_code(pc) for pc in pcs]
+def plot_latlons(pcs, xyzg):
+    latlons = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     plt.scatter(lons, lats)

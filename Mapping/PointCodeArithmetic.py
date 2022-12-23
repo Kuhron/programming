@@ -1,6 +1,8 @@
 # implementing the "arithmetic" on point code strings
 # to try to remove the need for recursion as much as possible in computing adjacency
 
+import functools
+
 from BoxCornerMapping import correct_reversed_edge_polarity, point_code_is_in_reversed_polarity_encoding, reverse_edge_polarity
 
 
@@ -9,8 +11,8 @@ SOUTHERN_RING = ["D", "F", "H", "J", "L"]
 
 
 def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
-    if pc in [None, "?"]:
-        return pc
+    if pc is None:
+        return None
 
     pc, peel_offset = normalize_peel(pc)
     reference_peel = "CD"  # since we normalized, but need to make sure to update this if we move elsewhere
@@ -151,7 +153,7 @@ def add_direction_to_point_code(pc, x, fix_edge_polarity=True):
     if res is not None and fix_edge_polarity and point_code_is_in_reversed_polarity_encoding(res):
         res = correct_reversed_edge_polarity(res, reference_peel)
 
-    if res not in [None, "?"]:
+    if res is not None:
         pc = apply_peel_offset(pc, peel_offset)
         res = apply_peel_offset(res, peel_offset)
         assert len(res) == len(pc), f"need same #iterations in result but got {pc} {x:+} = {res}"

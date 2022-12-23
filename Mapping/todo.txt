@@ -1,3 +1,10 @@
+DON'T do these (without good reason):
+
+- don't make a data structure for keeping track of adjacencies, since it's already pretty fast using point code arithmetic. Tested using caching of get_adjacency function and it made almost no difference.
+
+
+TODO:
+
 - apparently I was wrong way back when I wrote the original point coordinates! The latitudes of the north and south rings are not 30, they're arctan(1/2) = 26.57, according to Wikipedia (https://en.wikipedia.org/wiki/Regular_icosahedron). Decide if this is worth fixing, and if so, need to recalculate a bunch of coordinates of points. If want to fix it, the best way would seem to be to use the images for control points and recalculate their codes in the new icosahedron directly from where they are in the image, but for the non-control points, get their coordinates and find closest new icosa point to them within a tolerance? This might be a mess. Think about it a lot before doing this.
 
 - make equirectangular maps centered on their center longitude (matplotlib usually does this, but need to fix it in the case where region crosses the antimeridian)
@@ -8,6 +15,7 @@
 
 - once have a bunch of elevation generated, look at a bunch of it and see if anything looks weird/wrong
 -- can use smoothing to get rid of things like pockmarks from intervening higher-iteration points being at default while the grid around them already has data on it
+-- sandpile-like smoothing where things spill over onto nearby points if the gradient is too steep?
 
 - find and fix the random points that are zero elevation even though everything around them is high land (seen in some maps)
 
@@ -24,8 +32,28 @@
 
 - add interaction between volcanism and elevation, where volcanism is just like upward pressure on elevation (and negative volcanism is downward pressure on elevation), e.g. make Amphoto's ring island more like a steep wall (since the elevation generation will tend to keep it low because it's so near to coastline)
 
+- find latlon using trig, like the point code tells you how far along a certain edge the point is located, e.g. K022020022 is some proportion along the great-circle curve between K and I
 
-done (and I want to remember that I did them already so I don't repeat them):
+- constrain how much closer/farther a point in the middle of an edge could be
+- also constrain which edges we even need to subdivide in watershed distance measuring
+-- this can help us do watershed narrowing more efficiently, don't need to check some number of points on all four edges
+
+- I don't trust that the narrowing is correct always because dmin and dmax are just estimates based on sampling 2**k points from each edge of the watershed. I want a much more accurate idea of these extrema.
+-- and also should have a tolerance amount where, if the region is just barely all in or all out, by a margin less than that tolerance, then we're paranoid and put it in split so we check all its points just in case
+
+- can check lengths of points in df, to know max iteration, if the number of points at a certain iteration is small enough then can check if they are in region or not, rather than building huge region at large resolution and then throwing most points away
+
+- once find points with data for this variable in region, don't have to edit them all, can edit a grid with lower resolution but still have it influenced by the existing data points
+
+- when load a specific region to work on, keep its points and their adjacencies in RAM to make it faster to select circles within the region by spreading (still have to check distances to circle center)
+
+- use narrowing and filtering to get the region to work on for the session within a session of generating elevation, use spreading to get the circles (much faster)
+
+
+DONE (and I want to remember that I did them already so I don't repeat them):
+
 - double check where north pole is on Imis Tolin map: cell NQ211 in the csv of point codes = row 211, col 381, it is farther up in the image from where I originally marked it, but it is close enough, northwest of Vergensi and still on the land of Eawortis
+
 - double check where south pole is on Oligra-Zitomo map (this one matters less): cell PE279 in csv = row 279, col 421, this is good, very close
+
 - fix bug where interpolation of elevation condition is overwriting existing elevations with default values

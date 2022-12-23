@@ -202,7 +202,7 @@ def descendants_of_point_can_ever_be_in_region(pn, region_center_xyz, region_rad
     return closest_descendant_can_be_to_region_center <= region_radius_great_circle_km
 
 
-def interpolate_at_points_nearest_neighbor(pcs_to_interpolate_at, pcs_to_interpolate_from, variable_name, db, max_nn_distance=None):
+def interpolate_at_points_nearest_neighbor(pcs_to_interpolate_at, pcs_to_interpolate_from, variable_name, db, xyzg, max_nn_distance=None):
     # interpolate the conditions at the points_at_this_resolution
 
     interpolated = pd.Series(dtype=int)
@@ -220,7 +220,7 @@ def interpolate_at_points_nearest_neighbor(pcs_to_interpolate_at, pcs_to_interpo
         return pd.Series({pc: known_values[pc] for pc in pcs_to_interpolate_at}, dtype=int)
 
     # db.validate()  # debug
-    nn_pc_lookup, d_lookup = icm.get_nearest_neighbors_pc_to_pc_with_distance(query_pcs=pcs_to_interpolate_at, candidate_pcs=pcs_to_interpolate_from, k_neighbors=1, allow_self=False)
+    nn_pc_lookup, d_lookup = icm.get_nearest_neighbors_pc_to_pc_with_distance(query_pcs=pcs_to_interpolate_at, candidate_pcs=pcs_to_interpolate_from, xyzg=xyzg, k_neighbors=1, allow_self=False)
     
     for i, pc in enumerate(pcs_to_interpolate_at):
         if i % 1000 == 0:
@@ -258,7 +258,7 @@ def interpolate_at_points_nearest_neighbor(pcs_to_interpolate_at, pcs_to_interpo
     return interpolated
 
 
-def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolution, planet_radius_km, elevation_condition_to_default_value):
+def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolution, planet_radius_km, elevation_condition_to_default_value, xyzg):
     # interpolate condition at other points as nearest neighbor
     # (with some max distance to that neighbor so we don't get things like
     # the middle of the ocean thinking it has to be a coast/shallow
@@ -298,6 +298,7 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
         pcs_to_interpolate_from=points_to_interpolate_from,
         variable_name="elevation_condition",
         db=db,
+        xyzg=xyzg,
         max_nn_distance=100/planet_radius_km,
     )
 
@@ -356,7 +357,7 @@ def interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolut
     return points_to_interpolate_at  # we didn't change anything else, so only need to send the points we interpolated to
 
 
-def run_region_generation(db, planet_radius_km):
+def run_region_generation(db, planet_radius_km, xyzg):
     df = db.df
     desired_point_prefix = ""
     power_law_param = 0.25  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
@@ -364,21 +365,23 @@ def run_region_generation(db, planet_radius_km):
     circle_radius_dist = lambda: power_law()
     el_stdev = 15
     resolution_iterations = 9
-    n_circles = 2000
+    n_circles = 100
 
     # to choose random one
     ## region_center_pc = icm.get_random_point_code(min_iterations=6, expected_iterations=9, max_iterations=9, prefix=desired_point_prefix)
-    region_radius_gc = random.randint(600, 1000)/10000
-    ## region_radius_gc = 0.05
+    ## region_radius_gc = random.randint(600, 1000)/10000
+    region_radius_gc = 0.01
     ## region_center_latlondeg = icm.get_latlon_from_point_code(region_center_point_code)
     ## region_center_latlondeg, region_radius_great_circle_km = (
     #    UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
     # )
 
     # to choose based on some condition
-    # pcs_on_coast = df.index[df["elevation_condition"] == 1]
-    pcs_on_land = df.index[df["elevation_condition"] == 2]
-    region_center_pc = random.choice(pcs_on_land)
+    pcs_ocean = df.index[df["elevation_condition"] == 0]
+    pcs_coast = df.index[df["elevation_condition"] == 1]
+    pcs_land = df.index[df["elevation_condition"] == 2]
+    pcs_shallow = df.index[df["elevation_condition"] == 3]
+    region_center_pc = random.choice(list(pcs_ocean) + list(pcs_coast) + list(pcs_land) + list(pcs_shallow))
 
     # to choose existing point file (they are just lists of the point codes in a given area)
     pc_dir = "PointFiles"
@@ -406,15 +409,15 @@ def run_region_generation(db, planet_radius_km):
     #     # should probably just redo this all the time anyway in case another run added some points
     #     icdb.make_point_code_file_for_region(db, region_center_pc, region_radius_gc)
     # pcs_with_data_in_region = icdb.get_point_codes_from_file(pc_fp)
-    pcs_with_data_in_region = icdb.get_point_codes_in_database_in_region(db, region_center_pc, region_radius_gc, use_narrowing=True, pcs_to_consider=None)
+    pcs_with_data_in_region = icdb.get_point_codes_in_database_in_region(db, region_center_pc, region_radius_gc, xyzg, use_narrowing=True, pcs_to_consider=None)
 
     region_radius_gc_km = region_radius_gc * planet_radius_km
-    center_latlondeg = icm.get_latlon_from_point_code(region_center_pc)
+    center_latlondeg = icm.get_latlon_from_point_code(region_center_pc, xyzg)
 
     print(f"region centered at {region_center_pc} {center_latlondeg} deg with radius {region_radius_gc_km} km")
     # pu.scatter_icosa_points_by_code(pcs_with_data_in_region)
 
-    pcs_in_region_at_resolution = icm.get_region_around_point_code_by_spreading(region_center_pc, region_radius_gc, resolution_iterations)
+    pcs_in_region_at_resolution = icm.get_region_around_point_code_by_spreading(region_center_pc, region_radius_gc, xyzg, resolution_iterations=resolution_iterations)
 
     # add missing points to the dataframe
     missing_pcs = [x for x in pcs_in_region_at_resolution if x not in df.index]
@@ -452,7 +455,7 @@ def run_region_generation(db, planet_radius_km):
     elevation_condition_to_max_value = {sh: condition_shorthand_dict[sh]["max"] for sh in condition_shorthand_dict}
 
     if interpolate_condition_variables:
-        points_to_edit = interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolution, planet_radius_km, elevation_condition_to_default_value)
+        points_to_edit = interpolate_conditions(db, pcs_with_data_in_region, pcs_in_region_at_resolution, planet_radius_km, elevation_condition_to_default_value, xyzg)
         # redo the point file so we have accurate point list after adding pcs_in_region_at_resolution
         # (but we're just going to remake it anyway so who cares about keeping it)
         # icdb.make_point_code_file_for_region(db, region_center_pc, region_radius_gc, pcs_to_consider=points_to_edit, use_narrowing=False, overwrite=True)
@@ -461,13 +464,11 @@ def run_region_generation(db, planet_radius_km):
     
     # start by generating random elevation circles in the region
     print("getting xyzs and distance matrix")
-    xyz_array = icm.get_xyz_array_from_point_codes(points_to_edit)
+    xyz_array = icm.get_xyz_array_from_point_codes(points_to_edit, xyzg)
     xyz_tuples = [tuple(xyz) for xyz in xyz_array]
     xyz_dict = BiDict.from_dict(dict(zip(points_to_edit, xyz_tuples)))
     matrix = GreatCircleDistanceMatrix(xyz_array, radius=1)
     print("done getting xyzs and distance matrix")
-
-    # db.add_variable("elevation")
     
     elevation_conditions = db.get_dict(points_to_edit, "elevation_condition")
 
@@ -479,10 +480,8 @@ def run_region_generation(db, planet_radius_km):
         circle_radius_gc = circle_radius_dist()
         pc_center = random.choice(points_to_edit)
         xyz_center = np.array(xyz_dict[pc_center])
-        distances = matrix.get_distances_to_point(xyz_center)
         p_xyzs_in_circle = matrix.get_points_within_distance_of_point(xyz_center, circle_radius_gc)
         pcs_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle.keys()]
-        # pcs_in_circle = icm.get_region_around_point_code_by_spreading(pc_center, circle_radius_gc, resolution_iterations)
         # print(f"this circle contains {pcs_in_circle}")
 
         d_el = int(round(np.random.normal(0, el_stdev)))
@@ -563,7 +562,7 @@ def run_region_generation(db, planet_radius_km):
 
     # print("plotting elevation after generating noise")
     # pu.plot_variables_scattered_from_db(db, points_to_edit, ["elevation_condition", "elevation"])
-    pu.plot_variables_interpolated_from_db(db, points_to_edit, ["elevation_condition", "elevation"], resolution=1000, show=False)
+    pu.plot_variables_interpolated_from_db(db, points_to_edit, ["elevation_condition", "elevation"], xyzg, resolution=1000, show=False)
     plt.gcf().set_size_inches(18, 6)
     now_str = datetime.utcnow().strftime("%Y-%m-%d-%H%M%S")
     plt.savefig(f"ElevationImages/GeneratedElevation_{region_center_pc}_{region_radius_gc}_{now_str}.png")
@@ -578,6 +577,7 @@ if __name__ == "__main__":
     db_root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
     db = IcosahedronPointDatabase.load(db_root_dir)
     planet_radius_km = icm.CADA_II_RADIUS_KM
+    xyzg = XyzLookupAncestryGraph()  # will add to it as needed
 
     ## region_center_latlondeg, region_radius_great_circle_km = (10, -87), 1000  # Western Amphoto
     ## region_center_latlondeg, region_radius_great_circle_km = (-87, 10), 1000  # somewhere in O-Z because I originally mixed up latlon
@@ -590,5 +590,5 @@ if __name__ == "__main__":
     ## region_center_point_code = icm.get_nearest_icosa_point_to_latlon(region_center_latlondeg, maximum_distance=1, planet_radius=icm.CADA_II_RADIUS_KM)
 
     while True:
-        run_region_generation(db, planet_radius_km)
+        run_region_generation(db, planet_radius_km, xyzg)
     

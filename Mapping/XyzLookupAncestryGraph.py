@@ -34,9 +34,13 @@ class XyzLookupAncestryGraph:
     
     @staticmethod
     def from_list(pcs):
+        print(f"constructing XyzLookupAncestryGraph from {len(pcs)} point codes")
         xyzg = XyzLookupAncestryGraph()
-        for pc in pcs:
+        for i, pc in enumerate(pcs):
+            if i % 1000 == 0:
+                print(f"{i} / {len(pcs)}")
             xyzg.add(pc)
+        print(f"done constructing XyzLookupAncestryGraph")
         return xyzg
     
     def add(self, pc):
@@ -82,13 +86,16 @@ class XyzLookupAncestryGraph:
 
     def get_count(self):
         return len(self.pc_to_node)
+    
+    def __getitem__(self, pc):
+        return self.get_xyz(pc)
 
 
 
 if __name__ == "__main__":
     pc_array = lmd.get_image_pixel_to_icosa_point_code_from_memo("Mienta")
     pcs = reduce(lambda x, y: x+y, pc_array)
-    pcs = random.sample(pcs, 10000)
+    pcs = random.sample(pcs, 46580)
     print(len(pcs),"points")
 
     xyzg = XyzLookupAncestryGraph()

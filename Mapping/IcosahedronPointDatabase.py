@@ -290,8 +290,9 @@ class IcosahedronPointDatabase:
         resolution_iterations = 4
         # now make the bit arrays for each image we will write
         for variable_indices in partitions:
-            arr
-        im = Image.fromarray(arr)
+            raise NotImplementedError
+        # im = Image.fromarray(arr)
+        raise NotImplementedError
 
     def get_mask_point_codes_with_prefix(self, prefix):
         # want to return true for things like "D" starting with "D00"
@@ -352,7 +353,7 @@ class IcosahedronPointDatabase:
             print("all points already have lookup numbers; done")
             return
         print(f"{n_needs} points need lookup numbers")
-        lookup_numbers = get_prefix_lookup_numbers_from_point_codes(self.df.index[needs_number_mask])
+        lookup_numbers = icm.get_prefix_lookup_numbers_from_point_codes(self.df.index[needs_number_mask])
         assert len(np.unique(lookup_numbers)) == len(lookup_numbers), "conflict in lookup numbers!"
         assert len(set(lookup_numbers) & set(self.df["prefix_lookup_number"])) == 0, "conflict with existing lookup numbers!"
         self.df.loc[needs_number_mask, "prefix_lookup_number"] = lookup_numbers
@@ -430,14 +431,14 @@ def verify_df_dtype(df):
         raise TypeError("df dtypes wrong; see above")
 
 
-def get_point_codes_in_database_in_region(db, center_pc, d_gc, use_narrowing=True, pcs_to_consider=None):
+def get_point_codes_in_database_in_region(db, center_pc, d_gc, xyzg, use_narrowing=True, pcs_to_consider=None):
     df = db.df
     if use_narrowing:
         assert pcs_to_consider is None, "not implemented"
         # use narrowing to get which watersheds are all inside, all outside, and split
         t0 = time.time()
         narrowing_iterations = 4 #min(resolution_iterations - 1, random.randint(0, 3))
-        inside, outside, split = icm.narrow_watersheds_by_distance(center_pc, d_gc, narrowing_iterations)
+        inside, outside, split = icm.narrow_watersheds_by_distance(center_pc, d_gc, narrowing_iterations, xyzg)
         print("inside", inside)
         print("outside", outside)
         print("split", split)
@@ -451,7 +452,7 @@ def get_point_codes_in_database_in_region(db, center_pc, d_gc, use_narrowing=Tru
         outside_mask = db.get_mask_point_codes_with_prefixes(outside)
         split_mask = (~inside_mask) & (~outside_mask)
         split_pcs = df.index[split_mask]
-        split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, center_pc, d_gc)
+        split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, center_pc, d_gc, xyzg)
         split_pc_in_region_mask = np.array([pc in split_pcs_in_region if split_mask_this_pc else False for pc, split_mask_this_pc in zip(df.index, split_mask)])
         point_in_region_mask = inside_mask | split_pc_in_region_mask
         # for pc in split_pcs:
@@ -567,60 +568,17 @@ def partition_into_max_sum_groups(ints, max_sum):
     return boxes
 
 
-def get_prefix_lookup_numbers_from_point_codes(pcs):
-    num_to_pcs = {}  # for checking for duplicates
-    res = []
-    duplicates_found = False
-    for pc in pcs:
-        n = get_prefix_lookup_number_from_point_code(pc)
-        if n in num_to_pcs:
-            print(f"{pc=} created duplicate lookup number {n}, also found with pcs {num_to_pcs[n]}")
-            num_to_pcs[n].append(pc)
-            duplicates_found = True
-        else:
-            num_to_pcs[n] = [pc]
-        res.append(n)
-    if duplicates_found:
-        assert all(len(set(icm.strip_trailing_zeros(pc) for pc in these_pcs)) == 1 for num, these_pcs in num_to_pcs.items())
-        raise RuntimeError("duplicate lookup numbers created; see above")
-    return res
-
-
-def get_prefix_lookup_number_from_point_code(pc):
-    # reverse the number, treat the point letter as the least significant digit (base 12)
-    # all other digits are base 4
-    # so we can tell if the string starts with a prefix
-    # because it will be congruent to that prefix mod some base
-    if pc[0] == "A":
-        assert all(x == "0" for x in pc[1:])
-        return -2
-    elif pc[0] == "B":
-        assert all(x == "0" for x in pc[1:])
-        return -3
-    d1 = {y:x for x,y in enumerate("CDEFGHIJKL")}
-    d2 = {x: int(x) for x in "0123"}  # so it will KeyError for other values
-    n = d1[pc[0]] + 10 * sum(4**(p-1) * d2[pc[p]] for p in range(1, len(pc)))
+def check_lookup_number_wont_overflow(pc):
+    n = icm.get_prefix_lookup_number_from_point_code(pc)
     if n > IcosahedronPointDatabase.MAX_INT_VALUE:
         raise ValueError(f"{pc} has lookup number {n}, which exceeds max int64 value of {IcosahedronPointDatabase.MAX_INT_VALUE}")
-    return n
-
-
-def get_prefix_lookup_modulus(prefix):
-    return 1 if len(prefix) == 0 else 10 * 4**(len(prefix)-1)
-
-
-def lookup_number_matches_prefix_number(lookup_number, modulus, prefix_number):
-    if prefix_number == -2:  # A
-        return lookup_number == -2
-    elif prefix_number == -3:  # B
-        return lookup_number == -3
-    return lookup_number % modulus == prefix_number
 
 
 def get_mask_point_codes_starting_with_prefix_using_lookup_number(lookup_numbers, prefix):
-    prefix_num = get_prefix_lookup_number_from_point_code(prefix)
-    modulus = get_prefix_lookup_modulus(prefix)
-    matches_mask = lookup_number_matches_prefix_number(lookup_numbers, modulus, prefix_num)
+    check_lookup_number_wont_overflow(prefix)
+    prefix_num = icm.get_prefix_lookup_number_from_point_code(prefix)
+    modulus = icm.get_prefix_lookup_modulus(prefix)
+    matches_mask = icm.lookup_number_matches_prefix_number(lookup_numbers, modulus, prefix_num)
     return matches_mask
 
 

@@ -1,0 +1,7 @@
+- ways of referring to Icosahedron points:
+-- point code (pc), which tells the ancestry directly as a string, e.g. C1022301
+-- point number (pn), which tells the birth order, or the index of this point in the list of all point codes in order
+-- prefix lookup number (ln), which is a conversion of the point code into an integer directly using a mixed-base system
+-- place value array (pv), which is the midpoint between point code and prefix lookup number; a conversion of the point code into an array of place values in the mixed-base system; for example, "C12301" converts to [0, 1, 2, 3, 0, 1] (little-endian so I can just do coefficient*base**index instead of reversing index to get the power at this place value)
+
+

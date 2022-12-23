@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 
 
-def filter_point_codes_in_region_one_by_one(pcs, center_pc, radius_gc_normalized):
+def filter_point_codes_in_region_one_by_one(pcs, center_pc, radius_gc_normalized, xyzg):
     # goes over all point numbers you pass in, gets their distance from the center,
     # and returns the ones that are within the radius
 
@@ -19,7 +19,7 @@ def filter_point_codes_in_region_one_by_one(pcs, center_pc, radius_gc_normalized
     t0 = time.time()
     last_print_time = time.time()
     n_points = len(pcs)
-    region_center_latlondeg = icm.get_latlon_from_point_code(center_pc)
+    region_center_xyz = xyzg[center_pc]
     for i, pc in enumerate(pcs):
         if time.time() - last_print_time > 2:
             dt = time.time() - t0
@@ -27,8 +27,8 @@ def filter_point_codes_in_region_one_by_one(pcs, center_pc, radius_gc_normalized
             time_remaining = (n_points - i) / rate
             print(f"i = {i} / {len(pcs)}; estimated {time_remaining:.2f} seconds remaining")
             last_print_time = time.time()
-        latlondeg = icm.get_latlon_from_point_code(pc)
-        d_gc = UnitSpherePoint.distance_great_circle_latlondeg_static(region_center_latlondeg, latlondeg)
+        xyz = xyzg[pc]
+        d_gc = UnitSpherePoint.distance_great_circle_xyz_static(region_center_xyz, xyz)
         # print(f"distance from center {region_center_latlondeg}\nto point {pc} {latlondeg}\nis {d_gc} normalized to sphere radius 1")
         if d_gc <= radius_gc_normalized:
             region.add(pc)
