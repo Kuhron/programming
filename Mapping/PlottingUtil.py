@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -181,7 +182,7 @@ def plot_interpolated_data(data_coords, values, lat_range, lon_range, n_lats, n_
 
 
 def scatter_icosa_points_by_number(point_numbers, show=True):
-    point_codes = [icm.get_point_code_from_point_number(pn) for pn in point_numbers]
+    point_codes = icm.get_point_codes_from_point_numbers(point_numbers)
     scatter_icosa_points_by_code(point_codes, show=show)
 
 
@@ -255,7 +256,7 @@ def plot_coordinate_patterns(n_iterations):
 def plot_variable_at_point_codes(pcs, db, variable_name, xyzg, show=True):
     df = db.df
     df2 = df.loc[pcs,:]
-    lls = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
+    latlons = icm.get_latlons_from_point_codes(pcs, xyzg)
     lats = [ll[0] for ll in lls]
     lons = [ll[1] for ll in lls]
     variable_values = df2.loc[:, variable_name]
@@ -274,7 +275,7 @@ def plot_variable_scattered_from_db(db, pcs, var_to_plot, show=True):
 
 def plot_variable_scattered_from_dict(pc_to_val, xyzg, title=None, show=True):
     pcs = list(pc_to_val.keys())
-    latlons = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
+    latlons = icm.get_latlons_from_point_codes(pcs, xyzg)
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     vals = [pc_to_val.get(pc) for pc in pcs]
@@ -302,7 +303,7 @@ def plot_variable_interpolated_from_db(db, pcs, var_to_plot, xyzg, resolution, s
 
 def plot_variable_interpolated_from_dict(pc_to_val, xyzg, resolution, title=None, show=True):
     pcs = list(pc_to_val.keys())
-    latlons = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
+    latlons = icm.get_latlons_from_point_codes(pcs, xyzg)
     values = [pc_to_val.get(pc) for pc in pcs]
     plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution)
     if show:
@@ -320,8 +321,23 @@ def plot_variables_interpolated_from_db(db, pcs, vars_to_plot, xyzg, resolution,
         plt.show()
 
 
+def plot_variable_world_map_from_db(db, var_to_plot, xyzg, pixels_per_degree, show=False):
+    pcs = db.df.index
+    # pcs = random.sample(list(pcs), 10000)  # debug
+    print("getting latlons")
+    latlons = icm.get_latlons_from_point_codes(pcs, xyzg)
+    print("getting values")
+    values = db.df.loc[pcs, var_to_plot]
+    n_lats = int(2*90*pixels_per_degree)
+    n_lons = int(2*180*pixels_per_degree)
+    print("plotting interpolated")
+    plot_interpolated_data(latlons, values, lat_range=(-90, 90), lon_range=(-180, 180), n_lats=n_lats, n_lons=n_lons)
+    if show:
+        plt.show()
+
+
 def plot_latlons(pcs, xyzg):
-    latlons = [icm.get_latlon_from_point_code(pc, xyzg) for pc in pcs]
+    latlons = icm.get_latlons_from_point_codes(pcs, xyzg)
     lats = [latlon[0] for latlon in latlons]
     lons = [latlon[1] for latlon in latlons]
     plt.scatter(lons, lats)

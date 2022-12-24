@@ -11,26 +11,23 @@ import LoadMapData as lmd
 
 
 
-class XyzNode:
-    def __init__(self, point_code, par_node, dpar_node, xyz):
-        self.point_code = point_code
-        self.par_node = par_node
-        self.dpar_node = dpar_node
-        self.xyz = xyz
+# class XyzNode:
+#     def __init__(self, point_code, par_node, dpar_node, xyz):
+#         self.point_code = point_code
+#         self.par_node = par_node
+#         self.dpar_node = dpar_node
+#         self.xyz = xyz
     
-    # def get_parent_point_code(self):
-    #     return icm.get_parent_from_point_code(self.point_code)
-    
-    # def get_directional_parent_point_code(self):
-    #     return icm.get_directional_parent_from_point_code(self.point_code)
-    
-    def __repr__(self):
-        return f"<{self.point_code} at {self.xyz}>"
+#     def __repr__(self):
+#         return f"<{self.point_code} at {self.xyz}>"
 
 
 class XyzLookupAncestryGraph:
     def __init__(self):
-        self.pc_to_node = {}
+        self.array = []  # according to this, just Python list is pretty good: https://stackoverflow.com/questions/7133885/fastest-way-to-grow-a-numpy-numeric-array
+        self.pc_to_array_index = {}
+        self.array_index_to_pc = {}
+        self.count = 0
     
     @staticmethod
     def from_list(pcs):
@@ -44,38 +41,41 @@ class XyzLookupAncestryGraph:
         return xyzg
     
     def add(self, pc):
-        if pc in self.pc_to_node:
+        if pc in self.pc_to_array_index:
             # print(f"{pc=} already in ancestry graph")
             return
         par_pc = icm.get_parent_from_point_code(pc)
         dpar_pc = icm.get_directional_parent_from_point_code(pc)
-        assert (par_pc is None and dpar_pc is None) or (par_pc is not None and dpar_pc is not None)
+        assert (par_pc is None and dpar_pc is None) or (par_pc is not None and dpar_pc is not None), "neither or both parents should be None"
         if par_pc is None:
             # original point, base case
-            par_node = None
-            dpar_node = None
+            par_index = None
+            dpar_index = None
             xyz = icm.get_xyz_from_point_code(pc)
         else:
             self.add(par_pc)
             self.add(dpar_pc)
             # now that they are in here, get the xyz from the (now-filled-out) parent nodes
-            par_node = self.pc_to_node[par_pc]
-            dpar_node = self.pc_to_node[dpar_pc]
-            par_xyz = par_node.xyz
-            dpar_xyz = dpar_node.xyz
+            par_index = self.pc_to_array_index[par_pc]
+            dpar_index = self.pc_to_array_index[dpar_pc]
+            par_xyz = self.array[par_index]
+            dpar_xyz = self.array[dpar_index]
             xyz = icm.get_xyz_of_child_from_parent_xyzs(par_xyz, dpar_xyz)
         
-        node = XyzNode(pc, par_node, dpar_node, xyz)
-        self.pc_to_node[pc] = node
+        index = self.count
+        self.pc_to_array_index[pc] = index
+        self.array_index_to_pc[index] = pc
+        self.array.append(xyz)
+        self.count += 1
     
     def get_xyz(self, pc):
-        if pc not in self.pc_to_node:
+        if pc not in self.pc_to_array_index:
             self.add(pc)
-        node = self.pc_to_node[pc]
-        return node.xyz
+        index = self.pc_to_array_index[pc]
+        return self.array[index]
     
     def get_all_xyzs(self):
-        res = {pc: node.xyz for pc, node in self.pc_to_node.items()}
+        res = {pc: self.array[index] for pc, index in self.pc_to_array_index.items()}
         return res
     
     def get_xyzs(self, pcs):
@@ -85,7 +85,7 @@ class XyzLookupAncestryGraph:
         return res
 
     def get_count(self):
-        return len(self.pc_to_node)
+        return self.count
     
     def __getitem__(self, pc):
         return self.get_xyz(pc)

@@ -5,6 +5,15 @@ DON'T do these (without good reason):
 
 TODO:
 
+- minimize hdf5 size by using lookup number instead of point code as index (and get rid of point code from the file altogether), use smaller dtypes like int8 for the condition variables since they have very few values
+
+- load conditions from images directly whenever database is loaded, so I can change them and it will automatically know about them when I restart the program
+-- we will still need to keep conditions in the dataframe for the points where they've been interpolated (although could experiment with removing those at some point and only having the conditions true for the actual control points)
+--- but should basically overwrite the control point conditions on every db load by reading the images
+-- when get a circle to edit, check if need to adjust the existing elevations to fit the conditions (this could be the case if conditions at a point have been changed), figure out how to adjust them to fit conditions (may not be able to do a constant shift of the whole circle, might have to do different adjustments in different places)
+
+- make XyzLookupAncestryGraph take less memory, use ints instead of strings, use arrays and minimize use of objects, stuff like that
+
 - apparently I was wrong way back when I wrote the original point coordinates! The latitudes of the north and south rings are not 30, they're arctan(1/2) = 26.57, according to Wikipedia (https://en.wikipedia.org/wiki/Regular_icosahedron). Decide if this is worth fixing, and if so, need to recalculate a bunch of coordinates of points. If want to fix it, the best way would seem to be to use the images for control points and recalculate their codes in the new icosahedron directly from where they are in the image, but for the non-control points, get their coordinates and find closest new icosa point to them within a tolerance? This might be a mess. Think about it a lot before doing this.
 
 - make equirectangular maps centered on their center longitude (matplotlib usually does this, but need to fix it in the case where region crosses the antimeridian)
@@ -16,8 +25,11 @@ TODO:
 - once have a bunch of elevation generated, look at a bunch of it and see if anything looks weird/wrong
 -- can use smoothing to get rid of things like pockmarks from intervening higher-iteration points being at default while the grid around them already has data on it
 -- sandpile-like smoothing where things spill over onto nearby points if the gradient is too steep?
+-- erosion, find where water will flow and move dirt down these gradients
 
-- find and fix the random points that are zero elevation even though everything around them is high land (seen in some maps)
+- fix glitch spots
+-- find and fix the random points that are zero elevation even though everything around them is high land (seen in some maps)
+-- the area of Oligra-Zitomo (around -50, 30) that has like vertical ridges where it skipped over every other meridian or something like that
 
 - think of ways to make distance calculation faster
 -- including making xyz calculation faster for large sets of points, can try using PointCodeTrie or a similar structure like a graph that allows you to store coordinates at each point and have pointers to its parents

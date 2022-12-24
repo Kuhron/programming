@@ -365,23 +365,24 @@ def run_region_generation(db, planet_radius_km, xyzg):
     circle_radius_dist = lambda: power_law()
     el_stdev = 15
     resolution_iterations = 9
-    n_circles = 100
+    n_circles = 2000
 
     # to choose random one
     ## region_center_pc = icm.get_random_point_code(min_iterations=6, expected_iterations=9, max_iterations=9, prefix=desired_point_prefix)
-    ## region_radius_gc = random.randint(600, 1000)/10000
-    region_radius_gc = 0.01
+    region_radius_gc = random.randint(600, 1000)/10000
+    ## region_radius_gc = 0.01
     ## region_center_latlondeg = icm.get_latlon_from_point_code(region_center_point_code)
     ## region_center_latlondeg, region_radius_great_circle_km = (
     #    UnitSpherePoint.get_random_unit_sphere_point().latlondeg(), 250
     # )
 
     # to choose based on some condition
-    pcs_ocean = df.index[df["elevation_condition"] == 0]
-    pcs_coast = df.index[df["elevation_condition"] == 1]
-    pcs_land = df.index[df["elevation_condition"] == 2]
-    pcs_shallow = df.index[df["elevation_condition"] == 3]
-    region_center_pc = random.choice(list(pcs_ocean) + list(pcs_coast) + list(pcs_land) + list(pcs_shallow))
+    # pcs_ocean = df.index[df["elevation_condition"] == 0]
+    # pcs_coast = df.index[df["elevation_condition"] == 1]
+    # pcs_land = df.index[df["elevation_condition"] == 2]
+    # pcs_shallow = df.index[df["elevation_condition"] == 3]
+    ## region_center_pc = random.choice(list(pcs_ocean) + list(pcs_coast) + list(pcs_land) + list(pcs_shallow))
+    region_center_pc = random.choice(df.index[df["elevation_condition"] != -1])
 
     # to choose existing point file (they are just lists of the point codes in a given area)
     pc_dir = "PointFiles"

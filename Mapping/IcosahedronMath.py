@@ -140,11 +140,13 @@ def get_latlons_from_point_numbers(pns):
 
 
 def get_latlons_from_point_codes(pcs, xyzg):
-    # TODO use the fact that many of the point codes will share some ancestry
-    # maybe can use the PointCodeTrie to make this faster at some point
-    # e.g. storing the latlon of the parent in the trie node above
-    # do something similar for getting xyzs
-    return [get_latlon_from_point_code(pc, xyzg) for pc in pcs]
+    res = []
+    for i, pc in enumerate(pcs):
+        if i % 1000 == 0:
+            print(f"{i} / {len(pcs)}")
+        latlon = get_latlon_from_point_code(pc, xyzg)
+        res.append(latlon)
+    return res
 
 
 def get_xyz_from_point_number(pn):

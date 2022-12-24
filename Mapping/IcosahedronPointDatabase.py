@@ -25,6 +25,7 @@ from BiDict import BiDict
 import FindPointsInCircle as find
 import PlottingUtil as pu
 from LoadMapData import get_default_values_of_conditions, translate_array_by_dict
+from XyzLookupAncestryGraph import XyzLookupAncestryGraph
 
 
 class IcosahedronPointDatabase:
@@ -411,6 +412,7 @@ class IcosahedronPointDatabase:
         print("process complete; all data is stored in data.h5")
 
 
+
 def touch(fp):
     assert not os.path.exists(fp), "cannot touch existing file"
     open(fp, "w").close()
@@ -614,27 +616,30 @@ if __name__ == "__main__":
     db_root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
 
     # to start the database over based on just the control point images
-    initialize_default_value_dataframe_from_control_points(db_root_dir)
-    sys.exit()
+    # initialize_default_value_dataframe_from_control_points(db_root_dir)
+    # sys.exit()
 
     db = IcosahedronPointDatabase.load(db_root_dir)
     df = db.df
 
+    xyzg = XyzLookupAncestryGraph()
+    pu.plot_variable_world_map_from_db(db, "elevation", xyzg, pixels_per_degree=10, show=True)
+
     # db.write_as_images()  # experimental, not working yet
 
-    pc_dir = "PointFiles"
-    fname, fp = get_random_point_code_file(pc_dir)
-    center_pc, region_radius_gc = get_point_code_and_distance_from_filename(fname)
+    # pc_dir = "PointFiles"
+    # fname, fp = get_random_point_code_file(pc_dir)
+    # center_pc, region_radius_gc = get_point_code_and_distance_from_filename(fname)
 
-    max_iterations = 10
+    # max_iterations = 10
     
-    if point_code_file_exists(center_pc, region_radius_gc, "all_pcs"):
-        print("file exists, not calculating this region")
-    control_pcs = get_point_codes_from_file(fp)
-    all_pcs = icm.get_region_around_point_code_by_spreading(center_pc, region_radius_gc, max_iterations)
-    new_fname_prefix = f"pcs_iter{max_iterations}"
-    pu.scatter_icosa_points_by_code(all_pcs, show=True)
-    write_point_codes_to_file(all_pcs, center_pc, region_radius_gc, new_fname_prefix)
+    # if point_code_file_exists(center_pc, region_radius_gc, "all_pcs"):
+    #     print("file exists, not calculating this region")
+    # control_pcs = get_point_codes_from_file(fp)
+    # all_pcs = icm.get_region_around_point_code_by_spreading(center_pc, region_radius_gc, max_iterations)
+    # new_fname_prefix = f"pcs_iter{max_iterations}"
+    # pu.scatter_icosa_points_by_code(all_pcs, show=True)
+    # write_point_codes_to_file(all_pcs, center_pc, region_radius_gc, new_fname_prefix)
 
 
     # random.shuffle(fps)

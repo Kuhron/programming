@@ -441,12 +441,14 @@ def write_image_pixel_to_icosa_point_code(region_name, overwrite_existing=False)
 
 def get_point_codes_in_order_from_memo(region_name):
     rc_to_pc = get_image_pixel_to_icosa_point_code_from_memo(region_name)
-    r_size, c_size = get_rc_size(rc_to_pc.keys())
+    r_size = len(rc_to_pc)
+    c_size = len(rc_to_pc[0])
+    assert all(len(row) == c_size for row in rc_to_pc)
     # create flat list
     pcs = []
     for r in range(r_size):
         for c in range(c_size):
-            pc = rc_to_pc[(r,c)]
+            pc = rc_to_pc[r][c]
             pcs.append(pc)
     assert len(pcs) == r_size * c_size
     return pcs
@@ -466,6 +468,27 @@ def get_condition_int_array_for_region(region_name, map_variable):
     assert arr.shape[-1] == 4, arr.shape  # RGBA dimension
     int_arr = get_condition_int_array_from_image_array(arr, color_to_shorthand_int)
     return int_arr
+
+
+def get_point_code_to_condition_dict_for_region(region_name, map_variable):
+    condition_arr = get_condition_int_array_for_region(region_name, map_variable)
+    conditions = condition_arr.flatten()
+    point_codes = get_point_codes_in_order_from_memo(region_name)
+    assert len(conditions) == len(point_codes)
+    return dict(zip(point_codes, conditions))
+
+
+def get_point_code_to_condition_dict_for_world(world_name, map_variable):
+    print(f"getting conditions for {map_variable=} in {world_name=}")
+    d = {}
+    region_metadata = get_region_metadata_dict()
+    for region_name in region_metadata.keys():
+        if region_metadata[region_name]["world_name"] != world_name:
+            continue
+        region_d = get_point_code_to_condition_dict_for_region(region_name, map_variable)
+        d.update(region_d)
+    print(f"done getting conditions for {map_variable=} in {world_name=}")
+    return d
 
 
 def get_all_map_variable_names(world_name):
@@ -511,8 +534,21 @@ def get_control_point_dataframe(world_name):
 def plot_default_values_by_region(world_name, map_variable):
     region_metadata = get_region_metadata_dict()
     for region_name in region_metadata.keys():
+        if region_metadata[region_name]["world_name"] != world_name:
+            continue
         default_value_arr = get_default_value_array(region_name, map_variable)
         plt.imshow(default_value_arr)
+        plt.colorbar()
+        plt.show()
+
+
+def plot_conditions_by_region(world_name, map_variable):
+    region_metadata = get_region_metadata_dict()
+    for region_name in region_metadata.keys():
+        if region_metadata[region_name]["world_name"] != world_name:
+            continue
+        condition_arr = get_condition_int_array_for_region(region_name, map_variable)
+        plt.imshow(condition_arr)
         plt.colorbar()
         plt.show()
 
@@ -542,9 +578,13 @@ if __name__ == "__main__":
     world_metadata = get_world_metadata_dict()["Cada II"]
     map_variable = "elevation"
 
+    d = get_point_code_to_condition_dict_for_world(world_name, map_variable)
+    
     # plot_default_values_by_region(world_name, map_variable)
-    df = get_control_point_dataframe(world_name)
-    df.to_hdf("control_data.h5", key="control_data")
+    # plot_conditions_by_region(world_name, map_variable)
+
+    # df = get_control_point_dataframe(world_name)
+    # df.to_hdf("control_data.h5", key="control_data")
 
     # for region_name in region_metadata.keys():
     #     # write_image_conditions_as_image_shape_in_shorthand(region_name, map_variable)

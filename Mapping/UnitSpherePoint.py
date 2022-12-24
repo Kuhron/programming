@@ -137,6 +137,8 @@ class UnitSpherePoint:
 
     @staticmethod
     def convert_distance_great_circle_to_3d_array(d_gc, radius=1):
+        # TODO if ever use this much, convert it to working primarily on arrays rather than single values
+        # (like you did with the conversion of 3d to great circle distance)
         return (np.vectorize(lambda d: UnitSpherePoint.convert_distance_great_circle_to_3d(d, radius=radius)))(d_gc)
 
     def distance_3d(self, other, radius=1):
