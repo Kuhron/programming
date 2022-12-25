@@ -5,6 +5,7 @@
 
 import random
 from functools import reduce
+import numpy as np
 
 import IcosahedronMath as icm
 import LoadMapData as lmd
@@ -25,86 +26,88 @@ import LoadMapData as lmd
 class XyzLookupAncestryGraph:
     def __init__(self):
         self.array = []  # according to this, just Python list is pretty good: https://stackoverflow.com/questions/7133885/fastest-way-to-grow-a-numpy-numeric-array
-        self.pc_to_array_index = {}
-        self.array_index_to_pc = {}
+        self.ln_to_array_index = {}
+        self.array_index_to_ln = {}
         self.count = 0
     
     @staticmethod
-    def from_list(pcs):
-        print(f"constructing XyzLookupAncestryGraph from {len(pcs)} point codes")
+    def from_list(lns):
+        print(f"constructing XyzLookupAncestryGraph from {len(lns)} lookup numbers")
         xyzg = XyzLookupAncestryGraph()
-        for i, pc in enumerate(pcs):
+        for i, ln in enumerate(lns):
             if i % 1000 == 0:
-                print(f"{i} / {len(pcs)}")
-            xyzg.add(pc)
+                print(f"XyzLookupAncestryGraph.from_list: {i} / {len(lns)}")
+            xyzg.add(ln)
         print(f"done constructing XyzLookupAncestryGraph")
         return xyzg
     
-    def add(self, pc):
-        if pc in self.pc_to_array_index:
-            # print(f"{pc=} already in ancestry graph")
+    def add(self, ln):
+        assert type(ln) in [int, np.int64], f"{ln=} of type {type(ln)}"
+        if ln in self.ln_to_array_index:
+            # print(f"{ln=} already in ancestry graph")
             return
-        par_pc = icm.get_parent_from_point_code(pc)
-        dpar_pc = icm.get_directional_parent_from_point_code(pc)
-        assert (par_pc is None and dpar_pc is None) or (par_pc is not None and dpar_pc is not None), "neither or both parents should be None"
-        if par_pc is None:
+        par_ln = icm.get_parent_from_lookup_number(ln)
+        dpar_ln = icm.get_directional_parent_from_lookup_number(ln)
+        # print(f"{par_ln=}, {dpar_ln=}")
+        assert (par_ln is None and dpar_ln is None) or (par_ln is not None and dpar_ln is not None), "neither or both parents should be None"
+        if par_ln is None:
             # original point, base case
             par_index = None
             dpar_index = None
-            xyz = icm.get_xyz_from_point_code(pc)
+            pn = icm.get_point_number_from_lookup_number(ln)
+            xyz = icm.get_xyz_of_initial_point_number(pn)
         else:
-            self.add(par_pc)
-            self.add(dpar_pc)
+            self.add(par_ln)
+            self.add(dpar_ln)
             # now that they are in here, get the xyz from the (now-filled-out) parent nodes
-            par_index = self.pc_to_array_index[par_pc]
-            dpar_index = self.pc_to_array_index[dpar_pc]
+            par_index = self.ln_to_array_index[par_ln]
+            dpar_index = self.ln_to_array_index[dpar_ln]
             par_xyz = self.array[par_index]
             dpar_xyz = self.array[dpar_index]
             xyz = icm.get_xyz_of_child_from_parent_xyzs(par_xyz, dpar_xyz)
         
         index = self.count
-        self.pc_to_array_index[pc] = index
-        self.array_index_to_pc[index] = pc
+        self.ln_to_array_index[ln] = index
+        self.array_index_to_ln[index] = ln
         self.array.append(xyz)
         self.count += 1
     
-    def get_xyz(self, pc):
-        if pc not in self.pc_to_array_index:
-            self.add(pc)
-        index = self.pc_to_array_index[pc]
+    def get_xyz(self, ln):
+        if ln not in self.ln_to_array_index:
+            self.add(ln)
+        index = self.ln_to_array_index[ln]
         return self.array[index]
     
     def get_all_xyzs(self):
-        res = {pc: self.array[index] for pc, index in self.pc_to_array_index.items()}
+        res = {ln: self.array[index] for ln, index in self.ln_to_array_index.items()}
         return res
     
-    def get_xyzs(self, pcs):
+    def get_xyzs(self, lns):
         res = {}
-        for pc in pcs:
-            res[pc] = self.get_xyz(pc)  # do this in case we need to add it and its ancestry
+        for ln in lns:
+            res[ln] = self.get_xyz(ln)  # do this in case we need to add it and its ancestry
         return res
 
     def get_count(self):
         return self.count
     
-    def __getitem__(self, pc):
-        return self.get_xyz(pc)
+    def __getitem__(self, ln):
+        return self.get_xyz(ln)
 
 
 
 if __name__ == "__main__":
     pc_array = lmd.get_image_pixel_to_icosa_point_code_from_memo("Mienta")
-    pcs = reduce(lambda x, y: x+y, pc_array)
-    pcs = random.sample(pcs, 46580)
-    print(len(pcs),"points")
+    lns = reduce(lambda x, y: x+y, pc_array)
+    lns = random.sample(lns, 46580)
+    lns = icm.get_prefix_lookup_numbers_from_point_codes(lns)
+    print(len(lns),"points")
 
     xyzg = XyzLookupAncestryGraph()
-    for i, pc in enumerate(pcs):
+    for i, ln in enumerate(lns):
         if i % 1000 == 0:
-            print(i, len(pcs), xyzg.get_count())
-        xyzg.add(pc)
-    # for pc, node in xyzg.pc_to_node.items():
-    #     print(node)
+            print(i, len(lns), xyzg.get_count())
+        xyzg.add(ln)
     xyzs = xyzg.get_all_xyzs()
     print("done")
     input("check")

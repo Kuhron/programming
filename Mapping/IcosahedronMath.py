@@ -28,6 +28,7 @@ LETTER_TO_NUMBER_DICT = {c:i for i,c in enumerate("CDEFGHIJKL")}
 LETTER_TO_NUMBER_DICT["A"] = -2
 LETTER_TO_NUMBER_DICT["B"] = -3
 NUMBER_TO_LETTER_DICT = {i:c for c,i in LETTER_TO_NUMBER_DICT.items()}
+INITIAL_POINT_LOOKUP_NUMBERS = [-2, -3, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 
 
@@ -88,6 +89,15 @@ def get_point_code_from_point_number(pn):
     return res
 
 
+def get_point_number_from_lookup_number(ln):
+    try:
+        return INITIAL_POINT_LOOKUP_NUMBERS.index(ln)
+    except ValueError:
+        pc = get_point_code_from_prefix_lookup_number(ln)
+        pn = get_point_number_from_point_code(pc)
+        return pn
+
+
 def get_point_codes_from_point_numbers(pns):
     print(f"getting point codes for {len(pns)} point numbers")
     pcs = [get_point_code_from_point_number(pn) for pn in pns]
@@ -96,28 +106,20 @@ def get_point_codes_from_point_numbers(pns):
 
 
 def get_latlon_from_point_code(pc, xyzg):
+    ln = get_prefix_lookup_number_from_point_code(pc)
+    return get_latlon_from_lookup_number(ln, xyzg)
+
+
+def get_latlon_from_lookup_number(ln, xyzg):
     if xyzg is None:
-        if len(pc) == 1:
-            return get_latlon_of_initial_point_code(pc)
+        if ln in INITIAL_POINT_LOOKUP_NUMBERS:
+            return get_latlon_of_initial_lookup_number(ln)
         else:
-            xyz = get_xyz_from_point_code(pc, xyzg)
+            xyz = get_xyz_from_lookup_number(ln, xyzg)
     else:
-        xyz = xyzg[pc]
+        xyz = xyzg[ln]
     
     return mcm.unit_vector_cartesian_to_lat_lon(*xyz)
-
-
-def get_xyz_from_point_code(pc, xyzg=None):
-    if xyzg is None:
-        if len(pc) == 1:
-            pn = get_point_number_from_point_code(pc)
-            return get_xyz_from_point_number(pn)
-        else:
-            xyz = get_xyz_from_point_code_recursive(pc)
-    else:
-        xyz = xyzg[pc]
-
-    return xyz
 
 
 def get_latlon_of_initial_point_number(pn):
@@ -128,6 +130,11 @@ def get_latlon_of_initial_point_number(pn):
 def get_latlon_of_initial_point_code(pc):
     pn = get_point_number_from_point_code(pc)
     return get_latlon_of_initial_point_number(pn)
+
+
+def get_latlon_of_initial_lookup_number(ln):
+    pc = get_point_code_from_prefix_lookup_number(ln)
+    return get_latlon_from_point_code(pc)
 
 
 def get_latlon_from_point_number(pn):
@@ -143,7 +150,7 @@ def get_latlons_from_point_codes(pcs, xyzg):
     res = []
     for i, pc in enumerate(pcs):
         if i % 1000 == 0:
-            print(f"{i} / {len(pcs)}")
+            print(f"getting latlons from point codes: {i} / {len(pcs)}")
         latlon = get_latlon_from_point_code(pc, xyzg)
         res.append(latlon)
     return res
@@ -156,12 +163,36 @@ def get_xyz_from_point_number(pn):
     return xyz
 
 
+def get_xyz_from_point_code(pc, xyzg=None):
+    ln = get_prefix_lookup_number_from_point_code(pc)
+    return get_xyz_from_lookup_number(ln, xyzg)
+
+
+def get_xyz_from_lookup_number(ln, xyzg):
+    # print(f"{ln=}")
+    if xyzg is None:
+        if ln in INITIAL_POINT_LOOKUP_NUMBERS:
+            pn = get_point_number_from_lookup_number(ln)
+            return get_xyz_from_point_number(pn)
+        else:
+            pc = get_point_code_from_prefix_lookup_number(ln)
+            xyz = get_xyz_from_point_code_recursive(pc)
+    else:
+        xyz = xyzg[ln]
+
+    return xyz
+
+
 def get_xyzs_from_point_numbers(pns):
     return [get_xyz_from_point_number(pn) for pn in pns]
 
 
 def get_xyzs_from_point_codes(pcs, xyzg):
     return [get_xyz_from_point_code(pc, xyzg) for pc in pcs]
+
+
+def get_xyzs_from_lookup_numbers(lns, xyzg):
+    return [get_xyz_from_lookup_number(ln, xyzg) for ln in lns]
 
 
 def get_xyz_array_from_point_codes(pcs, xyzg):
@@ -638,6 +669,13 @@ def get_parent_from_point_code(pc):
     return strip_trailing_zeros(pc[:-1])
 
 
+def get_parent_from_lookup_number(ln):
+    pc = get_point_code_from_prefix_lookup_number(ln)
+    par_pc = get_parent_from_point_code(pc)
+    par_ln = get_prefix_lookup_number_from_point_code(par_pc)
+    return par_ln
+
+
 def get_directional_parent_from_point_number(pn):
     pc = get_point_code_from_point_number(pn)
     dpar_code = get_directional_parent_from_point_code(pc)
@@ -680,13 +718,11 @@ def get_directional_parent_from_point_code(pc):
     return dpar
 
 
-# @functools.lru_cache(maxsize=10000)
-# def get_directional_parent_from_point_code_brute_force(point_code):
-#     print("brute-forcing dpar from pc")
-#     point_number = get_point_number_from_point_code(point_code)
-#     dp_number = get_directional_parent_from_point_number(point_number)
-#     dp_code = get_point_code_from_point_number(dp_number)
-#     return dp_code
+def get_directional_parent_from_lookup_number(ln):
+    pc = get_point_code_from_prefix_lookup_number(ln)
+    dpar_pc = get_directional_parent_from_point_code(pc)
+    dpar_ln = get_prefix_lookup_number_from_point_code(dpar_pc)
+    return dpar_ln
 
 
 # @functools.lru_cache(maxsize=10000)
@@ -1165,8 +1201,8 @@ def get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
     return nn_xyz, min_d
 
 
-def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, xyzg, k_neighbors=1, allow_self=False):
-    if len(candidate_pcs) == 0:
+def get_nearest_neighbors_ln_to_ln_with_distance(query_lns, candidate_lns, xyzg, k_neighbors=1, allow_self=False):
+    if len(candidate_lns) == 0:
         # there is no point querying because there are no neighbors
         raise ValueError("no candidates")
     if not allow_self:
@@ -1188,9 +1224,9 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, xyzg,
     #         xyz = get_xyz_from_point_code(pc)
     #         pc_to_xyz[pc] = xyz
 
-    candidate_xyzs = np.array([xyzg[pc] for pc in candidate_pcs])
+    candidate_xyzs = np.array([xyzg[ln] for ln in candidate_lns])
     print(f"{candidate_xyzs.shape=}")
-    query_xyzs = np.array([xyzg[pc] for pc in query_pcs])
+    query_xyzs = np.array([xyzg[ln] for ln in query_lns])
     print(f"{query_xyzs.shape=}")
 
     print("creating KDTree")
@@ -1200,12 +1236,12 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, xyzg,
     print("done querying KDTree")
 
     if allow_self:
-        assert distances.shape == nn_indices.shape == (len(query_pcs), k_neighbors)
+        assert distances.shape == nn_indices.shape == (len(query_lns), k_neighbors)
     else:
         # just process the distances and nn_indices here so the dict creation code is the same
         new_distances = []
         new_nn_indices = []
-        for i in range(len(query_pcs)):
+        for i in range(len(query_lns)):
             distances_row = distances[i]
             nn_indices_row = nn_indices[i]
             if distances_row[0] == 0:
@@ -1218,25 +1254,25 @@ def get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, xyzg,
                 new_nn_indices.append(nn_indices_row[:-1])
         distances = np.array(new_distances)
         nn_indices = np.array(new_nn_indices)
-        assert distances.shape == nn_indices.shape == (len(query_pcs), k_neighbors-1)
+        assert distances.shape == nn_indices.shape == (len(query_lns), k_neighbors-1)
 
-    nn_index_lookup = {pc_query: nn_indices[i] for i, pc_query in enumerate(query_pcs)}
+    nn_index_lookup = {query_ln: nn_indices[i] for i, query_ln in enumerate(query_lns)}
 
     all_nn_indices = set()  # retain flexibility for k_neighbors > 1, which I might want to use later
     for indices_list in nn_indices:
         all_nn_indices |= set(indices_list)
     
-    nn_index_to_pc = {index: candidate_pcs[index] for index in all_nn_indices}
+    nn_index_to_ln = {index: candidate_lns[index] for index in all_nn_indices}
 
-    nn_pc_lookup = {}
-    for pc_query in query_pcs:
-        these_nn_indices = nn_index_lookup[pc_query]
-        these_nn_pcs = [nn_index_to_pc[index] for index in these_nn_indices]
-        nn_pc_lookup[pc_query] = these_nn_pcs
+    nn_ln_lookup = {}
+    for query_ln in query_lns:
+        these_nn_indices = nn_index_lookup[query_ln]
+        these_nn_lns = [nn_index_to_ln[index] for index in these_nn_indices]
+        nn_ln_lookup[query_ln] = these_nn_lns
     
-    d_lookup = {pc_query: distances[i] for i, pc_query in enumerate(query_pcs)}
+    d_lookup = {query_ln: distances[i] for i, query_ln in enumerate(query_lns)}
 
-    return nn_pc_lookup, d_lookup
+    return nn_ln_lookup, d_lookup
 
 
 def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_neighbors=1, allow_self=False):
@@ -1245,7 +1281,7 @@ def get_nearest_neighbors_pn_to_pn_with_distance(query_pns, candidate_pns, k_nei
         raise ValueError("no candidates")
     query_pcs = get_point_codes_from_point_numbers(query_pns)
     candidate_pcs = get_point_codes_from_point_numbers(candidate_pns)
-    return get_nearest_neighbors_pc_to_pc_with_distance(query_pcs, candidate_pcs, k_neighbors, allow_self)
+    return get_nearest_neighbors_ln_to_ln_with_distance(query_pcs, candidate_pcs, k_neighbors, allow_self)
 
 
 def _old_iterative_get_nearest_neighbor_xyz_to_xyz(xyz, candidates_xyz):
@@ -1346,6 +1382,7 @@ def get_distance_point_number_to_xyz_great_circle(pn, xyz, radius=1):
 
 
 def get_distance_point_codes_great_circle(pc1, pc2, xyzg, radius=1):
+    # print(f"{pc1=}, {pc2=}")
     xyz1 = get_xyz_from_point_code(pc1, xyzg)
     xyz2 = get_xyz_from_point_code(pc2, xyzg)
     return UnitSpherePoint.distance_great_circle_xyz_static(xyz1, xyz2, radius=radius)
@@ -1730,6 +1767,8 @@ def check_no_directions_from_poles_in_place_value_array(pv):
 
 
 def get_prefix_lookup_number_from_point_code(pc):
+    if pc is None:
+        return None
     # print(f"{pc=} -> ln")
     # reverse the number, treat the point letter as the least significant digit (base 12)
     # all other digits are base 4
@@ -1743,12 +1782,18 @@ def get_prefix_lookup_number_from_point_code(pc):
 
 
 def get_point_code_from_prefix_lookup_number(ln):
+    if ln is None:
+        return None
     # print(f"{ln=} -> pc")
     pv = get_place_value_array_from_prefix_lookup_number(ln)
     check_no_directions_from_poles_in_place_value_array(pv)
     pc = get_point_code_from_place_value_array(pv)
     check_no_directions_from_poles_in_point_code(pc)
     return pc
+
+
+def get_point_codes_from_prefix_lookup_numbers(lns):
+    return [get_point_code_from_prefix_lookup_number(ln) for ln in lns]
 
 
 def get_prefix_lookup_number_from_place_value_array(pv):
@@ -1759,6 +1804,7 @@ def get_prefix_lookup_number_from_place_value_array(pv):
 
 
 def get_place_value_array_from_prefix_lookup_number(ln):
+    assert type(ln) in [int, np.int64], f"{ln=} of type {type(ln)}"
     # print(f"{ln=} -> pv")
     if ln == -2:
         return [-2]
@@ -1777,6 +1823,7 @@ def get_place_value_array_from_prefix_lookup_number(ln):
 
 
 def get_place_value_array_from_point_code(pc):
+    assert type(pc) is str, f"{pc=} of type {type(pc)}"
     # print(f"{pc=} -> pv")
     check_no_directions_from_poles_in_point_code(pc)
     head = pc[0]
@@ -1970,7 +2017,7 @@ def test_speed_adjacency_recursive_vs_arithmetic(iterations):
         i = 2
         while i < n:
             if time.time() - last_print_time > print_every_n_seconds:
-                print(f"i = {i}/{n}")
+                print(f"testing speed of getting adjacency: {i}/{n}")
                 last_print_time = time.time()
             pc = get_point_code_from_point_number(i).ljust(iterations, "0")
             iteration = get_iteration_number_from_point_code(pc)
@@ -2063,6 +2110,15 @@ def test_lookup_number_conversion():
         pcs_seen.add(pc)
         # print(ln, pc)  # so I can see what the ordering looks like
     print("no duplicate point codes")
+
+    # plot the relationship
+    pns = list(range(10000))
+    pcs = get_point_codes_from_point_numbers(pns)
+    lns = get_prefix_lookup_numbers_from_point_codes(pcs)
+    # for i in range(400):
+    #     print(pns[i], lns[i])
+    plt.scatter(pns, lns)
+    plt.show()
 
 
 

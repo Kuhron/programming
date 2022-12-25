@@ -29,9 +29,13 @@ from XyzLookupAncestryGraph import XyzLookupAncestryGraph
 
 
 class IcosahedronPointDatabase:
-    DTYPE = np.dtype("int64")  # all values must always be int
-    VAL_TYPES = [DTYPE, int]
-    MAX_INT_VALUE = 2**63-1
+    VALUE_DTYPE = np.dtype("int64")
+    CONDITION_DTYPE = np.dtype("int8")
+    COLUMN_VALUE_LIMITS = {
+        np.dtype("int8"): [-2**7, 2**7-1],
+        np.dtype("int64"): [-2**63, 2**63-1],
+    }
+    MAX_INT64_VALUE = 2**63-1
     SPECIAL_COLUMN_NAMES = ["index", "prefix_lookup_number"]
 
     def __init__(self):
@@ -101,6 +105,7 @@ class IcosahedronPointDatabase:
             f.write(s)
 
     def write_hdf(self):
+        self.coerce_dtypes()
         self.validate()
         self.df.to_hdf(self.data_file, key="data")
         print("IcosahedronPointDatabase written to file.\n")
@@ -110,32 +115,12 @@ class IcosahedronPointDatabase:
         self.validate()
 
     def validate(self):
-        self.verify_df_dtype()
-        self.check_no_trailing_zeros_in_point_codes()
-        self.check_no_duplicate_point_codes()
-        self.check_no_duplicate_prefix_lookups()
-
-    def verify_df_dtype(self):
-        verify_df_dtype(self.df)
+        self.verify_df_dtypes()
+        self.check_no_duplicates_in_index()
     
-    def check_no_trailing_zeros_in_point_codes(self):
-        check_no_trailing_zeros_in_point_codes(self.df.index)
-    
-    def check_no_duplicate_point_codes(self):
+    def check_no_duplicates_in_index(self):
         assert self.df.index.has_duplicates is False
         # don't do `not object.attr` because that will be falsy if the attribute is absent
-    
-    def check_no_duplicate_prefix_lookups(self):
-        self.fill_lookup_numbers()
-        lns = self.df["prefix_lookup_number"]
-        duplicated_mask = lns.duplicated(keep=False)  # for some reason, keep=False means all duplicates are marked as True in the returned bool series
-        if duplicated_mask.sum() > 0:
-            nums_with_conflicts = np.unique(lns[duplicated_mask])
-            for ln in nums_with_conflicts:
-                this_ln_mask = lns == ln
-                pcs_this_ln = self.df.index[this_ln_mask]
-                print(f"point codes with lookup number {ln}: {pcs_this_ln}")
-            raise RuntimeError("duplicate lookup numbers created; see above")
 
     def get_variables(self):
         return sorted(self.df.columns)
@@ -143,11 +128,32 @@ class IcosahedronPointDatabase:
     def get_n_variables(self):
         return len(self.get_variables())
     
+    @staticmethod
+    def is_condition_variable(variable_name):
+        # things like the enumerated type of elevation_condition (ocean, coast, land, etc.)
+        res = variable_name.endswith("_condition")
+        if res:
+            assert not IcosahedronPointDatabase.is_special_column(variable_name), "shouldn't have special variables ending in '_condition'"
+        return res
+    
+    @staticmethod
+    def is_value_variable(variable_name):
+        # things like the amount of actual elevation at a point
+        is_condition = IcosahedronPointDatabase.is_condition_variable(variable_name)
+        is_special = IcosahedronPointDatabase.is_special_column(variable_name)
+        return (not is_condition) and (not is_special)
+    
+    @staticmethod
+    def is_special_column(variable_name):
+        # things like the row indices or info about the points themselves,
+        # rather than map variables
+        return variable_name in IcosahedronPointDatabase.SPECIAL_COLUMN_NAMES
+    
     def get_condition_variables(self):
-        return sorted(x for x in self.df.columns if x.endswith("_condition"))
+        return sorted(x for x in self.df.columns if IcosahedronPointDatabase.is_condition_variable(x))
     
     def get_value_variables(self):
-        return sorted(x for x in self.df.columns if not x.endswith("_condition") and x not in IcosahedronPointDatabase.SPECIAL_COLUMN_NAMES)
+        return sorted(x for x in self.df.columns if IcosahedronPointDatabase.is_value_variable(x))
 
     def get_variable_encoding_types(self):
         # based on the values in the df
@@ -208,13 +214,15 @@ class IcosahedronPointDatabase:
         return val
 
     def set_single_point(self, pc, variable_name, value):
-        check_int(value)
+        is_condition_column = IcosahedronPointDatabase.is_condition_variable(variable_name)
+        # check_int(value, is_condition_column)
         self.df.loc[pc, variable_name] = value
         # self.validate()
 
     def set_multiple_points(self, pcs, variable_name, values):
-        for val in values:
-            check_int(val)
+        is_condition_column = IcosahedronPointDatabase.is_condition_variable(variable_name)
+        # for val in values:
+        #     check_int(val, is_condition_column)
         self.df.loc[pcs, variable_name] = values
         # self.validate()
 
@@ -256,12 +264,49 @@ class IcosahedronPointDatabase:
 
     def verify_points_exist(self, pcs):
         missing = []
-        for pc in pcs:
-            if pc not in self.df.index:
-                missing.append(pc)
+        lns = icm.get_prefix_lookup_numbers_from_point_codes(pcs)
+        for ln in lns:
+            if ln not in self.df.index:
+                missing.append(ln)
         if len(missing) > 0:
             print("these points are missing from the database:", missing)
             raise KeyError("missing points; see list above")
+
+    def coerce_dtypes(self):
+        lst = []
+        for colname in self.get_condition_variables():
+            dtype = IcosahedronPointDatabase.CONDITION_DTYPE
+            lst.append([colname, dtype])
+        for colname in self.get_value_variables():
+            dtype = IcosahedronPointDatabase.VALUE_DTYPE
+            lst.append([colname, dtype])
+
+        for colname, dtype in lst:
+            min_val, max_val = IcosahedronPointDatabase.COLUMN_VALUE_LIMITS[dtype]
+            vals = self.df[colname]
+            assert (min_val <= vals).all(), f"{colname} outside minimum value"
+            assert (vals <= max_val).all(), f"{colname} outside maximum value"
+            self.df[colname] = vals.astype(dtype)
+
+    def verify_df_dtypes(self):
+        any_error = False
+
+        for colname in self.get_condition_variables():
+            dtype = self.df[colname].dtype
+            okay = dtype is IcosahedronPointDatabase.CONDITION_DTYPE
+            if not okay:
+                print(f"dtype of condition column {colname} is {dtype}, should be {IcosahedronPointDatabase.CONDITION_DTYPE}")
+                any_error = True
+
+        for colname in self.get_value_variables():
+            dtype = self.df[colname].dtype
+            okay = dtype is IcosahedronPointDatabase.VALUE_DTYPE
+            if not okay:
+                print(f"dtype of value column {colname} is {dtype}, should be {IcosahedronPointDatabase.VALUE_DTYPE}")
+                any_error = True
+
+        if any_error:
+            raise TypeError("df dtypes wrong; see above")
 
     def write_as_images(self):
         # hacky experiment: write data in pixel RGB values in PNG files for certain iterations
@@ -297,10 +342,6 @@ class IcosahedronPointDatabase:
 
     def get_mask_point_codes_with_prefix(self, prefix):
         # want to return true for things like "D" starting with "D00"
-
-        # if pandas_method:  # old, this is a performance bottleneck because of the string methods
-        #     return self.df.index.str.ljust(len(prefix), "0").str.startswith(prefix)
-        # else:
         return self.get_mask_point_codes_with_prefixes([prefix])
 
     def get_all_point_codes_with_prefix(self, prefix):
@@ -314,54 +355,12 @@ class IcosahedronPointDatabase:
             # treat no prefixes as "nothing starts with this", empty union here is all-false
             return mask
 
-        lookup_numbers = np.array(self.df["prefix_lookup_number"])  # pd.Series is WAY slower somehow
+        lookup_numbers = np.array(self.df.index)  # pd.Series is WAY slower somehow
         for i, prefix in enumerate(prefixes):
             this_mask = get_mask_point_codes_starting_with_prefix_using_lookup_number(lookup_numbers, prefix)
             mask = mask | this_mask  # this line takes forever for pd.Series but fast for np.array
         print("done creating point code prefix mask")
         return mask
-
-        # old 
-        # mask = pd.Series([False] * len(self.df.index), index=self.df.index)
-        # # without setting the mask's index to be the same as the df's it will error
-
-        # # times for using pandas method vs manually are very similar (e.g. 86 s and 87 s)
-        # if pandas_method:
-        #     for prefix in prefixes:
-        #         mask |= self.get_mask_point_codes_with_prefix(prefix, pandas_method=True)
-        # else:
-        #     max_prefix_len = max(len(x) for x in prefixes)
-        #     for pc in self.df.index:
-        #         pc = pc.ljust(max_prefix_len, "0")
-        #         for prefix in prefixes:
-        #             if pc.startswith(prefix):
-        #                 mask[pc] = True
-        #                 break
-
-        print(f"done creating point code prefix mask, has {mask.sum()} items")
-        return mask
-
-    def fill_lookup_numbers(self):
-        print("filling out prefix lookup numbers for point codes in database")
-        if "prefix_lookup_number" not in self.df.columns:
-            # don't want to deal with multi-index, just put it right after the index
-            self.df.insert(0, "prefix_lookup_number", -1)
-            self.df["prefix_lookup_number"] = self.df["prefix_lookup_number"].astype("int64")
-        needs_number_mask = self.df["prefix_lookup_number"] == -1
-        # print(self.df)
-        n_needs = needs_number_mask.sum()
-        if n_needs == 0:
-            print("all points already have lookup numbers; done")
-            return
-        print(f"{n_needs} points need lookup numbers")
-        lookup_numbers = icm.get_prefix_lookup_numbers_from_point_codes(self.df.index[needs_number_mask])
-        assert len(np.unique(lookup_numbers)) == len(lookup_numbers), "conflict in lookup numbers!"
-        assert len(set(lookup_numbers) & set(self.df["prefix_lookup_number"])) == 0, "conflict with existing lookup numbers!"
-        self.df.loc[needs_number_mask, "prefix_lookup_number"] = lookup_numbers
-        # print(self.df)
-        # input("df should have lookup numbers now; check")
-        self.write_hdf()
-        print("done filling out prefix lookup numbers for point codes in database")
 
     @staticmethod
     def get_line_from_dict(line_label, d):
@@ -418,25 +417,18 @@ def touch(fp):
     open(fp, "w").close()
 
 
-def check_int(value):
-    if type(value) not in IcosahedronPointDatabase.VAL_TYPES:
-        raise TypeError(f"Database only accepts {IcosahedronPointDatabase.VAL_TYPES} values (you gave {value} of type {type(value)}).\nIf you want enum, make them int shorthands in the condition_array_dir.\nIf you want floats, choose the precision you want and make ints of that, e.g. elevation in millimeters.")
+def check_int(value, is_condition_column):
+    dtype = IcosahedronPointDatabase.CONDITION_DTYPE if is_condition_column else IcosahedronPointDatabase.VALUE_DTYPE
+    if type(value) is not dtype:
+        raise TypeError(f"value should be of type {dtype} (you gave {value} of type {type(value)}).\nIf you want enum, make them int shorthands in the condition_array_dir.\nIf you want floats, choose the precision you want and make ints of that, e.g. elevation in millimeters.")
 
 
-def verify_df_dtype(df):
-    any_error = False
-    for colname, dtype in zip(df.columns, df.dtypes):
-        if dtype is not IcosahedronPointDatabase.DTYPE:
-            print(f"dtype of column {colname} is {dtype}, should be {IcosahedronPointDatabase.DTYPE}")
-            any_error = True
-    if any_error:
-        raise TypeError("df dtypes wrong; see above")
-
-
-def get_point_codes_in_database_in_region(db, center_pc, d_gc, xyzg, use_narrowing=True, pcs_to_consider=None):
+def get_lookup_numbers_in_database_in_region(db, center_pc, d_gc, xyzg, use_narrowing=True, lns_to_consider=None):
+    # print(f"{center_pc=}")
+    center_ln = icm.get_prefix_lookup_number_from_point_code(center_pc)
     df = db.df
     if use_narrowing:
-        assert pcs_to_consider is None, "not implemented"
+        assert lns_to_consider is None, "not implemented"
         # use narrowing to get which watersheds are all inside, all outside, and split
         t0 = time.time()
         narrowing_iterations = 4 #min(resolution_iterations - 1, random.randint(0, 3))
@@ -453,23 +445,27 @@ def get_point_codes_in_database_in_region(db, center_pc, d_gc, xyzg, use_narrowi
         inside_mask = db.get_mask_point_codes_with_prefixes(inside)
         outside_mask = db.get_mask_point_codes_with_prefixes(outside)
         split_mask = (~inside_mask) & (~outside_mask)
-        split_pcs = df.index[split_mask]
-        split_pcs_in_region = find.filter_point_codes_in_region_one_by_one(split_pcs, center_pc, d_gc, xyzg)
-        split_pc_in_region_mask = np.array([pc in split_pcs_in_region if split_mask_this_pc else False for pc, split_mask_this_pc in zip(df.index, split_mask)])
-        point_in_region_mask = inside_mask | split_pc_in_region_mask
+        split_lns = df.index[split_mask]
+        split_pcs_indices = np.where(split_mask)
+        # split_pcs = icm.get_point_codes_from_prefix_lookup_numbers(split_lns)
+        split_pc_in_region_mask_from_split_pcs = find.get_mask_points_in_region(split_lns, center_ln, d_gc, xyzg)
+        split_pc_in_region_mask_df_index_aligned = np.full((len(df.index),), False)
+        split_pc_in_region_mask_df_index_aligned[split_pcs_indices] = split_pc_in_region_mask_from_split_pcs
+        point_in_region_mask = inside_mask | split_pc_in_region_mask_df_index_aligned
         # for pc in split_pcs:
         #     if pc in split_pcs_in_region:
         #         point_in_region_mask.loc[pc] = True
             # else:
             #     # yes it CAN happen and it's okay; raise Exception("shouldn't happen if it was already filtered?")
         print(f"there are {point_in_region_mask.sum()} points in the region")
-        pcs_in_region = df.loc[point_in_region_mask].index
+        lns_in_region = df.loc[point_in_region_mask].index
         t1 = time.time() - t0
         print(f"with narrowing took {t1} seconds")
     else:
-        assert len(pcs_to_consider) > 0, "can't consider all points without narrowing"
-        pcs_in_region = find.filter_point_codes_in_region_one_by_one(pcs_to_consider, center_pc, d_gc)
-    return pcs_in_region
+        assert len(lns_to_consider) > 0, "can't consider all points without narrowing"
+        pcs_in_region = find.filter_point_codes_in_region_one_by_one(lns_to_consider, center_pc, d_gc)
+        lns_in_region = icm.get_prefix_lookup_numbers_from_point_codes(pcs_in_region)
+    return lns_in_region
 
 
 def get_point_codes_from_file(fp):
@@ -481,6 +477,7 @@ def get_point_codes_from_file(fp):
 
 
 def make_point_code_file_for_random_region(db):
+    raise Exception("deprecated")
     # min_pc_iterations = random.randint(0, 8)
     # max_pc_iterations = min_pc_iterations + random.randint(0, 2)
     # expected_pc_iterations = (min_pc_iterations + max_pc_iterations) / 2
@@ -493,17 +490,19 @@ def make_point_code_file_for_random_region(db):
 
 
 def make_point_code_file_for_region(db, center_pc, d_gc, parent_dir="PointFiles", pcs_to_consider=None, use_narrowing=True, overwrite=False):
+    raise Exception("deprecated")
     fname_prefix = "pcs_in_db"
     fp = get_point_code_filename(center_pc, d_gc, fname_prefix, parent_dir)
     if (not overwrite) and os.path.exists(fp):
         print(f"file {fp} exists, not going to calculate this region")
         return
 
-    pcs_in_region = get_point_codes_in_database_in_region(db, center_pc, d_gc, use_narrowing=use_narrowing, pcs_to_consider=pcs_to_consider)
+    pcs_in_region = get_lookup_numbers_in_database_in_region(db, center_pc, d_gc, use_narrowing=use_narrowing, lns_to_consider=pcs_to_consider)
     write_point_codes_to_file(pcs_in_region, center_pc, d_gc, fname_prefix, parent_dir=parent_dir)
 
 
 def write_point_codes_to_file(pcs_in_region, center_pc, d_gc, prefix_str, parent_dir="PointFiles"):
+    raise Exception("deprecated")
     pc_fp = get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir)
     with open(pc_fp, "w") as f:
         for center_pc in pcs_in_region:
@@ -512,11 +511,13 @@ def write_point_codes_to_file(pcs_in_region, center_pc, d_gc, prefix_str, parent
 
 
 def point_code_file_exists(center_pc, d_gc, prefix_str, parent_dir=None):
+    raise Exception("deprecated")
     fp = get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir)
     return os.path.exists(fp)
 
 
 def get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir=None):
+    raise Exception("deprecated")
     fname = f"{prefix_str}_{center_pc}_{d_gc}.txt"
     if parent_dir is None:
         fp = fname
@@ -526,10 +527,12 @@ def get_point_code_filename(center_pc, d_gc, prefix_str, parent_dir=None):
 
 
 def get_point_code_file_regex():
+    raise Exception("deprecated")
     return "pcs_in_db_(?P<date>[\d\-]+)_(?P<pc>[A-L][0123]*)_(?P<d>[.\d]+).txt"
 
 
 def get_random_point_code_file(pc_dir):
+    raise Exception("deprecated")
     pattern = get_point_code_file_regex()
     fnames = [x for x in os.listdir(pc_dir) if re.match(pattern, x)]
     fname = random.choice(fnames)
@@ -538,6 +541,7 @@ def get_random_point_code_file(pc_dir):
 
 
 def get_point_code_and_distance_from_filename(fname):
+    raise Exception("deprecated")
     pattern = get_point_code_file_regex()
     match = re.match(pattern, fname)
     center_pc = match.group("pc")
@@ -572,8 +576,8 @@ def partition_into_max_sum_groups(ints, max_sum):
 
 def check_lookup_number_wont_overflow(pc):
     n = icm.get_prefix_lookup_number_from_point_code(pc)
-    if n > IcosahedronPointDatabase.MAX_INT_VALUE:
-        raise ValueError(f"{pc} has lookup number {n}, which exceeds max int64 value of {IcosahedronPointDatabase.MAX_INT_VALUE}")
+    if n > IcosahedronPointDatabase.MAX_INT64_VALUE:
+        raise ValueError(f"{pc} has lookup number {n}, which exceeds max int64 value of {IcosahedronPointDatabase.MAX_INT64_VALUE}")
 
 
 def get_mask_point_codes_starting_with_prefix_using_lookup_number(lookup_numbers, prefix):
@@ -586,7 +590,8 @@ def get_mask_point_codes_starting_with_prefix_using_lookup_number(lookup_numbers
 
 def get_point_codes_starting_with_prefix_using_lookup_number(df, lookup_numbers, prefix):
     matches_mask = get_mask_point_codes_starting_with_prefix_using_lookup_number(lookup_numbers, prefix)
-    pcs = df.index[matches_mask]
+    lns = df.index[matches_mask]
+    pcs = icm.get_point_codes_from_prefix_lookup_numbers(lns)
     return pcs
 
 

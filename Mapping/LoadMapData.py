@@ -507,26 +507,27 @@ def get_control_point_dataframe(world_name):
     region_dfs = []
     for region_name in region_metadata.keys():
         region_df = pd.DataFrame(columns=[f"{x}_condition" for x in map_variables], dtype=np.int8)
-        pn_arr = get_image_pixel_to_icosa_point_code_from_memo(region_name)
-        pns = pn_arr.flatten()
-        test_pn = pns[0]
-        print(f"{test_pn=}")
+        pc_arr = get_image_pixel_to_icosa_point_code_from_memo(region_name)
+        pcs = pc_arr.flatten()
+        lns = icm.get_prefix_lookup_numbers_from_point_codes(pcs)
+        test_ln = lns[0]
+        print(f"{test_ln=}")
         for var in map_variables:
             colname = f"{var}_condition"
             condition_arr = get_condition_int_array_for_region(region_name, var)
-            assert condition_arr.shape == pn_arr.shape
+            assert condition_arr.shape == pc_arr.shape
             print(f"adding {colname} in region {region_name} to DataFrame")
             conditions = condition_arr.flatten()
             max_condition = conditions.max()
             assert max_condition <= 2**7 - 1, "too many conditions to store as np.int8 (we need signed to store -1)"
             conditions = conditions.astype(np.int8)
-            s = pd.Series(dict(zip(pns, conditions)), name=colname)
+            s = pd.Series(dict(zip(lns, conditions)), name=colname)
             region_df[colname] = s
             assert list(region_df.index) == list(s.index)
-            assert test_pn in region_df.index
+            assert test_ln in region_df.index
         region_dfs.append(region_df)
     df = pd.concat(region_dfs)
-    df["pc"] = icm.get_point_codes_from_point_numbers(df.index)
+    # df["pc"] = icm.get_point_codes_from_point_numbers(df.index)
     print("done getting control point dataframe")
     return df
 

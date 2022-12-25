@@ -112,7 +112,9 @@ class UnitSpherePoint:
     @staticmethod
     def convert_distance_3d_to_great_circle_single_value(d0, radius=1):
         arr = np.array([d0])
-        return UnitSpherePoint.convert_distance_3d_to_great_circle_array(arr, radius=radius)
+        res_arr = UnitSpherePoint.convert_distance_3d_to_great_circle_array(arr, radius=radius)
+        assert res_arr.shape == (1,)
+        return res_arr[0]
 
     @staticmethod
     def convert_distance_3d_to_great_circle_array(d0, radius=1):

@@ -295,39 +295,41 @@ def plot_variables_scattered_from_db(db, pcs, vars_to_plot):
     plt.show()
 
 
-def plot_variable_interpolated_from_db(db, pcs, var_to_plot, xyzg, resolution, show=True):
+def plot_variable_interpolated_from_db(db, lns, var_to_plot, xyzg, resolution, show=True):
     print(f"plotting variable interpolated: {var_to_plot}")
-    pc_to_val = db.get_dict(pcs, var_to_plot)
-    plot_variable_interpolated_from_dict(pc_to_val, xyzg, resolution, title=None, show=show)
+    ln_to_val = db.get_dict(lns, var_to_plot)
+    plot_variable_interpolated_from_dict(ln_to_val, xyzg, resolution, title=None, show=show)
 
 
-def plot_variable_interpolated_from_dict(pc_to_val, xyzg, resolution, title=None, show=True):
-    pcs = list(pc_to_val.keys())
+def plot_variable_interpolated_from_dict(ln_to_val, xyzg, resolution, title=None, show=True):
+    lns = list(ln_to_val.keys())
+    pcs = icm.get_point_codes_from_prefix_lookup_numbers(lns)
     latlons = icm.get_latlons_from_point_codes(pcs, xyzg)
-    values = [pc_to_val.get(pc) for pc in pcs]
+    values = [ln_to_val.get(ln) for ln in lns]
     plot_interpolated_data(latlons, values, lat_range=None, lon_range=None, n_lats=resolution, n_lons=resolution)
     if show:
         plt.show()
 
 
-def plot_variables_interpolated_from_db(db, pcs, vars_to_plot, xyzg, resolution, show=False):
+def plot_variables_interpolated_from_db(db, lns, vars_to_plot, xyzg, resolution, show=False):
     print(f"plotting variables interpolated: {vars_to_plot}")
     n_plots = len(vars_to_plot)
     for i, var in enumerate(vars_to_plot):
         plt.subplot(1, n_plots, i+1)
-        plot_variable_interpolated_from_db(db, pcs, var, xyzg, resolution, show=False)
+        plot_variable_interpolated_from_db(db, lns, var, xyzg, resolution, show=False)
         plt.title(var)
     if show:
         plt.show()
 
 
 def plot_variable_world_map_from_db(db, var_to_plot, xyzg, pixels_per_degree, show=False):
-    pcs = db.df.index
+    lns = db.df.index
+    pcs = icm.get_point_codes_from_prefix_lookup_numbers(lns)
     # pcs = random.sample(list(pcs), 10000)  # debug
     print("getting latlons")
     latlons = icm.get_latlons_from_point_codes(pcs, xyzg)
     print("getting values")
-    values = db.df.loc[pcs, var_to_plot]
+    values = db.df.loc[lns, var_to_plot]
     n_lats = int(2*90*pixels_per_degree)
     n_lons = int(2*180*pixels_per_degree)
     print("plotting interpolated")

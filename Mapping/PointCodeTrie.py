@@ -120,8 +120,9 @@ if __name__ == "__main__":
     db = icdb.IcosahedronPointDatabase.load(db_root_dir)
     df = db.df
     region_radius_gc = 0.03
-    region_center_pc = random.choice(df.index)
-    pcs_with_data_in_region = icdb.get_point_codes_in_database_in_region(db, region_center_pc, region_radius_gc, use_narrowing=True, pcs_to_consider=None)
+    region_center_ln = random.choice(df.index)
+    region_center_pc = icm.get_point_code_from_prefix_lookup_number(region_center_ln)
+    pcs_with_data_in_region = icdb.get_lookup_numbers_in_database_in_region(db, region_center_pc, region_radius_gc, use_narrowing=True, lns_to_consider=None)
     trie = PointCodeTrie.from_list(pcs_with_data_in_region)
     print(f"{trie.count=}")
     
