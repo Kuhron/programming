@@ -38,7 +38,7 @@ class XyzLookupAncestryGraph:
             if i % 1000 == 0:
                 print(f"XyzLookupAncestryGraph.from_list: {i} / {len(lns)}")
             xyzg.add(ln)
-        print(f"done constructing XyzLookupAncestryGraph")
+        print(f"-- done constructing XyzLookupAncestryGraph")
         return xyzg
     
     def add(self, ln):
@@ -109,5 +109,5 @@ if __name__ == "__main__":
             print(i, len(lns), xyzg.get_count())
         xyzg.add(ln)
     xyzs = xyzg.get_all_xyzs()
-    print("done")
+    print("-- done")
     input("check")

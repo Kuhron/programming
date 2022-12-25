@@ -32,7 +32,7 @@ def get_image_pixel_to_icosa_point_code_from_calculation(region_name, pixels=Non
 
     point_codes = get_approx_icosa_point_codes_from_usps(usps, icosa_distance_tolerance_normalized)
     rc_to_point_code = {rc: p_i for rc, p_i in zip(rcs, point_codes)}  # assumes the orders match, which they should if you get usps in the same order as rcs they correspond to
-    print(f"done getting image pixel to icosa point code dict for {region_name}")
+    print(f"-- done getting image pixel to icosa point code dict for {region_name}")
     return rc_to_point_code
 
 
@@ -53,7 +53,7 @@ def get_image_pixel_to_icosa_point_code_from_memo(region_name):
     with open(pixel_to_icosa_fp) as f:
         lines = f.readlines()
     strs = [l.strip().split(",") for l in lines]
-    # print(f"done reading image pixel to icosa point code correspondence for {region_name=}")
+    # print(f"-- done reading image pixel to icosa point code correspondence for {region_name=}")
     return strs
 
 
@@ -345,7 +345,7 @@ def get_lattice_and_df_for_region(region_name, map_variable, with_coords=False):
         # print("df size is now {}".format(df.size))
     df[map_variable] = str_lst
 
-    print("done adding condition values to DataFrame")
+    print("-- done adding condition values to DataFrame")
     return lattice, df
 
 
@@ -378,7 +378,7 @@ def find_icosa_points_near_image_lattice_points(image_lattice, icosa_point_toler
             nearest_icosa_point, distance_normalized, distance_km = icm.get_nearest_icosa_point_to_latlon(latlon, icosa_point_tolerance, planet_radius)
             # print(f"\nimage ({r},{c}); point #{point_number}; point {point}; icosa point within {icosa_point_tolerance_km} km = {nearest_icosa_point} at distance of {distance_km} km away")
             d[point_number] = nearest_icosa_point
-    print("done finding icosa points near image lattice points")
+    print("-- done finding icosa points near image lattice points")
     return d
 
 
@@ -391,7 +391,7 @@ def get_approx_icosa_point_codes_from_usps(usps, icosa_distance_tolerance_normal
         approx_p, d_norm, d_units = icm.get_nearest_icosa_point_to_latlon(p.latlondeg(), icosa_distance_tolerance_normalized, planet_radius=1)
         approx_pc = approx_p.point_code
         approx_icosa_point_codes.append(approx_pc)
-    print("done getting approx icosa points for USPs")
+    print("-- done getting approx icosa points for USPs")
     return approx_icosa_point_codes
 
 
@@ -436,7 +436,7 @@ def write_image_pixel_to_icosa_point_code(region_name, overwrite_existing=False)
         for line in lines:
             f.write(line)
 
-    print(f"done writing image pixel to icosa point code correspondence for {region_name=}")
+    print(f"-- done writing image pixel to icosa point code correspondence for {region_name=}")
 
 
 def get_point_codes_in_order_from_memo(region_name):
@@ -487,7 +487,7 @@ def get_point_code_to_condition_dict_for_world(world_name, map_variable):
             continue
         region_d = get_point_code_to_condition_dict_for_region(region_name, map_variable)
         d.update(region_d)
-    print(f"done getting conditions for {map_variable=} in {world_name=}")
+    print(f"-- done getting conditions for {map_variable=} in {world_name=}")
     return d
 
 
@@ -528,7 +528,7 @@ def get_control_point_dataframe(world_name):
         region_dfs.append(region_df)
     df = pd.concat(region_dfs)
     # df["pc"] = icm.get_point_codes_from_point_numbers(df.index)
-    print("done getting control point dataframe")
+    print("-- done getting control point dataframe")
     return df
 
 

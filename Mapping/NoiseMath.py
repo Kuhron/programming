@@ -267,7 +267,7 @@ def control_for_condition_ranges(df, map_variable, control_rate=1, pin_zero=Fals
         
         assert np.isfinite(df[map_variable]).all(), f"df[{map_variable}] not all finite, after adjustment"
 
-    print(f"done adjusting deviations in {map_variable}")
+    print(f"-- done adjusting deviations in {map_variable}")
     return df
 
 

@@ -101,7 +101,7 @@ def test_trie():
         set1.add(pc)
         # print(f"current count: {trie.count}")
 
-    print("done adding, now checking")
+    print("-- done adding, now checking")
     set2 = set()
     for pc in trie.get_all():
         print(f"got pc from trie: {pc}")

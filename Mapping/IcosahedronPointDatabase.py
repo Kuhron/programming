@@ -72,7 +72,7 @@ class IcosahedronPointDatabase:
         db.data_file = os.path.join(root_dir, "data.h5")
         db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
         db.read_hdf()
-        print(f"done loading database from {root_dir}")
+        print(f"-- done loading database from {root_dir}")
         return db
 
     @staticmethod
@@ -359,7 +359,7 @@ class IcosahedronPointDatabase:
         for i, prefix in enumerate(prefixes):
             this_mask = get_mask_point_codes_starting_with_prefix_using_lookup_number(lookup_numbers, prefix)
             mask = mask | this_mask  # this line takes forever for pd.Series but fast for np.array
-        print("done creating point code prefix mask")
+        print("-- done creating point code prefix mask")
         return mask
 
     @staticmethod
@@ -431,7 +431,7 @@ def get_lookup_numbers_in_database_in_region(db, center_pc, d_gc, xyzg, use_narr
         assert lns_to_consider is None, "not implemented"
         # use narrowing to get which watersheds are all inside, all outside, and split
         t0 = time.time()
-        narrowing_iterations = 4 #min(resolution_iterations - 1, random.randint(0, 3))
+        narrowing_iterations = 5 #min(resolution_iterations - 1, random.randint(0, 3))
         inside, outside, split = icm.narrow_watersheds_by_distance(center_pc, d_gc, narrowing_iterations, xyzg)
         print("inside", inside)
         print("outside", outside)

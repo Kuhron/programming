@@ -77,7 +77,9 @@ def interpolate_at_points_nearest_neighbor(lns_to_interpolate_at, lns_to_interpo
         return interpolated
 
     print("interpolating nearest neighbor")
+    print("getting known values")
     known_values = db.get_dict(lns_to_interpolate_from, variable_name)
+    print("-- done getting known values")
     if len(set(lns_to_interpolate_at) - set(lns_to_interpolate_from)) == 0:
         # already know values of all these points, don't bother getting xyz or doing nearest neighbor calculation
         return pd.Series({ln: known_values[ln] for ln in lns_to_interpolate_at}, dtype=int)
@@ -129,7 +131,6 @@ def interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolut
 
     # db.validate()  # debug
     # using the points in the region with data as interpolation, we will generate elevations at the points_at_this_resolution AND the points that already have data
-    lns_to_interpolate_at = list(set(lns_in_region_at_resolution) | set(lns_with_data_in_region))
 
     # debug
     # print("plotting elevation before interpolating conditions")
@@ -140,6 +141,8 @@ def interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolut
     existing_els = db.get_series(lns_with_data_in_region, "elevation")
     # but also want to make sure we are up to date with the images, TODO read conditions from images
     existing_el_cond_is_defined_mask = existing_el_conds != -1
+    lns_with_data_but_undefined_el_cond = lns_with_data_in_region[~existing_el_cond_is_defined_mask]
+    lns_to_interpolate_at = list(set(lns_in_region_at_resolution) | set(lns_with_data_but_undefined_el_cond))
 
     # if we've already generated data here,
     # don't overwrite it with default just because the condition was -1,
@@ -225,15 +228,15 @@ def interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolut
 def run_region_generation(db, planet_radius_km, xyzg):
     df = db.df
     desired_point_prefix = ""
-    power_law_param = random.random()  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
+    power_law_param = 2**random.uniform(-2, 2)  # 1 is uniform dist, >1 is more weight toward 1 and less toward 0, a=0 is all weight at 0, a=inf is all weight at 1
     power_law = lambda: np.random.power(power_law_param)  # will be a fraction of region radius
     el_stdev = np.random.uniform(5, 25)
     resolution_iterations = 9
-    n_circles = 5000
+    n_circles = 4000
 
     # to choose random one
     ## region_center_pc = icm.get_random_point_code(min_iterations=6, expected_iterations=9, max_iterations=9, prefix=desired_point_prefix)
-    region_radius_gc = random.randint(600, 1000)/10000
+    region_radius_gc = random.randint(800, 1500)/10000
     ## region_radius_gc = 0.01
     ## region_center_latlondeg = icm.get_latlon_from_point_code(region_center_point_code)
     ## region_center_latlondeg, region_radius_great_circle_km = (
@@ -242,12 +245,12 @@ def run_region_generation(db, planet_radius_km, xyzg):
 
     # to choose based on some condition
     # lns_ocean = df.index[df["elevation_condition"] == 0]
-    # lns_coast = df.index[df["elevation_condition"] == 1]
-    lns_land = df.index[df["elevation_condition"] == 2]
+    lns_coast = df.index[df["elevation_condition"] == 1]
+    # lns_land = df.index[df["elevation_condition"] == 2]
     # lns_shallow = df.index[df["elevation_condition"] == 3]
     ## region_center_ln = random.choice(list(lns_ocean) + list(lns_coast) + list(lns_land) + list(lns_shallow))
     ## region_center_ln = random.choice(df.index[df["elevation_condition"] != -1])
-    region_center_ln = random.choice(lns_land)
+    region_center_ln = random.choice(lns_coast)
     region_center_pc = icm.get_point_code_from_prefix_lookup_number(region_center_ln)
 
     circle_radius_dist = lambda: power_law() * region_radius_gc
@@ -348,24 +351,26 @@ def run_region_generation(db, planet_radius_km, xyzg):
     xyz_tuples = [tuple(xyz) for xyz in xyz_array]
     xyz_dict = BiDict.from_dict(dict(zip(lns_to_edit, xyz_tuples)))
     matrix = GreatCircleDistanceMatrix(xyz_array, radius=1)
-    print("done getting xyzs and distance matrix")
+    print("-- done getting xyzs and distance matrix")
     
     elevation_conditions = db.get_dict(lns_to_edit, "elevation_condition")
+    changes = {ln: 0 for ln in lns_to_edit}
 
     n_passed = 0
     n_failed = 0
     for c_i in range(n_circles):
         if c_i % 100 == 0:
-            print(f"circle {c_i} / {n_circles}; condition pass rate so far = {(n_passed / c_i) if c_i > 0 else np.nan}")
+            condition_pass_rate = n_passed / c_i if c_i > 0 else np.nan
+            print(f"circle {c_i} / {n_circles}; condition pass rate so far = {condition_pass_rate}")
         circle_radius_gc = circle_radius_dist()
-        pc_center = random.choice(lns_to_edit)
-        xyz_center = np.array(xyz_dict[pc_center])
+        ln_center = random.choice(lns_to_edit)
+        xyz_center = np.array(xyz_dict[ln_center])
         p_xyzs_in_circle = matrix.get_points_within_distance_of_point(xyz_center, circle_radius_gc)
-        pcs_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle.keys()]
-        # print(f"this circle contains {pcs_in_circle}")
+        lns_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle.keys()]
+        # print(f"this circle contains {len(pcs_in_circle)} points")
 
         d_el = int(round(np.random.normal(0, el_stdev)))
-        old_els = db.get_dict(pcs_in_circle, "elevation")
+        old_els = db.get_dict(lns_in_circle, "elevation")
         # print("old_els:", old_els)
         # print(f"values in old elevations: {sorted(set(old_els.values()))}")  # debugging when it is overwriting existing data with default elevations
 
@@ -376,10 +381,8 @@ def run_region_generation(db, planet_radius_km, xyzg):
         # just look at absolute value of changes that are in the same direction as d_el
         is_rise = d_el >= 0
         d_el = abs(d_el)
-        max_move = abs(d_el)
-        for pc in pcs_in_circle:
+        for pc in lns_in_circle:
             el = old_els[pc]
-            assert el % 1 == 0, f"{el} of type {type(el)}"
             # print(f"point {pn} has old_el {el}")
             el_cond = elevation_conditions[pc]
             if is_rise:
@@ -411,10 +414,10 @@ def run_region_generation(db, planet_radius_km, xyzg):
             d_el = -1 * d_el
         assert d_el % 1 == 0, f"{d_el} of type {type(d_el)}"
 
-        new_els = {pc: old_els[pc] + d_el for pc in pcs_in_circle}
+        new_els = {pc: old_els[pc] + d_el for pc in lns_in_circle}
         # check new_els still meet elevation conditions
         all_meet_conditions = True
-        for pc in pcs_in_circle:
+        for pc in lns_in_circle:
             el_cond = elevation_conditions[pc]
             max_val = elevation_condition_to_max_value.get(el_cond)
             min_val = elevation_condition_to_min_value.get(el_cond)
@@ -430,7 +433,9 @@ def run_region_generation(db, planet_radius_km, xyzg):
             # can be smarter about how we choose d_el based on the most any point here can move up/down
         if all_meet_conditions:
             # print("conditions passed, adding to db")
-            db.add_value(pcs_in_circle, "elevation", d_el)
+            db.add_value(lns_in_circle, "elevation", d_el)
+            for ln in lns_in_circle:
+                changes[ln] += d_el
             # print(f"added {d_el}")
             # print("new values:", db[pcs_in_circle, "elevation"])
         else:
@@ -446,6 +451,12 @@ def run_region_generation(db, planet_radius_km, xyzg):
     plt.gcf().set_size_inches(18, 6)
     now_str = datetime.utcnow().strftime("%Y-%m-%d-%H%M%S")
     plt.savefig(f"ElevationImages/GeneratedElevation_{region_center_pc}_{region_radius_gc}_{now_str}.png")
+    plt.gcf().clear()
+
+    # plot the changes so I can monitor what it's doing
+    pu.plot_variable_interpolated_from_dict(changes, xyzg, resolution=1000, show=False)
+    plt.gcf().set_size_inches(8, 6)
+    plt.savefig(f"ElevationImages/ElevationChanges_{region_center_pc}_{region_radius_gc}_{now_str}.png")
     plt.gcf().clear()
 
     if True: #input("write these results? y/n (default n)") == "y":

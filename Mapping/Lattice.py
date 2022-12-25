@@ -80,25 +80,25 @@ class Lattice:
             else:
                 tup = tuple(pos[coord_system])
                 coords.append(tup)
-        print("done getting coords for {}".format(type(self)))
+        print("-- done getting coords for {}".format(type(self)))
         return coords
 
     def get_xyz_coords(self, point_indices=None):
         print("getting xyz_coords for {}".format(type(self)))
         res = np.array(self.get_coords(coord_system="xyz", point_indices=point_indices))
-        print("done getting xyz_coords for {}".format(type(self)))
+        print("-- done getting xyz_coords for {}".format(type(self)))
         return res
 
     def get_latlondeg_coords(self, point_indices=None):
         print("getting latlondeg_coords for {}".format(type(self)))
         res = np.array(self.get_coords(coord_system="latlondeg", point_indices=point_indices))
-        print("done getting latlondeg_coords for {}".format(type(self)))
+        print("-- done getting latlondeg_coords for {}".format(type(self)))
         return res
 
     def get_kdtree(self):
         print("getting KDTree")
         res = KDTree(self.get_xyz_coords())
-        print("done getting KDTree")
+        print("-- done getting KDTree")
         return res
 
     def get_point_indices(self):
@@ -171,7 +171,7 @@ class Lattice:
             xyz_coords, latlondeg_coords = self.get_coords(point_indices=point_indices)
             df["xyz"] = xyz_coords
             df["latlondeg"] = latlondeg_coords
-        print(f"done creating DataFrame for {type(self)}")
+        print(f"-- done creating DataFrame for {type(self)}")
         return df
 
     def place_random_data(self, key_str, df=None):

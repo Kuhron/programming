@@ -37,7 +37,7 @@ def get_mask_points_in_region(lns, center_ln, radius_gc_normalized, xyzg):
         in_region = d_gc <= radius_gc_normalized
         mask[i] = in_region
     mask = np.array(mask)
-    print(f"done filtering {len(lns)} points for inclusion in region")
+    print(f"-- done filtering {len(lns)} points for inclusion in region")
     return mask
 
 

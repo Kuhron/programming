@@ -27,7 +27,7 @@ class BiDict:
         type_b = list(value_types)[0]
         bd = BiDict(type_a, type_b)
         bd.update(d)
-        print(f"done constructing BiDict")
+        print(f"-- done constructing BiDict")
         return bd
 
     def update(self, d):

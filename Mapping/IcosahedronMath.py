@@ -200,7 +200,7 @@ def get_xyz_array_from_point_codes(pcs, xyzg):
     xyzs = get_xyzs_from_point_codes(pcs, xyzg)
     arr = np.array(xyzs)
     assert arr.shape == (len(pcs), 3), arr.shape
-    print("done getting xyz array")
+    print("-- done getting xyz array")
     return arr
 
 
@@ -513,7 +513,7 @@ def get_starting_points():
         adjacencies_by_point_index[point_index] = neighbor_indices
         # print("adjacencies now:\n{}\n".format(adjacencies_by_point_index))
 
-    # print("done getting initial icosa points")
+    # print("-- done getting initial icosa points")
     return ordered_points, adjacencies_by_point_index
 
 
@@ -1044,7 +1044,7 @@ def get_xyzs_from_point_numbers_recursive(pns):
     # tree = get_ancestor_tree_for_multiple_points(point_numbers)
     # print("got ancestor tree")
     # pn_to_position = get_all_positions_in_ancestor_tree(tree)
-    # print(f"done getting positions recursively for {len(point_numbers)} points")
+    # print(f"-- done getting positions recursively for {len(point_numbers)} points")
     # return [pn_to_position[p] for p in point_numbers]
 
     # old, very slow
@@ -1146,7 +1146,7 @@ def get_nearest_icosa_point_to_xyz(xyz, maximum_distance, planet_radius):
         assert nearest_candidate_usp.point_number is not None
         print("nearest candidate is {} at distance of {}".format(nearest_candidate_usp, distance_normalized))
         if distance_normalized <= max_distance_normalized:
-            print("done getting nearest icosa point to {}".format(xyz))
+            print("-- done getting nearest icosa point to {}".format(xyz))
             distance_in_units = distance_normalized * planet_radius
             return nearest_candidate_usp, distance_normalized, distance_in_units
 
@@ -1224,6 +1224,7 @@ def get_nearest_neighbors_ln_to_ln_with_distance(query_lns, candidate_lns, xyzg,
     #         xyz = get_xyz_from_point_code(pc)
     #         pc_to_xyz[pc] = xyz
 
+    print("creating candidate_xyzs and query_xyzs")
     candidate_xyzs = np.array([xyzg[ln] for ln in candidate_lns])
     print(f"{candidate_xyzs.shape=}")
     query_xyzs = np.array([xyzg[ln] for ln in query_lns])
@@ -1233,7 +1234,7 @@ def get_nearest_neighbors_ln_to_ln_with_distance(query_lns, candidate_lns, xyzg,
     kdtree = KDTree(candidate_xyzs)  # ensure order is same as the point list
     print("-- done creating KDTree")
     distances, nn_indices = kdtree.query(query_xyzs, k=k_neighbors)
-    print("done querying KDTree")
+    print("-- done querying KDTree")
 
     if allow_self:
         assert distances.shape == nn_indices.shape == (len(query_lns), k_neighbors)
@@ -1306,7 +1307,7 @@ def get_usp_generator(iterations):
     for pi in range(n_points):
         usp = get_usp_from_point_number(pi)
         yield usp
-    print(f"done getting usp generator for {iterations} iterations")
+    print(f"-- done getting usp generator for {iterations} iterations")
 
 
 def get_xyz_generator(iterations):
@@ -1315,7 +1316,7 @@ def get_xyz_generator(iterations):
     for pi in range(n_points):
         xyz = get_xyz_from_point_number(pi)
         yield xyz
-    print(f"done getting xyz generator for {iterations} iterations")
+    print(f"-- done getting xyz generator for {iterations} iterations")
 
 
 def get_latlon_generator(iterations, xyzg):
@@ -1339,7 +1340,7 @@ def get_usps_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon, iterations)
         lat, lon = p.latlondeg()
         if is_in_latlon_rectangle(lat, lon, min_lat, max_lat, min_lon, max_lon):
             res.append(p)
-    print(f"done getting usps in latlon rectangle for {iterations} iterations")
+    print(f"-- done getting usps in latlon rectangle for {iterations} iterations")
     return res
 
 
@@ -1351,7 +1352,7 @@ def get_latlons_of_points_in_latlon_rectangle(min_lat, max_lat, min_lon, max_lon
     for lat, lon in g:
         if is_in_latlon_rectangle(lat, lon, min_lat, max_lat, min_lon, max_lon):
             res.append((lat, lon))
-    print(f"done getting latlons in latlon rectangle for {iterations} iterations")
+    print(f"-- done getting latlons in latlon rectangle for {iterations} iterations")
     return res
 
 

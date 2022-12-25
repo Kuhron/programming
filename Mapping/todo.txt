@@ -5,7 +5,7 @@ DON'T do these (without good reason):
 
 TODO:
 
-- minimize hdf5 size by using lookup number instead of point code as index (and get rid of point code from the file altogether), use smaller dtypes like int8 for the condition variables since they have very few values
+- play with other noise math on the icosahedron
 
 - load conditions from images directly whenever database is loaded, so I can change them and it will automatically know about them when I restart the program
 -- we will still need to keep conditions in the dataframe for the points where they've been interpolated (although could experiment with removing those at some point and only having the conditions true for the actual control points)

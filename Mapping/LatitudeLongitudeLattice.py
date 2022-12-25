@@ -180,7 +180,7 @@ class LatitudeLongitudeLattice(Lattice):
                 if pixels is None or tup in pixels:
                     usp = self.get_point_from_lattice_position(r, c)
                     d_usp[tup] = usp
-        print(f"done getting points by lattice position")
+        print(f"-- done getting points by lattice position")
         return d_usp
     
     def create_point_dicts(self):

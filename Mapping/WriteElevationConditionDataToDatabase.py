@@ -74,4 +74,4 @@ if __name__ == "__main__":
 
         # done with this image so save the db
         db.write(clear_cache=True)
-    print("done")
+    print("-- done")
