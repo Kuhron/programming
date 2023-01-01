@@ -1,0 +1,11 @@
+{subject_pronoun} {food_item} eat-{tense}.{subject_pronoun}
+yesterday {subject_pronoun} {food_item} eat-pst.{subject_pronoun}
+today {subject_pronoun} {food_item} eat-prs.{subject_pronoun}
+
+{subject_pronoun} {thing} see-{tense}.{subject_pronoun}
+yesterday {subject_pronoun} {thing} see-pst.{subject_pronoun}
+today {subject_pronoun} {thing} see-prs.{subject_pronoun}
+
+{subject_pronoun} {inanimate} want-{tense}.{subject_pronoun}
+{animate} {inanimate} want-{tense}.3sg
+{animate}-pl {inanimate} want-{tense}.3pl
