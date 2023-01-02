@@ -1,0 +1,618 @@
+
+template: {subject_pronoun} {food_item} eat-{tense}.{subject_pronoun}
+to sapi kame.
+to sapi kamape.
+to isi kame.
+to isi kamape.
+to poko kame.
+to poko kamape.
+to kupi kame.
+to kupi kamape.
+nu sapi kameni.
+nu sapi kamani.
+nu isi kameni.
+nu isi kamani.
+nu poko kameni.
+nu poko kamani.
+nu kupi kameni.
+nu kupi kamani.
+ko sapi kamo.
+ko sapi kama.
+ko isi kamo.
+ko isi kama.
+ko poko kamo.
+ko poko kama.
+ko kupi kamo.
+ko kupi kama.
+su sapi kamesi.
+su sapi kamasi.
+su isi kamesi.
+su isi kamasi.
+su poko kamesi.
+su poko kamasi.
+su kupi kamesi.
+su kupi kamasi.
+erru sapi kamei.
+erru sapi kamarri.
+erru isi kamei.
+erru isi kamarri.
+erru poko kamei.
+erru poko kamarri.
+erru kupi kamei.
+erru kupi kamarri.
+yoso sapi kami.
+yoso sapi kamai.
+yoso isi kami.
+yoso isi kamai.
+yoso poko kami.
+yoso poko kamai.
+yoso kupi kami.
+yoso kupi kamai.
+
+template: yesterday {subject_pronoun} {food_item} eat-pst.{subject_pronoun}
+potore to sapi kamape.
+potore to isi kamape.
+potore to poko kamape.
+potore to kupi kamape.
+potore nu sapi kamani.
+potore nu isi kamani.
+potore nu poko kamani.
+potore nu kupi kamani.
+potore ko sapi kama.
+potore ko isi kama.
+potore ko poko kama.
+potore ko kupi kama.
+potore su sapi kamasi.
+potore su isi kamasi.
+potore su poko kamasi.
+potore su kupi kamasi.
+potore erru sapi kamarri.
+potore erru isi kamarri.
+potore erru poko kamarri.
+potore erru kupi kamarri.
+potore yoso sapi kamai.
+potore yoso isi kamai.
+potore yoso poko kamai.
+potore yoso kupi kamai.
+
+template: today {subject_pronoun} {food_item} eat-prs.{subject_pronoun}
+kesere to sapi kame.
+kesere to isi kame.
+kesere to poko kame.
+kesere to kupi kame.
+kesere nu sapi kameni.
+kesere nu isi kameni.
+kesere nu poko kameni.
+kesere nu kupi kameni.
+kesere ko sapi kamo.
+kesere ko isi kamo.
+kesere ko poko kamo.
+kesere ko kupi kamo.
+kesere su sapi kamesi.
+kesere su isi kamesi.
+kesere su poko kamesi.
+kesere su kupi kamesi.
+kesere erru sapi kamei.
+kesere erru isi kamei.
+kesere erru poko kamei.
+kesere erru kupi kamei.
+kesere yoso sapi kami.
+kesere yoso isi kami.
+kesere yoso poko kami.
+kesere yoso kupi kami.
+
+template: {subject_pronoun} {thing} see-{tense}.{subject_pronoun}
+to uta yune.
+to uta yunape.
+to toto yune.
+to toto yunape.
+to sapi yune.
+to sapi yunape.
+to isi yune.
+to isi yunape.
+to poko yune.
+to poko yunape.
+to kupi yune.
+to kupi yunape.
+to komo yune.
+to komo yunape.
+to kene yune.
+to kene yunape.
+to mutu yune.
+to mutu yunape.
+to to yune.
+to to yunape.
+to nu yune.
+to nu yunape.
+to ko yune.
+to ko yunape.
+to su yune.
+to su yunape.
+to erru yune.
+to erru yunape.
+to yoso yune.
+to yoso yunape.
+nu uta yuneni.
+nu uta yunani.
+nu toto yuneni.
+nu toto yunani.
+nu sapi yuneni.
+nu sapi yunani.
+nu isi yuneni.
+nu isi yunani.
+nu poko yuneni.
+nu poko yunani.
+nu kupi yuneni.
+nu kupi yunani.
+nu komo yuneni.
+nu komo yunani.
+nu kene yuneni.
+nu kene yunani.
+nu mutu yuneni.
+nu mutu yunani.
+nu to yuneni.
+nu to yunani.
+nu nu yuneni.
+nu nu yunani.
+nu ko yuneni.
+nu ko yunani.
+nu su yuneni.
+nu su yunani.
+nu erru yuneni.
+nu erru yunani.
+nu yoso yuneni.
+nu yoso yunani.
+ko uta yuno.
+ko uta yuna.
+ko toto yuno.
+ko toto yuna.
+ko sapi yuno.
+ko sapi yuna.
+ko isi yuno.
+ko isi yuna.
+ko poko yuno.
+ko poko yuna.
+ko kupi yuno.
+ko kupi yuna.
+ko komo yuno.
+ko komo yuna.
+ko kene yuno.
+ko kene yuna.
+ko mutu yuno.
+ko mutu yuna.
+ko to yuno.
+ko to yuna.
+ko nu yuno.
+ko nu yuna.
+ko ko yuno.
+ko ko yuna.
+ko su yuno.
+ko su yuna.
+ko erru yuno.
+ko erru yuna.
+ko yoso yuno.
+ko yoso yuna.
+su uta yunesi.
+su uta yunasi.
+su toto yunesi.
+su toto yunasi.
+su sapi yunesi.
+su sapi yunasi.
+su isi yunesi.
+su isi yunasi.
+su poko yunesi.
+su poko yunasi.
+su kupi yunesi.
+su kupi yunasi.
+su komo yunesi.
+su komo yunasi.
+su kene yunesi.
+su kene yunasi.
+su mutu yunesi.
+su mutu yunasi.
+su to yunesi.
+su to yunasi.
+su nu yunesi.
+su nu yunasi.
+su ko yunesi.
+su ko yunasi.
+su su yunesi.
+su su yunasi.
+su erru yunesi.
+su erru yunasi.
+su yoso yunesi.
+su yoso yunasi.
+erru uta yunei.
+erru uta yunarri.
+erru toto yunei.
+erru toto yunarri.
+erru sapi yunei.
+erru sapi yunarri.
+erru isi yunei.
+erru isi yunarri.
+erru poko yunei.
+erru poko yunarri.
+erru kupi yunei.
+erru kupi yunarri.
+erru komo yunei.
+erru komo yunarri.
+erru kene yunei.
+erru kene yunarri.
+erru mutu yunei.
+erru mutu yunarri.
+erru to yunei.
+erru to yunarri.
+erru nu yunei.
+erru nu yunarri.
+erru ko yunei.
+erru ko yunarri.
+erru su yunei.
+erru su yunarri.
+erru erru yunei.
+erru erru yunarri.
+erru yoso yunei.
+erru yoso yunarri.
+yoso uta yuni.
+yoso uta yunai.
+yoso toto yuni.
+yoso toto yunai.
+yoso sapi yuni.
+yoso sapi yunai.
+yoso isi yuni.
+yoso isi yunai.
+yoso poko yuni.
+yoso poko yunai.
+yoso kupi yuni.
+yoso kupi yunai.
+yoso komo yuni.
+yoso komo yunai.
+yoso kene yuni.
+yoso kene yunai.
+yoso mutu yuni.
+yoso mutu yunai.
+yoso to yuni.
+yoso to yunai.
+yoso nu yuni.
+yoso nu yunai.
+yoso ko yuni.
+yoso ko yunai.
+yoso su yuni.
+yoso su yunai.
+yoso erru yuni.
+yoso erru yunai.
+yoso yoso yuni.
+yoso yoso yunai.
+
+template: yesterday {subject_pronoun} {thing} see-pst.{subject_pronoun}
+potore to uta yunape.
+potore to toto yunape.
+potore to sapi yunape.
+potore to isi yunape.
+potore to poko yunape.
+potore to kupi yunape.
+potore to komo yunape.
+potore to kene yunape.
+potore to mutu yunape.
+potore to to yunape.
+potore to nu yunape.
+potore to ko yunape.
+potore to su yunape.
+potore to erru yunape.
+potore to yoso yunape.
+potore nu uta yunani.
+potore nu toto yunani.
+potore nu sapi yunani.
+potore nu isi yunani.
+potore nu poko yunani.
+potore nu kupi yunani.
+potore nu komo yunani.
+potore nu kene yunani.
+potore nu mutu yunani.
+potore nu to yunani.
+potore nu nu yunani.
+potore nu ko yunani.
+potore nu su yunani.
+potore nu erru yunani.
+potore nu yoso yunani.
+potore ko uta yuna.
+potore ko toto yuna.
+potore ko sapi yuna.
+potore ko isi yuna.
+potore ko poko yuna.
+potore ko kupi yuna.
+potore ko komo yuna.
+potore ko kene yuna.
+potore ko mutu yuna.
+potore ko to yuna.
+potore ko nu yuna.
+potore ko ko yuna.
+potore ko su yuna.
+potore ko erru yuna.
+potore ko yoso yuna.
+potore su uta yunasi.
+potore su toto yunasi.
+potore su sapi yunasi.
+potore su isi yunasi.
+potore su poko yunasi.
+potore su kupi yunasi.
+potore su komo yunasi.
+potore su kene yunasi.
+potore su mutu yunasi.
+potore su to yunasi.
+potore su nu yunasi.
+potore su ko yunasi.
+potore su su yunasi.
+potore su erru yunasi.
+potore su yoso yunasi.
+potore erru uta yunarri.
+potore erru toto yunarri.
+potore erru sapi yunarri.
+potore erru isi yunarri.
+potore erru poko yunarri.
+potore erru kupi yunarri.
+potore erru komo yunarri.
+potore erru kene yunarri.
+potore erru mutu yunarri.
+potore erru to yunarri.
+potore erru nu yunarri.
+potore erru ko yunarri.
+potore erru su yunarri.
+potore erru erru yunarri.
+potore erru yoso yunarri.
+potore yoso uta yunai.
+potore yoso toto yunai.
+potore yoso sapi yunai.
+potore yoso isi yunai.
+potore yoso poko yunai.
+potore yoso kupi yunai.
+potore yoso komo yunai.
+potore yoso kene yunai.
+potore yoso mutu yunai.
+potore yoso to yunai.
+potore yoso nu yunai.
+potore yoso ko yunai.
+potore yoso su yunai.
+potore yoso erru yunai.
+potore yoso yoso yunai.
+
+template: today {subject_pronoun} {thing} see-prs.{subject_pronoun}
+kesere to uta yune.
+kesere to toto yune.
+kesere to sapi yune.
+kesere to isi yune.
+kesere to poko yune.
+kesere to kupi yune.
+kesere to komo yune.
+kesere to kene yune.
+kesere to mutu yune.
+kesere to to yune.
+kesere to nu yune.
+kesere to ko yune.
+kesere to su yune.
+kesere to erru yune.
+kesere to yoso yune.
+kesere nu uta yuneni.
+kesere nu toto yuneni.
+kesere nu sapi yuneni.
+kesere nu isi yuneni.
+kesere nu poko yuneni.
+kesere nu kupi yuneni.
+kesere nu komo yuneni.
+kesere nu kene yuneni.
+kesere nu mutu yuneni.
+kesere nu to yuneni.
+kesere nu nu yuneni.
+kesere nu ko yuneni.
+kesere nu su yuneni.
+kesere nu erru yuneni.
+kesere nu yoso yuneni.
+kesere ko uta yuno.
+kesere ko toto yuno.
+kesere ko sapi yuno.
+kesere ko isi yuno.
+kesere ko poko yuno.
+kesere ko kupi yuno.
+kesere ko komo yuno.
+kesere ko kene yuno.
+kesere ko mutu yuno.
+kesere ko to yuno.
+kesere ko nu yuno.
+kesere ko ko yuno.
+kesere ko su yuno.
+kesere ko erru yuno.
+kesere ko yoso yuno.
+kesere su uta yunesi.
+kesere su toto yunesi.
+kesere su sapi yunesi.
+kesere su isi yunesi.
+kesere su poko yunesi.
+kesere su kupi yunesi.
+kesere su komo yunesi.
+kesere su kene yunesi.
+kesere su mutu yunesi.
+kesere su to yunesi.
+kesere su nu yunesi.
+kesere su ko yunesi.
+kesere su su yunesi.
+kesere su erru yunesi.
+kesere su yoso yunesi.
+kesere erru uta yunei.
+kesere erru toto yunei.
+kesere erru sapi yunei.
+kesere erru isi yunei.
+kesere erru poko yunei.
+kesere erru kupi yunei.
+kesere erru komo yunei.
+kesere erru kene yunei.
+kesere erru mutu yunei.
+kesere erru to yunei.
+kesere erru nu yunei.
+kesere erru ko yunei.
+kesere erru su yunei.
+kesere erru erru yunei.
+kesere erru yoso yunei.
+kesere yoso uta yuni.
+kesere yoso toto yuni.
+kesere yoso sapi yuni.
+kesere yoso isi yuni.
+kesere yoso poko yuni.
+kesere yoso kupi yuni.
+kesere yoso komo yuni.
+kesere yoso kene yuni.
+kesere yoso mutu yuni.
+kesere yoso to yuni.
+kesere yoso nu yuni.
+kesere yoso ko yuni.
+kesere yoso su yuni.
+kesere yoso erru yuni.
+kesere yoso yoso yuni.
+
+template: {subject_pronoun} {inanimate} want-{tense}.{subject_pronoun}
+to uta ike.
+to uta ikape.
+to toto ike.
+to toto ikape.
+to sapi ike.
+to sapi ikape.
+to isi ike.
+to isi ikape.
+to poko ike.
+to poko ikape.
+to kupi ike.
+to kupi ikape.
+nu uta ikeni.
+nu uta ikani.
+nu toto ikeni.
+nu toto ikani.
+nu sapi ikeni.
+nu sapi ikani.
+nu isi ikeni.
+nu isi ikani.
+nu poko ikeni.
+nu poko ikani.
+nu kupi ikeni.
+nu kupi ikani.
+ko uta iko.
+ko uta ika.
+ko toto iko.
+ko toto ika.
+ko sapi iko.
+ko sapi ika.
+ko isi iko.
+ko isi ika.
+ko poko iko.
+ko poko ika.
+ko kupi iko.
+ko kupi ika.
+su uta ikesi.
+su uta ikasi.
+su toto ikesi.
+su toto ikasi.
+su sapi ikesi.
+su sapi ikasi.
+su isi ikesi.
+su isi ikasi.
+su poko ikesi.
+su poko ikasi.
+su kupi ikesi.
+su kupi ikasi.
+erru uta ikei.
+erru uta ikarri.
+erru toto ikei.
+erru toto ikarri.
+erru sapi ikei.
+erru sapi ikarri.
+erru isi ikei.
+erru isi ikarri.
+erru poko ikei.
+erru poko ikarri.
+erru kupi ikei.
+erru kupi ikarri.
+yoso uta iki.
+yoso uta ikai.
+yoso toto iki.
+yoso toto ikai.
+yoso sapi iki.
+yoso sapi ikai.
+yoso isi iki.
+yoso isi ikai.
+yoso poko iki.
+yoso poko ikai.
+yoso kupi iki.
+yoso kupi ikai.
+
+template: {animate} {inanimate} want-{tense}.3sg
+komo uta iko.
+komo uta ika.
+komo toto iko.
+komo toto ika.
+komo sapi iko.
+komo sapi ika.
+komo isi iko.
+komo isi ika.
+komo poko iko.
+komo poko ika.
+komo kupi iko.
+komo kupi ika.
+kene uta iko.
+kene uta ika.
+kene toto iko.
+kene toto ika.
+kene sapi iko.
+kene sapi ika.
+kene isi iko.
+kene isi ika.
+kene poko iko.
+kene poko ika.
+kene kupi iko.
+kene kupi ika.
+mutu uta iko.
+mutu uta ika.
+mutu toto iko.
+mutu toto ika.
+mutu sapi iko.
+mutu sapi ika.
+mutu isi iko.
+mutu isi ika.
+mutu poko iko.
+mutu poko ika.
+mutu kupi iko.
+mutu kupi ika.
+
+template: {animate}-pl {inanimate} want-{tense}.3pl
+komoku uta iki.
+komoku uta ikai.
+komoku toto iki.
+komoku toto ikai.
+komoku sapi iki.
+komoku sapi ikai.
+komoku isi iki.
+komoku isi ikai.
+komoku poko iki.
+komoku poko ikai.
+komoku kupi iki.
+komoku kupi ikai.
+keneku uta iki.
+keneku uta ikai.
+keneku toto iki.
+keneku toto ikai.
+keneku sapi iki.
+keneku sapi ikai.
+keneku isi iki.
+keneku isi ikai.
+keneku poko iki.
+keneku poko ikai.
+keneku kupi iki.
+keneku kupi ikai.
+mutuku uta iki.
+mutuku uta ikai.
+mutuku toto iki.
+mutuku toto ikai.
+mutuku sapi iki.
+mutuku sapi ikai.
+mutuku isi iki.
+mutuku isi ikai.
+mutuku poko iki.
+mutuku poko ikai.
+mutuku kupi iki.
+mutuku kupi ikai.

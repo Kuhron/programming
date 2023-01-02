@@ -37,12 +37,6 @@ def render_template_all_possibilities_eng(template_str):
     return final_renditions
 
 
-def render_template_all_possibilities_lang(template_str, d):
-    eng = render_template_all_possibilities_eng(template_str)
-    lang = [translate_gloss(s, d) for s in eng]
-    return lang
-
-
 def translate_gloss(s, d):
     words = s.split()
     w2 = [d[w] for w in words]
@@ -55,7 +49,7 @@ if __name__ == "__main__":
     translations = get_translation_dict()
     for template in templates:
         print(f"\ntemplate: {template}")
-        renditions = render_template_all_possibilities_lang(template, translations)
-        for s in renditions:
-            print(s)
-    
+        eng_renditions = render_template_all_possibilities_eng(template)
+        for eng in eng_renditions:
+            lang = translate_gloss(eng, translations)
+            print(f"{lang}.")
