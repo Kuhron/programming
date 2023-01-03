@@ -1,500 +1,5000 @@
-today 3sg tree see-prs.3sg
-person-pl food want-prs.3pl
-cat rock want-pst.3sg
-today 3sg water eat-prs.3sg
-yesterday 2sg cat see-pst.2sg
-2pl tree want-pst.2pl
-yesterday 1pl water eat-pst.1pl
-3sg fruit eat-pst.3sg
-cat-pl tree want-prs.3pl
-yesterday 1pl person see-pst.1pl
-cat-pl tree want-prs.3pl
-yesterday 3sg rock see-pst.3sg
-2pl food eat-pst.2pl
-person-pl meat want-prs.3pl
-1sg tree see-prs.1sg
-person-pl tree want-prs.3pl
-1sg cat see-prs.1sg
-dog tree want-pst.3sg
-yesterday 1pl fruit eat-pst.1pl
-today 2sg 1sg see-prs.2sg
-yesterday 2sg dog see-pst.2sg
-dog-pl fruit want-pst.3pl
-3sg tree want-pst.3sg
-today 2pl meat eat-prs.2pl
-dog tree want-pst.3sg
-cat food want-prs.3sg
-dog rock want-prs.3sg
-cat tree want-prs.3sg
-3sg meat eat-prs.3sg
-cat-pl meat want-pst.3pl
-2pl water eat-pst.2pl
-yesterday 1pl food eat-pst.1pl
-yesterday 2sg fruit eat-pst.2sg
-yesterday 2pl meat eat-pst.2pl
-2sg food eat-pst.2sg
-today 2pl 1pl see-prs.2pl
-yesterday 1sg 1sg see-pst.1sg
-3pl 1pl see-prs.3pl
-today 3sg tree see-prs.3sg
-2sg water eat-pst.2sg
-2pl tree want-prs.2pl
-yesterday 3sg meat eat-pst.3sg
-1sg meat eat-pst.1sg
-yesterday 3sg fruit eat-pst.3sg
-1sg meat eat-pst.1sg
-2pl fruit eat-prs.2pl
-2sg fruit want-prs.2sg
-cat-pl tree want-prs.3pl
-3sg fruit see-pst.3sg
-yesterday 2pl tree see-pst.2pl
-yesterday 1sg cat see-pst.1sg
-2pl water want-prs.2pl
-yesterday 1sg person see-pst.1sg
-1pl tree want-prs.1pl
-2pl food eat-prs.2pl
-yesterday 1sg 3sg see-pst.1sg
-yesterday 3pl cat see-pst.3pl
-person tree want-pst.3sg
-yesterday 1sg person see-pst.1sg
-yesterday 1sg fruit eat-pst.1sg
-3pl water want-prs.3pl
-cat-pl tree want-pst.3pl
-1pl tree want-prs.1pl
-today 3pl water eat-prs.3pl
-yesterday 3pl person see-pst.3pl
-3sg water eat-pst.3sg
-person rock want-pst.3sg
-person-pl rock want-prs.3pl
-today 3pl person see-prs.3pl
-yesterday 2pl food eat-pst.2pl
-today 1sg meat see-prs.1sg
-2pl tree want-prs.2pl
-dog tree want-pst.3sg
-today 3pl food eat-prs.3pl
-yesterday 3sg tree see-pst.3sg
-yesterday 3pl person see-pst.3pl
-today 3pl food see-prs.3pl
-1pl rock want-prs.1pl
-today 3sg tree see-prs.3sg
-2sg fruit want-prs.2sg
-yesterday 3pl meat eat-pst.3pl
-today 1pl water eat-prs.1pl
-person-pl tree want-pst.3pl
-yesterday 3sg person see-pst.3sg
-3sg food eat-prs.3sg
-cat rock want-prs.3sg
-3sg food eat-pst.3sg
-yesterday 1sg 1pl see-pst.1sg
-dog tree want-pst.3sg
-person-pl fruit want-pst.3pl
-1sg food see-prs.1sg
-person-pl rock want-prs.3pl
-today 3pl tree see-prs.3pl
-dog-pl water want-prs.3pl
-today 2sg 3sg see-prs.2sg
-person rock want-pst.3sg
-yesterday 3pl tree see-pst.3pl
-yesterday 2pl person see-pst.2pl
-1pl fruit eat-prs.1pl
-today 3pl meat eat-prs.3pl
-2sg tree see-prs.2sg
-today 2sg rock see-prs.2sg
-3sg water want-prs.3sg
-dog fruit want-prs.3sg
-yesterday 3sg food see-pst.3sg
-yesterday 2pl water eat-pst.2pl
-person fruit want-pst.3sg
-2pl meat eat-pst.2pl
-1sg meat eat-pst.1sg
-dog-pl food want-prs.3pl
-yesterday 3sg food eat-pst.3sg
-1pl water see-pst.1pl
-person-pl tree want-prs.3pl
-yesterday 1sg meat eat-pst.1sg
-yesterday 1pl meat eat-pst.1pl
-today 3pl water eat-prs.3pl
-2sg 2pl see-pst.2sg
-cat tree want-pst.3sg
-cat-pl tree want-pst.3pl
-yesterday 2sg 1sg see-pst.2sg
-yesterday 3pl fruit eat-pst.3pl
-today 3pl cat see-prs.3pl
-dog-pl tree want-prs.3pl
-1pl meat eat-prs.1pl
-today 2sg meat eat-prs.2sg
-3sg meat eat-pst.3sg
-2sg water want-prs.2sg
-3pl tree want-pst.3pl
-yesterday 2sg food eat-pst.2sg
-person-pl food want-pst.3pl
-1pl tree want-pst.1pl
-yesterday 2sg water see-pst.2sg
-yesterday 1sg rock see-pst.1sg
-yesterday 1pl fruit eat-pst.1pl
-today 3sg water eat-prs.3sg
-person-pl tree want-pst.3pl
-today 1sg water see-prs.1sg
-yesterday 2pl meat eat-pst.2pl
-1pl 3sg see-prs.1pl
-today 1pl dog see-prs.1pl
-3pl tree want-prs.3pl
-3pl 2pl see-prs.3pl
-1sg rock see-prs.1sg
-yesterday 2sg meat eat-pst.2sg
-yesterday 1sg food eat-pst.1sg
-yesterday 3sg 1sg see-pst.3sg
-3sg food eat-prs.3sg
-yesterday 2pl meat eat-pst.2pl
-person-pl rock want-prs.3pl
-dog rock want-pst.3sg
-person-pl rock want-pst.3pl
-yesterday 1sg meat eat-pst.1sg
-3pl meat eat-prs.3pl
-today 2sg meat eat-prs.2sg
-today 1sg water eat-prs.1sg
-3pl meat eat-prs.3pl
-dog tree want-prs.3sg
 3sg rock want-pst.3sg
-1sg water eat-prs.1sg
-dog-pl tree want-pst.3pl
-2sg water eat-prs.2sg
-today 1sg 3sg see-prs.1sg
-2pl tree want-pst.2pl
-1pl tree see-prs.1pl
-dog-pl tree want-prs.3pl
-today 3pl fruit eat-prs.3pl
-yesterday 3pl 1pl see-pst.3pl
-today 2sg water eat-prs.2sg
-dog rock want-pst.3sg
-today 2sg meat eat-prs.2sg
-yesterday 2pl food eat-pst.2pl
-today 2sg dog see-prs.2sg
-today 2pl 3sg see-prs.2pl
-yesterday 1sg cat see-pst.1sg
-1sg water want-pst.1sg
-yesterday 2pl person see-pst.2pl
-1pl person see-pst.1pl
-today 3sg meat see-prs.3sg
-person-pl fruit want-prs.3pl
-1sg food want-prs.1sg
-cat-pl rock want-prs.3pl
-today 1sg rock see-prs.1sg
-yesterday 2sg tree see-pst.2sg
-3pl tree see-pst.3pl
-3pl water eat-prs.3pl
-1pl water want-prs.1pl
-2sg meat eat-pst.2sg
-2pl food want-prs.2pl
-today 3pl meat eat-prs.3pl
-2pl tree want-pst.2pl
-1sg 2sg see-prs.1sg
-person-pl rock want-prs.3pl
-yesterday 3sg 2pl see-pst.3sg
-dog-pl rock want-pst.3pl
-3pl person see-prs.3pl
-yesterday 3sg food eat-pst.3sg
-today 2sg meat eat-prs.2sg
-today 1sg fruit eat-prs.1sg
-person rock want-pst.3sg
-2sg food eat-prs.2sg
-person-pl tree want-pst.3pl
-cat-pl rock want-pst.3pl
-person-pl rock want-pst.3pl
-person-pl tree want-pst.3pl
-dog rock want-pst.3sg
-today 1sg meat eat-prs.1sg
-yesterday 2pl person see-pst.2pl
-person rock want-pst.3sg
-1pl cat see-prs.1pl
-yesterday 1sg fruit eat-pst.1sg
-2sg 3sg see-pst.2sg
-1pl fruit want-prs.1pl
-person rock want-prs.3sg
-today 3pl fruit eat-prs.3pl
-2pl cat see-prs.2pl
-today 2pl 1sg see-prs.2pl
-person meat want-pst.3sg
-today 1sg food eat-prs.1sg
-1pl tree want-pst.1pl
-3sg fruit eat-pst.3sg
-today 2pl fruit eat-prs.2pl
-dog water want-pst.3sg
-cat-pl meat want-prs.3pl
-today 2pl cat see-prs.2pl
-cat rock want-prs.3sg
-2sg water want-pst.2sg
-today 2sg water eat-prs.2sg
-today 2pl meat eat-prs.2pl
-yesterday 3pl tree see-pst.3pl
-today 3pl person see-prs.3pl
-cat rock want-prs.3sg
-cat-pl rock want-prs.3pl
-dog-pl tree want-pst.3pl
-3sg water eat-prs.3sg
-dog-pl rock want-prs.3pl
-yesterday 3sg 1pl see-pst.3sg
-yesterday 1sg 3pl see-pst.1sg
-today 1pl water eat-prs.1pl
-yesterday 1sg person see-pst.1sg
-yesterday 2pl food eat-pst.2pl
-person-pl food want-pst.3pl
-person rock want-prs.3sg
-yesterday 2pl food eat-pst.2pl
-yesterday 2pl fruit eat-pst.2pl
-3sg rock want-prs.3sg
-today 1sg 3sg see-prs.1sg
-yesterday 1pl 2sg see-pst.1pl
-today 2sg fruit eat-prs.2sg
-today 3pl fruit see-prs.3pl
-yesterday 1pl meat eat-pst.1pl
-yesterday 1sg fruit eat-pst.1sg
-yesterday 1sg water eat-pst.1sg
-yesterday 1pl food eat-pst.1pl
-today 1sg fruit eat-prs.1sg
-2sg rock want-prs.2sg
-today 1pl food eat-prs.1pl
-dog-pl rock want-pst.3pl
-1pl tree want-prs.1pl
-yesterday 3sg food eat-pst.3sg
-1pl food eat-prs.1pl
-yesterday 2pl water eat-pst.2pl
-today 3pl 1sg see-prs.3pl
-yesterday 3pl fruit eat-pst.3pl
-yesterday 3pl tree see-pst.3pl
-yesterday 3sg fruit eat-pst.3sg
-1pl fruit want-pst.1pl
-today 1pl meat eat-prs.1pl
-yesterday 2sg tree see-pst.2sg
-1pl cat see-pst.1pl
-yesterday 1pl tree see-pst.1pl
-today 2sg water eat-prs.2sg
-today 1pl meat eat-prs.1pl
-1pl water eat-prs.1pl
-yesterday 3sg rock see-pst.3sg
-cat-pl rock want-prs.3pl
-today 1pl 1sg see-prs.1pl
-today 3pl fruit eat-prs.3pl
-3pl tree see-prs.3pl
-dog-pl fruit want-prs.3pl
-yesterday 3pl 2sg see-pst.3pl
-1sg food eat-prs.1sg
-3pl water see-pst.3pl
-yesterday 1pl food eat-pst.1pl
-2sg tree see-prs.2sg
-today 3pl 2pl see-prs.3pl
-1sg fruit want-prs.1sg
-yesterday 3pl cat see-pst.3pl
-yesterday 1sg food eat-pst.1sg
-today 1pl water eat-prs.1pl
-today 1sg 3pl see-prs.1sg
-1sg water want-pst.1sg
-yesterday 3sg 1pl see-pst.3sg
-yesterday 2pl food eat-pst.2pl
-yesterday 1sg meat eat-pst.1sg
-1sg water want-prs.1sg
-today 2pl water eat-prs.2pl
-dog rock want-prs.3sg
-today 3sg water eat-prs.3sg
-person food want-pst.3sg
-3pl 3pl see-pst.3pl
-1sg fruit eat-prs.1sg
-today 1pl rock see-prs.1pl
-1sg 3sg see-prs.1sg
-yesterday 1pl cat see-pst.1pl
-today 1pl 3pl see-prs.1pl
-today 3pl meat eat-prs.3pl
-yesterday 3sg 2sg see-pst.3sg
-yesterday 2pl meat eat-pst.2pl
-3sg food eat-pst.3sg
-yesterday 1sg dog see-pst.1sg
-1pl meat eat-prs.1pl
-today 3pl food eat-prs.3pl
-yesterday 2sg water eat-pst.2sg
-cat food want-prs.3sg
-cat-pl food want-prs.3pl
-today 2pl fruit eat-prs.2pl
-person rock want-pst.3sg
-2pl water see-prs.2pl
-1sg fruit eat-prs.1sg
-dog rock want-pst.3sg
-dog-pl water want-pst.3pl
-cat-pl tree want-prs.3pl
-cat-pl food want-pst.3pl
-yesterday 2sg water eat-pst.2sg
-yesterday 1pl person see-pst.1pl
-3sg fruit eat-prs.3sg
-1pl rock see-prs.1pl
-today 1sg person see-prs.1sg
-2pl food want-pst.2pl
-today 1pl water eat-prs.1pl
-today 3sg rock see-prs.3sg
-yesterday 1sg meat eat-pst.1sg
-yesterday 1sg rock see-pst.1sg
-3pl rock see-pst.3pl
-3pl fruit want-prs.3pl
-3sg food eat-prs.3sg
-cat-pl fruit want-pst.3pl
-today 3sg water eat-prs.3sg
-1sg food eat-prs.1sg
-dog-pl rock want-prs.3pl
-yesterday 1pl food eat-pst.1pl
-1sg meat eat-pst.1sg
-today 2sg cat see-prs.2sg
-2pl water want-pst.2pl
-today 3pl water see-prs.3pl
-today 2pl 1sg see-prs.2pl
-today 1sg meat eat-prs.1sg
-yesterday 3sg fruit eat-pst.3sg
-dog-pl tree want-pst.3pl
-2pl dog see-pst.2pl
-1sg tree want-prs.1sg
-cat-pl rock want-prs.3pl
-2pl rock see-prs.2pl
-1sg 2pl see-prs.1sg
-yesterday 1sg person see-pst.1sg
-3sg food eat-prs.3sg
-yesterday 3pl 2sg see-pst.3pl
-cat-pl tree want-prs.3pl
-today 2sg 3sg see-prs.2sg
-today 2sg water eat-prs.2sg
-3sg water eat-pst.3sg
-1pl person see-pst.1pl
-1pl meat eat-prs.1pl
-yesterday 1sg water eat-pst.1sg
-yesterday 1sg fruit eat-pst.1sg
-cat food want-pst.3sg
-person tree want-pst.3sg
 3pl rock want-pst.3pl
-cat-pl tree want-prs.3pl
-today 1sg tree see-prs.1sg
-3pl food eat-pst.3pl
-cat tree want-prs.3sg
-today 2sg fruit see-prs.2sg
-yesterday 2sg tree see-pst.2sg
-1sg fruit want-prs.1sg
-today 3sg fruit eat-prs.3sg
-1sg water eat-pst.1sg
-yesterday 2pl meat see-pst.2pl
-today 1sg meat eat-prs.1sg
-dog-pl fruit want-pst.3pl
-yesterday 2pl meat eat-pst.2pl
-3sg fruit see-pst.3sg
-2sg dog see-pst.2sg
-today 1sg rock see-prs.1sg
-today 1sg dog see-prs.1sg
-today 1sg food eat-prs.1sg
-cat rock want-prs.3sg
-today 3pl 1pl see-prs.3pl
-today 1pl food eat-prs.1pl
+3sg water eat-prs.3sg
 person rock want-prs.3sg
-3pl food want-prs.3pl
-today 2pl 2pl see-prs.2pl
-1sg cat see-pst.1sg
-today 1pl person see-prs.1pl
-3pl 2sg see-prs.3pl
-today 1sg meat see-prs.1sg
-today 2sg food eat-prs.2sg
-3pl 1sg see-prs.3pl
-2sg water eat-pst.2sg
-today 2sg food eat-prs.2sg
-2pl meat eat-prs.2pl
-2sg rock see-prs.2sg
-today 1sg person see-prs.1sg
-today 1sg tree see-prs.1sg
-today 2pl food eat-prs.2pl
-cat rock want-pst.3sg
-2pl person see-prs.2pl
-yesterday 2pl fruit eat-pst.2pl
-yesterday 3sg water eat-pst.3sg
-today 2pl fruit eat-prs.2pl
-1pl water eat-pst.1pl
-yesterday 2sg food eat-pst.2sg
-yesterday 1sg water eat-pst.1sg
-1pl fruit eat-pst.1pl
-today 3sg food eat-prs.3sg
-today 3pl fruit eat-prs.3pl
-cat food want-prs.3sg
-yesterday 1sg cat see-pst.1sg
-today 2sg water eat-prs.2sg
-today 3pl fruit eat-prs.3pl
-dog tree want-pst.3sg
-yesterday 1pl meat eat-pst.1pl
-3pl water eat-prs.3pl
-person-pl fruit want-prs.3pl
-1sg food see-prs.1sg
-dog-pl water want-prs.3pl
-yesterday 1sg person see-pst.1sg
-dog-pl tree want-prs.3pl
-yesterday 3pl meat eat-pst.3pl
-dog tree want-prs.3sg
-cat-pl tree want-prs.3pl
-today 3pl fruit eat-prs.3pl
-yesterday 3sg water eat-pst.3sg
-yesterday 3pl meat eat-pst.3pl
-today 2sg fruit eat-prs.2sg
-yesterday 1sg water eat-pst.1sg
-today 2sg water see-prs.2sg
+today 1pl meat eat-prs.1pl
+yesterday 3pl person see-pst.3pl
+yesterday 1pl cat see-pst.1pl
+today 1sg cat see-prs.1sg
+1pl meat want-pst.1pl
+3sg 1pl see-prs.3sg
+yesterday 1sg tree see-pst.1sg
+3sg tree want-pst.3sg
+dog-pl tree want-pst.3pl
+1sg person see-pst.1sg
+cat-pl rock want-prs.3pl
+dog-pl tree want-pst.3pl
+3pl fruit eat-pst.3pl
+yesterday 3pl rock see-pst.3pl
 2pl rock want-pst.2pl
-1pl 3sg see-pst.1pl
-3sg food eat-pst.3sg
-1sg tree see-pst.1sg
-person-pl tree want-prs.3pl
-3pl 2sg see-prs.3pl
-yesterday 1pl food eat-pst.1pl
-today 3sg food eat-prs.3sg
-person rock want-pst.3sg
-today 2sg meat eat-prs.2sg
-1sg food eat-prs.1sg
+person food want-pst.3sg
+today 2pl fruit eat-prs.2pl
+3pl water want-prs.3pl
+cat meat want-pst.3sg
+1pl food eat-prs.1pl
+2sg water eat-pst.2sg
+yesterday 3sg 2sg see-pst.3sg
+3sg fruit eat-pst.3sg
+yesterday 3pl 2pl see-pst.3pl
+2pl water want-prs.2pl
 person tree want-prs.3sg
-person rock want-prs.3sg
-today 1pl tree see-prs.1pl
-person fruit want-pst.3sg
-today 1sg meat eat-prs.1sg
-today 3pl meat eat-prs.3pl
-person-pl fruit want-pst.3pl
-person-pl water want-prs.3pl
-cat-pl water want-prs.3pl
+today 1pl food eat-prs.1pl
+cat tree want-prs.3sg
+1sg fruit eat-prs.1sg
+yesterday 1sg 1pl see-pst.1sg
+2pl rock want-prs.2pl
+cat-pl fruit want-prs.3pl
+yesterday 3sg 3pl see-pst.3sg
+yesterday 3sg cat see-pst.3sg
+dog-pl rock want-pst.3pl
+today 2sg food eat-prs.2sg
+today 3pl food see-prs.3pl
+2pl meat want-prs.2pl
+yesterday 1sg 2pl see-pst.1sg
+3pl water eat-pst.3pl
+yesterday 3pl 1pl see-pst.3pl
+person-pl tree want-prs.3pl
+person-pl tree want-prs.3pl
+1pl 2sg see-prs.1pl
+yesterday 1pl food eat-pst.1pl
+3pl meat eat-pst.3pl
+today 1pl 2sg see-prs.1pl
+yesterday 1pl 2pl see-pst.1pl
+2pl fruit want-pst.2pl
+person-pl tree want-pst.3pl
+dog-pl tree want-prs.3pl
+yesterday 3pl water eat-pst.3pl
+1pl water eat-prs.1pl
+3sg fruit eat-prs.3sg
+yesterday 3sg food eat-pst.3sg
+yesterday 2pl 1sg see-pst.2pl
+yesterday 3pl tree see-pst.3pl
+2sg water want-prs.2sg
+today 1pl 2sg see-prs.1pl
+today 1sg fruit eat-prs.1sg
+yesterday 2pl tree see-pst.2pl
+today 1sg cat see-prs.1sg
+1sg food want-pst.1sg
+today 1sg person see-prs.1sg
+3sg fruit want-prs.3sg
+2sg dog see-pst.2sg
+1pl meat eat-prs.1pl
+yesterday 3pl meat eat-pst.3pl
+3pl dog see-prs.3pl
 1sg cat see-pst.1sg
-yesterday 2sg 2pl see-pst.2sg
-today 1pl rock see-prs.1pl
-yesterday 3pl 3sg see-pst.3pl
+person-pl tree want-prs.3pl
+yesterday 3pl meat eat-pst.3pl
+3sg tree want-pst.3sg
+dog tree want-pst.3sg
+yesterday 3sg food eat-pst.3sg
+today 2pl water eat-prs.2pl
+cat fruit want-pst.3sg
+today 2pl water eat-prs.2pl
+cat rock want-pst.3sg
+yesterday 3sg rock see-pst.3sg
+today 1pl meat eat-prs.1pl
+dog rock want-pst.3sg
+dog rock want-prs.3sg
+cat tree want-prs.3sg
+1sg 2pl see-pst.1sg
+1pl tree see-prs.1pl
+person-pl rock want-pst.3pl
+today 1pl water eat-prs.1pl
+yesterday 2sg food eat-pst.2sg
+yesterday 3sg cat see-pst.3sg
+3pl rock want-pst.3pl
+3sg tree want-pst.3sg
+3sg tree want-prs.3sg
+2sg fruit want-pst.2sg
+yesterday 3pl rock see-pst.3pl
+3pl rock see-prs.3pl
+3pl fruit eat-pst.3pl
+dog-pl tree want-prs.3pl
+yesterday 2sg fruit see-pst.2sg
+cat fruit want-pst.3sg
+1sg 1sg see-pst.1sg
+1sg cat see-prs.1sg
+yesterday 2sg cat see-pst.2sg
+3sg 3sg see-pst.3sg
+3sg tree see-pst.3sg
+1sg person see-prs.1sg
+yesterday 3pl 2sg see-pst.3pl
+1pl water want-prs.1pl
+yesterday 2sg water eat-pst.2sg
+3pl tree see-pst.3pl
+2sg rock see-pst.2sg
+3pl water eat-pst.3pl
+cat-pl rock want-pst.3pl
+1sg person see-pst.1sg
+3pl 2sg see-prs.3pl
+2sg cat see-prs.2sg
+today 2pl meat eat-prs.2pl
+yesterday 2pl food eat-pst.2pl
+2sg food eat-prs.2sg
+1sg food eat-prs.1sg
+2sg water eat-pst.2sg
+yesterday 3pl dog see-pst.3pl
 3pl rock want-prs.3pl
 yesterday 1sg food eat-pst.1sg
+1sg rock see-pst.1sg
+2pl meat eat-pst.2pl
+dog-pl rock want-pst.3pl
+today 2pl meat eat-prs.2pl
+2sg meat eat-pst.2sg
+yesterday 3pl water eat-pst.3pl
+3pl person see-prs.3pl
+yesterday 3pl cat see-pst.3pl
+3sg fruit eat-prs.3sg
+2sg 3pl see-pst.2sg
+2pl fruit eat-prs.2pl
+1sg food want-prs.1sg
+2sg water want-prs.2sg
+yesterday 1pl meat eat-pst.1pl
+1pl water want-prs.1pl
+yesterday 2sg tree see-pst.2sg
+3pl fruit eat-prs.3pl
+today 1sg water eat-prs.1sg
+3pl 1pl see-pst.3pl
+dog tree want-pst.3sg
+today 1pl tree see-prs.1pl
+cat-pl rock want-pst.3pl
+yesterday 2sg food eat-pst.2sg
+yesterday 3pl water eat-pst.3pl
+dog tree want-pst.3sg
+1pl water eat-pst.1pl
+today 2sg tree see-prs.2sg
+yesterday 2pl food eat-pst.2pl
+2pl dog see-prs.2pl
+3pl person see-prs.3pl
+yesterday 1pl rock see-pst.1pl
+3sg tree see-prs.3sg
+person-pl tree want-prs.3pl
+2pl tree want-pst.2pl
+yesterday 2sg meat eat-pst.2sg
+cat tree want-pst.3sg
+yesterday 1sg fruit eat-pst.1sg
+1pl fruit eat-prs.1pl
+yesterday 2pl food eat-pst.2pl
+today 3pl dog see-prs.3pl
+dog-pl rock want-prs.3pl
+3pl water want-prs.3pl
+yesterday 1sg rock see-pst.1sg
+3pl tree want-prs.3pl
+2sg water eat-pst.2sg
+yesterday 3sg 2sg see-pst.3sg
+2pl tree want-prs.2pl
+today 3pl 1pl see-prs.3pl
+today 1pl dog see-prs.1pl
+3sg meat eat-pst.3sg
+person-pl tree want-prs.3pl
+cat rock want-pst.3sg
+person-pl tree want-pst.3pl
+yesterday 1pl rock see-pst.1pl
+person-pl tree want-prs.3pl
+today 3sg 3pl see-prs.3sg
+yesterday 1sg meat eat-pst.1sg
+person rock want-pst.3sg
+cat-pl tree want-prs.3pl
+today 2pl rock see-prs.2pl
+2pl food eat-pst.2pl
+person fruit want-pst.3sg
+2pl fruit eat-pst.2pl
+today 3sg meat eat-prs.3sg
+3sg tree want-pst.3sg
+cat-pl rock want-prs.3pl
+2sg 2pl see-prs.2sg
+yesterday 2sg rock see-pst.2sg
+yesterday 1sg person see-pst.1sg
+yesterday 3sg 2sg see-pst.3sg
+yesterday 2pl 3sg see-pst.2pl
+yesterday 3pl 2pl see-pst.3pl
+1sg rock want-pst.1sg
+dog-pl tree want-pst.3pl
+3pl tree want-prs.3pl
+cat food want-pst.3sg
+yesterday 1pl water eat-pst.1pl
+3pl food eat-pst.3pl
+today 2sg food eat-prs.2sg
+3sg tree see-pst.3sg
+3pl cat see-prs.3pl
+2pl dog see-prs.2pl
+today 2pl fruit eat-prs.2pl
+3pl fruit eat-prs.3pl
+3sg rock see-pst.3sg
+1sg person see-prs.1sg
+1pl rock want-pst.1pl
+1sg 1pl see-prs.1sg
+yesterday 2sg 3pl see-pst.2sg
+3sg rock want-pst.3sg
+yesterday 1pl dog see-pst.1pl
+yesterday 2sg tree see-pst.2sg
+person rock want-prs.3sg
+today 1pl fruit eat-prs.1pl
+person-pl tree want-prs.3pl
+today 1sg food eat-prs.1sg
+2pl food see-pst.2pl
+today 2pl person see-prs.2pl
+yesterday 2pl meat eat-pst.2pl
+cat tree want-prs.3sg
+dog-pl rock want-prs.3pl
+person-pl rock want-pst.3pl
+2pl water eat-prs.2pl
+today 3sg meat eat-prs.3sg
+cat tree want-pst.3sg
+today 1pl water eat-prs.1pl
+person rock want-pst.3sg
+yesterday 1pl water eat-pst.1pl
+3sg tree want-prs.3sg
+cat-pl food want-prs.3pl
+2sg rock want-prs.2sg
+yesterday 1pl rock see-pst.1pl
+1sg food eat-prs.1sg
+3sg tree want-prs.3sg
+1pl meat eat-pst.1pl
+today 1sg fruit eat-prs.1sg
+yesterday 3pl tree see-pst.3pl
+today 2pl water eat-prs.2pl
+cat-pl meat want-pst.3pl
+yesterday 3pl 2sg see-pst.3pl
+today 3pl 1pl see-prs.3pl
+3pl food eat-prs.3pl
+3sg rock want-prs.3sg
+yesterday 3pl food eat-pst.3pl
+yesterday 1pl 3pl see-pst.1pl
+yesterday 1sg water eat-pst.1sg
+1pl person see-prs.1pl
+person-pl food want-prs.3pl
+3pl tree want-pst.3pl
+1pl tree want-prs.1pl
+person food want-prs.3sg
+yesterday 3sg tree see-pst.3sg
+dog-pl rock want-pst.3pl
+person fruit want-prs.3sg
+today 1pl tree see-prs.1pl
+person rock want-pst.3sg
+yesterday 3sg 2pl see-pst.3sg
+person rock want-pst.3sg
+person-pl food want-prs.3pl
+cat rock want-pst.3sg
+yesterday 3pl water eat-pst.3pl
+today 2sg water eat-prs.2sg
+2pl 3sg see-prs.2pl
+1pl fruit eat-prs.1pl
+1sg 2sg see-prs.1sg
+today 2sg person see-prs.2sg
+yesterday 3pl dog see-pst.3pl
+3pl meat eat-prs.3pl
+cat-pl rock want-pst.3pl
+3sg 2pl see-pst.3sg
+1pl fruit eat-prs.1pl
 yesterday 2sg water eat-pst.2sg
-today 1pl rock see-prs.1pl
+today 3pl food eat-prs.3pl
+today 3sg cat see-prs.3sg
+yesterday 1pl water eat-pst.1pl
+yesterday 3pl 3sg see-pst.3pl
+person food want-pst.3sg
+yesterday 3pl meat eat-pst.3pl
+today 1sg person see-prs.1sg
+3sg food eat-prs.3sg
+1pl food eat-prs.1pl
+dog-pl meat want-prs.3pl
+yesterday 1sg 3pl see-pst.1sg
+2pl meat eat-prs.2pl
+3sg food eat-prs.3sg
+cat tree want-pst.3sg
+person fruit want-prs.3sg
+1pl food want-pst.1pl
+yesterday 3sg meat eat-pst.3sg
+yesterday 1sg rock see-pst.1sg
+person-pl food want-pst.3pl
+today 2sg 1pl see-prs.2sg
+cat rock want-pst.3sg
+2pl person see-prs.2pl
+1sg food eat-pst.1sg
+today 2pl person see-prs.2pl
+3sg tree see-prs.3sg
+dog-pl tree want-pst.3pl
+1pl tree want-pst.1pl
+yesterday 2pl tree see-pst.2pl
+3sg rock want-pst.3sg
+person water want-prs.3sg
 cat-pl tree want-pst.3pl
+yesterday 1sg food eat-pst.1sg
+today 2pl person see-prs.2pl
+3pl fruit eat-prs.3pl
+today 3sg water eat-prs.3sg
+today 1sg meat eat-prs.1sg
+yesterday 3pl dog see-pst.3pl
+yesterday 2sg dog see-pst.2sg
+cat-pl tree want-pst.3pl
+dog-pl tree want-prs.3pl
+yesterday 1pl rock see-pst.1pl
+dog-pl fruit want-pst.3pl
+3pl food eat-pst.3pl
+yesterday 3pl meat eat-pst.3pl
+yesterday 3sg fruit eat-pst.3sg
+yesterday 3pl food eat-pst.3pl
+yesterday 3sg dog see-pst.3sg
+cat-pl rock want-pst.3pl
+today 1sg cat see-prs.1sg
+3pl fruit eat-prs.3pl
+today 3sg meat eat-prs.3sg
+today 1sg cat see-prs.1sg
+today 2sg water eat-prs.2sg
+today 1pl 2sg see-prs.1pl
+3sg water eat-pst.3sg
+2sg food eat-prs.2sg
+1pl food eat-prs.1pl
+yesterday 3sg 2pl see-pst.3sg
+1pl tree see-prs.1pl
+2pl food eat-prs.2pl
+yesterday 1pl tree see-pst.1pl
+yesterday 3pl rock see-pst.3pl
+yesterday 1pl 1pl see-pst.1pl
+today 2sg tree see-prs.2sg
+2sg 3sg see-prs.2sg
+today 1pl tree see-prs.1pl
+today 1pl water eat-prs.1pl
+3sg fruit eat-prs.3sg
+1sg tree want-pst.1sg
+dog-pl food want-pst.3pl
+yesterday 3sg fruit eat-pst.3sg
+today 1sg dog see-prs.1sg
+cat-pl rock want-pst.3pl
+yesterday 2sg 2pl see-pst.2sg
+dog rock want-pst.3sg
+today 1sg water eat-prs.1sg
+yesterday 1pl meat eat-pst.1pl
+2pl tree see-pst.2pl
+today 2pl water eat-prs.2pl
+person-pl meat want-prs.3pl
+2sg dog see-prs.2sg
+today 3sg cat see-prs.3sg
+3sg dog see-prs.3sg
+today 2sg fruit eat-prs.2sg
+2pl rock want-pst.2pl
+yesterday 3sg 3pl see-pst.3sg
+today 3pl water eat-prs.3pl
+3pl water eat-pst.3pl
+2sg tree see-prs.2sg
+person-pl meat want-pst.3pl
+1sg water eat-prs.1sg
+person tree want-pst.3sg
+dog tree want-prs.3sg
+yesterday 2sg dog see-pst.2sg
+yesterday 1sg meat eat-pst.1sg
+cat-pl tree want-pst.3pl
+today 3sg person see-prs.3sg
+today 3sg meat eat-prs.3sg
+dog rock want-prs.3sg
+dog rock want-prs.3sg
+2sg tree see-pst.2sg
+1sg meat eat-prs.1sg
+1pl 2pl see-prs.1pl
+yesterday 3sg meat eat-pst.3sg
+2sg fruit see-pst.2sg
+2pl rock want-prs.2pl
+today 2pl fruit eat-prs.2pl
+yesterday 3sg fruit eat-pst.3sg
+dog tree want-pst.3sg
+yesterday 1sg 1pl see-pst.1sg
+yesterday 3sg meat eat-pst.3sg
+today 2sg rock see-prs.2sg
+today 3pl person see-prs.3pl
+yesterday 1sg meat eat-pst.1sg
+cat-pl rock want-pst.3pl
+1pl cat see-prs.1pl
+2pl tree see-pst.2pl
+yesterday 3sg food eat-pst.3sg
+yesterday 1sg water eat-pst.1sg
+cat-pl rock want-pst.3pl
+1pl rock see-pst.1pl
+yesterday 1pl 3sg see-pst.1pl
+2pl water eat-pst.2pl
+yesterday 3sg cat see-pst.3sg
+today 3pl 1sg see-prs.3pl
+cat-pl rock want-prs.3pl
+2sg dog see-pst.2sg
+yesterday 1sg tree see-pst.1sg
+2pl rock want-pst.2pl
+2pl tree want-prs.2pl
+person fruit want-prs.3sg
+3sg food eat-pst.3sg
+dog-pl tree want-prs.3pl
+3sg tree see-prs.3sg
+yesterday 1sg water see-pst.1sg
+yesterday 3pl meat see-pst.3pl
+dog-pl tree want-pst.3pl
+3sg meat eat-prs.3sg
+person fruit want-prs.3sg
+2pl meat see-pst.2pl
+dog-pl fruit want-pst.3pl
+cat-pl rock want-pst.3pl
+today 2sg dog see-prs.2sg
+yesterday 2pl person see-pst.2pl
+yesterday 3sg fruit eat-pst.3sg
+yesterday 1pl 2pl see-pst.1pl
+2pl water eat-prs.2pl
+2pl water want-prs.2pl
+1sg water want-prs.1sg
+today 3sg food eat-prs.3sg
+today 2pl food eat-prs.2pl
+dog tree want-prs.3sg
+2sg rock want-pst.2sg
+today 2pl 3pl see-prs.2pl
+yesterday 3sg 2pl see-pst.3sg
+person water want-pst.3sg
+today 2sg dog see-prs.2sg
+person food want-prs.3sg
+today 3sg 3sg see-prs.3sg
+yesterday 1pl food eat-pst.1pl
+1pl meat want-pst.1pl
+yesterday 2sg fruit eat-pst.2sg
+today 2sg rock see-prs.2sg
+cat tree want-pst.3sg
+3pl person see-pst.3pl
+today 3sg 3pl see-prs.3sg
+today 2sg water eat-prs.2sg
+cat-pl tree want-prs.3pl
+3pl rock want-prs.3pl
+yesterday 2pl meat eat-pst.2pl
+2sg food eat-pst.2sg
+cat fruit want-prs.3sg
+yesterday 1sg water eat-pst.1sg
+today 3pl water eat-prs.3pl
+1sg tree see-pst.1sg
+yesterday 3pl food eat-pst.3pl
+today 1sg cat see-prs.1sg
+1pl meat eat-prs.1pl
+3sg rock want-prs.3sg
+3sg water eat-prs.3sg
+cat rock want-prs.3sg
+cat tree want-pst.3sg
+today 3sg meat eat-prs.3sg
+1pl tree want-pst.1pl
+today 1pl 2sg see-prs.1pl
+yesterday 1sg fruit see-pst.1sg
+cat fruit want-pst.3sg
+yesterday 2pl food eat-pst.2pl
+person-pl rock want-pst.3pl
+3sg food want-pst.3sg
+person-pl tree want-pst.3pl
+yesterday 1pl meat eat-pst.1pl
+1pl water see-pst.1pl
+today 2sg water eat-prs.2sg
+3sg food want-prs.3sg
+1pl rock want-pst.1pl
+yesterday 3sg fruit eat-pst.3sg
+yesterday 3pl water eat-pst.3pl
+3pl water want-prs.3pl
+today 1sg 2sg see-prs.1sg
+3pl 1sg see-prs.3pl
+today 2sg fruit see-prs.2sg
+1pl fruit want-pst.1pl
+1sg fruit want-prs.1sg
+3pl meat eat-prs.3pl
+2sg rock want-prs.2sg
+today 2pl dog see-prs.2pl
+yesterday 1sg 1pl see-pst.1sg
+today 1sg fruit eat-prs.1sg
+yesterday 3pl food eat-pst.3pl
+2sg tree want-pst.2sg
+today 1pl dog see-prs.1pl
+person tree want-pst.3sg
+cat-pl rock want-pst.3pl
+3pl meat eat-pst.3pl
+1sg meat eat-pst.1sg
+cat-pl fruit want-prs.3pl
+dog rock want-prs.3sg
+2pl food want-pst.2pl
+cat-pl tree want-pst.3pl
+yesterday 1pl water eat-pst.1pl
+3sg fruit eat-prs.3sg
+2pl water eat-prs.2pl
+person tree want-prs.3sg
+today 2sg food eat-prs.2sg
+today 1pl fruit eat-prs.1pl
+yesterday 1pl water see-pst.1pl
+dog-pl fruit want-prs.3pl
+person-pl water want-prs.3pl
+2sg tree want-prs.2sg
+dog food want-pst.3sg
+dog-pl tree want-prs.3pl
+person rock want-prs.3sg
+2sg fruit eat-pst.2sg
+yesterday 1sg dog see-pst.1sg
+3sg meat eat-pst.3sg
+cat-pl meat want-pst.3pl
+today 2sg meat eat-prs.2sg
+today 2pl fruit see-prs.2pl
+yesterday 1sg water eat-pst.1sg
+3pl water eat-pst.3pl
+person tree want-prs.3sg
+yesterday 1sg 3sg see-pst.1sg
+today 1pl food eat-prs.1pl
+3pl fruit eat-pst.3pl
+2sg dog see-prs.2sg
+cat-pl tree want-pst.3pl
+3sg food see-prs.3sg
+today 3sg fruit eat-prs.3sg
+yesterday 3pl 3pl see-pst.3pl
+3pl meat see-pst.3pl
+cat rock want-pst.3sg
+today 2sg water eat-prs.2sg
+yesterday 1pl fruit eat-pst.1pl
+today 1sg 3pl see-prs.1sg
+3sg water eat-pst.3sg
+today 1sg cat see-prs.1sg
+2sg rock see-pst.2sg
+today 2pl fruit eat-prs.2pl
+yesterday 3pl fruit eat-pst.3pl
+2pl 1pl see-pst.2pl
+today 2sg food eat-prs.2sg
+yesterday 2pl fruit eat-pst.2pl
+person-pl tree want-pst.3pl
+today 3pl person see-prs.3pl
+today 3pl food eat-prs.3pl
+cat-pl food want-prs.3pl
+3sg meat eat-pst.3sg
+1sg 3sg see-prs.1sg
+person-pl rock want-prs.3pl
+2pl water eat-prs.2pl
+2pl tree see-pst.2pl
+1sg cat see-pst.1sg
+3sg fruit eat-pst.3sg
+today 2pl tree see-prs.2pl
+yesterday 3pl fruit eat-pst.3pl
+cat tree want-prs.3sg
+today 3pl fruit eat-prs.3pl
+today 3sg fruit eat-prs.3sg
+1pl fruit want-pst.1pl
+1pl rock want-prs.1pl
+today 3sg water see-prs.3sg
+dog rock want-pst.3sg
+1sg water want-pst.1sg
+3pl tree see-prs.3pl
+1pl 2sg see-pst.1pl
+cat-pl fruit want-prs.3pl
+today 2sg water eat-prs.2sg
+3pl rock want-prs.3pl
+yesterday 2pl food eat-pst.2pl
+today 1sg food eat-prs.1sg
+today 1pl food eat-prs.1pl
+person-pl water want-pst.3pl
+1sg water want-prs.1sg
+person-pl rock want-prs.3pl
+3sg water see-prs.3sg
+yesterday 2pl fruit eat-pst.2pl
+dog tree want-pst.3sg
+today 1sg fruit eat-prs.1sg
+dog-pl water want-prs.3pl
+today 1sg food see-prs.1sg
+today 1pl water eat-prs.1pl
+3sg tree want-prs.3sg
+1sg water eat-prs.1sg
+today 3pl water see-prs.3pl
+yesterday 1sg person see-pst.1sg
+2sg 2pl see-prs.2sg
+3sg food eat-prs.3sg
+yesterday 2pl food eat-pst.2pl
+today 1sg meat eat-prs.1sg
+today 2pl tree see-prs.2pl
+1sg rock want-pst.1sg
+cat-pl fruit want-prs.3pl
+today 1pl 2sg see-prs.1pl
+today 1pl fruit eat-prs.1pl
+3pl 1sg see-prs.3pl
+1pl fruit eat-prs.1pl
+yesterday 2sg water eat-pst.2sg
+today 3pl 1sg see-prs.3pl
+2pl 1pl see-pst.2pl
+yesterday 1pl food eat-pst.1pl
+today 1sg dog see-prs.1sg
+dog rock want-pst.3sg
+today 3sg cat see-prs.3sg
+today 3pl cat see-prs.3pl
+dog-pl meat want-pst.3pl
+cat water want-pst.3sg
+yesterday 1pl person see-pst.1pl
+3sg rock want-pst.3sg
+yesterday 1sg meat eat-pst.1sg
+today 2sg rock see-prs.2sg
+cat tree want-pst.3sg
+yesterday 2pl person see-pst.2pl
+today 3pl meat see-prs.3pl
+person fruit want-pst.3sg
+cat rock want-prs.3sg
+person-pl tree want-prs.3pl
+2pl 2sg see-pst.2pl
+cat-pl rock want-prs.3pl
+2sg rock want-prs.2sg
+3sg tree see-pst.3sg
+dog-pl fruit want-prs.3pl
+today 2pl food eat-prs.2pl
+cat meat want-prs.3sg
+3pl fruit eat-prs.3pl
+yesterday 3sg food eat-pst.3sg
+dog water want-pst.3sg
+yesterday 1sg water eat-pst.1sg
+yesterday 3sg fruit eat-pst.3sg
+person-pl food want-prs.3pl
+today 1sg person see-prs.1sg
+yesterday 2sg fruit eat-pst.2sg
+yesterday 1pl water eat-pst.1pl
+1pl dog see-prs.1pl
+yesterday 3sg water eat-pst.3sg
+today 2sg water eat-prs.2sg
+person tree want-prs.3sg
+2sg rock want-prs.2sg
+yesterday 3pl fruit see-pst.3pl
+cat-pl tree want-prs.3pl
+3pl 2sg see-prs.3pl
+cat-pl meat want-pst.3pl
+today 2sg meat eat-prs.2sg
+2pl rock see-prs.2pl
+2pl meat eat-prs.2pl
+yesterday 3sg food eat-pst.3sg
+dog-pl meat want-pst.3pl
+today 3pl fruit eat-prs.3pl
+today 2pl 3pl see-prs.2pl
+today 2sg tree see-prs.2sg
+yesterday 1pl water eat-pst.1pl
+1sg tree want-pst.1sg
+1sg dog see-prs.1sg
+1sg food eat-prs.1sg
+2pl meat eat-pst.2pl
+yesterday 1sg food see-pst.1sg
+dog food want-pst.3sg
+today 3sg meat eat-prs.3sg
+yesterday 1sg 3pl see-pst.1sg
+2sg 3pl see-pst.2sg
+today 2sg 1pl see-prs.2sg
+dog-pl rock want-pst.3pl
+2sg rock want-prs.2sg
+1sg food eat-prs.1sg
+cat-pl rock want-pst.3pl
+today 2sg fruit eat-prs.2sg
+3pl person see-pst.3pl
+cat-pl tree want-prs.3pl
+cat-pl tree want-pst.3pl
+3pl water eat-prs.3pl
+3pl food eat-prs.3pl
+person-pl rock want-prs.3pl
+person-pl water want-pst.3pl
+3sg person see-pst.3sg
+yesterday 3sg 2pl see-pst.3sg
+person rock want-pst.3sg
+yesterday 1sg meat eat-pst.1sg
+2pl cat see-prs.2pl
+today 1sg meat eat-prs.1sg
+yesterday 3pl tree see-pst.3pl
+yesterday 1pl dog see-pst.1pl
+1sg rock want-pst.1sg
+today 3sg water eat-prs.3sg
+1sg tree want-prs.1sg
+1sg fruit want-prs.1sg
+yesterday 1sg person see-pst.1sg
+today 2sg meat eat-prs.2sg
+cat rock want-pst.3sg
+today 1sg person see-prs.1sg
+yesterday 1sg water eat-pst.1sg
+3sg fruit eat-prs.3sg
+yesterday 1pl cat see-pst.1pl
+today 1sg fruit eat-prs.1sg
+dog meat want-pst.3sg
+person rock want-pst.3sg
+today 2pl food eat-prs.2pl
+yesterday 1pl fruit see-pst.1pl
+1sg tree want-prs.1sg
+today 1sg cat see-prs.1sg
+yesterday 1sg 1sg see-pst.1sg
+2sg rock see-pst.2sg
+yesterday 2pl dog see-pst.2pl
+cat-pl tree want-prs.3pl
+3pl fruit eat-prs.3pl
+today 1sg food eat-prs.1sg
+yesterday 3sg fruit eat-pst.3sg
+person rock want-prs.3sg
+today 1sg fruit eat-prs.1sg
+person rock want-prs.3sg
+today 1sg rock see-prs.1sg
+3sg cat see-pst.3sg
+dog rock want-pst.3sg
+3sg tree want-prs.3sg
+today 2pl meat see-prs.2pl
+2sg meat see-pst.2sg
+3sg water eat-pst.3sg
+yesterday 3pl 2sg see-pst.3pl
+dog-pl tree want-prs.3pl
+yesterday 3pl food eat-pst.3pl
+2sg meat want-prs.2sg
+yesterday 2pl water see-pst.2pl
+person meat want-prs.3sg
+yesterday 3sg food eat-pst.3sg
+1pl fruit eat-prs.1pl
+today 2sg water see-prs.2sg
+1pl tree want-pst.1pl
+yesterday 2pl 1pl see-pst.2pl
+1sg person see-prs.1sg
+3pl 3sg see-pst.3pl
+2sg rock want-prs.2sg
+person-pl fruit want-pst.3pl
+3sg meat eat-prs.3sg
+3pl rock want-pst.3pl
+dog rock want-prs.3sg
+2pl food eat-prs.2pl
+2pl water eat-prs.2pl
+3sg food want-pst.3sg
+cat-pl tree want-pst.3pl
+1sg 3sg see-pst.1sg
+today 1pl water eat-prs.1pl
+2pl rock see-prs.2pl
+1sg rock see-pst.1sg
+yesterday 2pl fruit eat-pst.2pl
+2sg food want-pst.2sg
+yesterday 2pl tree see-pst.2pl
+2pl tree want-pst.2pl
+3pl rock want-pst.3pl
+1pl fruit want-prs.1pl
+3pl water eat-prs.3pl
+person-pl tree want-prs.3pl
+today 2pl water eat-prs.2pl
+yesterday 2sg water eat-pst.2sg
+yesterday 1pl fruit eat-pst.1pl
+person tree want-prs.3sg
+person-pl fruit want-prs.3pl
+3pl dog see-pst.3pl
+cat food want-prs.3sg
+dog-pl tree want-prs.3pl
+3sg meat eat-prs.3sg
+3pl rock want-prs.3pl
+person-pl tree want-pst.3pl
+1sg meat eat-prs.1sg
+today 2sg fruit eat-prs.2sg
+2sg water eat-prs.2sg
+2sg tree want-pst.2sg
+yesterday 2sg tree see-pst.2sg
+dog food want-pst.3sg
+yesterday 3pl dog see-pst.3pl
+2pl tree see-prs.2pl
+3sg water eat-prs.3sg
+2sg meat eat-pst.2sg
+cat-pl tree want-pst.3pl
+today 3sg rock see-prs.3sg
+yesterday 2sg fruit eat-pst.2sg
+yesterday 3pl meat eat-pst.3pl
+yesterday 1sg food eat-pst.1sg
+today 3pl food eat-prs.3pl
+2pl food see-prs.2pl
+yesterday 1pl water eat-pst.1pl
+today 2pl cat see-prs.2pl
+cat tree want-prs.3sg
+person-pl food want-prs.3pl
+2sg meat see-pst.2sg
+1sg water want-prs.1sg
+2sg fruit eat-pst.2sg
+dog-pl rock want-prs.3pl
+yesterday 2sg food see-pst.2sg
+today 1sg food eat-prs.1sg
+today 2pl tree see-prs.2pl
+yesterday 2pl fruit eat-pst.2pl
+cat tree want-prs.3sg
+2pl 3pl see-pst.2pl
+2sg rock want-prs.2sg
+today 3pl 1sg see-prs.3pl
+today 2pl food eat-prs.2pl
+today 1pl food see-prs.1pl
+today 2sg 3pl see-prs.2sg
+person-pl rock want-pst.3pl
+1sg fruit eat-prs.1sg
+2sg 2pl see-prs.2sg
+cat tree want-pst.3sg
+yesterday 3sg 3sg see-pst.3sg
+dog-pl rock want-prs.3pl
+dog tree want-pst.3sg
+cat meat want-pst.3sg
+2sg tree see-prs.2sg
+1pl rock want-pst.1pl
+yesterday 1sg rock see-pst.1sg
+today 3pl fruit eat-prs.3pl
+dog-pl tree want-prs.3pl
+yesterday 3sg fruit eat-pst.3sg
+yesterday 1sg meat eat-pst.1sg
+person rock want-prs.3sg
+3sg tree want-prs.3sg
+3pl rock want-prs.3pl
+yesterday 1pl water see-pst.1pl
+cat tree want-pst.3sg
+today 3sg 3sg see-prs.3sg
+dog tree want-pst.3sg
+2pl meat eat-pst.2pl
+yesterday 3sg 3sg see-pst.3sg
+1pl rock want-prs.1pl
+today 1sg fruit eat-prs.1sg
+yesterday 1pl water eat-pst.1pl
+cat-pl meat want-pst.3pl
+3pl dog see-pst.3pl
+cat-pl rock want-pst.3pl
+dog-pl water want-pst.3pl
+yesterday 2sg food eat-pst.2sg
+3pl water eat-pst.3pl
+today 3sg meat eat-prs.3sg
+yesterday 1sg food eat-pst.1sg
+1sg 3pl see-pst.1sg
+today 2sg meat eat-prs.2sg
+yesterday 3pl cat see-pst.3pl
+yesterday 3sg fruit eat-pst.3sg
+today 3sg water eat-prs.3sg
+cat-pl rock want-pst.3pl
+dog-pl rock want-pst.3pl
+2pl fruit eat-prs.2pl
+yesterday 2pl food eat-pst.2pl
+3sg person see-pst.3sg
+1sg food eat-prs.1sg
+dog rock want-prs.3sg
+today 1sg water eat-prs.1sg
+1pl food see-prs.1pl
+1pl 3sg see-pst.1pl
+dog-pl tree want-prs.3pl
+yesterday 2sg fruit eat-pst.2sg
+2sg water eat-pst.2sg
+today 1sg food eat-prs.1sg
+today 1sg 1sg see-prs.1sg
+yesterday 2sg meat eat-pst.2sg
+yesterday 3pl water eat-pst.3pl
+2sg rock see-prs.2sg
+cat tree want-prs.3sg
+cat-pl meat want-prs.3pl
+yesterday 1sg water eat-pst.1sg
+today 2pl rock see-prs.2pl
+today 1pl dog see-prs.1pl
+1pl tree want-pst.1pl
+person-pl tree want-pst.3pl
+2pl fruit eat-pst.2pl
+1sg cat see-pst.1sg
+3sg tree want-prs.3sg
+dog rock want-pst.3sg
+cat-pl water want-pst.3pl
+2pl 3pl see-prs.2pl
+yesterday 2sg dog see-pst.2sg
+person rock want-pst.3sg
+cat tree want-pst.3sg
+today 3sg meat eat-prs.3sg
+yesterday 1sg fruit eat-pst.1sg
+today 1sg cat see-prs.1sg
+yesterday 1sg water eat-pst.1sg
+yesterday 2sg water eat-pst.2sg
+today 1sg fruit eat-prs.1sg
+2sg rock want-pst.2sg
+today 3sg food eat-prs.3sg
+yesterday 2pl meat eat-pst.2pl
+person tree want-pst.3sg
+1sg rock want-pst.1sg
+yesterday 1sg meat see-pst.1sg
+yesterday 3pl fruit eat-pst.3pl
+yesterday 3sg water eat-pst.3sg
+today 2pl 1sg see-prs.2pl
+yesterday 1sg meat eat-pst.1sg
+person-pl fruit want-pst.3pl
+yesterday 2sg water eat-pst.2sg
+yesterday 3pl water eat-pst.3pl
+3pl meat eat-prs.3pl
+yesterday 3sg rock see-pst.3sg
+1sg food eat-pst.1sg
+2pl meat eat-pst.2pl
+3pl 3pl see-prs.3pl
+3sg food eat-prs.3sg
+cat-pl tree want-pst.3pl
+2pl tree see-prs.2pl
+2sg 1sg see-pst.2sg
+yesterday 3pl 3pl see-pst.3pl
+3sg food want-pst.3sg
+1pl water eat-pst.1pl
+yesterday 1pl person see-pst.1pl
+3sg fruit eat-prs.3sg
+1pl meat want-pst.1pl
+1sg fruit eat-pst.1sg
+person-pl water want-prs.3pl
+2pl fruit eat-pst.2pl
+person-pl fruit want-prs.3pl
+yesterday 1pl fruit eat-pst.1pl
+1pl fruit eat-prs.1pl
+3sg water eat-prs.3sg
+person-pl tree want-prs.3pl
+cat-pl meat want-prs.3pl
+yesterday 2sg 2sg see-pst.2sg
+2sg rock want-prs.2sg
+yesterday 3pl water eat-pst.3pl
+yesterday 2pl 3pl see-pst.2pl
+1pl meat eat-prs.1pl
+1pl water eat-prs.1pl
+2pl rock want-prs.2pl
+3pl tree want-pst.3pl
+dog-pl tree want-prs.3pl
+1pl tree want-pst.1pl
+3pl 3pl see-prs.3pl
+today 2sg fruit eat-prs.2sg
+2pl 3sg see-pst.2pl
+2sg meat eat-prs.2sg
+today 2sg cat see-prs.2sg
+person-pl tree want-prs.3pl
+yesterday 1sg 1sg see-pst.1sg
+yesterday 3sg fruit eat-pst.3sg
+3pl 3pl see-pst.3pl
+person-pl rock want-prs.3pl
+1sg 3sg see-pst.1sg
+dog rock want-prs.3sg
+yesterday 3pl tree see-pst.3pl
+yesterday 3pl 3sg see-pst.3pl
+1pl meat eat-prs.1pl
+today 1sg fruit eat-prs.1sg
+dog water want-prs.3sg
+person-pl rock want-pst.3pl
+today 1sg 1sg see-prs.1sg
+yesterday 1pl person see-pst.1pl
+1sg meat eat-prs.1sg
+cat tree want-pst.3sg
+yesterday 2sg fruit eat-pst.2sg
+person-pl fruit want-pst.3pl
+yesterday 3pl 2pl see-pst.3pl
+3sg rock want-pst.3sg
+cat tree want-prs.3sg
+yesterday 3pl food eat-pst.3pl
+yesterday 1pl water eat-pst.1pl
+cat tree want-pst.3sg
+today 2pl food eat-prs.2pl
+today 2sg food eat-prs.2sg
+today 2sg water see-prs.2sg
+yesterday 1sg tree see-pst.1sg
+today 3pl water eat-prs.3pl
+yesterday 2sg water eat-pst.2sg
+yesterday 3sg 1sg see-pst.3sg
+person rock want-prs.3sg
+today 1pl person see-prs.1pl
+yesterday 2pl fruit eat-pst.2pl
+cat rock want-prs.3sg
+yesterday 2pl person see-pst.2pl
+2sg meat want-pst.2sg
+yesterday 3pl food eat-pst.3pl
+person rock want-prs.3sg
+today 2pl cat see-prs.2pl
+yesterday 1sg food eat-pst.1sg
+yesterday 1sg meat eat-pst.1sg
+2sg food eat-pst.2sg
+yesterday 1sg 1sg see-pst.1sg
+person tree want-prs.3sg
+1sg fruit eat-prs.1sg
+yesterday 3pl water eat-pst.3pl
+today 3sg person see-prs.3sg
+yesterday 2pl person see-pst.2pl
+3pl food eat-pst.3pl
+3sg rock want-prs.3sg
+yesterday 2pl water eat-pst.2pl
+1pl 2pl see-pst.1pl
+today 3pl water see-prs.3pl
+today 3sg dog see-prs.3sg
+cat-pl tree want-prs.3pl
+cat rock want-prs.3sg
+3sg cat see-prs.3sg
+today 1sg 1pl see-prs.1sg
+3pl meat eat-prs.3pl
+today 2sg fruit eat-prs.2sg
+today 3pl 1pl see-prs.3pl
+1pl rock want-prs.1pl
+2sg 1pl see-pst.2sg
+yesterday 2pl food eat-pst.2pl
+cat-pl rock want-prs.3pl
+2sg rock want-prs.2sg
+dog-pl rock want-pst.3pl
+dog fruit want-pst.3sg
+yesterday 3sg fruit eat-pst.3sg
+3pl tree see-pst.3pl
+3pl fruit want-prs.3pl
+2sg dog see-prs.2sg
+3sg 3sg see-pst.3sg
+cat-pl tree want-prs.3pl
+yesterday 3sg tree see-pst.3sg
+yesterday 2sg water eat-pst.2sg
+today 2sg water eat-prs.2sg
+1sg 3sg see-pst.1sg
+today 3pl food eat-prs.3pl
+dog tree want-prs.3sg
+person tree want-prs.3sg
+today 3sg 1pl see-prs.3sg
+yesterday 3pl dog see-pst.3pl
+cat tree want-prs.3sg
+3sg water see-pst.3sg
+today 3sg cat see-prs.3sg
+1pl 1sg see-pst.1pl
+today 1pl rock see-prs.1pl
+1pl food eat-prs.1pl
+today 3pl person see-prs.3pl
+3pl meat eat-prs.3pl
+today 2sg meat see-prs.2sg
+today 3pl meat eat-prs.3pl
+person tree want-prs.3sg
+1sg 3pl see-prs.1sg
+today 3sg 2pl see-prs.3sg
+today 3pl dog see-prs.3pl
+yesterday 1sg food eat-pst.1sg
+yesterday 1pl 1pl see-pst.1pl
+cat tree want-prs.3sg
+today 3sg 3sg see-prs.3sg
+today 2sg water eat-prs.2sg
+today 1pl 2sg see-prs.1pl
+yesterday 3pl fruit eat-pst.3pl
+3sg water eat-prs.3sg
+yesterday 1pl dog see-pst.1pl
+yesterday 2pl tree see-pst.2pl
+today 3pl cat see-prs.3pl
+today 2pl 2pl see-prs.2pl
+person-pl rock want-prs.3pl
+yesterday 1sg dog see-pst.1sg
+yesterday 1pl meat see-pst.1pl
+dog-pl tree want-prs.3pl
+yesterday 1sg person see-pst.1sg
+today 2sg tree see-prs.2sg
+3pl rock want-pst.3pl
+today 2pl meat eat-prs.2pl
+2pl cat see-pst.2pl
+today 3sg 3pl see-prs.3sg
+dog tree want-prs.3sg
+yesterday 1sg cat see-pst.1sg
+yesterday 2pl 1pl see-pst.2pl
+yesterday 3sg 3pl see-pst.3sg
+1sg meat eat-prs.1sg
+2pl tree want-pst.2pl
+yesterday 3sg food eat-pst.3sg
+cat-pl water want-prs.3pl
+cat tree want-pst.3sg
+2sg fruit eat-prs.2sg
+yesterday 3sg person see-pst.3sg
+person tree want-pst.3sg
+2sg food eat-pst.2sg
+yesterday 2pl person see-pst.2pl
+3pl water eat-prs.3pl
+today 2sg water eat-prs.2sg
+yesterday 2sg dog see-pst.2sg
+dog meat want-prs.3sg
+person rock want-pst.3sg
+3pl 1pl see-pst.3pl
+today 2sg dog see-prs.2sg
+3pl fruit want-pst.3pl
+2sg 1pl see-prs.2sg
+dog-pl tree want-pst.3pl
+cat-pl tree want-prs.3pl
+today 1sg fruit eat-prs.1sg
+1pl meat eat-prs.1pl
+3sg meat want-pst.3sg
+cat rock want-pst.3sg
+yesterday 1sg tree see-pst.1sg
+cat-pl tree want-prs.3pl
+1pl meat eat-pst.1pl
+3pl fruit eat-prs.3pl
+3sg rock want-prs.3sg
+2sg water eat-pst.2sg
+3sg rock want-prs.3sg
+today 3pl rock see-prs.3pl
+2pl fruit want-prs.2pl
+yesterday 3sg dog see-pst.3sg
+cat fruit want-prs.3sg
+today 3sg 2pl see-prs.3sg
+2sg rock want-prs.2sg
+today 2pl food eat-prs.2pl
+yesterday 3pl meat eat-pst.3pl
+dog water want-pst.3sg
+2pl 2pl see-prs.2pl
+cat food want-prs.3sg
+yesterday 3sg cat see-pst.3sg
+person-pl meat want-pst.3pl
+today 3pl meat eat-prs.3pl
+yesterday 2pl fruit eat-pst.2pl
+yesterday 2sg fruit eat-pst.2sg
+1sg tree want-prs.1sg
+today 1sg water eat-prs.1sg
+cat water want-prs.3sg
+person-pl rock want-prs.3pl
+3pl food eat-pst.3pl
+today 1pl water eat-prs.1pl
+person-pl water want-pst.3pl
+dog rock want-prs.3sg
+yesterday 3sg food eat-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+yesterday 2pl cat see-pst.2pl
+today 2sg person see-prs.2sg
+today 2sg food eat-prs.2sg
+1pl tree want-pst.1pl
+person tree want-prs.3sg
+dog meat want-pst.3sg
+2pl water want-prs.2pl
+yesterday 1pl 2sg see-pst.1pl
+yesterday 3pl 3pl see-pst.3pl
+1pl person see-prs.1pl
+today 1pl meat eat-prs.1pl
+today 1sg fruit eat-prs.1sg
+2pl water eat-prs.2pl
+3sg person see-pst.3sg
+yesterday 2pl 3sg see-pst.2pl
+yesterday 1pl water eat-pst.1pl
+2sg tree want-pst.2sg
+1sg tree want-prs.1sg
+2pl water want-prs.2pl
+3pl fruit want-pst.3pl
+1sg fruit eat-pst.1sg
+cat-pl tree want-prs.3pl
+today 2pl water eat-prs.2pl
+1sg cat see-pst.1sg
+2sg food want-pst.2sg
+today 2sg fruit see-prs.2sg
+3sg 3pl see-prs.3sg
+cat-pl rock want-pst.3pl
+yesterday 3pl water eat-pst.3pl
+today 2sg 1pl see-prs.2sg
+yesterday 2sg rock see-pst.2sg
+3sg dog see-pst.3sg
+yesterday 2sg meat eat-pst.2sg
+today 2pl water see-prs.2pl
+2pl 1pl see-pst.2pl
+3pl rock want-prs.3pl
+1pl dog see-prs.1pl
+person-pl fruit want-prs.3pl
+yesterday 3sg meat eat-pst.3sg
+yesterday 2pl dog see-pst.2pl
+person-pl fruit want-pst.3pl
+3pl water eat-pst.3pl
+yesterday 1sg cat see-pst.1sg
+2pl meat see-prs.2pl
+1pl rock see-prs.1pl
+today 2sg water eat-prs.2sg
+1pl water eat-pst.1pl
+yesterday 1sg rock see-pst.1sg
+2sg meat want-pst.2sg
+1pl dog see-prs.1pl
+yesterday 2pl 1sg see-pst.2pl
+yesterday 2pl food eat-pst.2pl
+1pl food eat-prs.1pl
+person water want-prs.3sg
+today 1pl fruit eat-prs.1pl
+person-pl rock want-prs.3pl
+yesterday 3sg rock see-pst.3sg
+today 2pl meat eat-prs.2pl
+person rock want-pst.3sg
+yesterday 3pl meat see-pst.3pl
+yesterday 3sg meat eat-pst.3sg
+yesterday 2pl food eat-pst.2pl
+3pl food eat-pst.3pl
+yesterday 2sg food eat-pst.2sg
+cat rock want-prs.3sg
+yesterday 2pl fruit see-pst.2pl
+person tree want-prs.3sg
+cat-pl rock want-prs.3pl
+dog-pl water want-pst.3pl
+1sg food see-prs.1sg
+3sg rock want-pst.3sg
+2pl 1pl see-pst.2pl
+yesterday 1sg water eat-pst.1sg
+3pl cat see-pst.3pl
+1pl food eat-pst.1pl
+yesterday 3pl 3sg see-pst.3pl
+yesterday 2pl tree see-pst.2pl
+3sg food want-pst.3sg
+yesterday 1pl water eat-pst.1pl
+yesterday 3sg meat eat-pst.3sg
+today 2sg 3sg see-prs.2sg
+yesterday 2pl tree see-pst.2pl
+dog-pl tree want-prs.3pl
+yesterday 1pl fruit eat-pst.1pl
+yesterday 3sg tree see-pst.3sg
+person tree want-prs.3sg
+yesterday 1sg water eat-pst.1sg
+2sg dog see-pst.2sg
+yesterday 2sg tree see-pst.2sg
+cat tree want-pst.3sg
+today 3pl tree see-prs.3pl
+today 1pl 1pl see-prs.1pl
+today 2sg cat see-prs.2sg
+yesterday 3pl tree see-pst.3pl
+2sg dog see-pst.2sg
+3pl 3sg see-prs.3pl
+2sg rock want-prs.2sg
+yesterday 2pl 1pl see-pst.2pl
+yesterday 2pl food eat-pst.2pl
+yesterday 2pl water eat-pst.2pl
+cat tree want-pst.3sg
+today 3sg meat eat-prs.3sg
+2pl meat want-prs.2pl
+3sg tree want-pst.3sg
+cat tree want-pst.3sg
+person rock want-pst.3sg
+3pl food eat-prs.3pl
+3sg person see-prs.3sg
+2pl tree want-prs.2pl
+2sg meat eat-prs.2sg
+today 1sg meat eat-prs.1sg
+dog food want-pst.3sg
+yesterday 2pl fruit see-pst.2pl
+3pl 3pl see-prs.3pl
+yesterday 3sg person see-pst.3sg
+yesterday 2pl 2sg see-pst.2pl
+today 1sg meat eat-prs.1sg
+today 1pl 1pl see-prs.1pl
+2pl 2sg see-prs.2pl
+today 1pl fruit eat-prs.1pl
+today 2sg tree see-prs.2sg
+1sg tree want-pst.1sg
+yesterday 3sg person see-pst.3sg
+yesterday 2pl food eat-pst.2pl
+today 3sg person see-prs.3sg
+today 2sg rock see-prs.2sg
+today 3sg cat see-prs.3sg
+3sg rock want-pst.3sg
+1sg tree want-pst.1sg
+2pl water eat-prs.2pl
+today 2pl food eat-prs.2pl
+today 2pl fruit eat-prs.2pl
+today 3pl water eat-prs.3pl
+person-pl rock want-pst.3pl
+yesterday 3pl water eat-pst.3pl
+yesterday 3sg cat see-pst.3sg
+today 2pl fruit eat-prs.2pl
+person food want-prs.3sg
+today 3pl food eat-prs.3pl
+1sg fruit want-prs.1sg
+yesterday 2pl water eat-pst.2pl
+today 2sg 1pl see-prs.2sg
+today 1sg water eat-prs.1sg
+3pl tree want-pst.3pl
+cat-pl water want-pst.3pl
+2pl rock want-pst.2pl
+today 1pl meat eat-prs.1pl
+dog-pl rock want-prs.3pl
+yesterday 3sg dog see-pst.3sg
+3pl tree want-pst.3pl
+1sg meat eat-prs.1sg
+cat-pl rock want-pst.3pl
+3sg 1pl see-prs.3sg
+3pl rock see-pst.3pl
+today 3sg fruit eat-prs.3sg
+today 1pl meat eat-prs.1pl
+yesterday 1pl rock see-pst.1pl
+today 2pl rock see-prs.2pl
+1pl tree want-pst.1pl
+yesterday 1pl meat eat-pst.1pl
+dog-pl rock want-prs.3pl
+2sg food want-pst.2sg
+2pl cat see-pst.2pl
+yesterday 3sg 3sg see-pst.3sg
+today 2pl meat eat-prs.2pl
+yesterday 1sg food eat-pst.1sg
+yesterday 2sg 2sg see-pst.2sg
+person rock want-pst.3sg
+today 1sg person see-prs.1sg
+today 3sg meat eat-prs.3sg
+yesterday 3pl meat eat-pst.3pl
+today 1sg fruit eat-prs.1sg
+cat water want-pst.3sg
+1pl rock see-pst.1pl
+today 3sg food eat-prs.3sg
+person-pl water want-pst.3pl
+2sg fruit see-prs.2sg
+yesterday 3pl 2sg see-pst.3pl
+cat-pl rock want-prs.3pl
+cat fruit want-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+dog-pl fruit want-pst.3pl
+today 1pl 2pl see-prs.1pl
+1sg meat eat-prs.1sg
+dog-pl water want-prs.3pl
+yesterday 2pl tree see-pst.2pl
+3sg water eat-prs.3sg
+yesterday 3pl water eat-pst.3pl
+yesterday 2sg tree see-pst.2sg
+dog fruit want-prs.3sg
+yesterday 3sg fruit see-pst.3sg
+dog-pl food want-prs.3pl
+today 2sg food see-prs.2sg
+cat-pl food want-prs.3pl
+3sg food want-prs.3sg
+today 3sg meat eat-prs.3sg
+3pl food eat-pst.3pl
+today 2sg fruit eat-prs.2sg
+yesterday 3sg rock see-pst.3sg
+3pl food want-pst.3pl
+yesterday 3sg water eat-pst.3sg
+today 3pl rock see-prs.3pl
+3sg 3pl see-pst.3sg
+today 2pl 2sg see-prs.2pl
+person rock want-prs.3sg
+person-pl tree want-pst.3pl
+1sg fruit eat-pst.1sg
+yesterday 1sg cat see-pst.1sg
+1pl rock want-prs.1pl
+today 3sg water eat-prs.3sg
+yesterday 1sg fruit eat-pst.1sg
+dog fruit want-prs.3sg
+3sg rock want-prs.3sg
+yesterday 3pl cat see-pst.3pl
+dog-pl food want-pst.3pl
+3pl tree see-pst.3pl
+person rock want-pst.3sg
+today 2pl fruit eat-prs.2pl
+cat fruit want-pst.3sg
+today 1pl 2sg see-prs.1pl
+person tree want-prs.3sg
+yesterday 1pl meat eat-pst.1pl
+1pl tree want-pst.1pl
+today 1pl tree see-prs.1pl
+today 1pl tree see-prs.1pl
+2pl rock want-prs.2pl
+cat-pl tree want-pst.3pl
+today 2sg cat see-prs.2sg
+2sg tree want-prs.2sg
+today 3sg meat eat-prs.3sg
+yesterday 2sg meat eat-pst.2sg
+1sg tree want-pst.1sg
+3sg tree want-prs.3sg
+yesterday 1pl 1pl see-pst.1pl
+cat rock want-prs.3sg
+today 2pl dog see-prs.2pl
+today 3sg 1sg see-prs.3sg
+today 2pl person see-prs.2pl
+3pl rock see-pst.3pl
+dog water want-pst.3sg
+yesterday 2sg 3pl see-pst.2sg
+yesterday 1pl fruit see-pst.1pl
+yesterday 3sg cat see-pst.3sg
+dog-pl tree want-pst.3pl
+2sg person see-pst.2sg
+today 3pl water eat-prs.3pl
+2sg 3sg see-pst.2sg
+today 3pl person see-prs.3pl
+yesterday 1sg meat eat-pst.1sg
+person-pl food want-prs.3pl
+today 1pl fruit eat-prs.1pl
+2sg tree want-pst.2sg
+person-pl tree want-prs.3pl
+3pl food eat-prs.3pl
+person rock want-pst.3sg
+yesterday 1pl person see-pst.1pl
+person rock want-prs.3sg
+person-pl rock want-pst.3pl
+yesterday 3sg 1sg see-pst.3sg
+3pl water eat-prs.3pl
+dog-pl rock want-pst.3pl
+person-pl food want-prs.3pl
+3pl meat eat-pst.3pl
+yesterday 3sg fruit eat-pst.3sg
+dog-pl meat want-prs.3pl
+3pl tree see-pst.3pl
+cat-pl tree want-pst.3pl
+1sg 2pl see-prs.1sg
+today 1pl 2sg see-prs.1pl
+yesterday 1sg 3sg see-pst.1sg
+1sg water eat-pst.1sg
+yesterday 1pl meat eat-pst.1pl
+yesterday 1pl meat eat-pst.1pl
+today 3sg 2sg see-prs.3sg
+yesterday 1pl 2sg see-pst.1pl
+yesterday 1pl water eat-pst.1pl
+cat tree want-pst.3sg
+cat-pl food want-pst.3pl
+1sg rock want-pst.1sg
+1pl water eat-pst.1pl
+today 2sg tree see-prs.2sg
+today 2pl fruit eat-prs.2pl
+cat-pl tree want-prs.3pl
+today 1pl 2sg see-prs.1pl
+yesterday 2sg 2sg see-pst.2sg
+dog-pl rock want-pst.3pl
+dog-pl tree want-pst.3pl
+2sg fruit eat-pst.2sg
+3pl water eat-prs.3pl
+person-pl water want-pst.3pl
+today 3sg fruit eat-prs.3sg
+3sg rock see-prs.3sg
+today 1sg tree see-prs.1sg
+dog meat want-prs.3sg
+today 3sg water eat-prs.3sg
+today 2sg person see-prs.2sg
+yesterday 1sg water eat-pst.1sg
+dog-pl tree want-prs.3pl
+today 3pl meat eat-prs.3pl
+today 2pl food eat-prs.2pl
+1sg 2pl see-prs.1sg
+3pl fruit see-prs.3pl
+yesterday 2pl dog see-pst.2pl
+2pl dog see-pst.2pl
+yesterday 2pl dog see-pst.2pl
+yesterday 2sg water eat-pst.2sg
+today 2pl fruit eat-prs.2pl
+today 2sg 3sg see-prs.2sg
+yesterday 3pl 3pl see-pst.3pl
+2pl person see-prs.2pl
+person-pl tree want-pst.3pl
+cat tree want-prs.3sg
+yesterday 3sg food eat-pst.3sg
+yesterday 1sg water eat-pst.1sg
+3pl cat see-pst.3pl
+cat-pl rock want-prs.3pl
+yesterday 3pl tree see-pst.3pl
+3sg tree want-prs.3sg
+dog-pl tree want-pst.3pl
+dog-pl tree want-prs.3pl
+yesterday 1sg food see-pst.1sg
+dog-pl tree want-pst.3pl
+today 2sg tree see-prs.2sg
+2pl water eat-prs.2pl
+yesterday 1pl 1sg see-pst.1pl
+2pl tree want-pst.2pl
+person tree want-prs.3sg
+yesterday 2sg fruit eat-pst.2sg
+today 3sg meat eat-prs.3sg
+yesterday 1sg meat eat-pst.1sg
+1pl meat eat-prs.1pl
+yesterday 3pl meat eat-pst.3pl
+1sg meat eat-prs.1sg
+2sg 1pl see-prs.2sg
+dog rock want-pst.3sg
+1pl meat eat-prs.1pl
+2sg 2sg see-prs.2sg
+1pl water eat-prs.1pl
+today 3sg 2sg see-prs.3sg
+yesterday 3pl rock see-pst.3pl
+2pl meat eat-pst.2pl
+person-pl fruit want-pst.3pl
+cat tree want-pst.3sg
+3sg dog see-pst.3sg
+3sg meat eat-prs.3sg
+cat-pl food want-pst.3pl
+3sg water want-pst.3sg
+1pl rock want-prs.1pl
+yesterday 3pl fruit eat-pst.3pl
+2pl fruit eat-prs.2pl
+today 2sg person see-prs.2sg
+person-pl rock want-prs.3pl
+1pl meat eat-prs.1pl
+today 2pl food eat-prs.2pl
+yesterday 3sg 3pl see-pst.3sg
+today 3sg food eat-prs.3sg
+today 3sg 3pl see-prs.3sg
+yesterday 3sg fruit eat-pst.3sg
+1pl water eat-pst.1pl
+person-pl meat want-prs.3pl
+dog rock want-prs.3sg
+person-pl rock want-prs.3pl
+today 3sg 1pl see-prs.3sg
+dog-pl tree want-prs.3pl
+yesterday 1sg fruit see-pst.1sg
+1sg water eat-pst.1sg
+yesterday 1pl fruit eat-pst.1pl
+2pl rock want-prs.2pl
+today 1pl dog see-prs.1pl
+3pl food eat-prs.3pl
+3sg fruit want-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+today 3pl person see-prs.3pl
+today 2pl 2pl see-prs.2pl
+today 3pl 2sg see-prs.3pl
+1pl water eat-prs.1pl
+yesterday 2pl water eat-pst.2pl
+3pl meat eat-pst.3pl
+3pl food want-pst.3pl
+today 3sg 2pl see-prs.3sg
+yesterday 1pl meat eat-pst.1pl
+cat rock want-pst.3sg
+yesterday 1sg 2pl see-pst.1sg
+3pl 1sg see-prs.3pl
+dog-pl rock want-prs.3pl
+1sg person see-prs.1sg
+today 1sg dog see-prs.1sg
+3pl 2pl see-prs.3pl
+yesterday 3pl 2pl see-pst.3pl
+person rock want-pst.3sg
+dog-pl rock want-prs.3pl
+today 1sg meat eat-prs.1sg
+3sg tree want-pst.3sg
+1pl 3pl see-prs.1pl
+3pl rock want-pst.3pl
+today 3sg 1pl see-prs.3sg
+3pl water eat-prs.3pl
+yesterday 3sg food eat-pst.3sg
+3sg rock want-prs.3sg
+yesterday 3sg water eat-pst.3sg
+1pl water eat-pst.1pl
+yesterday 1sg 3sg see-pst.1sg
+cat tree want-prs.3sg
+yesterday 1pl cat see-pst.1pl
+today 3pl tree see-prs.3pl
+yesterday 2sg food eat-pst.2sg
+today 3pl food eat-prs.3pl
+today 3sg fruit eat-prs.3sg
+yesterday 2pl 3sg see-pst.2pl
+1pl meat want-pst.1pl
+yesterday 2pl food eat-pst.2pl
+today 1sg 1sg see-prs.1sg
+dog rock want-prs.3sg
+today 3sg tree see-prs.3sg
+person-pl tree want-prs.3pl
+person-pl tree want-prs.3pl
+today 1sg 1pl see-prs.1sg
+yesterday 2pl dog see-pst.2pl
+yesterday 1pl cat see-pst.1pl
+dog tree want-prs.3sg
+2sg meat want-prs.2sg
+today 3pl 1sg see-prs.3pl
+today 3pl cat see-prs.3pl
+yesterday 1pl person see-pst.1pl
+yesterday 1pl food see-pst.1pl
+3sg water eat-pst.3sg
+2sg rock want-prs.2sg
+3sg 2sg see-pst.3sg
+today 1pl food eat-prs.1pl
+yesterday 3pl food eat-pst.3pl
+yesterday 3pl fruit see-pst.3pl
+person-pl fruit want-prs.3pl
+cat-pl fruit want-prs.3pl
+yesterday 2pl 2pl see-pst.2pl
+today 3pl cat see-prs.3pl
 cat-pl tree want-pst.3pl
 today 1sg water eat-prs.1sg
-person-pl food want-pst.3pl
-yesterday 1pl food eat-pst.1pl
-dog food want-prs.3sg
-1pl water see-prs.1pl
+yesterday 1sg fruit eat-pst.1sg
+1pl fruit eat-pst.1pl
+yesterday 2pl 3sg see-pst.2pl
+yesterday 2pl person see-pst.2pl
+yesterday 2sg water see-pst.2sg
+1pl water eat-pst.1pl
+1sg meat eat-pst.1sg
+dog-pl rock want-pst.3pl
+3pl cat see-pst.3pl
+person rock want-pst.3sg
+today 1sg fruit eat-prs.1sg
+2pl tree want-prs.2pl
+yesterday 1sg 1pl see-pst.1sg
+yesterday 3pl tree see-pst.3pl
+3pl dog see-pst.3pl
+3pl cat see-pst.3pl
+1sg water eat-prs.1sg
+3pl rock want-prs.3pl
+yesterday 2pl 2pl see-pst.2pl
+person fruit want-prs.3sg
+yesterday 1pl 2sg see-pst.1pl
+1pl tree want-pst.1pl
+today 3pl rock see-prs.3pl
+today 3sg fruit eat-prs.3sg
+today 1pl water eat-prs.1pl
+3sg tree want-prs.3sg
+yesterday 2pl rock see-pst.2pl
+person-pl rock want-pst.3pl
+today 1sg rock see-prs.1sg
+2pl tree want-prs.2pl
+yesterday 3pl person see-pst.3pl
+1sg rock want-pst.1sg
+2pl tree want-pst.2pl
+1pl rock want-pst.1pl
+1pl food eat-pst.1pl
+3sg dog see-pst.3sg
+3pl rock want-prs.3pl
+person rock want-prs.3sg
+1pl fruit eat-pst.1pl
+cat rock want-prs.3sg
+1pl rock want-prs.1pl
+today 1sg dog see-prs.1sg
+dog tree want-pst.3sg
+today 3sg person see-prs.3sg
+yesterday 3sg dog see-pst.3sg
+yesterday 3sg rock see-pst.3sg
+cat rock want-prs.3sg
+3sg 2pl see-prs.3sg
+2pl food eat-pst.2pl
+3sg meat eat-pst.3sg
+2sg tree see-pst.2sg
+1sg rock want-prs.1sg
+dog-pl tree want-prs.3pl
+1sg rock see-pst.1sg
+person tree want-prs.3sg
+today 2pl 2sg see-prs.2pl
+yesterday 3sg water see-pst.3sg
+today 1pl cat see-prs.1pl
 today 2sg water eat-prs.2sg
-3pl tree want-pst.3pl
-yesterday 2sg dog see-pst.2sg
-yesterday 1pl 3sg see-pst.1pl
-1pl rock see-prs.1pl
+today 3pl water eat-prs.3pl
+1sg 2sg see-prs.1sg
+yesterday 2pl fruit eat-pst.2pl
+2sg water eat-pst.2sg
+2sg water want-prs.2sg
+1sg rock want-prs.1sg
+yesterday 2pl cat see-pst.2pl
+today 1pl water eat-prs.1pl
+today 2pl dog see-prs.2pl
+yesterday 3pl water eat-pst.3pl
+today 3pl 3sg see-prs.3pl
+yesterday 2sg rock see-pst.2sg
+1sg fruit eat-prs.1sg
+dog-pl rock want-pst.3pl
+person-pl meat want-prs.3pl
+yesterday 2sg 2sg see-pst.2sg
+2sg tree want-pst.2sg
+cat-pl rock want-pst.3pl
+today 3sg water eat-prs.3sg
+1sg 1sg see-prs.1sg
+1pl fruit eat-pst.1pl
+1sg tree see-pst.1sg
+dog rock want-pst.3sg
+cat-pl rock want-pst.3pl
+yesterday 1pl fruit eat-pst.1pl
+yesterday 1pl 3pl see-pst.1pl
+3pl rock see-prs.3pl
+dog-pl water want-prs.3pl
+yesterday 1sg fruit eat-pst.1sg
+person tree want-prs.3sg
+person rock want-prs.3sg
+3pl tree want-prs.3pl
+yesterday 3pl meat eat-pst.3pl
+today 3sg water eat-prs.3sg
+person tree want-pst.3sg
+2pl food want-prs.2pl
+1pl rock want-pst.1pl
+cat tree want-prs.3sg
+3sg meat eat-prs.3sg
+yesterday 3sg food eat-pst.3sg
+today 2pl fruit eat-prs.2pl
+yesterday 1sg food eat-pst.1sg
+today 2sg meat eat-prs.2sg
+yesterday 2pl meat see-pst.2pl
+dog-pl rock want-prs.3pl
+today 2sg food see-prs.2sg
+1pl water eat-prs.1pl
+today 3sg 1sg see-prs.3sg
+today 2sg 3sg see-prs.2sg
+dog-pl water want-pst.3pl
+dog-pl tree want-prs.3pl
+1sg tree see-pst.1sg
+3sg fruit eat-pst.3sg
+2sg tree want-pst.2sg
+today 3pl person see-prs.3pl
+dog rock want-prs.3sg
+today 3pl rock see-prs.3pl
+3sg tree see-prs.3sg
+today 1pl water eat-prs.1pl
+yesterday 3sg food eat-pst.3sg
+today 3pl meat eat-prs.3pl
+1pl tree want-prs.1pl
+today 1sg person see-prs.1sg
+1pl meat eat-prs.1pl
+1pl cat see-prs.1pl
+cat rock want-pst.3sg
+yesterday 1sg cat see-pst.1sg
+today 3pl 1sg see-prs.3pl
+cat-pl tree want-prs.3pl
+yesterday 1pl food eat-pst.1pl
+today 3pl meat eat-prs.3pl
+yesterday 1sg meat eat-pst.1sg
+today 1sg meat eat-prs.1sg
+yesterday 3pl food eat-pst.3pl
+cat-pl rock want-prs.3pl
+cat-pl meat want-pst.3pl
+person-pl tree want-prs.3pl
+today 2pl food eat-prs.2pl
+cat rock want-pst.3sg
+today 3sg food eat-prs.3sg
+person-pl rock want-prs.3pl
+3pl rock want-pst.3pl
+dog tree want-prs.3sg
+1sg 2pl see-pst.1sg
+cat rock want-prs.3sg
+3sg tree want-pst.3sg
+2pl rock want-pst.2pl
+3pl rock want-pst.3pl
+today 1pl water eat-prs.1pl
+today 1pl meat eat-prs.1pl
+1pl food eat-prs.1pl
+person-pl rock want-prs.3pl
+dog-pl food want-pst.3pl
+3pl 2pl see-pst.3pl
+2sg cat see-pst.2sg
+3pl tree want-prs.3pl
+cat-pl rock want-pst.3pl
+cat-pl fruit want-prs.3pl
+1sg meat eat-prs.1sg
+yesterday 3pl water eat-pst.3pl
+2pl meat see-prs.2pl
+yesterday 2sg person see-pst.2sg
+today 1pl cat see-prs.1pl
+yesterday 1pl fruit eat-pst.1pl
+today 1sg meat eat-prs.1sg
+yesterday 1pl cat see-pst.1pl
+cat-pl rock want-pst.3pl
+today 1sg 1pl see-prs.1sg
+3sg fruit eat-pst.3sg
+today 3sg water eat-prs.3sg
+dog-pl rock want-pst.3pl
+today 1pl meat eat-prs.1pl
+today 2sg water eat-prs.2sg
+person rock want-pst.3sg
+cat tree want-prs.3sg
+cat-pl rock want-pst.3pl
+2sg water eat-prs.2sg
+cat rock want-pst.3sg
+cat fruit want-prs.3sg
+dog-pl rock want-prs.3pl
+cat food want-pst.3sg
+yesterday 2pl 3pl see-pst.2pl
+3pl meat eat-pst.3pl
+yesterday 1sg meat eat-pst.1sg
+1sg 1sg see-pst.1sg
+today 3sg dog see-prs.3sg
+yesterday 2pl food eat-pst.2pl
+person-pl tree want-pst.3pl
+yesterday 2pl dog see-pst.2pl
+3pl food want-pst.3pl
+person tree want-prs.3sg
+today 2sg water eat-prs.2sg
+yesterday 3sg rock see-pst.3sg
+yesterday 3pl meat eat-pst.3pl
+cat-pl fruit want-pst.3pl
+3sg rock want-pst.3sg
+yesterday 3sg food eat-pst.3sg
+2sg meat eat-prs.2sg
 2sg food eat-pst.2sg
+1sg 2pl see-pst.1sg
+cat tree want-prs.3sg
+3pl dog see-prs.3pl
+person water want-pst.3sg
+person-pl fruit want-pst.3pl
+cat tree want-pst.3sg
+today 1sg food see-prs.1sg
+today 3sg meat eat-prs.3sg
+person water want-prs.3sg
+person fruit want-prs.3sg
+3pl meat want-prs.3pl
+today 2pl water see-prs.2pl
+1pl 1pl see-prs.1pl
+cat rock want-prs.3sg
+yesterday 2sg meat eat-pst.2sg
+today 1pl 1pl see-prs.1pl
+3sg water want-pst.3sg
+today 3pl 2pl see-prs.3pl
+2sg rock want-prs.2sg
+3pl tree see-pst.3pl
+today 1pl water eat-prs.1pl
+yesterday 1pl tree see-pst.1pl
+3sg tree want-pst.3sg
+yesterday 3pl meat eat-pst.3pl
+cat-pl tree want-prs.3pl
+dog water want-pst.3sg
+today 3sg meat eat-prs.3sg
+3sg rock want-pst.3sg
+today 2sg water eat-prs.2sg
+yesterday 2sg food eat-pst.2sg
+yesterday 1pl dog see-pst.1pl
+1sg 3pl see-prs.1sg
+2pl rock want-pst.2pl
+yesterday 3pl meat eat-pst.3pl
+today 1sg rock see-prs.1sg
+2sg food see-pst.2sg
+yesterday 1sg food eat-pst.1sg
+person-pl tree want-pst.3pl
+cat-pl meat want-prs.3pl
+2pl fruit want-prs.2pl
+dog-pl fruit want-pst.3pl
+yesterday 1sg person see-pst.1sg
+cat tree want-prs.3sg
+dog-pl rock want-prs.3pl
+person fruit want-pst.3sg
+person-pl water want-prs.3pl
+cat-pl tree want-pst.3pl
+dog-pl tree want-pst.3pl
+person food want-prs.3sg
+yesterday 3pl meat eat-pst.3pl
+today 2sg water see-prs.2sg
+yesterday 2pl water eat-pst.2pl
+today 2pl water eat-prs.2pl
+dog-pl rock want-prs.3pl
+yesterday 3pl 2pl see-pst.3pl
+2sg fruit eat-pst.2sg
+yesterday 2pl rock see-pst.2pl
+today 1pl dog see-prs.1pl
+yesterday 2pl person see-pst.2pl
+today 3sg meat eat-prs.3sg
+yesterday 2sg water eat-pst.2sg
+dog-pl rock want-prs.3pl
+today 1sg 1pl see-prs.1sg
+3sg meat eat-pst.3sg
+dog tree want-prs.3sg
+3sg meat eat-pst.3sg
+yesterday 2pl water eat-pst.2pl
+yesterday 2sg water eat-pst.2sg
+dog water want-pst.3sg
+1pl water eat-prs.1pl
+2sg dog see-pst.2sg
+today 2sg tree see-prs.2sg
+2pl food eat-pst.2pl
+3sg water eat-pst.3sg
+dog-pl tree want-pst.3pl
+today 3pl rock see-prs.3pl
+dog-pl fruit want-prs.3pl
+yesterday 2pl fruit eat-pst.2pl
+today 2sg water eat-prs.2sg
+today 2pl water eat-prs.2pl
+3pl rock want-prs.3pl
+1pl 1pl see-pst.1pl
+2sg 1pl see-pst.2sg
+1pl rock want-pst.1pl
+today 2pl tree see-prs.2pl
+person water want-prs.3sg
+yesterday 1sg rock see-pst.1sg
+dog water want-prs.3sg
+2sg rock want-pst.2sg
+today 2sg meat eat-prs.2sg
+yesterday 2pl meat eat-pst.2pl
+dog-pl tree want-prs.3pl
+3sg rock see-pst.3sg
+1sg 1pl see-prs.1sg
+dog fruit want-pst.3sg
+1sg meat eat-pst.1sg
+person-pl tree want-pst.3pl
+cat-pl rock want-prs.3pl
+today 2pl cat see-prs.2pl
+3pl food want-prs.3pl
+yesterday 2sg fruit eat-pst.2sg
+person rock want-prs.3sg
+today 1sg fruit eat-prs.1sg
+yesterday 1pl cat see-pst.1pl
+today 1sg 2sg see-prs.1sg
+person tree want-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+today 1pl fruit eat-prs.1pl
+yesterday 1sg water eat-pst.1sg
+yesterday 1pl 2pl see-pst.1pl
+yesterday 1sg rock see-pst.1sg
+person meat want-prs.3sg
+dog tree want-pst.3sg
+today 3sg meat eat-prs.3sg
+2sg water see-pst.2sg
+yesterday 1pl water eat-pst.1pl
+2pl 3sg see-pst.2pl
+3sg tree want-pst.3sg
+2sg meat eat-prs.2sg
+1sg food eat-prs.1sg
+today 2sg 1sg see-prs.2sg
+today 2sg meat eat-prs.2sg
+1pl tree want-prs.1pl
+cat tree want-pst.3sg
+1sg 1sg see-prs.1sg
+today 2pl food see-prs.2pl
+today 3pl food eat-prs.3pl
+yesterday 1pl water eat-pst.1pl
+today 2pl fruit eat-prs.2pl
+person fruit want-pst.3sg
+2pl fruit eat-pst.2pl
+1sg tree want-pst.1sg
+cat tree want-prs.3sg
+dog-pl tree want-pst.3pl
+yesterday 3pl person see-pst.3pl
+1sg rock want-pst.1sg
+yesterday 1pl fruit eat-pst.1pl
+2pl 2pl see-prs.2pl
+2pl food eat-prs.2pl
+3sg meat see-pst.3sg
+yesterday 1pl rock see-pst.1pl
+today 1pl 3pl see-prs.1pl
+person rock want-pst.3sg
+2pl meat eat-pst.2pl
+2pl meat see-pst.2pl
+today 1sg 3pl see-prs.1sg
+yesterday 1sg food eat-pst.1sg
+3sg water eat-prs.3sg
+dog rock want-prs.3sg
+2pl 1pl see-prs.2pl
+today 2sg dog see-prs.2sg
+1sg person see-pst.1sg
+person-pl rock want-prs.3pl
+1sg fruit eat-prs.1sg
+dog-pl tree want-pst.3pl
+cat-pl tree want-prs.3pl
+cat tree want-pst.3sg
+yesterday 3sg 2sg see-pst.3sg
+2pl rock see-prs.2pl
+today 2pl water eat-prs.2pl
+1pl food eat-prs.1pl
+today 3sg fruit eat-prs.3sg
+1pl fruit eat-pst.1pl
+2pl fruit eat-prs.2pl
+3pl water see-prs.3pl
+yesterday 1sg 3sg see-pst.1sg
+cat-pl tree want-prs.3pl
+today 2pl food eat-prs.2pl
+today 3sg water eat-prs.3sg
+person tree want-pst.3sg
+3pl tree want-prs.3pl
+today 2pl fruit eat-prs.2pl
+today 2pl rock see-prs.2pl
+person rock want-pst.3sg
+yesterday 2sg fruit eat-pst.2sg
+person tree want-pst.3sg
+today 2sg water eat-prs.2sg
+cat rock want-pst.3sg
+dog-pl food want-prs.3pl
+3sg meat eat-prs.3sg
+yesterday 3sg cat see-pst.3sg
+today 1pl water eat-prs.1pl
+today 2sg fruit eat-prs.2sg
+yesterday 3sg 1pl see-pst.3sg
+cat-pl rock want-pst.3pl
+1sg rock want-pst.1sg
+3pl meat eat-pst.3pl
+3pl rock want-prs.3pl
+3pl fruit want-pst.3pl
+yesterday 1pl dog see-pst.1pl
+today 3sg 3pl see-prs.3sg
+yesterday 3sg food eat-pst.3sg
+yesterday 2sg water eat-pst.2sg
+cat food want-prs.3sg
+3pl food eat-pst.3pl
+3sg rock want-prs.3sg
+3sg food eat-prs.3sg
+dog-pl tree want-pst.3pl
+yesterday 3sg rock see-pst.3sg
+today 1sg fruit eat-prs.1sg
+1pl food want-prs.1pl
+yesterday 1pl 1sg see-pst.1pl
+dog-pl rock want-pst.3pl
+2pl 3sg see-pst.2pl
+dog tree want-prs.3sg
+3pl tree want-prs.3pl
+3pl food see-pst.3pl
+2sg water see-pst.2sg
+1pl person see-prs.1pl
+dog rock want-prs.3sg
+3pl fruit eat-pst.3pl
+2sg tree want-pst.2sg
+3sg meat want-pst.3sg
+yesterday 3sg meat eat-pst.3sg
+person-pl meat want-prs.3pl
+1pl 3pl see-pst.1pl
+person-pl tree want-pst.3pl
+person tree want-prs.3sg
+2sg fruit eat-prs.2sg
+person-pl water want-prs.3pl
+today 1pl meat eat-prs.1pl
+1sg rock see-pst.1sg
+yesterday 1sg cat see-pst.1sg
+cat tree want-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+cat-pl fruit want-prs.3pl
+person tree want-prs.3sg
+dog-pl rock want-prs.3pl
+3sg tree see-pst.3sg
+yesterday 1sg food see-pst.1sg
+person-pl tree want-pst.3pl
+yesterday 3sg fruit eat-pst.3sg
+yesterday 3sg food eat-pst.3sg
+today 3pl fruit eat-prs.3pl
+3pl person see-prs.3pl
+today 2pl water eat-prs.2pl
+today 3pl 2sg see-prs.3pl
+person food want-pst.3sg
+2pl 2pl see-prs.2pl
+3pl rock want-pst.3pl
+today 3pl tree see-prs.3pl
+3pl food eat-prs.3pl
+1pl meat want-prs.1pl
+dog tree want-pst.3sg
+yesterday 2pl person see-pst.2pl
+3sg 3sg see-prs.3sg
+yesterday 2pl food eat-pst.2pl
+today 2pl 2sg see-prs.2pl
+cat water want-pst.3sg
+3sg person see-prs.3sg
+person-pl fruit want-pst.3pl
+1sg rock want-pst.1sg
+today 2pl meat eat-prs.2pl
+today 1sg person see-prs.1sg
+today 3pl tree see-prs.3pl
+today 1sg meat eat-prs.1sg
+yesterday 3pl meat see-pst.3pl
+today 3pl rock see-prs.3pl
+today 2sg fruit eat-prs.2sg
+yesterday 1sg fruit eat-pst.1sg
+1pl 3sg see-pst.1pl
+person water want-pst.3sg
+1sg meat eat-prs.1sg
+yesterday 3pl fruit eat-pst.3pl
+today 1sg dog see-prs.1sg
+yesterday 3pl person see-pst.3pl
+yesterday 1pl person see-pst.1pl
+1sg rock want-pst.1sg
+today 3pl meat eat-prs.3pl
+cat-pl water want-prs.3pl
+cat rock want-prs.3sg
+1pl 2sg see-prs.1pl
+today 2pl water eat-prs.2pl
+2pl dog see-pst.2pl
+1sg rock want-prs.1sg
+today 3pl water eat-prs.3pl
+yesterday 1sg dog see-pst.1sg
+yesterday 2sg food eat-pst.2sg
+yesterday 1pl fruit eat-pst.1pl
+yesterday 1pl food eat-pst.1pl
+today 2pl water eat-prs.2pl
+person-pl fruit want-pst.3pl
+yesterday 3pl 2sg see-pst.3pl
+yesterday 3sg meat eat-pst.3sg
+person-pl fruit want-pst.3pl
+yesterday 1sg water eat-pst.1sg
+cat food want-prs.3sg
+dog-pl meat want-prs.3pl
+2sg water see-pst.2sg
+3sg tree want-pst.3sg
+dog food want-prs.3sg
+yesterday 3pl person see-pst.3pl
+1sg tree see-pst.1sg
+dog tree want-prs.3sg
+today 2pl food eat-prs.2pl
+yesterday 1pl water eat-pst.1pl
+today 2pl 3pl see-prs.2pl
+1sg food eat-prs.1sg
+yesterday 2sg meat eat-pst.2sg
+yesterday 1sg water eat-pst.1sg
+1sg fruit want-pst.1sg
+dog rock want-pst.3sg
+today 3pl 2pl see-prs.3pl
+3sg meat eat-pst.3sg
+yesterday 2pl fruit eat-pst.2pl
+today 3sg 1pl see-prs.3sg
+1sg food want-prs.1sg
+yesterday 3pl water eat-pst.3pl
+cat tree want-prs.3sg
+3sg water eat-prs.3sg
+1sg rock see-prs.1sg
+3pl food want-pst.3pl
+today 2pl fruit eat-prs.2pl
+today 2sg tree see-prs.2sg
+today 3sg meat eat-prs.3sg
+today 3sg food eat-prs.3sg
+3pl person see-prs.3pl
+1sg fruit eat-pst.1sg
+2sg tree want-pst.2sg
+1pl fruit eat-prs.1pl
+3sg tree want-prs.3sg
+yesterday 2sg food eat-pst.2sg
+cat-pl water want-pst.3pl
+cat meat want-prs.3sg
+1sg rock see-pst.1sg
+cat-pl food want-prs.3pl
+yesterday 1pl water see-pst.1pl
+1pl rock want-prs.1pl
+3pl fruit eat-prs.3pl
+today 2sg meat see-prs.2sg
+1sg fruit eat-prs.1sg
+3pl tree see-pst.3pl
+yesterday 3sg person see-pst.3sg
+3pl rock want-prs.3pl
+2sg dog see-pst.2sg
+2sg fruit eat-pst.2sg
+person tree want-pst.3sg
+today 2sg person see-prs.2sg
+2pl food want-pst.2pl
+person-pl meat want-pst.3pl
+cat-pl fruit want-pst.3pl
+cat rock want-prs.3sg
+today 3sg meat eat-prs.3sg
+cat-pl rock want-prs.3pl
+today 3pl 3sg see-prs.3pl
+1sg cat see-pst.1sg
+today 1sg meat eat-prs.1sg
+yesterday 2pl meat eat-pst.2pl
+person rock want-prs.3sg
+cat rock want-prs.3sg
+today 3sg water eat-prs.3sg
+today 1pl food eat-prs.1pl
+3sg cat see-prs.3sg
+1pl person see-pst.1pl
+cat-pl tree want-pst.3pl
+person-pl tree want-prs.3pl
+person-pl tree want-pst.3pl
+today 2sg dog see-prs.2sg
+1sg 3sg see-prs.1sg
+today 2sg person see-prs.2sg
+today 1pl food eat-prs.1pl
+2pl food eat-prs.2pl
+cat-pl rock want-prs.3pl
+today 3sg rock see-prs.3sg
+2pl water eat-prs.2pl
+person rock want-prs.3sg
+3pl rock see-prs.3pl
+yesterday 2pl water see-pst.2pl
+3pl rock want-prs.3pl
+today 3sg fruit eat-prs.3sg
+2sg meat eat-pst.2sg
+1sg meat eat-pst.1sg
+yesterday 3pl 1sg see-pst.3pl
+person rock want-pst.3sg
+2pl 3pl see-prs.2pl
+2pl 2pl see-pst.2pl
+1pl water eat-pst.1pl
+1pl meat eat-prs.1pl
+today 1sg 2sg see-prs.1sg
+3sg meat eat-pst.3sg
+today 3pl water eat-prs.3pl
+person-pl rock want-pst.3pl
+today 1sg rock see-prs.1sg
+today 3sg tree see-prs.3sg
+1pl water want-prs.1pl
+person tree want-pst.3sg
+3pl person see-prs.3pl
+2sg water eat-pst.2sg
+1sg water eat-pst.1sg
+dog-pl rock want-prs.3pl
+today 3pl fruit eat-prs.3pl
+3pl rock see-pst.3pl
+cat tree want-prs.3sg
+3sg food eat-pst.3sg
+1pl fruit eat-pst.1pl
+3sg tree see-pst.3sg
+today 2pl meat eat-prs.2pl
+today 2pl meat eat-prs.2pl
+today 1sg tree see-prs.1sg
+yesterday 2sg water eat-pst.2sg
+yesterday 1sg meat eat-pst.1sg
+3sg food want-prs.3sg
+2pl 1pl see-prs.2pl
+today 1sg food eat-prs.1sg
+yesterday 1pl dog see-pst.1pl
+today 3pl water eat-prs.3pl
+today 3sg 3pl see-prs.3sg
+person food want-prs.3sg
+today 2pl rock see-prs.2pl
+2sg food want-pst.2sg
+cat-pl rock want-prs.3pl
+yesterday 2sg water eat-pst.2sg
+person tree want-pst.3sg
+yesterday 1sg 3pl see-pst.1sg
+3pl water see-prs.3pl
+today 3pl food eat-prs.3pl
+3pl fruit see-prs.3pl
+3pl 3pl see-pst.3pl
+today 3pl 1sg see-prs.3pl
+cat rock want-pst.3sg
+yesterday 2pl food eat-pst.2pl
+2sg meat want-prs.2sg
+yesterday 2pl water eat-pst.2pl
+yesterday 1sg cat see-pst.1sg
+cat-pl fruit want-prs.3pl
+2sg food want-pst.2sg
+yesterday 3sg fruit eat-pst.3sg
+person rock want-pst.3sg
+today 2pl food see-prs.2pl
+cat meat want-prs.3sg
+yesterday 3pl rock see-pst.3pl
+yesterday 3pl 1pl see-pst.3pl
+today 3pl tree see-prs.3pl
+2sg rock see-pst.2sg
+yesterday 2sg fruit eat-pst.2sg
+today 3sg 2sg see-prs.3sg
+yesterday 2sg meat see-pst.2sg
+yesterday 2pl meat eat-pst.2pl
+cat tree want-prs.3sg
+dog-pl tree want-prs.3pl
+2sg meat eat-pst.2sg
+yesterday 1pl food eat-pst.1pl
+today 1pl fruit eat-prs.1pl
+today 2sg food eat-prs.2sg
+1pl water eat-prs.1pl
+dog-pl water want-prs.3pl
+2sg meat eat-prs.2sg
+yesterday 2pl 3pl see-pst.2pl
+yesterday 2pl tree see-pst.2pl
+3pl meat see-pst.3pl
+cat tree want-prs.3sg
+today 1pl food eat-prs.1pl
+cat-pl rock want-prs.3pl
+person-pl tree want-prs.3pl
+cat rock want-prs.3sg
+3pl tree want-pst.3pl
+3sg tree want-prs.3sg
+yesterday 3pl food eat-pst.3pl
+yesterday 3pl food eat-pst.3pl
+yesterday 2pl water eat-pst.2pl
+today 3sg 3sg see-prs.3sg
+1pl rock see-pst.1pl
+yesterday 3sg food eat-pst.3sg
+cat meat want-prs.3sg
+yesterday 3sg dog see-pst.3sg
+2sg dog see-pst.2sg
+2sg tree want-pst.2sg
+today 1sg meat eat-prs.1sg
+person-pl water want-prs.3pl
+today 3pl fruit eat-prs.3pl
+dog tree want-pst.3sg
+dog fruit want-prs.3sg
+yesterday 3pl meat eat-pst.3pl
+3sg water eat-pst.3sg
+today 1pl 2pl see-prs.1pl
+3sg tree want-pst.3sg
+today 3pl rock see-prs.3pl
+yesterday 2pl rock see-pst.2pl
+2pl rock want-prs.2pl
+1sg rock want-prs.1sg
+cat-pl tree want-pst.3pl
+today 1pl fruit eat-prs.1pl
+1pl 1sg see-prs.1pl
+today 2pl meat eat-prs.2pl
+today 2sg meat see-prs.2sg
+3pl rock want-prs.3pl
+person fruit want-prs.3sg
+yesterday 1pl dog see-pst.1pl
+2sg cat see-prs.2sg
+cat-pl tree want-pst.3pl
+2sg 1pl see-pst.2sg
+2pl tree see-pst.2pl
+today 3sg person see-prs.3sg
+yesterday 1pl 1sg see-pst.1pl
+1sg cat see-prs.1sg
+today 3pl person see-prs.3pl
+today 2sg dog see-prs.2sg
+person-pl fruit want-pst.3pl
+dog-pl rock want-prs.3pl
+cat rock want-prs.3sg
+today 3sg food eat-prs.3sg
+yesterday 3sg fruit eat-pst.3sg
+today 1pl meat eat-prs.1pl
+today 2sg meat eat-prs.2sg
+today 3sg rock see-prs.3sg
+cat-pl water want-pst.3pl
+yesterday 3pl cat see-pst.3pl
+yesterday 3pl fruit eat-pst.3pl
+today 3pl cat see-prs.3pl
+1sg food eat-prs.1sg
+yesterday 3sg food eat-pst.3sg
+today 2pl fruit eat-prs.2pl
+dog food want-pst.3sg
+today 3sg cat see-prs.3sg
+person water want-prs.3sg
+today 1sg water eat-prs.1sg
+today 1pl water eat-prs.1pl
+person-pl food want-pst.3pl
+yesterday 1sg tree see-pst.1sg
+2sg rock want-prs.2sg
+cat water want-pst.3sg
+yesterday 2pl water eat-pst.2pl
+dog-pl tree want-prs.3pl
+dog-pl tree want-pst.3pl
+1sg food want-pst.1sg
+1sg fruit eat-prs.1sg
+1pl cat see-pst.1pl
+3sg fruit eat-prs.3sg
+2sg fruit eat-pst.2sg
+2pl person see-prs.2pl
+3pl water eat-pst.3pl
+dog meat want-pst.3sg
+yesterday 3sg meat eat-pst.3sg
+today 3pl water eat-prs.3pl
+3pl fruit want-pst.3pl
+1sg meat want-pst.1sg
+person fruit want-prs.3sg
+1sg meat eat-prs.1sg
+today 3sg meat eat-prs.3sg
+person meat want-pst.3sg
+cat tree want-prs.3sg
+yesterday 1pl meat eat-pst.1pl
+person tree want-pst.3sg
+yesterday 3sg person see-pst.3sg
+1sg tree want-pst.1sg
+dog rock want-pst.3sg
+dog-pl rock want-prs.3pl
+today 3pl dog see-prs.3pl
+3pl meat want-prs.3pl
+person-pl food want-pst.3pl
+2sg rock want-prs.2sg
+yesterday 2pl water eat-pst.2pl
+yesterday 2sg meat eat-pst.2sg
+2pl person see-prs.2pl
+1sg meat want-pst.1sg
+cat rock want-pst.3sg
+2sg food eat-prs.2sg
+3sg 2sg see-prs.3sg
+2pl tree see-pst.2pl
+yesterday 3sg tree see-pst.3sg
+person-pl tree want-prs.3pl
+2sg food eat-prs.2sg
+2sg meat eat-pst.2sg
+3sg 1pl see-prs.3sg
+today 1pl meat eat-prs.1pl
+yesterday 2pl cat see-pst.2pl
+today 2sg 2sg see-prs.2sg
+today 2pl meat eat-prs.2pl
+dog tree want-prs.3sg
+yesterday 1pl water eat-pst.1pl
+yesterday 3sg meat eat-pst.3sg
+yesterday 2sg 1sg see-pst.2sg
+person-pl tree want-prs.3pl
+cat-pl water want-pst.3pl
+today 2sg meat see-prs.2sg
+yesterday 2pl fruit eat-pst.2pl
+yesterday 2pl 3sg see-pst.2pl
+today 1pl water eat-prs.1pl
+2pl fruit eat-prs.2pl
+cat tree want-pst.3sg
+2pl tree want-prs.2pl
+3sg water eat-prs.3sg
+cat water want-prs.3sg
+today 2pl food eat-prs.2pl
+today 1pl tree see-prs.1pl
+dog tree want-prs.3sg
+3pl rock want-pst.3pl
+yesterday 2pl meat eat-pst.2pl
+3pl water want-prs.3pl
+2pl fruit eat-prs.2pl
+yesterday 1sg 1sg see-pst.1sg
+dog meat want-pst.3sg
+3pl fruit want-pst.3pl
+yesterday 3sg fruit eat-pst.3sg
+yesterday 1pl food eat-pst.1pl
+dog fruit want-pst.3sg
+2pl rock see-prs.2pl
+today 1pl water eat-prs.1pl
+1pl food eat-pst.1pl
+today 1pl dog see-prs.1pl
+yesterday 2sg meat eat-pst.2sg
+yesterday 2sg meat eat-pst.2sg
+2pl rock want-pst.2pl
+today 2pl meat eat-prs.2pl
+today 2sg food eat-prs.2sg
+2pl 3pl see-prs.2pl
+today 2sg person see-prs.2sg
+yesterday 1pl tree see-pst.1pl
+person-pl fruit want-prs.3pl
+today 1sg meat eat-prs.1sg
+3sg rock see-pst.3sg
+1pl fruit eat-prs.1pl
+today 1pl 1sg see-prs.1pl
+1pl fruit eat-pst.1pl
+1sg tree want-pst.1sg
+2sg rock want-prs.2sg
+2sg 3pl see-pst.2sg
+yesterday 3sg meat eat-pst.3sg
+1sg water want-pst.1sg
+2sg food eat-pst.2sg
+yesterday 2pl 2pl see-pst.2pl
+2pl rock see-prs.2pl
+cat meat want-prs.3sg
+today 2pl dog see-prs.2pl
+dog-pl tree want-pst.3pl
+yesterday 3sg rock see-pst.3sg
+2sg fruit eat-pst.2sg
+yesterday 2pl rock see-pst.2pl
+yesterday 1sg meat eat-pst.1sg
+3pl water want-pst.3pl
+dog rock want-prs.3sg
+person-pl tree want-pst.3pl
+yesterday 3sg fruit eat-pst.3sg
+1pl food want-pst.1pl
+today 2pl fruit eat-prs.2pl
+cat-pl water want-pst.3pl
+cat-pl fruit want-prs.3pl
+cat water want-prs.3sg
+3sg meat eat-pst.3sg
+1pl 3sg see-pst.1pl
+1sg water eat-pst.1sg
+today 1pl meat eat-prs.1pl
+dog tree want-pst.3sg
+today 1sg 1sg see-prs.1sg
+dog fruit want-pst.3sg
+3sg tree want-pst.3sg
+1pl 1pl see-pst.1pl
+cat-pl fruit want-prs.3pl
+today 3pl 1sg see-prs.3pl
+3sg rock want-prs.3sg
+yesterday 3sg fruit see-pst.3sg
+yesterday 2sg water eat-pst.2sg
+2sg rock see-prs.2sg
+yesterday 3pl meat eat-pst.3pl
+3sg tree want-prs.3sg
+dog-pl rock want-pst.3pl
+yesterday 2sg food eat-pst.2sg
+2pl tree want-pst.2pl
+yesterday 1pl food eat-pst.1pl
+today 3sg dog see-prs.3sg
+2sg tree want-prs.2sg
+today 2sg food eat-prs.2sg
+person-pl rock want-prs.3pl
+2pl rock want-prs.2pl
+cat-pl water want-prs.3pl
+person-pl rock want-pst.3pl
+today 1pl water eat-prs.1pl
+3sg meat eat-pst.3sg
+today 2pl rock see-prs.2pl
+3pl water eat-pst.3pl
+today 3pl water eat-prs.3pl
+cat-pl rock want-prs.3pl
+2sg fruit want-pst.2sg
+yesterday 2sg food eat-pst.2sg
+2sg food eat-prs.2sg
+cat tree want-pst.3sg
+yesterday 2sg food eat-pst.2sg
+yesterday 2sg food eat-pst.2sg
+2sg rock want-pst.2sg
+1sg food want-prs.1sg
+yesterday 2pl fruit eat-pst.2pl
+person-pl fruit want-prs.3pl
+yesterday 1sg cat see-pst.1sg
+yesterday 1sg fruit eat-pst.1sg
+today 2sg cat see-prs.2sg
+yesterday 3sg meat eat-pst.3sg
+yesterday 2sg dog see-pst.2sg
+dog rock want-pst.3sg
+dog-pl rock want-pst.3pl
+today 2pl cat see-prs.2pl
+cat rock want-prs.3sg
+yesterday 3sg meat see-pst.3sg
+today 2sg tree see-prs.2sg
+yesterday 1sg water eat-pst.1sg
+person-pl food want-pst.3pl
+3pl water want-prs.3pl
+person food want-prs.3sg
+yesterday 3sg 1sg see-pst.3sg
+person fruit want-prs.3sg
+today 2sg food eat-prs.2sg
+today 1sg meat eat-prs.1sg
+today 3sg 3pl see-prs.3sg
+person food want-prs.3sg
+cat-pl rock want-prs.3pl
+yesterday 1pl 3sg see-pst.1pl
+yesterday 3pl meat see-pst.3pl
+yesterday 3pl 1pl see-pst.3pl
+today 1sg person see-prs.1sg
+today 3pl food see-prs.3pl
+today 3pl 3pl see-prs.3pl
+cat meat want-pst.3sg
+3pl food eat-prs.3pl
+dog fruit want-pst.3sg
+3sg meat eat-pst.3sg
+today 2sg meat eat-prs.2sg
+yesterday 1sg cat see-pst.1sg
+yesterday 1pl meat eat-pst.1pl
+today 3sg person see-prs.3sg
+cat-pl rock want-prs.3pl
+1pl water eat-prs.1pl
+today 2pl rock see-prs.2pl
+3pl cat see-pst.3pl
+yesterday 1pl 1sg see-pst.1pl
+today 3sg person see-prs.3sg
+2pl person see-pst.2pl
+3pl water eat-pst.3pl
+1sg tree want-pst.1sg
+3sg fruit eat-prs.3sg
+person rock want-prs.3sg
+yesterday 2sg dog see-pst.2sg
+person tree want-pst.3sg
+yesterday 3pl food eat-pst.3pl
+3sg meat eat-prs.3sg
+cat-pl tree want-prs.3pl
+yesterday 3pl food eat-pst.3pl
+dog-pl tree want-prs.3pl
+person-pl tree want-prs.3pl
+1sg water eat-prs.1sg
+today 1pl water eat-prs.1pl
+yesterday 3sg rock see-pst.3sg
+2sg rock want-pst.2sg
+dog-pl meat want-prs.3pl
+today 3sg fruit see-prs.3sg
+yesterday 3sg fruit eat-pst.3sg
+today 2sg tree see-prs.2sg
+today 2sg dog see-prs.2sg
+yesterday 2pl person see-pst.2pl
+yesterday 3sg meat eat-pst.3sg
+yesterday 2pl tree see-pst.2pl
+person tree want-prs.3sg
+today 3sg food eat-prs.3sg
+yesterday 1sg water eat-pst.1sg
+1pl dog see-pst.1pl
+person-pl tree want-pst.3pl
+person-pl tree want-pst.3pl
+dog-pl rock want-prs.3pl
+2sg person see-prs.2sg
+yesterday 3pl rock see-pst.3pl
+today 1sg tree see-prs.1sg
+3pl meat want-pst.3pl
+cat rock want-pst.3sg
+today 3pl meat see-prs.3pl
+1sg water want-pst.1sg
+dog meat want-pst.3sg
+today 1sg fruit eat-prs.1sg
+2pl tree want-pst.2pl
+yesterday 2sg water see-pst.2sg
+1pl cat see-pst.1pl
+person tree want-pst.3sg
+1sg fruit eat-pst.1sg
+dog-pl rock want-pst.3pl
+2sg rock want-pst.2sg
+yesterday 3pl 1pl see-pst.3pl
+1sg rock want-prs.1sg
+today 3sg water eat-prs.3sg
+1sg 1sg see-prs.1sg
+2sg fruit eat-pst.2sg
+today 2pl cat see-prs.2pl
+today 3pl meat eat-prs.3pl
+2sg dog see-prs.2sg
+person rock want-pst.3sg
+1sg tree want-pst.1sg
+today 2pl cat see-prs.2pl
+today 2sg tree see-prs.2sg
+yesterday 3sg 1sg see-pst.3sg
+today 3pl 1sg see-prs.3pl
+yesterday 3pl meat eat-pst.3pl
+today 2sg water eat-prs.2sg
+dog tree want-pst.3sg
+today 2sg cat see-prs.2sg
+today 2pl food eat-prs.2pl
+3sg fruit eat-prs.3sg
+today 2sg dog see-prs.2sg
+3pl meat eat-prs.3pl
+yesterday 2pl 2sg see-pst.2pl
+1pl 1sg see-pst.1pl
+3pl 3pl see-prs.3pl
+yesterday 3sg dog see-pst.3sg
+today 1sg tree see-prs.1sg
+1sg rock want-pst.1sg
+3sg fruit eat-pst.3sg
+yesterday 2pl dog see-pst.2pl
+3pl water want-prs.3pl
+3pl rock want-pst.3pl
+yesterday 3pl tree see-pst.3pl
+today 2pl dog see-prs.2pl
+3pl rock see-pst.3pl
+3sg rock want-prs.3sg
+3sg food see-pst.3sg
+yesterday 3sg meat eat-pst.3sg
+1pl rock want-prs.1pl
+3pl tree want-pst.3pl
+today 1pl food eat-prs.1pl
+2sg water eat-pst.2sg
+person rock want-pst.3sg
+yesterday 2sg 3sg see-pst.2sg
+dog-pl tree want-prs.3pl
+today 2pl rock see-prs.2pl
+2pl meat want-pst.2pl
+today 1sg water eat-prs.1sg
+1sg water eat-prs.1sg
+person-pl fruit want-pst.3pl
+3sg fruit eat-pst.3sg
+2sg fruit want-pst.2sg
+3sg 1sg see-pst.3sg
+2sg 3pl see-pst.2sg
+1pl fruit eat-prs.1pl
+today 2pl food eat-prs.2pl
+person tree want-prs.3sg
+2pl 2pl see-pst.2pl
+3pl tree want-prs.3pl
+yesterday 1pl cat see-pst.1pl
+1sg fruit eat-prs.1sg
+3pl tree see-pst.3pl
+2pl rock see-pst.2pl
+3pl 2pl see-prs.3pl
+1pl fruit eat-pst.1pl
+1sg person see-pst.1sg
+dog-pl food want-prs.3pl
+1pl person see-pst.1pl
+2sg food want-pst.2sg
+yesterday 3sg person see-pst.3sg
+yesterday 2sg meat eat-pst.2sg
+1pl 1sg see-pst.1pl
+2sg meat eat-prs.2sg
+dog-pl rock want-prs.3pl
+dog meat want-prs.3sg
+today 1sg meat eat-prs.1sg
+today 3pl water eat-prs.3pl
+person-pl tree want-pst.3pl
+1sg meat see-prs.1sg
+today 3pl dog see-prs.3pl
+yesterday 1sg water eat-pst.1sg
+yesterday 2sg person see-pst.2sg
+yesterday 1pl food see-pst.1pl
+person-pl tree want-prs.3pl
+today 3pl fruit eat-prs.3pl
+1sg water eat-prs.1sg
+1sg 3pl see-pst.1sg
+today 3pl water eat-prs.3pl
+yesterday 1pl water eat-pst.1pl
+today 3pl water eat-prs.3pl
+today 3sg 3pl see-prs.3sg
+today 1sg food eat-prs.1sg
+person-pl tree want-prs.3pl
+1sg 3pl see-prs.1sg
+3pl food eat-pst.3pl
+today 2pl 1sg see-prs.2pl
+2pl meat want-pst.2pl
+yesterday 3pl fruit eat-pst.3pl
+yesterday 3pl 2sg see-pst.3pl
+3pl meat want-prs.3pl
+1pl cat see-prs.1pl
+yesterday 3sg food eat-pst.3sg
+cat-pl rock want-pst.3pl
+yesterday 2sg 1sg see-pst.2sg
+today 2pl 2sg see-prs.2pl
+1pl meat eat-pst.1pl
+2pl dog see-prs.2pl
+2sg meat eat-pst.2sg
+today 3pl fruit see-prs.3pl
+today 1pl water eat-prs.1pl
+today 3pl food eat-prs.3pl
+2sg fruit eat-prs.2sg
+today 3pl cat see-prs.3pl
+yesterday 1pl fruit eat-pst.1pl
+today 1sg food eat-prs.1sg
+person food want-prs.3sg
+yesterday 1pl dog see-pst.1pl
+today 3pl fruit eat-prs.3pl
+person water want-pst.3sg
+person-pl rock want-prs.3pl
+cat rock want-prs.3sg
+today 2sg food eat-prs.2sg
+dog-pl fruit want-prs.3pl
+yesterday 3sg fruit eat-pst.3sg
+today 2pl food eat-prs.2pl
+yesterday 1sg person see-pst.1sg
+today 1sg meat eat-prs.1sg
+3pl fruit eat-pst.3pl
+yesterday 2sg food eat-pst.2sg
+cat-pl rock want-pst.3pl
+3sg water eat-prs.3sg
+yesterday 1sg water eat-pst.1sg
+yesterday 3sg person see-pst.3sg
+3sg fruit want-prs.3sg
+3sg tree want-pst.3sg
+1pl rock want-prs.1pl
+today 1pl tree see-prs.1pl
+yesterday 1pl food eat-pst.1pl
+3pl fruit eat-prs.3pl
+2sg tree want-prs.2sg
+3sg meat see-prs.3sg
+today 2pl 1pl see-prs.2pl
+today 2pl food eat-prs.2pl
+yesterday 1sg 1sg see-pst.1sg
+2sg food eat-prs.2sg
+1pl person see-prs.1pl
+today 1sg meat eat-prs.1sg
+2sg dog see-prs.2sg
+yesterday 1sg water see-pst.1sg
+1pl food eat-prs.1pl
+cat tree want-prs.3sg
+yesterday 1sg 2sg see-pst.1sg
+cat-pl rock want-pst.3pl
+person-pl fruit want-pst.3pl
+today 1sg 2pl see-prs.1sg
+today 1pl meat eat-prs.1pl
+yesterday 3sg water eat-pst.3sg
+2pl water see-pst.2pl
+yesterday 2sg water eat-pst.2sg
+yesterday 3sg meat eat-pst.3sg
+cat-pl water want-prs.3pl
+cat tree want-pst.3sg
+dog-pl rock want-prs.3pl
+yesterday 3sg dog see-pst.3sg
+today 3pl meat eat-prs.3pl
+yesterday 1sg food eat-pst.1sg
+2sg meat see-pst.2sg
+yesterday 1pl rock see-pst.1pl
+1pl rock see-prs.1pl
+cat-pl water want-prs.3pl
+3sg rock want-pst.3sg
+yesterday 3sg rock see-pst.3sg
+dog tree want-prs.3sg
+today 3sg meat eat-prs.3sg
+yesterday 3pl rock see-pst.3pl
+yesterday 2pl rock see-pst.2pl
+3sg food eat-pst.3sg
+cat-pl tree want-prs.3pl
+today 3pl tree see-prs.3pl
+3pl tree see-pst.3pl
+today 3pl food eat-prs.3pl
+2pl water eat-pst.2pl
+cat-pl tree want-prs.3pl
+yesterday 2pl fruit eat-pst.2pl
+person-pl rock want-pst.3pl
+cat-pl tree want-prs.3pl
+3sg rock see-pst.3sg
+today 1sg water eat-prs.1sg
+yesterday 2pl fruit eat-pst.2pl
+yesterday 1pl person see-pst.1pl
+today 2sg 3pl see-prs.2sg
+today 2sg meat eat-prs.2sg
+2pl meat eat-prs.2pl
+2pl 1pl see-prs.2pl
+yesterday 3sg food eat-pst.3sg
+1pl rock want-pst.1pl
+yesterday 2sg meat eat-pst.2sg
+yesterday 2sg food eat-pst.2sg
+today 2sg fruit eat-prs.2sg
+today 1pl meat eat-prs.1pl
+person rock want-prs.3sg
+1sg tree see-pst.1sg
+yesterday 2pl meat eat-pst.2pl
+yesterday 2sg rock see-pst.2sg
+1pl water want-prs.1pl
+today 2sg fruit eat-prs.2sg
+yesterday 3sg water eat-pst.3sg
+cat rock want-pst.3sg
+today 3pl tree see-prs.3pl
+yesterday 3pl 1pl see-pst.3pl
+person-pl rock want-pst.3pl
+today 3sg person see-prs.3sg
+1sg fruit eat-prs.1sg
+3pl dog see-prs.3pl
+2pl tree want-pst.2pl
+1pl tree want-pst.1pl
+yesterday 2pl food eat-pst.2pl
+cat-pl rock want-pst.3pl
+today 2sg tree see-prs.2sg
+today 2sg fruit eat-prs.2sg
+3pl meat eat-prs.3pl
+1pl food eat-pst.1pl
+today 2pl dog see-prs.2pl
+dog rock want-pst.3sg
+dog-pl rock want-pst.3pl
+today 3sg cat see-prs.3sg
+today 3pl rock see-prs.3pl
+today 3sg 2sg see-prs.3sg
+3pl rock want-prs.3pl
+1sg meat eat-prs.1sg
+1sg tree want-prs.1sg
+yesterday 2sg meat eat-pst.2sg
+today 2sg tree see-prs.2sg
+today 1pl 3pl see-prs.1pl
+yesterday 2pl water eat-pst.2pl
+dog fruit want-pst.3sg
+today 2pl food eat-prs.2pl
+3pl meat see-prs.3pl
+cat-pl tree want-pst.3pl
+today 2sg water eat-prs.2sg
+today 1pl person see-prs.1pl
+yesterday 1pl food eat-pst.1pl
+today 1pl fruit eat-prs.1pl
+yesterday 2sg person see-pst.2sg
+yesterday 3sg water eat-pst.3sg
+3pl person see-prs.3pl
+today 1pl dog see-prs.1pl
+3pl 2sg see-prs.3pl
+yesterday 1sg meat eat-pst.1sg
+today 3sg rock see-prs.3sg
+2sg 3sg see-pst.2sg
+3pl tree see-pst.3pl
+yesterday 3pl water eat-pst.3pl
+3pl dog see-prs.3pl
+2sg 2sg see-pst.2sg
+1pl 1sg see-pst.1pl
+today 1pl 3pl see-prs.1pl
+2pl rock see-prs.2pl
+person tree want-prs.3sg
+person-pl food want-prs.3pl
+yesterday 1pl meat eat-pst.1pl
+today 2sg water eat-prs.2sg
+1sg tree want-pst.1sg
+today 1pl meat eat-prs.1pl
+3sg water eat-pst.3sg
+dog food want-prs.3sg
+yesterday 1pl water eat-pst.1pl
+today 2pl 1pl see-prs.2pl
+yesterday 3sg food eat-pst.3sg
+3pl rock want-pst.3pl
+3pl water eat-pst.3pl
+1sg water want-prs.1sg
+cat tree want-prs.3sg
+yesterday 1sg food eat-pst.1sg
+person rock want-prs.3sg
+dog-pl rock want-prs.3pl
+yesterday 1pl person see-pst.1pl
+yesterday 2sg fruit eat-pst.2sg
+yesterday 2pl 3sg see-pst.2pl
+cat-pl water want-prs.3pl
+1pl rock see-prs.1pl
+3pl person see-pst.3pl
+person food want-pst.3sg
+dog fruit want-prs.3sg
+yesterday 1pl fruit eat-pst.1pl
+dog-pl rock want-pst.3pl
+2sg 2pl see-pst.2sg
+3pl meat eat-pst.3pl
+cat tree want-pst.3sg
+today 1sg 3pl see-prs.1sg
+1sg food see-pst.1sg
+1pl tree want-prs.1pl
+3pl water eat-prs.3pl
+today 1sg meat eat-prs.1sg
+cat rock want-pst.3sg
+person rock want-pst.3sg
+3pl rock want-pst.3pl
+yesterday 3sg 2pl see-pst.3sg
+1pl dog see-prs.1pl
+3sg water eat-prs.3sg
+cat rock want-pst.3sg
+today 2sg meat eat-prs.2sg
+yesterday 2sg 2pl see-pst.2sg
+yesterday 2pl fruit eat-pst.2pl
+yesterday 1pl meat eat-pst.1pl
+person meat want-pst.3sg
+yesterday 2pl fruit eat-pst.2pl
+cat tree want-pst.3sg
+dog meat want-prs.3sg
+2sg dog see-pst.2sg
+yesterday 2pl 3pl see-pst.2pl
+today 1sg rock see-prs.1sg
+today 1pl meat eat-prs.1pl
+yesterday 3pl fruit eat-pst.3pl
+person-pl tree want-prs.3pl
+3sg water eat-pst.3sg
+person rock want-pst.3sg
+2pl meat eat-prs.2pl
+today 3pl rock see-prs.3pl
+2pl rock want-prs.2pl
+today 3sg cat see-prs.3sg
+2pl rock want-pst.2pl
+person-pl rock want-pst.3pl
+3pl food want-prs.3pl
+today 1sg fruit eat-prs.1sg
+3sg food eat-pst.3sg
+person-pl tree want-prs.3pl
+yesterday 1pl meat eat-pst.1pl
+1sg rock want-prs.1sg
+3sg meat want-prs.3sg
+2sg 1sg see-prs.2sg
+3pl water eat-pst.3pl
+1sg dog see-pst.1sg
+yesterday 1sg water eat-pst.1sg
+3pl water eat-pst.3pl
+3pl tree want-prs.3pl
+today 3pl person see-prs.3pl
+cat-pl rock want-prs.3pl
+today 3pl meat eat-prs.3pl
+1pl water eat-pst.1pl
+2sg food eat-pst.2sg
+person water want-pst.3sg
+yesterday 1sg cat see-pst.1sg
+cat tree want-pst.3sg
+cat-pl rock want-prs.3pl
+2pl rock want-pst.2pl
+cat water want-pst.3sg
+2sg water eat-pst.2sg
+today 2pl cat see-prs.2pl
+yesterday 1sg tree see-pst.1sg
+person-pl rock want-prs.3pl
+today 3pl water eat-prs.3pl
+cat meat want-prs.3sg
+yesterday 3pl 1sg see-pst.3pl
+cat-pl tree want-prs.3pl
+3sg food eat-prs.3sg
+2pl tree want-pst.2pl
+2sg person see-pst.2sg
+today 2pl food eat-prs.2pl
+today 1pl fruit eat-prs.1pl
+dog-pl rock want-pst.3pl
+today 1pl dog see-prs.1pl
+cat-pl water want-prs.3pl
+dog tree want-prs.3sg
+today 2sg meat eat-prs.2sg
+1pl 2sg see-pst.1pl
+person-pl tree want-pst.3pl
+2pl tree want-prs.2pl
+dog rock want-prs.3sg
+today 1sg fruit eat-prs.1sg
+2sg food eat-prs.2sg
+1pl cat see-prs.1pl
+yesterday 3sg tree see-pst.3sg
+1sg tree want-pst.1sg
+2sg cat see-prs.2sg
+today 2pl food eat-prs.2pl
+3sg tree want-pst.3sg
+1pl food eat-pst.1pl
+today 1sg meat eat-prs.1sg
+2sg water eat-pst.2sg
+yesterday 1sg meat eat-pst.1sg
+today 1pl food eat-prs.1pl
+1sg rock want-pst.1sg
+dog-pl tree want-pst.3pl
+today 3pl water eat-prs.3pl
+1pl meat eat-pst.1pl
+person food want-prs.3sg
+1sg cat see-pst.1sg
+today 3pl 3pl see-prs.3pl
+person-pl rock want-pst.3pl
+yesterday 1pl dog see-pst.1pl
+today 3pl food see-prs.3pl
+1pl cat see-prs.1pl
+dog-pl rock want-prs.3pl
+person rock want-pst.3sg
+cat-pl rock want-pst.3pl
+today 2sg 2pl see-prs.2sg
+yesterday 3sg tree see-pst.3sg
+1pl meat want-pst.1pl
+person tree want-pst.3sg
+today 2pl cat see-prs.2pl
+yesterday 1sg dog see-pst.1sg
+today 2sg fruit eat-prs.2sg
+1sg person see-pst.1sg
+1pl meat eat-pst.1pl
+person-pl tree want-prs.3pl
+3pl meat see-pst.3pl
+1sg cat see-prs.1sg
+person-pl tree want-prs.3pl
+3pl rock want-prs.3pl
+1sg rock want-prs.1sg
+2pl meat eat-prs.2pl
+yesterday 2sg person see-pst.2sg
+dog tree want-pst.3sg
+dog-pl meat want-prs.3pl
+2sg meat eat-pst.2sg
+3sg fruit eat-prs.3sg
+cat-pl rock want-prs.3pl
+yesterday 1pl water eat-pst.1pl
+today 1sg fruit eat-prs.1sg
+dog fruit want-prs.3sg
+today 2sg water eat-prs.2sg
+today 1sg water eat-prs.1sg
+1sg meat want-prs.1sg
+cat meat want-pst.3sg
+yesterday 2pl water eat-pst.2pl
+yesterday 3sg cat see-pst.3sg
+cat-pl rock want-prs.3pl
+today 2pl fruit eat-prs.2pl
+1sg meat eat-pst.1sg
+dog tree want-pst.3sg
+yesterday 2pl rock see-pst.2pl
+yesterday 3sg fruit eat-pst.3sg
+today 2sg food eat-prs.2sg
+person-pl rock want-prs.3pl
+person-pl tree want-prs.3pl
+today 1sg water see-prs.1sg
+dog fruit want-prs.3sg
+3sg food eat-prs.3sg
+yesterday 2pl 3pl see-pst.2pl
+yesterday 2pl fruit eat-pst.2pl
+person rock want-pst.3sg
+yesterday 1pl tree see-pst.1pl
+person-pl tree want-pst.3pl
+3sg 2sg see-pst.3sg
+cat-pl tree want-prs.3pl
+yesterday 3sg food eat-pst.3sg
+yesterday 1sg cat see-pst.1sg
+cat tree want-pst.3sg
+3pl food see-prs.3pl
+2pl dog see-prs.2pl
+person rock want-prs.3sg
+today 3pl 3pl see-prs.3pl
+dog meat want-prs.3sg
+cat-pl water want-pst.3pl
+today 2sg water eat-prs.2sg
+person food want-prs.3sg
+2pl meat eat-prs.2pl
+person-pl water want-pst.3pl
+today 3sg fruit eat-prs.3sg
+yesterday 1pl water eat-pst.1pl
+yesterday 3pl water eat-pst.3pl
+yesterday 1pl dog see-pst.1pl
+yesterday 1pl cat see-pst.1pl
+2sg meat eat-prs.2sg
+cat-pl meat want-prs.3pl
+2sg meat eat-prs.2sg
+3pl fruit eat-prs.3pl
+person-pl meat want-prs.3pl
+today 3pl cat see-prs.3pl
+person-pl tree want-pst.3pl
+1sg person see-prs.1sg
+today 2pl 3sg see-prs.2pl
+dog-pl tree want-pst.3pl
+cat-pl rock want-prs.3pl
+1sg dog see-prs.1sg
+3pl fruit want-prs.3pl
+yesterday 1sg person see-pst.1sg
+yesterday 1pl fruit eat-pst.1pl
+today 3pl 2sg see-prs.3pl
+cat-pl tree want-prs.3pl
+person-pl fruit want-pst.3pl
+today 3sg water eat-prs.3sg
+2pl 2pl see-pst.2pl
+yesterday 2pl water eat-pst.2pl
+3sg food eat-pst.3sg
+today 1sg meat eat-prs.1sg
+2pl tree want-pst.2pl
+today 1sg food eat-prs.1sg
+3pl food eat-prs.3pl
+2sg rock want-pst.2sg
+yesterday 3pl fruit eat-pst.3pl
+1pl meat eat-pst.1pl
+yesterday 1sg food eat-pst.1sg
+2sg 3pl see-prs.2sg
+yesterday 2pl fruit eat-pst.2pl
+2pl rock see-pst.2pl
+3sg 1sg see-prs.3sg
+2pl cat see-prs.2pl
+today 3pl 1pl see-prs.3pl
+1sg rock see-pst.1sg
+dog rock want-prs.3sg
+2sg 1pl see-pst.2sg
+1sg fruit want-prs.1sg
+yesterday 3sg person see-pst.3sg
+dog food want-pst.3sg
+today 3sg 3pl see-prs.3sg
+yesterday 2sg person see-pst.2sg
+today 3sg water eat-prs.3sg
+1sg water eat-pst.1sg
+yesterday 3pl fruit eat-pst.3pl
+yesterday 3pl 3sg see-pst.3pl
+dog-pl food want-prs.3pl
+today 1pl food eat-prs.1pl
+2sg tree want-pst.2sg
+yesterday 2pl food eat-pst.2pl
+dog-pl tree want-prs.3pl
+2sg food eat-pst.2sg
+today 2sg fruit eat-prs.2sg
+cat-pl water want-prs.3pl
+yesterday 3sg tree see-pst.3sg
+today 3sg water see-prs.3sg
+today 3pl dog see-prs.3pl
+2pl 2pl see-prs.2pl
+1sg water eat-prs.1sg
+yesterday 1sg 1sg see-pst.1sg
+3sg water eat-prs.3sg
+yesterday 1sg 2sg see-pst.1sg
+today 1pl cat see-prs.1pl
+1pl meat eat-pst.1pl
+today 2sg 1pl see-prs.2sg
+today 3pl person see-prs.3pl
+cat rock want-prs.3sg
+1pl water eat-pst.1pl
+dog-pl tree want-prs.3pl
+dog rock want-pst.3sg
+yesterday 2sg water see-pst.2sg
+yesterday 3pl fruit eat-pst.3pl
+3pl tree want-prs.3pl
+today 2sg 3sg see-prs.2sg
+person tree want-pst.3sg
+yesterday 1pl cat see-pst.1pl
+1sg fruit want-prs.1sg
+cat-pl rock want-prs.3pl
+dog rock want-pst.3sg
+yesterday 1pl food eat-pst.1pl
+cat-pl meat want-prs.3pl
+cat rock want-prs.3sg
+cat water want-prs.3sg
+today 2sg dog see-prs.2sg
+1sg water eat-prs.1sg
+3pl meat eat-pst.3pl
+dog-pl tree want-pst.3pl
+today 1sg 2sg see-prs.1sg
+1pl water eat-pst.1pl
+yesterday 3sg fruit eat-pst.3sg
+yesterday 3pl fruit eat-pst.3pl
+person-pl tree want-pst.3pl
+person-pl rock want-pst.3pl
+2sg rock want-pst.2sg
+cat fruit want-prs.3sg
+1pl water want-prs.1pl
+cat tree want-prs.3sg
+yesterday 3sg food eat-pst.3sg
+today 3pl fruit eat-prs.3pl
+today 3pl water eat-prs.3pl
+today 1pl 1sg see-prs.1pl
+yesterday 2pl fruit eat-pst.2pl
+today 3pl water eat-prs.3pl
+1sg 3pl see-pst.1sg
+today 1sg fruit eat-prs.1sg
+2pl fruit eat-prs.2pl
+today 2pl 1sg see-prs.2pl
+3pl 3sg see-pst.3pl
+today 1sg fruit eat-prs.1sg
+yesterday 2pl 1sg see-pst.2pl
+3sg person see-prs.3sg
+2sg 2sg see-prs.2sg
+yesterday 1sg food eat-pst.1sg
+1sg 3sg see-pst.1sg
+yesterday 1sg dog see-pst.1sg
+2sg 2pl see-pst.2sg
+2pl tree want-prs.2pl
+today 3pl tree see-prs.3pl
+1pl food eat-prs.1pl
+today 2sg rock see-prs.2sg
+yesterday 2sg water eat-pst.2sg
+cat-pl tree want-prs.3pl
+cat meat want-prs.3sg
+today 1sg water eat-prs.1sg
+3sg food want-pst.3sg
+today 3sg food eat-prs.3sg
+person tree want-prs.3sg
+1sg tree see-pst.1sg
+1pl food eat-prs.1pl
+1pl water want-prs.1pl
+today 2sg tree see-prs.2sg
+today 1sg tree see-prs.1sg
+3pl tree see-prs.3pl
+1pl rock see-prs.1pl
+yesterday 3pl dog see-pst.3pl
+person tree want-prs.3sg
+1sg tree want-prs.1sg
+dog-pl tree want-pst.3pl
+2sg rock see-pst.2sg
+2sg rock want-prs.2sg
+yesterday 3pl person see-pst.3pl
+today 3sg 2sg see-prs.3sg
+1pl person see-pst.1pl
+dog-pl fruit want-prs.3pl
+dog-pl tree want-prs.3pl
+3pl rock want-pst.3pl
+today 1pl fruit eat-prs.1pl
+today 3sg 1pl see-prs.3sg
+2pl food eat-prs.2pl
+today 1sg person see-prs.1sg
+dog tree want-pst.3sg
+1pl meat eat-prs.1pl
+person tree want-pst.3sg
+today 2sg meat eat-prs.2sg
+2sg fruit want-pst.2sg
+3sg water want-pst.3sg
+today 2sg food eat-prs.2sg
+2sg rock see-pst.2sg
+2pl meat eat-pst.2pl
+dog-pl tree want-prs.3pl
+person water want-prs.3sg
+today 1sg 2sg see-prs.1sg
+1sg fruit eat-pst.1sg
+cat-pl tree want-pst.3pl
+person-pl fruit want-pst.3pl
+today 3sg 2pl see-prs.3sg
+3sg person see-prs.3sg
+2pl meat eat-prs.2pl
+dog food want-pst.3sg
+today 2pl food eat-prs.2pl
+yesterday 3pl meat eat-pst.3pl
+person-pl rock want-prs.3pl
+3sg cat see-prs.3sg
+today 3sg rock see-prs.3sg
+1sg dog see-prs.1sg
+1pl tree want-pst.1pl
+yesterday 1sg 1pl see-pst.1sg
+today 2sg rock see-prs.2sg
+yesterday 2sg meat eat-pst.2sg
+dog rock want-prs.3sg
+yesterday 2pl food eat-pst.2pl
+3sg tree see-pst.3sg
+yesterday 3sg tree see-pst.3sg
+dog-pl tree want-prs.3pl
+today 2pl person see-prs.2pl
+3pl rock see-pst.3pl
+3sg rock want-prs.3sg
+today 3pl fruit eat-prs.3pl
+yesterday 1pl 2pl see-pst.1pl
+yesterday 1sg fruit eat-pst.1sg
+yesterday 3pl meat eat-pst.3pl
+person-pl tree want-prs.3pl
+today 3sg meat eat-prs.3sg
+cat-pl tree want-pst.3pl
+yesterday 1sg water eat-pst.1sg
+today 2sg meat eat-prs.2sg
+3sg person see-prs.3sg
+1pl tree want-prs.1pl
+dog tree want-prs.3sg
+today 1sg 1pl see-prs.1sg
+cat fruit want-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+yesterday 1sg fruit eat-pst.1sg
+person tree want-pst.3sg
+3pl 1sg see-pst.3pl
+today 1sg dog see-prs.1sg
+3pl meat eat-pst.3pl
+yesterday 3pl cat see-pst.3pl
+yesterday 3pl meat eat-pst.3pl
+today 3pl fruit eat-prs.3pl
+yesterday 3sg meat eat-pst.3sg
+today 2pl cat see-prs.2pl
+yesterday 2pl 2pl see-pst.2pl
+1pl tree want-prs.1pl
+1pl meat eat-prs.1pl
+dog food want-pst.3sg
+1sg fruit eat-pst.1sg
+yesterday 1sg rock see-pst.1sg
+yesterday 1sg tree see-pst.1sg
+yesterday 2pl 2sg see-pst.2pl
+cat-pl meat want-pst.3pl
+yesterday 1sg fruit eat-pst.1sg
+dog meat want-prs.3sg
+cat meat want-prs.3sg
+yesterday 3sg tree see-pst.3sg
+3pl tree want-pst.3pl
+3sg fruit want-prs.3sg
+person-pl tree want-prs.3pl
+dog meat want-pst.3sg
+today 3sg water eat-prs.3sg
+3pl tree want-prs.3pl
+1sg 3pl see-pst.1sg
+cat food want-pst.3sg
+today 2pl cat see-prs.2pl
+yesterday 1sg tree see-pst.1sg
+1pl meat eat-prs.1pl
+3pl fruit eat-pst.3pl
+3sg meat want-pst.3sg
+2sg dog see-prs.2sg
+today 3sg dog see-prs.3sg
+3pl 1sg see-prs.3pl
+dog-pl rock want-pst.3pl
+3sg tree want-prs.3sg
+today 1pl person see-prs.1pl
+person-pl fruit want-pst.3pl
+today 3pl fruit eat-prs.3pl
+yesterday 1pl rock see-pst.1pl
+3sg water want-pst.3sg
+dog food want-prs.3sg
+1pl dog see-pst.1pl
+3sg person see-prs.3sg
+today 2sg dog see-prs.2sg
+2pl tree want-pst.2pl
+today 2sg fruit eat-prs.2sg
+cat rock want-pst.3sg
+today 2pl 2pl see-prs.2pl
+3sg water eat-pst.3sg
+2pl tree want-prs.2pl
+3pl meat want-prs.3pl
+cat food want-prs.3sg
+yesterday 2sg 2sg see-pst.2sg
+dog-pl tree want-pst.3pl
+cat-pl rock want-pst.3pl
+cat tree want-prs.3sg
+person rock want-prs.3sg
+yesterday 1pl food eat-pst.1pl
+3pl fruit eat-prs.3pl
+person-pl food want-pst.3pl
+person-pl tree want-pst.3pl
+yesterday 3sg meat eat-pst.3sg
+today 1pl water eat-prs.1pl
+3pl rock want-pst.3pl
+2sg fruit eat-prs.2sg
+today 2sg meat eat-prs.2sg
+yesterday 2sg 1sg see-pst.2sg
+1sg water eat-prs.1sg
+1pl 3sg see-pst.1pl
+yesterday 3sg water eat-pst.3sg
+3sg tree see-pst.3sg
+yesterday 3pl rock see-pst.3pl
+today 3pl 2sg see-prs.3pl
+today 1sg tree see-prs.1sg
+1pl dog see-pst.1pl
+3sg water want-pst.3sg
+2pl rock want-prs.2pl
+today 1pl water eat-prs.1pl
+today 2pl fruit eat-prs.2pl
+cat-pl rock want-prs.3pl
+person tree want-pst.3sg
+person water want-pst.3sg
+yesterday 3pl water see-pst.3pl
+today 3pl water eat-prs.3pl
+2pl rock see-prs.2pl
+person-pl meat want-prs.3pl
+today 2sg 3pl see-prs.2sg
+yesterday 1sg fruit eat-pst.1sg
+dog-pl tree want-pst.3pl
+dog-pl water want-pst.3pl
+1sg rock see-pst.1sg
+3sg rock want-prs.3sg
+yesterday 1sg cat see-pst.1sg
+2sg tree want-pst.2sg
+2pl tree see-pst.2pl
+dog-pl food want-prs.3pl
+1pl food want-pst.1pl
+2pl meat eat-prs.2pl
+1pl tree want-prs.1pl
+2sg meat want-pst.2sg
+cat-pl rock want-pst.3pl
+1sg cat see-prs.1sg
+cat rock want-pst.3sg
+2pl meat eat-pst.2pl
+yesterday 2pl meat eat-pst.2pl
+today 3pl dog see-prs.3pl
+yesterday 1pl dog see-pst.1pl
+3pl rock see-prs.3pl
+today 2pl meat eat-prs.2pl
+yesterday 3sg meat eat-pst.3sg
+3pl tree want-prs.3pl
+2sg 2pl see-prs.2sg
+today 1pl dog see-prs.1pl
+dog-pl rock want-prs.3pl
+3pl 3sg see-pst.3pl
+today 1sg fruit eat-prs.1sg
+person food want-prs.3sg
+1sg 2sg see-prs.1sg
+cat-pl tree want-pst.3pl
+2sg tree want-prs.2sg
+cat tree want-pst.3sg
+2sg 1sg see-pst.2sg
+yesterday 2pl meat eat-pst.2pl
+yesterday 1pl meat eat-pst.1pl
+3sg tree want-prs.3sg
+yesterday 3sg rock see-pst.3sg
+cat rock want-prs.3sg
+today 1pl water eat-prs.1pl
+1sg food eat-prs.1sg
+2pl tree see-prs.2pl
+yesterday 1pl tree see-pst.1pl
+3sg meat want-pst.3sg
+3sg water want-prs.3sg
+3pl tree want-pst.3pl
+2sg meat want-prs.2sg
+dog tree want-prs.3sg
+yesterday 1pl water eat-pst.1pl
+2pl tree want-pst.2pl
+2pl tree want-prs.2pl
+cat rock want-pst.3sg
+dog-pl tree want-prs.3pl
+yesterday 3pl fruit eat-pst.3pl
+3pl tree want-pst.3pl
+today 1sg fruit eat-prs.1sg
+cat-pl water want-prs.3pl
+2pl meat want-prs.2pl
+3pl person see-pst.3pl
+2sg meat want-prs.2sg
+3sg person see-prs.3sg
+1pl 1pl see-pst.1pl
+2sg rock want-prs.2sg
+3pl water eat-prs.3pl
+3sg meat eat-pst.3sg
+2sg meat want-prs.2sg
+3pl water eat-prs.3pl
+yesterday 1sg food eat-pst.1sg
+today 3pl food eat-prs.3pl
+yesterday 1pl meat eat-pst.1pl
+yesterday 2pl water see-pst.2pl
+today 2sg fruit eat-prs.2sg
+1sg person see-prs.1sg
+yesterday 1pl 3pl see-pst.1pl
+3pl tree want-pst.3pl
+cat-pl rock want-pst.3pl
+dog-pl tree want-pst.3pl
+person rock want-pst.3sg
+dog tree want-prs.3sg
+1pl water want-prs.1pl
+yesterday 2sg food see-pst.2sg
+person-pl water want-prs.3pl
+yesterday 2sg person see-pst.2sg
+yesterday 3pl 3sg see-pst.3pl
+dog food want-pst.3sg
+1sg food want-pst.1sg
+2pl fruit eat-pst.2pl
+yesterday 2pl rock see-pst.2pl
+yesterday 1pl dog see-pst.1pl
+3pl rock want-prs.3pl
+today 2pl food eat-prs.2pl
+3sg water want-pst.3sg
+person water want-pst.3sg
+1sg meat eat-pst.1sg
+dog-pl fruit want-pst.3pl
+cat-pl rock want-prs.3pl
+2sg 3pl see-pst.2sg
+today 2pl 2sg see-prs.2pl
+3sg tree want-prs.3sg
+3sg 2sg see-prs.3sg
+3pl rock want-pst.3pl
+2pl tree want-prs.2pl
+yesterday 3pl tree see-pst.3pl
+dog rock want-prs.3sg
+2pl 1pl see-pst.2pl
+cat rock want-prs.3sg
+3sg water eat-pst.3sg
+2sg 2pl see-prs.2sg
+2pl tree want-pst.2pl
+cat-pl tree want-pst.3pl
+today 3sg food eat-prs.3sg
+2pl water eat-pst.2pl
+yesterday 3sg food eat-pst.3sg
+3pl food eat-prs.3pl
+1sg food eat-prs.1sg
+2sg rock want-prs.2sg
+1sg rock want-pst.1sg
+today 2sg food eat-prs.2sg
+dog-pl rock want-prs.3pl
+yesterday 2pl meat eat-pst.2pl
+3sg water eat-pst.3sg
+yesterday 1pl cat see-pst.1pl
+dog water want-prs.3sg
+yesterday 1pl fruit eat-pst.1pl
+today 3sg 1pl see-prs.3sg
+2sg 2sg see-pst.2sg
+dog fruit want-prs.3sg
+3pl rock want-prs.3pl
+3pl 2pl see-prs.3pl
+1pl 1pl see-pst.1pl
+person-pl water want-prs.3pl
+yesterday 3sg fruit eat-pst.3sg
+person rock want-pst.3sg
+2pl food eat-pst.2pl
+1pl tree see-prs.1pl
+3pl meat want-pst.3pl
+yesterday 2sg rock see-pst.2sg
+dog tree want-prs.3sg
+cat-pl food want-prs.3pl
+yesterday 2sg fruit eat-pst.2sg
+person-pl rock want-prs.3pl
+today 3sg water eat-prs.3sg
+yesterday 3sg food eat-pst.3sg
+yesterday 1pl dog see-pst.1pl
+today 3pl fruit eat-prs.3pl
+cat rock want-pst.3sg
+2sg tree want-prs.2sg
+today 1pl water eat-prs.1pl
+today 3sg tree see-prs.3sg
+today 2pl person see-prs.2pl
+yesterday 1sg rock see-pst.1sg
+person tree want-pst.3sg
+2pl food eat-prs.2pl
+1sg 2pl see-pst.1sg
+2pl tree want-prs.2pl
+yesterday 3pl 3pl see-pst.3pl
+1pl water want-prs.1pl
+person rock want-prs.3sg
+yesterday 1pl tree see-pst.1pl
+yesterday 2sg dog see-pst.2sg
+dog-pl water want-pst.3pl
+1pl tree want-prs.1pl
+dog-pl water want-prs.3pl
+yesterday 3sg fruit see-pst.3sg
+cat-pl tree want-pst.3pl
+2sg meat eat-prs.2sg
+2sg rock want-pst.2sg
+3pl meat eat-prs.3pl
+today 3pl water eat-prs.3pl
+cat food want-pst.3sg
+yesterday 1sg tree see-pst.1sg
+today 3pl rock see-prs.3pl
+today 1sg water eat-prs.1sg
+dog-pl tree want-pst.3pl
+dog-pl rock want-pst.3pl
+2pl water eat-prs.2pl
+cat-pl rock want-pst.3pl
+today 1pl water eat-prs.1pl
+today 2pl cat see-prs.2pl
+yesterday 3sg dog see-pst.3sg
+1sg rock want-pst.1sg
+3pl food eat-pst.3pl
+yesterday 3sg person see-pst.3sg
+yesterday 1pl fruit eat-pst.1pl
+2sg 1sg see-pst.2sg
+today 1pl 1sg see-prs.1pl
+yesterday 1sg food eat-pst.1sg
+yesterday 2pl food eat-pst.2pl
+yesterday 3pl 1sg see-pst.3pl
+cat tree want-prs.3sg
+2sg 3pl see-pst.2sg
+2pl meat eat-pst.2pl
+cat-pl food want-pst.3pl
+cat water want-prs.3sg
+today 1pl tree see-prs.1pl
+1sg food eat-pst.1sg
+cat-pl water want-prs.3pl
+2sg tree want-pst.2sg
+2sg fruit eat-prs.2sg
+person-pl tree want-prs.3pl
+1pl water want-prs.1pl
+yesterday 2pl 1pl see-pst.2pl
+1sg rock want-prs.1sg
+person food want-prs.3sg
+cat-pl tree want-pst.3pl
+yesterday 1sg dog see-pst.1sg
+cat food want-pst.3sg
+cat-pl meat want-pst.3pl
+3sg meat eat-prs.3sg
+person-pl rock want-pst.3pl
+today 3pl 1pl see-prs.3pl
+yesterday 1pl fruit eat-pst.1pl
+yesterday 3sg 2pl see-pst.3sg
+yesterday 1sg food see-pst.1sg
+today 3pl fruit eat-prs.3pl
+today 3sg 3pl see-prs.3sg
+1sg rock want-pst.1sg
+person-pl food want-pst.3pl
+2pl 1sg see-prs.2pl
+yesterday 2sg cat see-pst.2sg
+yesterday 2pl fruit eat-pst.2pl
+2pl water eat-pst.2pl
+person-pl rock want-pst.3pl
+cat fruit want-pst.3sg
+today 1sg tree see-prs.1sg
+yesterday 3pl 2sg see-pst.3pl
+person rock want-pst.3sg
+yesterday 2sg person see-pst.2sg
+2sg rock want-prs.2sg
+yesterday 3sg rock see-pst.3sg
+3sg cat see-prs.3sg
+1pl fruit eat-prs.1pl
+today 3pl person see-prs.3pl
+yesterday 3pl water eat-pst.3pl
+1sg 2sg see-prs.1sg
+yesterday 3pl cat see-pst.3pl
+dog rock want-prs.3sg
+dog-pl fruit want-pst.3pl
+yesterday 1sg dog see-pst.1sg
+cat-pl fruit want-pst.3pl
+dog tree want-prs.3sg
+1pl tree want-prs.1pl
+yesterday 1sg food see-pst.1sg
+cat tree want-prs.3sg
+person-pl tree want-prs.3pl
+3sg meat eat-pst.3sg
+yesterday 1sg cat see-pst.1sg
+yesterday 1pl tree see-pst.1pl
+yesterday 2sg water eat-pst.2sg
+cat rock want-pst.3sg
+2pl meat eat-pst.2pl
+today 1sg water eat-prs.1sg
+cat rock want-pst.3sg
+3sg tree want-pst.3sg
+person-pl water want-prs.3pl
+2pl water want-pst.2pl
+today 1sg tree see-prs.1sg
+3pl rock see-prs.3pl
+today 3sg food eat-prs.3sg
+3sg 1pl see-pst.3sg
+3sg dog see-prs.3sg
+today 2pl 1pl see-prs.2pl
+dog tree want-pst.3sg
+person-pl rock want-prs.3pl
+cat-pl meat want-prs.3pl
+yesterday 3sg rock see-pst.3sg
+1pl rock see-prs.1pl
+1pl tree want-pst.1pl
+today 2pl 3sg see-prs.2pl
+person-pl rock want-prs.3pl
+yesterday 3pl meat eat-pst.3pl
+today 1pl 1pl see-prs.1pl
+2sg tree want-pst.2sg
+yesterday 2sg meat eat-pst.2sg
+3pl food eat-prs.3pl
+yesterday 3sg 1pl see-pst.3sg
+cat tree want-pst.3sg
+yesterday 3pl 2sg see-pst.3pl
+1sg person see-prs.1sg
+today 3pl 2sg see-prs.3pl
+3pl rock want-prs.3pl
+cat-pl tree want-prs.3pl
+3sg meat eat-pst.3sg
+3sg fruit eat-prs.3sg
+dog rock want-prs.3sg
+today 2pl fruit eat-prs.2pl
+2pl food want-pst.2pl
+today 1sg food eat-prs.1sg
+cat-pl food want-prs.3pl
+3pl rock see-prs.3pl
+today 1pl food eat-prs.1pl
+cat-pl tree want-prs.3pl
+yesterday 1pl dog see-pst.1pl
+3sg water want-pst.3sg
+yesterday 3pl rock see-pst.3pl
+today 1pl food eat-prs.1pl
+1sg 2sg see-prs.1sg
+yesterday 1sg tree see-pst.1sg
+person-pl tree want-pst.3pl
+dog-pl meat want-pst.3pl
+today 2pl water eat-prs.2pl
+2pl tree want-prs.2pl
+1pl 1pl see-pst.1pl
+dog rock want-prs.3sg
+3sg fruit eat-pst.3sg
+dog rock want-pst.3sg
+today 3sg meat eat-prs.3sg
+today 2sg 2sg see-prs.2sg
+2sg fruit eat-prs.2sg
+dog-pl tree want-pst.3pl
+today 3sg 2sg see-prs.3sg
+dog-pl meat want-prs.3pl
+today 1pl 2pl see-prs.1pl
+2sg rock want-pst.2sg
+yesterday 1pl dog see-pst.1pl
+3pl rock see-prs.3pl
+3sg 3sg see-prs.3sg
+person-pl rock want-prs.3pl
+2pl tree see-pst.2pl
+yesterday 1pl water eat-pst.1pl
+yesterday 1pl meat eat-pst.1pl
+3sg water eat-prs.3sg
+today 1sg fruit eat-prs.1sg
+yesterday 2pl cat see-pst.2pl
+today 3sg tree see-prs.3sg
+3sg 3pl see-prs.3sg
+yesterday 2sg 1pl see-pst.2sg
+today 2sg water eat-prs.2sg
+1sg rock want-prs.1sg
+dog tree want-prs.3sg
+today 2sg meat eat-prs.2sg
+today 2pl water eat-prs.2pl
+3pl cat see-prs.3pl
+3pl water eat-pst.3pl
+dog-pl fruit want-prs.3pl
+2sg meat want-prs.2sg
+today 2sg 3pl see-prs.2sg
+person rock want-pst.3sg
+today 2pl rock see-prs.2pl
+person-pl water want-prs.3pl
+dog-pl water want-prs.3pl
+2pl tree see-prs.2pl
+2pl tree want-prs.2pl
+yesterday 3pl water eat-pst.3pl
+3sg 3pl see-prs.3sg
+3sg tree want-prs.3sg
+person-pl fruit want-pst.3pl
+3pl dog see-pst.3pl
+yesterday 1pl food eat-pst.1pl
+today 2sg 3pl see-prs.2sg
+today 3sg dog see-prs.3sg
+3pl tree want-prs.3pl
+today 3pl food eat-prs.3pl
+2sg tree want-pst.2sg
+yesterday 1sg person see-pst.1sg
+person-pl water want-pst.3pl
+yesterday 3sg meat eat-pst.3sg
+today 2sg meat eat-prs.2sg
+yesterday 2sg cat see-pst.2sg
+today 1pl food eat-prs.1pl
 yesterday 3sg cat see-pst.3sg
 cat rock want-pst.3sg
-1pl tree want-prs.1pl
-yesterday 1pl water see-pst.1pl
-yesterday 2pl meat eat-pst.2pl
-person-pl meat want-prs.3pl
-3pl 2pl see-pst.3pl
-today 3pl person see-prs.3pl
-3sg meat eat-pst.3sg
+3pl food eat-pst.3pl
+2pl rock see-prs.2pl
+yesterday 2sg fruit eat-pst.2sg
+cat tree want-pst.3sg
+yesterday 1sg food eat-pst.1sg
+today 1sg fruit eat-prs.1sg
+2sg rock want-prs.2sg
+1sg 1pl see-prs.1sg
+person rock want-prs.3sg
+today 1pl rock see-prs.1pl
+2pl rock want-prs.2pl
+yesterday 2pl 1sg see-pst.2pl
+3sg cat see-pst.3sg
+cat tree want-pst.3sg
+person-pl water want-pst.3pl
+today 3pl 1sg see-prs.3pl
+1pl dog see-pst.1pl
+2pl fruit eat-prs.2pl
 dog rock want-pst.3sg
-3pl tree want-pst.3pl
-3pl tree want-pst.3pl
-1sg 1sg see-prs.1sg
-today 2sg rock see-prs.2sg
-3sg dog see-pst.3sg
-3sg food eat-pst.3sg
-today 2sg meat eat-prs.2sg
-2pl food eat-prs.2pl
-dog-pl fruit want-pst.3pl
+yesterday 2sg food eat-pst.2sg
+dog-pl rock want-pst.3pl
+cat rock want-pst.3sg
+yesterday 1sg water see-pst.1sg
+1sg food want-pst.1sg
+3pl food see-pst.3pl
+cat tree want-prs.3sg
+yesterday 1sg cat see-pst.1sg
+yesterday 3pl rock see-pst.3pl
+yesterday 2sg cat see-pst.2sg
+1sg 2sg see-prs.1sg
+3sg fruit want-pst.3sg
+3sg fruit want-pst.3sg
+dog-pl tree want-pst.3pl
+2pl rock want-prs.2pl
+person meat want-pst.3sg
+dog-pl rock want-prs.3pl
+yesterday 2sg cat see-pst.2sg
+yesterday 2sg water eat-pst.2sg
+yesterday 3sg food eat-pst.3sg
+person tree want-pst.3sg
+3pl rock want-prs.3pl
+yesterday 1sg water eat-pst.1sg
+dog-pl food want-pst.3pl
+yesterday 3sg meat eat-pst.3sg
+today 1sg water eat-prs.1sg
+yesterday 2sg meat eat-pst.2sg
+dog-pl water want-prs.3pl
+today 3pl fruit eat-prs.3pl
+person tree want-pst.3sg
+3sg meat want-pst.3sg
+2sg rock see-prs.2sg
+yesterday 2pl tree see-pst.2pl
+3sg rock see-pst.3sg
+dog rock want-prs.3sg
+2sg tree want-pst.2sg
+yesterday 3sg dog see-pst.3sg
+yesterday 3sg dog see-pst.3sg
+person-pl tree want-pst.3pl
+2pl meat see-prs.2pl
+today 3sg 2pl see-prs.3sg
+yesterday 1sg food eat-pst.1sg
+today 1pl tree see-prs.1pl
+today 3pl food eat-prs.3pl
+1pl meat want-prs.1pl
+person-pl rock want-prs.3pl
+cat-pl rock want-prs.3pl
+dog rock want-pst.3sg
+yesterday 1sg 3pl see-pst.1sg
+cat water want-pst.3sg
+1pl meat see-prs.1pl
+1sg fruit eat-prs.1sg
+person tree want-pst.3sg
+today 3sg meat eat-prs.3sg
+2sg meat want-pst.2sg
+2sg fruit eat-prs.2sg
+2pl rock want-prs.2pl
+cat rock want-prs.3sg
+2pl water eat-prs.2pl
+today 2pl meat eat-prs.2pl
+yesterday 2pl meat see-pst.2pl
+today 3sg cat see-prs.3sg
+today 1pl dog see-prs.1pl
+yesterday 3sg water eat-pst.3sg
+2pl meat eat-pst.2pl
+today 3pl person see-prs.3pl
+cat-pl meat want-pst.3pl
 dog tree want-pst.3sg
-3pl fruit want-pst.3pl
+2sg 3sg see-prs.2sg
+today 2sg water eat-prs.2sg
+1sg cat see-prs.1sg
+today 1sg person see-prs.1sg
+3pl tree see-prs.3pl
+1pl tree want-prs.1pl
+2pl rock want-pst.2pl
+today 1pl meat eat-prs.1pl
+3pl fruit eat-pst.3pl
+yesterday 1sg 3sg see-pst.1sg
+2sg tree want-prs.2sg
+today 2pl fruit eat-prs.2pl
+2pl food eat-prs.2pl
+today 2sg fruit eat-prs.2sg
+cat-pl food want-prs.3pl
+dog food want-prs.3sg
+2sg fruit want-prs.2sg
+1sg food see-pst.1sg
+person-pl rock want-pst.3pl
+yesterday 1sg fruit eat-pst.1sg
+2pl tree want-pst.2pl
+3pl rock want-prs.3pl
+today 3pl water eat-prs.3pl
+yesterday 1sg fruit eat-pst.1sg
+yesterday 2sg meat eat-pst.2sg
+yesterday 1sg water eat-pst.1sg
+today 2pl meat eat-prs.2pl
+today 3pl food eat-prs.3pl
+3pl rock want-prs.3pl
+1pl food eat-pst.1pl
+3sg fruit eat-pst.3sg
+yesterday 1pl water eat-pst.1pl
+3pl person see-pst.3pl
+today 2pl fruit eat-prs.2pl
+yesterday 2pl water eat-pst.2pl
+dog tree want-pst.3sg
+cat-pl food want-prs.3pl
+1pl tree want-pst.1pl
+yesterday 1sg tree see-pst.1sg
+yesterday 1sg meat eat-pst.1sg
+dog tree want-prs.3sg
+yesterday 1sg 1pl see-pst.1sg
+2pl fruit see-pst.2pl
+1sg food want-pst.1sg
+yesterday 3sg 3pl see-pst.3sg
+person rock want-prs.3sg
+3pl food eat-prs.3pl
+3pl water eat-prs.3pl
+yesterday 1sg water eat-pst.1sg
+1sg rock want-prs.1sg
+yesterday 3pl food eat-pst.3pl
+today 2pl water eat-prs.2pl
+1pl person see-prs.1pl
+today 3sg meat eat-prs.3sg
+2sg tree want-prs.2sg
+3sg tree want-prs.3sg
+1pl 1pl see-prs.1pl
+yesterday 2pl dog see-pst.2pl
+2pl water eat-pst.2pl
+3sg water eat-pst.3sg
+1sg meat want-pst.1sg
+2sg food eat-prs.2sg
+yesterday 2sg water see-pst.2sg
+yesterday 2pl 2pl see-pst.2pl
+cat-pl tree want-prs.3pl
+yesterday 1sg meat eat-pst.1sg
+yesterday 3sg fruit eat-pst.3sg
+3sg tree want-prs.3sg
+yesterday 1sg 2pl see-pst.1sg
+1pl food see-pst.1pl
+today 1pl dog see-prs.1pl
+yesterday 1pl water eat-pst.1pl
+2pl tree want-pst.2pl
+cat-pl tree want-prs.3pl
+yesterday 3sg fruit eat-pst.3sg
+cat-pl rock want-pst.3pl
+cat-pl rock want-prs.3pl
+today 3pl dog see-prs.3pl
+person-pl tree want-pst.3pl
+today 1sg person see-prs.1sg
+yesterday 2pl water eat-pst.2pl
+yesterday 2sg fruit see-pst.2sg
+1pl rock want-prs.1pl
+2pl tree want-pst.2pl
+2sg rock see-prs.2sg
+cat tree want-prs.3sg
+cat-pl tree want-prs.3pl
+yesterday 1pl dog see-pst.1pl
+yesterday 2sg 2pl see-pst.2sg
+2pl rock want-prs.2pl
+today 2pl cat see-prs.2pl
+person tree want-prs.3sg
+yesterday 3sg rock see-pst.3sg
+yesterday 2pl water eat-pst.2pl
+today 1pl fruit eat-prs.1pl
+today 1sg person see-prs.1sg
+2pl tree want-prs.2pl
+cat tree want-prs.3sg
+2pl meat want-pst.2pl
+person-pl water want-pst.3pl
+person-pl tree want-pst.3pl
+person rock want-pst.3sg
+person-pl meat want-prs.3pl
+cat-pl rock want-pst.3pl
+yesterday 2sg fruit see-pst.2sg
+person meat want-prs.3sg
+3sg rock want-pst.3sg
+yesterday 3pl fruit eat-pst.3pl
+dog-pl tree want-pst.3pl
+person-pl tree want-pst.3pl
+today 3pl rock see-prs.3pl
+1sg meat eat-pst.1sg
+dog food want-pst.3sg
+1pl cat see-prs.1pl
+person-pl tree want-pst.3pl
+2sg food eat-prs.2sg
+person-pl tree want-prs.3pl
+today 2sg water eat-prs.2sg
+3pl water eat-prs.3pl
+1sg person see-prs.1sg
+2pl tree want-prs.2pl
+yesterday 3sg rock see-pst.3sg
+2pl meat see-prs.2pl
+today 2sg water eat-prs.2sg
+3pl food eat-prs.3pl
+2pl tree want-pst.2pl
+today 2sg cat see-prs.2sg
+today 1sg person see-prs.1sg
+2sg rock want-prs.2sg
+today 1sg food eat-prs.1sg
+today 3sg cat see-prs.3sg
+dog food want-pst.3sg
+1pl fruit eat-pst.1pl
+today 3pl food eat-prs.3pl
+3sg rock see-pst.3sg
+2sg tree want-pst.2sg
+3sg rock want-pst.3sg
+yesterday 2sg cat see-pst.2sg
+today 3pl fruit eat-prs.3pl
+yesterday 3sg tree see-pst.3sg
+today 3pl food eat-prs.3pl
+today 3sg meat eat-prs.3sg
+cat rock want-pst.3sg
+dog rock want-prs.3sg
+3sg tree want-pst.3sg
+person-pl tree want-prs.3pl
+yesterday 2sg fruit eat-pst.2sg
+today 1pl meat eat-prs.1pl
+yesterday 3sg fruit eat-pst.3sg
+2pl tree want-pst.2pl
+person-pl rock want-pst.3pl
+yesterday 3pl fruit see-pst.3pl
+yesterday 2pl meat eat-pst.2pl
+2sg water eat-prs.2sg
+cat-pl food want-pst.3pl
+dog fruit want-pst.3sg
+today 1pl 3pl see-prs.1pl
+yesterday 3sg meat see-pst.3sg
+person-pl rock want-pst.3pl
+today 3pl fruit eat-prs.3pl
+today 3sg food eat-prs.3sg
+3pl tree want-pst.3pl
+2pl fruit want-pst.2pl
+dog fruit want-prs.3sg
+1sg person see-pst.1sg
+today 3sg rock see-prs.3sg
+2pl person see-prs.2pl
+cat-pl meat want-prs.3pl
+yesterday 1pl water eat-pst.1pl
+today 1pl water eat-prs.1pl
+3sg cat see-pst.3sg
+dog fruit want-prs.3sg
+1sg 1sg see-pst.1sg
+today 1sg water eat-prs.1sg
+yesterday 2pl person see-pst.2pl
+dog tree want-pst.3sg
+dog-pl rock want-prs.3pl
+person rock want-pst.3sg
+3sg dog see-prs.3sg
+dog rock want-prs.3sg
+yesterday 1sg tree see-pst.1sg
+person rock want-pst.3sg
+yesterday 3pl dog see-pst.3pl
+cat-pl rock want-pst.3pl
+2pl tree want-prs.2pl
+today 2sg water eat-prs.2sg
+today 3sg meat eat-prs.3sg
+today 1sg meat eat-prs.1sg
+today 2sg fruit eat-prs.2sg
+cat fruit want-pst.3sg
+today 1sg 3sg see-prs.1sg
+today 3pl 3pl see-prs.3pl
+today 1sg water eat-prs.1sg
+person-pl tree want-prs.3pl
+today 3pl water see-prs.3pl
+cat food want-prs.3sg
+1sg fruit eat-pst.1sg
+1pl rock want-prs.1pl
+2sg tree see-pst.2sg
+yesterday 2pl meat eat-pst.2pl
+today 1pl fruit eat-prs.1pl
+person-pl fruit want-pst.3pl
+1sg tree want-prs.1sg
+today 2pl meat eat-prs.2pl
+yesterday 3pl meat eat-pst.3pl
+2pl tree want-prs.2pl
+1pl 2pl see-pst.1pl
+1sg tree see-pst.1sg
+yesterday 3pl water eat-pst.3pl
+3sg rock want-pst.3sg
+cat-pl food want-pst.3pl
+2sg meat eat-prs.2sg
+yesterday 3sg 1pl see-pst.3sg
+today 2pl food see-prs.2pl
+today 1sg fruit eat-prs.1sg
+3sg rock see-pst.3sg
+1sg dog see-prs.1sg
+3pl tree want-prs.3pl
+1sg dog see-prs.1sg
+yesterday 1pl fruit eat-pst.1pl
+dog-pl food want-pst.3pl
+3pl food eat-pst.3pl
+dog tree want-pst.3sg
+today 2sg dog see-prs.2sg
+3sg meat want-pst.3sg
+today 3sg meat eat-prs.3sg
+2pl water eat-pst.2pl
+2pl meat want-pst.2pl
+1sg fruit eat-prs.1sg
+today 2pl person see-prs.2pl
+3sg meat eat-pst.3sg
+cat tree want-pst.3sg
+1pl food eat-pst.1pl
+1pl person see-prs.1pl
+today 1sg cat see-prs.1sg
+cat tree want-prs.3sg
+today 3pl meat eat-prs.3pl
+2sg tree want-pst.2sg
+3pl water want-prs.3pl
+yesterday 2sg rock see-pst.2sg
+1sg rock see-pst.1sg
+2pl meat eat-pst.2pl
+today 1sg 3pl see-prs.1sg
+today 2pl person see-prs.2pl
+yesterday 1sg rock see-pst.1sg
+person tree want-prs.3sg
+yesterday 2pl cat see-pst.2pl
+cat rock want-pst.3sg
+person-pl rock want-pst.3pl
+yesterday 2pl fruit eat-pst.2pl
+2pl food eat-pst.2pl
+today 1sg meat eat-prs.1sg
+3pl food want-prs.3pl
+yesterday 2sg meat eat-pst.2sg
+cat-pl tree want-prs.3pl
+cat-pl meat want-pst.3pl
+dog-pl rock want-prs.3pl
+2sg meat want-pst.2sg
+2pl cat see-prs.2pl
+3pl water eat-pst.3pl
+1pl 1pl see-pst.1pl
+person rock want-pst.3sg
+person fruit want-prs.3sg
+today 2pl fruit eat-prs.2pl
+today 3sg fruit eat-prs.3sg
+1sg water eat-pst.1sg
+3sg tree want-pst.3sg
+cat tree want-pst.3sg
+person rock want-prs.3sg
+yesterday 3pl dog see-pst.3pl
+3sg fruit eat-prs.3sg
+today 1pl food eat-prs.1pl
+1sg tree want-pst.1sg
+1sg cat see-prs.1sg
+3pl food eat-pst.3pl
+yesterday 2pl food eat-pst.2pl
+2pl food eat-pst.2pl
+today 3sg 1sg see-prs.3sg
+yesterday 2pl rock see-pst.2pl
+today 3pl 3pl see-prs.3pl
+yesterday 2sg water eat-pst.2sg
+yesterday 2sg water eat-pst.2sg
+dog-pl rock want-pst.3pl
+yesterday 2sg water eat-pst.2sg
+3sg tree see-prs.3sg
+cat-pl rock want-prs.3pl
+yesterday 3sg cat see-pst.3sg
+1pl fruit want-prs.1pl
+today 1pl 2pl see-prs.1pl
+3sg fruit eat-prs.3sg
+yesterday 3pl water eat-pst.3pl
+yesterday 2pl fruit eat-pst.2pl
+cat tree want-prs.3sg
+1pl 1sg see-pst.1pl
+today 3sg water eat-prs.3sg
+today 2sg person see-prs.2sg
+today 3sg water eat-prs.3sg
+today 1pl dog see-prs.1pl
+2pl 1pl see-pst.2pl
+yesterday 3sg tree see-pst.3sg
+today 2pl rock see-prs.2pl
+today 3pl tree see-prs.3pl
+person water want-pst.3sg
+1pl food want-pst.1pl
+2pl water see-prs.2pl
+today 3pl food eat-prs.3pl
+today 1sg meat eat-prs.1sg
+dog-pl rock want-pst.3pl
+today 2pl 1pl see-prs.2pl
+2sg fruit see-prs.2sg
+cat tree want-prs.3sg
+yesterday 1sg rock see-pst.1sg
+yesterday 3sg fruit eat-pst.3sg
+yesterday 2sg fruit eat-pst.2sg
+2pl tree want-pst.2pl
+2pl food want-pst.2pl
+dog rock want-prs.3sg
+person water want-prs.3sg
+today 1sg food eat-prs.1sg
+cat-pl tree want-pst.3pl
+2pl rock want-prs.2pl
 3pl rock want-pst.3pl
+1pl person see-pst.1pl
+today 3sg cat see-prs.3sg
+1sg rock want-prs.1sg
+today 2pl tree see-prs.2pl
+yesterday 2pl water eat-pst.2pl
+cat-pl rock want-prs.3pl
+yesterday 2sg water eat-pst.2sg
+yesterday 2sg cat see-pst.2sg
+3sg rock see-prs.3sg
+3sg 3sg see-prs.3sg
+cat-pl food want-pst.3pl
+today 2sg fruit eat-prs.2sg
+today 3sg rock see-prs.3sg
+person food want-prs.3sg
+3pl rock want-prs.3pl
+yesterday 3pl meat eat-pst.3pl
+2pl 1pl see-pst.2pl
+yesterday 3sg fruit eat-pst.3sg
+2pl fruit eat-pst.2pl
+dog-pl rock want-prs.3pl
+today 3pl meat eat-prs.3pl
+2sg food eat-pst.2sg
+dog tree want-prs.3sg
+today 1sg water eat-prs.1sg
+dog-pl food want-prs.3pl
+3sg rock want-prs.3sg
+2sg tree want-prs.2sg
+yesterday 1sg fruit eat-pst.1sg
+dog-pl rock want-pst.3pl
+2sg meat eat-prs.2sg
+today 3sg dog see-prs.3sg
+2pl tree see-prs.2pl
+yesterday 1pl meat eat-pst.1pl
+yesterday 3sg food eat-pst.3sg
+yesterday 1pl rock see-pst.1pl
+yesterday 1pl food eat-pst.1pl
+3pl 2sg see-pst.3pl
+dog fruit want-prs.3sg
+yesterday 3sg food eat-pst.3sg
+yesterday 2sg water see-pst.2sg
+yesterday 3sg meat eat-pst.3sg
+today 2pl food eat-prs.2pl
+1sg food eat-pst.1sg
+2sg tree see-pst.2sg
+person food want-pst.3sg
+cat-pl water want-prs.3pl
+2pl rock see-pst.2pl
+today 3pl meat eat-prs.3pl
+1pl food eat-pst.1pl
+3sg tree want-prs.3sg
+yesterday 3pl rock see-pst.3pl
+today 3pl water eat-prs.3pl
+yesterday 2pl 1sg see-pst.2pl
+2sg tree want-pst.2sg
+today 1pl fruit eat-prs.1pl
+2pl meat eat-prs.2pl
+yesterday 2sg rock see-pst.2sg
+dog-pl tree want-pst.3pl
+today 1pl dog see-prs.1pl
+dog meat want-pst.3sg
+today 1sg water eat-prs.1sg
+cat fruit want-prs.3sg
+today 3sg fruit eat-prs.3sg
+1pl rock want-pst.1pl
+cat tree want-prs.3sg
+yesterday 1pl cat see-pst.1pl
+3sg rock want-prs.3sg
+today 1sg dog see-prs.1sg
+2pl rock want-pst.2pl
+cat-pl rock want-prs.3pl
+2sg food want-prs.2sg
+yesterday 1sg fruit eat-pst.1sg
+2pl rock want-prs.2pl
+today 2sg 1sg see-prs.2sg
+yesterday 1pl food see-pst.1pl
+2pl meat want-prs.2pl
+today 1sg dog see-prs.1sg
+yesterday 1pl tree see-pst.1pl
+dog tree want-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+yesterday 2pl water eat-pst.2pl
+2sg water eat-prs.2sg
+3sg meat want-prs.3sg
+3pl person see-pst.3pl
+yesterday 3pl water eat-pst.3pl
+cat-pl tree want-prs.3pl
+yesterday 3pl food eat-pst.3pl
+1pl food eat-prs.1pl
+cat fruit want-prs.3sg
+cat water want-prs.3sg
+today 2pl water eat-prs.2pl
+2pl food want-prs.2pl
+cat-pl rock want-pst.3pl
+yesterday 1pl food see-pst.1pl
+2sg food want-prs.2sg
+yesterday 3sg fruit eat-pst.3sg
+3pl rock want-pst.3pl
+1sg food eat-prs.1sg
+3sg person see-prs.3sg
+yesterday 3sg water eat-pst.3sg
+1sg person see-pst.1sg
+3pl food eat-prs.3pl
+cat-pl tree want-pst.3pl
+person rock want-prs.3sg
+yesterday 3sg meat eat-pst.3sg
+today 1sg dog see-prs.1sg
+yesterday 1pl food eat-pst.1pl
+today 3sg meat see-prs.3sg
+1sg tree want-pst.1sg
+today 3pl 3sg see-prs.3pl
+3sg rock want-prs.3sg
+3sg tree see-prs.3sg
+yesterday 2pl rock see-pst.2pl
+today 2pl person see-prs.2pl
+cat tree want-prs.3sg
+today 2pl fruit eat-prs.2pl
+2sg food eat-prs.2sg
+cat water want-prs.3sg
+today 3pl person see-prs.3pl
+dog food want-pst.3sg
+3sg meat want-pst.3sg
+yesterday 3sg 2sg see-pst.3sg
+today 3sg 1pl see-prs.3sg
+person tree want-pst.3sg
+3sg rock want-prs.3sg
+2pl rock want-pst.2pl
+cat-pl food want-pst.3pl
+2pl rock want-prs.2pl
+today 3pl fruit eat-prs.3pl
+today 2sg water eat-prs.2sg
+3pl rock want-prs.3pl
+dog-pl rock want-prs.3pl
+cat fruit want-pst.3sg
+2pl tree want-pst.2pl
+person rock want-pst.3sg
+person water want-prs.3sg
+person-pl tree want-pst.3pl
+2pl food see-pst.2pl
+today 3sg dog see-prs.3sg
+dog rock want-prs.3sg
+3pl meat eat-prs.3pl
+today 2pl person see-prs.2pl
+cat-pl meat want-pst.3pl
+cat food want-pst.3sg
+1pl dog see-prs.1pl
+3sg meat eat-pst.3sg
+today 1pl person see-prs.1pl
+3pl water eat-pst.3pl
+dog rock want-prs.3sg
+cat-pl food want-pst.3pl
+cat water want-prs.3sg
+2pl dog see-prs.2pl
+1sg food eat-pst.1sg
+1sg rock want-pst.1sg
+today 1pl fruit eat-prs.1pl
+1pl person see-prs.1pl
+dog tree want-prs.3sg
+dog-pl tree want-prs.3pl
+today 3sg fruit eat-prs.3sg
+cat-pl rock want-prs.3pl
+3pl meat see-prs.3pl
+yesterday 1pl water eat-pst.1pl
+yesterday 2sg 2pl see-pst.2sg
+2sg rock want-prs.2sg
+today 3sg cat see-prs.3sg
+3pl water eat-prs.3pl
+yesterday 2pl meat eat-pst.2pl
+yesterday 1pl tree see-pst.1pl
+dog-pl fruit want-pst.3pl
+yesterday 2sg fruit eat-pst.2sg
+cat-pl tree want-pst.3pl
+3sg tree want-pst.3sg
+dog-pl tree want-pst.3pl
+yesterday 2sg person see-pst.2sg
+yesterday 3sg person see-pst.3sg
+yesterday 1sg person see-pst.1sg
+yesterday 3pl water eat-pst.3pl
+1pl rock want-pst.1pl
+cat-pl meat want-pst.3pl
+cat rock want-prs.3sg
+cat rock want-pst.3sg
+dog tree want-prs.3sg
+yesterday 2pl meat eat-pst.2pl
+person-pl tree want-prs.3pl
+3pl rock see-pst.3pl
+cat-pl water want-prs.3pl
+2sg meat eat-prs.2sg
+person fruit want-pst.3sg
+today 2sg food see-prs.2sg
+person rock want-pst.3sg
+1pl rock want-pst.1pl
+yesterday 1pl rock see-pst.1pl
+yesterday 1pl 3pl see-pst.1pl
+2sg person see-prs.2sg
+today 1pl tree see-prs.1pl
+today 1sg dog see-prs.1sg
+2pl tree want-pst.2pl
+yesterday 2pl dog see-pst.2pl
+today 3pl water eat-prs.3pl
+yesterday 2pl cat see-pst.2pl
+yesterday 1sg person see-pst.1sg
+2pl fruit eat-prs.2pl
+cat-pl food want-prs.3pl
+yesterday 1pl fruit eat-pst.1pl
+person rock want-pst.3sg
+person-pl tree want-pst.3pl
+cat tree want-pst.3sg
+3pl meat eat-prs.3pl
+cat tree want-prs.3sg
+today 3sg meat eat-prs.3sg
+1sg meat eat-pst.1sg
+today 2pl rock see-prs.2pl
+1sg water want-prs.1sg
+1pl meat want-pst.1pl
+today 3sg rock see-prs.3sg
+1sg meat eat-pst.1sg
+1pl water eat-pst.1pl
+dog water want-prs.3sg
+today 1pl rock see-prs.1pl
+cat fruit want-prs.3sg
+person water want-prs.3sg
+yesterday 2pl 1sg see-pst.2pl
+yesterday 2sg food eat-pst.2sg
+3pl food eat-pst.3pl
+dog-pl tree want-prs.3pl
+person-pl tree want-prs.3pl
+2sg meat eat-pst.2sg
+1pl rock want-prs.1pl
+2pl food eat-pst.2pl
+today 3pl meat eat-prs.3pl
+person-pl rock want-prs.3pl
+today 3sg dog see-prs.3sg
+dog food want-prs.3sg
+cat rock want-prs.3sg
+today 3pl fruit eat-prs.3pl
+yesterday 2sg person see-pst.2sg
+2sg meat want-prs.2sg
+yesterday 1sg tree see-pst.1sg
+yesterday 2pl dog see-pst.2pl
+today 1pl food eat-prs.1pl
+today 3sg water see-prs.3sg
+today 2pl person see-prs.2pl
+cat rock want-prs.3sg
+1pl fruit eat-pst.1pl
+2sg dog see-prs.2sg
+today 1sg rock see-prs.1sg
+today 2sg person see-prs.2sg
+yesterday 1pl fruit eat-pst.1pl
+1pl rock want-prs.1pl
+2pl fruit want-prs.2pl
+today 1sg fruit eat-prs.1sg
+yesterday 2pl food eat-pst.2pl
+today 3sg 3pl see-prs.3sg
+person-pl rock want-pst.3pl
+cat tree want-pst.3sg
+today 1sg food eat-prs.1sg
+today 3sg water eat-prs.3sg
+cat-pl fruit want-prs.3pl
+yesterday 1pl dog see-pst.1pl
+cat-pl water want-prs.3pl
+3pl tree see-pst.3pl
+dog meat want-pst.3sg
+dog-pl rock want-prs.3pl
+2sg water eat-prs.2sg
+3pl fruit eat-pst.3pl
+today 3sg water eat-prs.3sg
+today 3sg water eat-prs.3sg
+3pl fruit eat-prs.3pl
+yesterday 2pl cat see-pst.2pl
+yesterday 2sg water see-pst.2sg
+dog-pl meat want-prs.3pl
+yesterday 2pl meat eat-pst.2pl
+2sg rock want-prs.2sg
+1pl tree want-prs.1pl
+2sg 2sg see-prs.2sg
+yesterday 1sg meat eat-pst.1sg
+today 3pl meat eat-prs.3pl
+3pl dog see-prs.3pl
+person rock want-pst.3sg
+person-pl tree want-pst.3pl
+yesterday 2pl food eat-pst.2pl
+2pl 3pl see-pst.2pl
+yesterday 3pl dog see-pst.3pl
+1pl food eat-prs.1pl
+person-pl rock want-pst.3pl
+3sg 3sg see-pst.3sg
+yesterday 3sg meat eat-pst.3sg
+today 3pl food eat-prs.3pl
+today 2sg meat see-prs.2sg
+today 3sg 1pl see-prs.3sg
+2pl meat eat-pst.2pl
+2pl rock see-pst.2pl
+2sg meat want-pst.2sg
+today 2sg food eat-prs.2sg
+cat-pl meat want-prs.3pl
+dog-pl tree want-pst.3pl
+1sg 3sg see-pst.1sg
+yesterday 2pl tree see-pst.2pl
+3pl meat want-prs.3pl
+today 2sg fruit eat-prs.2sg
+1sg meat eat-prs.1sg
+yesterday 1pl water eat-pst.1pl
+today 3sg water eat-prs.3sg
+1sg tree want-pst.1sg
+yesterday 2sg 2pl see-pst.2sg
+today 3sg tree see-prs.3sg
+cat food want-prs.3sg
+3pl 2sg see-pst.3pl
+cat rock want-prs.3sg
+2sg person see-prs.2sg
+person-pl water want-prs.3pl
+2sg water eat-pst.2sg
+dog rock want-pst.3sg
+person-pl food want-pst.3pl
+2pl tree see-prs.2pl
+1pl meat want-pst.1pl
+dog rock want-prs.3sg
+yesterday 1pl meat eat-pst.1pl
+2pl 3sg see-prs.2pl
+person-pl rock want-prs.3pl
+1sg food eat-prs.1sg
+today 3pl 1sg see-prs.3pl
+cat tree want-prs.3sg
+today 1sg water eat-prs.1sg
+today 3sg rock see-prs.3sg
+today 1pl cat see-prs.1pl
+today 3pl food see-prs.3pl
+dog-pl meat want-pst.3pl
+3sg rock see-prs.3sg
+yesterday 1sg meat eat-pst.1sg
+person tree want-prs.3sg
+yesterday 2sg water eat-pst.2sg
+person rock want-pst.3sg
+2sg food eat-pst.2sg
+yesterday 2sg tree see-pst.2sg
+cat-pl tree want-prs.3pl
+person food want-pst.3sg
+1sg tree want-prs.1sg
+1sg tree want-prs.1sg
+yesterday 1pl tree see-pst.1pl
+1sg meat eat-pst.1sg
+2pl water eat-pst.2pl
+yesterday 3sg water eat-pst.3sg
+person rock want-pst.3sg
+2pl food eat-prs.2pl
+today 2pl water eat-prs.2pl
+dog tree want-prs.3sg
+today 2sg meat eat-prs.2sg
+3sg rock want-prs.3sg
+today 1pl meat eat-prs.1pl
+today 2pl cat see-prs.2pl
+cat tree want-prs.3sg
+3sg food eat-prs.3sg
+yesterday 3pl cat see-pst.3pl
+2pl meat want-pst.2pl
+cat-pl tree want-prs.3pl
+person-pl rock want-pst.3pl
+yesterday 1sg water eat-pst.1sg
+yesterday 3pl meat eat-pst.3pl
+person fruit want-pst.3sg
+cat-pl tree want-pst.3pl
+1pl rock want-prs.1pl
+cat rock want-pst.3sg
+3sg food want-prs.3sg
+yesterday 3pl meat eat-pst.3pl
+3sg fruit want-prs.3sg
+yesterday 1sg 3sg see-pst.1sg
+dog-pl rock want-prs.3pl
+3sg water eat-pst.3sg
+1sg water see-prs.1sg
+3sg fruit want-pst.3sg
+yesterday 3sg food eat-pst.3sg
+3sg water eat-prs.3sg
+yesterday 2pl food eat-pst.2pl
+2sg fruit eat-pst.2sg
+dog-pl rock want-pst.3pl
+today 3pl 1pl see-prs.3pl
+today 1pl dog see-prs.1pl
+2pl food eat-prs.2pl
+3pl food eat-pst.3pl
+3pl fruit eat-prs.3pl
+today 2pl meat eat-prs.2pl
+cat-pl tree want-pst.3pl
+dog-pl fruit want-prs.3pl
+yesterday 2pl person see-pst.2pl
+1pl rock want-pst.1pl
+cat rock want-prs.3sg
+1sg fruit want-prs.1sg
+1sg food eat-prs.1sg
+dog meat want-prs.3sg
+2sg meat want-prs.2sg
+today 2pl rock see-prs.2pl
+yesterday 3sg water see-pst.3sg
+today 1pl meat eat-prs.1pl
+today 2sg tree see-prs.2sg
+yesterday 2sg meat eat-pst.2sg
+2pl tree want-prs.2pl
+2sg water see-pst.2sg
+person tree want-prs.3sg
+2sg meat want-pst.2sg
+cat-pl rock want-pst.3pl
+today 3pl fruit eat-prs.3pl
+2sg food want-prs.2sg
+cat tree want-pst.3sg
+dog tree want-prs.3sg
+3sg food want-pst.3sg
+3sg water eat-pst.3sg
+person-pl water want-pst.3pl
+yesterday 1sg cat see-pst.1sg
+yesterday 3pl water eat-pst.3pl
+dog meat want-pst.3sg
+1pl meat see-prs.1pl
+cat tree want-pst.3sg
+today 2pl person see-prs.2pl
+cat meat want-pst.3sg
+yesterday 3pl person see-pst.3pl
+today 2pl rock see-prs.2pl
+1pl water want-pst.1pl
+1pl tree want-pst.1pl
+1pl meat eat-prs.1pl
+3pl person see-prs.3pl
+yesterday 2pl fruit see-pst.2pl
+today 3sg dog see-prs.3sg
+cat tree want-prs.3sg
+dog fruit want-pst.3sg
+yesterday 3pl meat eat-pst.3pl
+yesterday 2sg water eat-pst.2sg
+person-pl rock want-prs.3pl
+cat meat want-prs.3sg
+today 1pl water eat-prs.1pl
+3pl 1sg see-pst.3pl
+cat tree want-prs.3sg
+3sg fruit eat-prs.3sg
+2pl tree see-pst.2pl
+1sg cat see-prs.1sg
+today 2sg 3sg see-prs.2sg
+3sg dog see-pst.3sg
+2pl rock see-pst.2pl
+person rock want-pst.3sg
+2sg dog see-prs.2sg
+person rock want-pst.3sg
+yesterday 2pl tree see-pst.2pl
+today 3sg meat eat-prs.3sg
+3sg fruit eat-pst.3sg
+yesterday 2pl meat eat-pst.2pl
+2pl rock want-prs.2pl
+today 3sg tree see-prs.3sg
+dog-pl meat want-prs.3pl
+yesterday 2sg fruit eat-pst.2sg
+2sg tree want-prs.2sg
+3sg tree want-pst.3sg
+1sg cat see-prs.1sg
+yesterday 3sg meat eat-pst.3sg
+yesterday 2sg meat eat-pst.2sg
+3sg food eat-pst.3sg
+person-pl rock want-prs.3pl
+dog food want-prs.3sg
+cat-pl tree want-prs.3pl
+yesterday 3pl dog see-pst.3pl
+3sg 2sg see-prs.3sg
+today 1pl water eat-prs.1pl
+today 1pl rock see-prs.1pl
+yesterday 2sg person see-pst.2sg
+cat tree want-pst.3sg
+today 3sg meat eat-prs.3sg
+yesterday 2sg cat see-pst.2sg
+3sg dog see-prs.3sg
+dog-pl tree want-prs.3pl
+2sg rock want-prs.2sg
+yesterday 3pl meat eat-pst.3pl
+today 2sg water eat-prs.2sg
+dog-pl rock want-prs.3pl
+today 3pl dog see-prs.3pl
+3pl tree want-prs.3pl
+2sg fruit see-pst.2sg
+yesterday 3pl food eat-pst.3pl
+3pl person see-prs.3pl
+2pl tree see-prs.2pl
+yesterday 2pl food eat-pst.2pl
+yesterday 1pl fruit eat-pst.1pl
+today 1pl person see-prs.1pl
+2sg fruit eat-prs.2sg
+yesterday 3sg water eat-pst.3sg
+1sg tree want-prs.1sg
+today 1pl 2pl see-prs.1pl
+1pl tree want-pst.1pl
+1sg fruit eat-pst.1sg
+3sg fruit see-prs.3sg
+2sg meat eat-pst.2sg
+cat meat want-pst.3sg
+3sg meat want-pst.3sg
+2pl dog see-prs.2pl
+today 2sg 1pl see-prs.2sg
+2pl food want-pst.2pl
+3sg person see-pst.3sg
+1pl 1pl see-prs.1pl
+1sg fruit see-prs.1sg
+3sg water eat-pst.3sg
+today 3pl fruit eat-prs.3pl
+yesterday 3sg meat eat-pst.3sg
+person-pl rock want-prs.3pl
+2pl water eat-pst.2pl
+yesterday 1sg food eat-pst.1sg
+1sg 3sg see-prs.1sg
+1pl 1pl see-pst.1pl
+today 2sg fruit eat-prs.2sg
+person water want-prs.3sg
+yesterday 1pl 2sg see-pst.1pl
+2pl fruit eat-prs.2pl
+today 1sg tree see-prs.1sg
+today 1pl 3sg see-prs.1pl
+today 2pl meat eat-prs.2pl
+yesterday 3pl food eat-pst.3pl
+1pl tree see-prs.1pl
+1sg rock want-prs.1sg
+2pl tree want-prs.2pl
+yesterday 2sg fruit eat-pst.2sg
+3sg food see-pst.3sg
+yesterday 1sg person see-pst.1sg
+yesterday 3pl food see-pst.3pl
+today 2sg 2pl see-prs.2sg
+person meat want-pst.3sg
+2pl rock want-prs.2pl
+yesterday 1pl meat eat-pst.1pl
+cat tree want-pst.3sg
+3sg food eat-prs.3sg
+yesterday 2pl tree see-pst.2pl
+3pl rock want-pst.3pl
+today 3pl food eat-prs.3pl
+cat tree want-pst.3sg
+1pl cat see-pst.1pl
+yesterday 1pl fruit eat-pst.1pl
+today 1pl water eat-prs.1pl
+cat tree want-pst.3sg
+1sg food want-prs.1sg
+today 1pl 1pl see-prs.1pl
+yesterday 1sg rock see-pst.1sg
+today 1sg fruit eat-prs.1sg
+yesterday 2pl rock see-pst.2pl
+person rock want-prs.3sg
+1sg dog see-pst.1sg
+1sg water eat-prs.1sg
+today 3pl cat see-prs.3pl
+person-pl water want-pst.3pl
+today 1sg person see-prs.1sg
+yesterday 3sg 3sg see-pst.3sg
+today 1pl 3pl see-prs.1pl
+today 1pl tree see-prs.1pl
+1sg tree want-pst.1sg
+1sg 1sg see-prs.1sg
+dog tree want-pst.3sg
+today 3sg meat eat-prs.3sg
+cat-pl rock want-pst.3pl
+yesterday 3pl water eat-pst.3pl
+1sg food eat-pst.1sg
+person-pl rock want-pst.3pl
+3pl rock want-pst.3pl
+1pl rock see-prs.1pl
+3sg tree want-prs.3sg
+2sg dog see-prs.2sg
+1pl tree want-prs.1pl
+dog tree want-pst.3sg
+3sg dog see-pst.3sg
+1sg rock want-pst.1sg
+1sg food eat-prs.1sg
+person-pl meat want-pst.3pl
+2sg water see-prs.2sg
+cat-pl tree want-pst.3pl
+yesterday 1sg meat eat-pst.1sg
+today 1sg fruit eat-prs.1sg
+yesterday 1pl fruit eat-pst.1pl
+person tree want-pst.3sg
+1pl 2sg see-prs.1pl
+today 1pl person see-prs.1pl
+today 2pl 3pl see-prs.2pl
+cat-pl tree want-pst.3pl
+3pl fruit see-prs.3pl
+person-pl rock want-pst.3pl
+person rock want-pst.3sg
+yesterday 3sg fruit eat-pst.3sg
+dog-pl rock want-pst.3pl
+2sg fruit eat-pst.2sg
+today 2sg meat eat-prs.2sg
+today 2sg 2pl see-prs.2sg
+yesterday 2pl rock see-pst.2pl
+yesterday 2sg food eat-pst.2sg
+3pl 1sg see-pst.3pl
+2pl dog see-pst.2pl
+today 1pl tree see-prs.1pl
+2sg fruit eat-pst.2sg
+today 1pl fruit eat-prs.1pl
+person-pl fruit want-pst.3pl
+yesterday 3sg meat eat-pst.3sg
+2sg tree want-prs.2sg
+today 1pl meat eat-prs.1pl
+yesterday 3pl water eat-pst.3pl
+person tree want-pst.3sg
+1sg water see-pst.1sg
+dog tree want-prs.3sg
+dog rock want-pst.3sg
+yesterday 1pl 3sg see-pst.1pl
+1sg water want-prs.1sg
+2sg dog see-pst.2sg
+today 2pl dog see-prs.2pl
+dog rock want-prs.3sg
+cat tree want-prs.3sg
+yesterday 1sg cat see-pst.1sg
+3pl food eat-pst.3pl
+today 2sg rock see-prs.2sg
+3pl rock see-pst.3pl
+2pl rock see-pst.2pl
+yesterday 2sg fruit eat-pst.2sg
+2pl rock want-prs.2pl
+today 1sg food eat-prs.1sg
+yesterday 2pl meat eat-pst.2pl
+person rock want-pst.3sg
+2pl rock see-pst.2pl
+today 1pl rock see-prs.1pl
+1pl rock want-prs.1pl
+cat-pl tree want-pst.3pl
+yesterday 1sg fruit eat-pst.1sg
+2pl rock want-pst.2pl
+yesterday 2sg water see-pst.2sg
+today 2pl meat eat-prs.2pl
+yesterday 2sg cat see-pst.2sg
+person fruit want-prs.3sg
+2sg rock want-pst.2sg
+today 3sg 3sg see-prs.3sg
+1sg 1pl see-prs.1sg
+today 1sg meat eat-prs.1sg
+yesterday 2pl person see-pst.2pl
+today 1pl food eat-prs.1pl
+yesterday 3sg rock see-pst.3sg
+yesterday 2pl water eat-pst.2pl
+today 3sg meat eat-prs.3sg
+today 2pl water eat-prs.2pl
+yesterday 3sg 1pl see-pst.3sg
+yesterday 2pl person see-pst.2pl
+person rock want-prs.3sg
+1sg water eat-pst.1sg
+3pl 2pl see-pst.3pl
+today 2pl 2pl see-prs.2pl
+3sg dog see-prs.3sg
+today 1sg fruit eat-prs.1sg
+2sg cat see-prs.2sg
+yesterday 2pl cat see-pst.2pl
+dog-pl rock want-prs.3pl
+today 1sg cat see-prs.1sg
+yesterday 3sg fruit see-pst.3sg
+yesterday 3sg water eat-pst.3sg
+yesterday 1pl dog see-pst.1pl
+today 3sg 3sg see-prs.3sg
+today 3pl rock see-prs.3pl
+dog meat want-prs.3sg
+dog rock want-prs.3sg
+yesterday 2sg rock see-pst.2sg
+3pl tree see-prs.3pl
+1pl tree want-prs.1pl
+3sg fruit eat-pst.3sg
+person-pl tree want-prs.3pl
+2pl cat see-prs.2pl
+2sg 3pl see-prs.2sg
+yesterday 1sg fruit eat-pst.1sg
+today 2pl rock see-prs.2pl
+yesterday 1pl 3pl see-pst.1pl
+3pl dog see-prs.3pl
+dog water want-pst.3sg
+2pl 1sg see-pst.2pl
+2pl food want-prs.2pl
+today 2pl food eat-prs.2pl
+1pl meat want-prs.1pl
+3sg food eat-pst.3sg
+1sg meat eat-pst.1sg
+yesterday 2sg food see-pst.2sg
+1pl food eat-pst.1pl
+today 1pl 1pl see-prs.1pl
+yesterday 1sg fruit eat-pst.1sg
+3sg person see-prs.3sg
+1pl food eat-prs.1pl
+2pl 1sg see-prs.2pl
+1sg meat want-prs.1sg
+today 3pl meat eat-prs.3pl
+yesterday 3sg rock see-pst.3sg
+today 2sg 2pl see-prs.2sg
+2sg water eat-pst.2sg
+2pl tree want-pst.2pl
+1sg meat eat-prs.1sg
+1pl meat eat-pst.1pl
+yesterday 3pl fruit eat-pst.3pl
+3sg fruit eat-pst.3sg
+yesterday 3pl dog see-pst.3pl
+today 3sg dog see-prs.3sg
+yesterday 2pl tree see-pst.2pl
+3sg rock see-pst.3sg
+today 2sg water eat-prs.2sg
+2sg food eat-pst.2sg
+3sg meat eat-pst.3sg
+1pl dog see-prs.1pl
+yesterday 1pl 1sg see-pst.1pl
+dog tree want-prs.3sg
+yesterday 2pl food eat-pst.2pl
+yesterday 1sg 2pl see-pst.1sg
+yesterday 3pl rock see-pst.3pl
+dog-pl tree want-prs.3pl
+cat fruit want-pst.3sg
+today 3pl water eat-prs.3pl
+2sg food want-pst.2sg
+yesterday 2sg person see-pst.2sg
+today 3pl fruit eat-prs.3pl
+1pl tree want-pst.1pl
+today 2pl meat eat-prs.2pl
+dog tree want-pst.3sg
+today 3pl cat see-prs.3pl
+2pl water want-pst.2pl
+person-pl meat want-prs.3pl
+yesterday 1sg food eat-pst.1sg
+cat-pl rock want-prs.3pl
+yesterday 2sg meat eat-pst.2sg
+yesterday 3pl food eat-pst.3pl
+3sg rock want-pst.3sg
+2sg food want-prs.2sg
+today 1pl water eat-prs.1pl
+yesterday 3pl rock see-pst.3pl
+dog-pl fruit want-pst.3pl
+today 1sg meat eat-prs.1sg
+cat rock want-prs.3sg
+yesterday 2pl fruit eat-pst.2pl
+dog-pl rock want-prs.3pl
+dog rock want-pst.3sg
+3sg dog see-prs.3sg
+yesterday 1pl food eat-pst.1pl
+yesterday 3pl tree see-pst.3pl
+2sg tree see-pst.2sg
+yesterday 2sg tree see-pst.2sg
+yesterday 2sg water eat-pst.2sg
+dog-pl rock want-prs.3pl
+2sg rock see-pst.2sg
+today 1sg 1sg see-prs.1sg
+yesterday 3sg 1sg see-pst.3sg
+dog tree want-prs.3sg
+dog-pl tree want-pst.3pl
+cat meat want-pst.3sg
+today 2sg meat eat-prs.2sg
+3sg 2pl see-pst.3sg
+today 1sg meat eat-prs.1sg
+1pl meat eat-pst.1pl
+yesterday 1pl dog see-pst.1pl
+yesterday 2pl meat eat-pst.2pl
+3pl food eat-prs.3pl
+1pl fruit eat-prs.1pl
+yesterday 2sg tree see-pst.2sg
+cat-pl tree want-pst.3pl
+yesterday 1sg water eat-pst.1sg
+1pl tree want-prs.1pl
+person rock want-prs.3sg
+2pl tree want-prs.2pl
+2sg meat want-pst.2sg
+person water want-pst.3sg
+2sg meat eat-pst.2sg
+today 2sg meat eat-prs.2sg
+yesterday 1sg meat eat-pst.1sg
+2sg food eat-prs.2sg
+yesterday 2pl 1sg see-pst.2pl
+today 3sg meat eat-prs.3sg
+yesterday 1sg 3sg see-pst.1sg
+today 2pl food eat-prs.2pl
+yesterday 1sg food eat-pst.1sg
+3sg 1pl see-prs.3sg
+today 3pl food eat-prs.3pl
+yesterday 1sg cat see-pst.1sg
+person rock want-prs.3sg
+today 2sg cat see-prs.2sg
+1sg food eat-prs.1sg
+cat-pl meat want-pst.3pl
+yesterday 3sg water eat-pst.3sg
+cat water want-pst.3sg
+today 2sg meat eat-prs.2sg
+3sg meat want-pst.3sg
+cat-pl rock want-pst.3pl
+person tree want-prs.3sg
+yesterday 1pl meat eat-pst.1pl
+2pl 1pl see-pst.2pl
+2pl water eat-pst.2pl
+dog fruit want-prs.3sg
+today 1sg 3pl see-prs.1sg
+yesterday 2sg meat eat-pst.2sg
+person tree want-prs.3sg
+yesterday 1pl meat eat-pst.1pl
+yesterday 3pl food eat-pst.3pl
+yesterday 1pl water eat-pst.1pl
+yesterday 2pl water eat-pst.2pl
+dog fruit want-pst.3sg
+cat rock want-prs.3sg
+today 1pl cat see-prs.1pl
+yesterday 2sg meat eat-pst.2sg
+person fruit want-pst.3sg
+2sg meat eat-prs.2sg
+1pl 3pl see-prs.1pl
+today 1pl fruit eat-prs.1pl
+1sg 2pl see-prs.1sg
+today 1sg rock see-prs.1sg
+yesterday 1pl cat see-pst.1pl
+1sg meat eat-pst.1sg
+today 3pl 3sg see-prs.3pl
+cat-pl tree want-prs.3pl
+dog-pl water want-prs.3pl
+yesterday 2pl dog see-pst.2pl
+2pl water want-pst.2pl
+person-pl food want-pst.3pl
+1sg 2pl see-pst.1sg
+3sg food eat-pst.3sg
+1pl tree want-prs.1pl
+dog tree want-pst.3sg
+today 2sg food eat-prs.2sg
+today 2pl food eat-prs.2pl
+yesterday 3pl 3pl see-pst.3pl
+today 1sg tree see-prs.1sg
+dog tree want-pst.3sg
+cat food want-pst.3sg
+yesterday 3sg food eat-pst.3sg
+cat-pl rock want-pst.3pl
+cat tree want-prs.3sg
+3pl tree want-prs.3pl
+2pl water eat-prs.2pl
+dog-pl rock want-prs.3pl
+yesterday 2sg tree see-pst.2sg
+dog rock want-prs.3sg
+cat rock want-prs.3sg
+2pl meat eat-prs.2pl
+3sg 3pl see-pst.3sg
+yesterday 1sg water eat-pst.1sg
+1pl water want-pst.1pl
+yesterday 1pl 1pl see-pst.1pl
+2pl food eat-prs.2pl
+3sg fruit eat-prs.3sg
+cat tree want-prs.3sg
+yesterday 1pl 3pl see-pst.1pl
+yesterday 3sg rock see-pst.3sg
+today 3sg food eat-prs.3sg
+today 1pl meat eat-prs.1pl
+dog-pl meat want-pst.3pl
+today 2sg meat eat-prs.2sg
+today 2pl food eat-prs.2pl
+2sg rock see-prs.2sg
+1sg food eat-prs.1sg
+yesterday 1sg meat eat-pst.1sg
+2sg fruit eat-prs.2sg
+today 3sg rock see-prs.3sg
+today 1pl 2pl see-prs.1pl
+1sg tree see-pst.1sg
+today 1pl rock see-prs.1pl
+1pl tree want-pst.1pl
+today 3pl water eat-prs.3pl
+2sg meat eat-prs.2sg
+cat-pl water want-pst.3pl
+yesterday 1pl fruit see-pst.1pl
+yesterday 3sg person see-pst.3sg
+cat-pl meat want-prs.3pl
+person tree want-prs.3sg
+yesterday 2sg water eat-pst.2sg
+yesterday 1sg 3sg see-pst.1sg
+dog-pl tree want-pst.3pl
+person tree want-pst.3sg
+today 1pl water eat-prs.1pl
+yesterday 1sg tree see-pst.1sg
+yesterday 1pl fruit see-pst.1pl
+today 3sg water eat-prs.3sg
+today 1pl food eat-prs.1pl
+yesterday 3pl person see-pst.3pl
+today 1sg 3sg see-prs.1sg
+yesterday 3pl meat eat-pst.3pl
+yesterday 1sg rock see-pst.1sg
+3sg person see-pst.3sg
+today 3sg food eat-prs.3sg
+1sg person see-prs.1sg
+yesterday 3pl rock see-pst.3pl
+1sg 2pl see-pst.1sg
+1sg fruit eat-prs.1sg
+3sg dog see-prs.3sg
+today 3pl water eat-prs.3pl
+yesterday 2pl person see-pst.2pl
+cat-pl food want-prs.3pl
+2pl rock want-prs.2pl
+1sg meat see-prs.1sg
+1sg rock want-prs.1sg
+3sg meat eat-prs.3sg
+yesterday 3pl person see-pst.3pl
+2sg fruit eat-pst.2sg
+yesterday 3sg cat see-pst.3sg
+today 1sg water eat-prs.1sg
+1sg food eat-prs.1sg
+today 1pl food see-prs.1pl
+person-pl rock want-pst.3pl
+today 3sg fruit eat-prs.3sg
+person rock want-pst.3sg
+person rock want-prs.3sg
+1pl cat see-pst.1pl
+yesterday 2sg water see-pst.2sg
+today 2sg meat eat-prs.2sg
+3pl dog see-pst.3pl
+today 1sg rock see-prs.1sg
+3sg dog see-prs.3sg
+person tree want-pst.3sg
+yesterday 1pl water eat-pst.1pl
+1sg meat want-prs.1sg
+yesterday 3sg fruit eat-pst.3sg
+yesterday 2pl fruit eat-pst.2pl
+3sg water eat-pst.3sg
+yesterday 1pl dog see-pst.1pl
+cat tree want-prs.3sg
+person water want-prs.3sg
+2sg food see-pst.2sg
+1pl water see-pst.1pl
+dog rock want-pst.3sg
+yesterday 1pl person see-pst.1pl
+cat-pl rock want-prs.3pl
+today 2sg rock see-prs.2sg
+person tree want-pst.3sg
+yesterday 2pl dog see-pst.2pl
+today 3sg food see-prs.3sg
+2sg 1sg see-pst.2sg
+today 1sg fruit eat-prs.1sg
+person-pl fruit want-prs.3pl
+dog fruit want-prs.3sg
+1pl food eat-prs.1pl
+cat-pl tree want-pst.3pl
+yesterday 3sg 1pl see-pst.3sg
+1pl cat see-prs.1pl
+2sg 3pl see-pst.2sg
+dog-pl tree want-pst.3pl
+dog-pl fruit want-prs.3pl
+today 1pl dog see-prs.1pl
+today 2pl water eat-prs.2pl
+3sg meat eat-pst.3sg
+2sg 2sg see-pst.2sg
+yesterday 2pl cat see-pst.2pl
+yesterday 2sg 3sg see-pst.2sg
+yesterday 3sg 1pl see-pst.3sg
+yesterday 2sg 2sg see-pst.2sg
+1pl meat want-pst.1pl
+today 1sg food eat-prs.1sg
+yesterday 1sg 2pl see-pst.1sg
+1sg rock want-prs.1sg
+3sg meat want-prs.3sg
+yesterday 3pl tree see-pst.3pl
+dog-pl rock want-pst.3pl
+today 3sg rock see-prs.3sg
+3sg water eat-pst.3sg

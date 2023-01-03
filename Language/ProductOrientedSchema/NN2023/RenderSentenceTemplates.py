@@ -65,7 +65,13 @@ def translate_gloss(s, d):
 
 
 def translate_words(words, d):
-    w2 = [d[w] for w in words]
+    # if the morpheme gloss has a dot (.), it needs to be in the dict
+    # but if it has a dash, we can ignore the dash and concat the strings
+    w2 = []
+    for gloss in words:
+        morphemes = gloss.split("-")
+        w = "".join(d[m] for m in morphemes)
+        w2.append(w)
     return w2
 
 
@@ -110,4 +116,4 @@ if __name__ == "__main__":
     templates = get_sentence_template_strings()
     translations = get_translation_dict()
     # write_sample_files_all_possibilities(templates, translations)
-    write_sample_files_random(templates, translations, n_samples=500)
+    write_sample_files_random(templates, translations, n_samples=5000)

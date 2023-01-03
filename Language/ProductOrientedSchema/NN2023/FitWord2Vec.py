@@ -5,6 +5,7 @@ import random
 import re
 import itertools
 import numpy as np
+from sklearn.neighbors import NearestNeighbors
 
 import RenderSentenceTemplates as rst
 
@@ -62,12 +63,7 @@ def get_text_tokenized(fp):
     return text_tokens
 
 
-def convert_words_to_semantic_nn_input(words, text_tokens, sg=True):
-    # fit a new Word2Vec model on the given text, then make an array of the words' vectors
-    if sg:
-        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=100, window=5, sg=1)
-    else:
-        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=100, window=5)
+def convert_words_to_semantic_nn_input(words, model):
     n_words = len(words)
     n_cols = model.vector_size
     arr = np.zeros((n_words, n_cols))
@@ -77,14 +73,51 @@ def convert_words_to_semantic_nn_input(words, text_tokens, sg=True):
     return arr
 
 
+def get_eng_model(sg=True):
+    text_tokens = get_eng_text_tokenized()
+    if sg:
+        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=100, window=5, sg=1)
+    else:
+        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=100, window=5)
+    return model
+
+
+def get_all_words_from_model(model):
+    return sorted(word for word in model.wv.index_to_key)
+
+
+def get_words_and_vector_array_in_order_from_model(model):
+    words = get_all_words_from_model(model)
+    vecs = [model.wv[w] for w in words]
+    arr = np.array(vecs)
+    return words, arr
+
+
+def get_nearest_neighbors(test_words, test_vecs, model):
+    # trying to interpret a novel vector that is output by a neural net
+    # what are the nearby meanings in the semantic space, and how far away are they?
+    k = 5
+    words, all_vecs = get_words_and_vector_array_in_order_from_model(model)
+    nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree').fit(all_vecs)
+    distances, indices = nbrs.kneighbors(test_vecs)
+    d = {}
+    for i in range(len(test_words)):
+        w = test_words[i]
+        these_distances = distances[i]
+        these_indices = indices[i]
+        neighbor_words = [words[i] for i in these_indices]
+        d[w] = dict(zip(neighbor_words, these_distances))
+    return d
+
+
 
 if __name__ == "__main__":
     # TODO why are the words all so similar with larger corpus?
     # - need to understand what Word2Vec is doing here
 
     eng_to_lang = rst.get_translation_dict()
-    eng_text_tokens = get_text_tokenized(eng_sample_fp)
-    lang_text_tokens = get_text_tokenized(lang_sample_fp)
+    eng_text_tokens = get_eng_text_tokenized()
+    lang_text_tokens = get_lang_text_tokenized()
 
     words = get_all_words_from_text_tokens(eng_text_tokens)
     lang_words = get_all_words_from_text_tokens(lang_text_tokens)
