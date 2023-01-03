@@ -14,7 +14,7 @@ from UnitSpherePoint import UnitSpherePoint
 import MapCoordinateMath as mcm
 from GreatCircleDistanceMatrix import GreatCircleDistanceMatrix
 from BiDict import BiDict
-import LoadMapData
+import LoadMapData as lmd
 import PlottingUtil as pu
 import FindPointsInCircle as find
 from XyzLookupAncestryGraph import XyzLookupAncestryGraph
@@ -196,12 +196,12 @@ def interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolut
     change_point_lns = interpolated_el_cond_lns[change_point_mask]
     # print("change_points:", change_points)
     if len(change_point_lns) == 0:
-        print("no points were changed by interpolation")
+        print("no points were changed by interpolation (thus not writing db to file)")
     else:
         print(f"{len(change_point_lns)} points have had their elevation condition inferred by interpolation")
         el_conds_at_change_points = interpolated_el_conds[change_point_mask]
         # print("el_conds_at_change_points:\n", el_conds_at_change_points)
-        els_at_change_points = LoadMapData.translate_array_by_dict(el_conds_at_change_points, elevation_condition_to_default_value)
+        els_at_change_points = lmd.translate_array_by_dict(el_conds_at_change_points, elevation_condition_to_default_value)
         # print("els_at_change_points:\n", els_at_change_points)
 
         # debug
@@ -310,7 +310,6 @@ def run_region_generation(db, planet_radius_km, xyzg):
     print(f"\nmissing_df.dtypes:\n{missing_df.dtypes}\n")
     concat_df = pd.concat([df, missing_df]).sort_index()
     db.df = concat_df
-    db.validate()  # debug
     db.write_hdf()
 
     # use this to check if the point locations look right
@@ -326,21 +325,18 @@ def run_region_generation(db, planet_radius_km, xyzg):
 
     # edit the region and then plot again
 
-    condition_shorthand_dict = LoadMapData.get_condition_shorthand_dict(world_name="Cada II", map_variable="elevation")
-    elevation_condition_to_default_value = LoadMapData.get_default_values_of_conditions(world_name="Cada II", map_variable="elevation")
-    elevation_condition_to_min_value = {sh: condition_shorthand_dict[sh]["min"] for sh in condition_shorthand_dict}
-    elevation_condition_to_max_value = {sh: condition_shorthand_dict[sh]["max"] for sh in condition_shorthand_dict}
+    condition_shorthand_dict = lmd.get_condition_shorthand_dict(world_name="Cada II", map_variable="elevation")
+    el_cond_to_default_value = lmd.get_default_values_of_conditions(world_name="Cada II", map_variable="elevation")
+    el_cond_to_min_value = {sh: condition_shorthand_dict[sh]["min"] for sh in condition_shorthand_dict}
+    el_cond_to_max_value = {sh: condition_shorthand_dict[sh]["max"] for sh in condition_shorthand_dict}
 
     if interpolate_condition_variables:
         try:
-            lns_to_edit = interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolution, planet_radius_km, elevation_condition_to_default_value, xyzg)
+            lns_to_edit = interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolution, planet_radius_km, el_cond_to_default_value, xyzg)
         except InterpolationError:
             print("interpolation failed; stopping this region generation")
             # this way it doesn't stop the program completely, since this is a rare occurrence and we can just ignore it and try again with a different region
             return
-        # redo the point file so we have accurate point list after adding pcs_in_region_at_resolution
-        # (but we're just going to remake it anyway so who cares about keeping it)
-        # icdb.make_point_code_file_for_region(db, region_center_pc, region_radius_gc, pcs_to_consider=points_to_edit, use_narrowing=False, overwrite=True)
     else:
         lns_to_edit = list(lns_in_region_at_resolution)
     
@@ -353,9 +349,26 @@ def run_region_generation(db, planet_radius_km, xyzg):
     matrix = GreatCircleDistanceMatrix(xyz_array, radius=1)
     print("-- done getting xyzs and distance matrix")
     
-    elevation_conditions = db.get_dict(lns_to_edit, "elevation_condition")
-    changes = {ln: 0 for ln in lns_to_edit}
+    el_cond_by_ln = db.get_series(lns_to_edit, "elevation_condition")
+    el_by_ln = db.get_series(lns_to_edit, "elevation")
+    min_el_by_ln = lmd.translate_array_by_dict(el_cond_by_ln, el_cond_to_min_value)
+    max_el_by_ln = lmd.translate_array_by_dict(el_cond_by_ln, el_cond_to_max_value)
+    rises = max_el_by_ln - el_by_ln
+    falls = min_el_by_ln - el_by_ln
+    assert (rises[~pd.isna(rises)] >= 0).all(), "some points currently are above their maximum elevation"
+    assert (falls[~pd.isna(falls)] <= 0).all(), "some points currently are below their minimum elevation"
 
+    el_df = pd.DataFrame(index=lns_to_edit, columns=["el_cond", "min_el", "el", "max_el"])
+    el_df["el_cond"] = el_cond_by_ln
+    el_df["min_el"] = min_el_by_ln
+    el_df["el"] = el_by_ln
+    el_df["max_el"] = max_el_by_ln
+    el_df["min_d_el"] = falls
+    el_df["max_d_el"] = rises
+    print("working with these elevation conditions:")
+    print(el_df)
+
+    changes = pd.Series({ln: 0 for ln in lns_to_edit})  # keep track of what we changed in this region
     n_passed = 0
     n_failed = 0
     for c_i in range(n_circles):
@@ -367,80 +380,49 @@ def run_region_generation(db, planet_radius_km, xyzg):
         xyz_center = np.array(xyz_dict[ln_center])
         p_xyzs_in_circle = matrix.get_points_within_distance_of_point(xyz_center, circle_radius_gc)
         lns_in_circle = [xyz_dict[p_xyz] for p_xyz in p_xyzs_in_circle.keys()]
-        # print(f"this circle contains {len(pcs_in_circle)} points")
 
         d_el = int(round(np.random.normal(0, el_stdev)))
-        old_els = db.get_dict(lns_in_circle, "elevation")
-        # print("old_els:", old_els)
-        # print(f"values in old elevations: {sorted(set(old_els.values()))}")  # debugging when it is overwriting existing data with default elevations
 
         # keep track of how much each point can move up or down from where it is right now, 
         # and adjust d_el toward 0 (but keep its direction) 
         # so that the conditions are all still met 
         # (unless that change becomes zero in which case just start over)
         # just look at absolute value of changes that are in the same direction as d_el
+        old_els_this_circle = el_df.loc[lns_in_circle, "el"]
+        # Series.min()/max() won't be NaN unless the whole thing is NaN
+        min_d_el_this_circle = el_df.loc[lns_in_circle, "min_d_el"].max()
+        max_d_el_this_circle = el_df.loc[lns_in_circle, "max_d_el"].min()
+        
         is_rise = d_el >= 0
-        d_el = abs(d_el)
-        for pc in lns_in_circle:
-            el = old_els[pc]
-            # print(f"point {pn} has old_el {el}")
-            el_cond = elevation_conditions[pc]
-            if is_rise:
-                # check if we would go over the max
-                max_val = elevation_condition_to_max_value.get(el_cond)
-                if max_val is not None:
-                    assert max_val >= el, f"invalid elevation found: {el} exceeds max value of {max_val} at point {pc}"
-                    assert type(max_val) is int, el_cond
-                    move_size = abs(max_val - el)
-                    d_el = min(d_el, move_size)
-            else:
-                min_val = elevation_condition_to_min_value.get(el_cond)
-                if min_val is not None:
-                    assert el >= min_val, f"invalid elevation found: {el} is below min value of {min_val} at point {pc}"
-                    assert type(min_val) is int, el_cond
-                    move_size = abs(min_val - el)
-                    d_el = min(d_el, move_size)
-            if d_el == 0:
-                # print("d_el reached zero, skipping")
-                break
-        if d_el == 0:
+        if is_rise:
+            d_el = min(d_el, max_d_el_this_circle)
+        else:
+            d_el = max(d_el, min_d_el_this_circle)
+        
+        if abs(d_el) < 1:
+            # d_el reached zero, conditions failed on this circle
             n_failed += 1
             continue
         else:
             n_passed += 1
 
-        if not is_rise:
-            # convert it back to a fall after minimizing the abs
-            d_el = -1 * d_el
         assert d_el % 1 == 0, f"{d_el} of type {type(d_el)}"
-
-        new_els = {pc: old_els[pc] + d_el for pc in lns_in_circle}
+        new_els = old_els_this_circle + d_el
         # check new_els still meet elevation conditions
-        all_meet_conditions = True
-        for pc in lns_in_circle:
-            el_cond = elevation_conditions[pc]
-            max_val = elevation_condition_to_max_value.get(el_cond)
-            min_val = elevation_condition_to_min_value.get(el_cond)
-            new_val = new_els[pc]
-            meets_condition = True
-            if min_val is not None:
-                meets_condition = meets_condition and min_val <= new_val
-            if max_val is not None:
-                meets_condition = meets_condition and new_val <= max_val
-            if not meets_condition:
-                all_meet_conditions = False
-                break
-            # can be smarter about how we choose d_el based on the most any point here can move up/down
-        if all_meet_conditions:
-            # print("conditions passed, adding to db")
-            db.add_value(lns_in_circle, "elevation", d_el)
-            for ln in lns_in_circle:
-                changes[ln] += d_el
-            # print(f"added {d_el}")
-            # print("new values:", db[pcs_in_circle, "elevation"])
-        else:
-            print("conditions failed, making new circle")
-            raise Exception("this shouldn't happen anymore")
+        min_els_this_circle = el_df.loc[lns_in_circle, "min_el"]
+        max_els_this_circle = el_df.loc[lns_in_circle, "max_el"]
+        has_min_mask = ~pd.isna(min_els_this_circle)
+        has_max_mask = ~pd.isna(max_els_this_circle)
+        falls_this_circle = min_els_this_circle[has_min_mask] - new_els[has_min_mask]
+        rises_this_circle = max_els_this_circle[has_max_mask] - new_els[has_max_mask]
+        assert (falls_this_circle <= 0).all(), "some minimum elevation is now violated"
+        assert (rises_this_circle >= 0).all(), "some maximum elevation is now violated"
+
+        # print("conditions passed, adding to db")
+        db.add_value(lns_in_circle, "elevation", d_el)
+        changes[lns_in_circle] += d_el
+        # print(f"added {d_el}")
+        # print("new values:", db[pcs_in_circle, "elevation"])
 
     assert n_passed + n_failed == n_circles
     print(f"condition pass rate overall = {n_passed / n_circles}")

@@ -117,10 +117,16 @@ class IcosahedronPointDatabase:
     def validate(self):
         self.verify_df_dtypes()
         self.check_no_duplicates_in_index()
+        self.check_no_na()
     
     def check_no_duplicates_in_index(self):
         assert self.df.index.has_duplicates is False
         # don't do `not object.attr` because that will be falsy if the attribute is absent
+    
+    def check_no_na(self):
+        assert not pd.isna(self.df.index).any()
+        for col in self.df.columns:
+            assert not pd.isna(self.df[col]).any(), f"NA value in column {col}"
 
     def get_variables(self):
         return sorted(self.df.columns)

@@ -231,11 +231,17 @@ def create_cada_ii_default_value_dict(map_variable):
 
 def translate_array_by_dict(arr, d, default_value=None):
     # look up each element in the dict and put its value in the corresponding place in new array
-    contains = np.vectorize(d.__contains__)(arr)
-    bad_colors = np.unique(arr[~contains])
-    if len(bad_colors) > 0:
-        print(f"unrecognized colors defaulting to {default_value}:", ", ".join(str(x) for x in bad_colors))
-    return np.vectorize(lambda x: d.get(x, default_value))(arr)
+    if type(arr) is pd.Series:
+        arr = arr.map(d)
+        if default_value is not None:
+            arr = arr.fillna(default_value)
+        return arr
+    else:
+        contains = np.vectorize(d.__contains__)(arr)
+        bad_colors = np.unique(arr[~contains])
+        if len(bad_colors) > 0:
+            print(f"unrecognized colors defaulting to {default_value}:", ", ".join(str(x) for x in bad_colors))
+        return np.vectorize(lambda x: d.get(x, default_value))(arr)
 
 
 def rgb_to_int(arr):

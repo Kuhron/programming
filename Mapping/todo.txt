@@ -7,6 +7,8 @@ TODO:
 
 - play with other noise math on the icosahedron
 
+- maybe write data as csv (pd.read_csv and df.to_csv) (still enforcing dtypes when it's loaded and written) if this takes less disk space
+
 - load conditions from images directly whenever database is loaded, so I can change them and it will automatically know about them when I restart the program
 -- we will still need to keep conditions in the dataframe for the points where they've been interpolated (although could experiment with removing those at some point and only having the conditions true for the actual control points)
 --- but should basically overwrite the control point conditions on every db load by reading the images
