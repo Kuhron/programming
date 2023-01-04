@@ -1,10 +1,12 @@
 {subject_pronoun} {food_item} eat-{tense}.{subject_pronoun}
 yesterday {subject_pronoun} {food_item} eat-pst.{subject_pronoun}
 today {subject_pronoun} {food_item} eat-prs.{subject_pronoun}
+tomorrow {subject_pronoun} {food_item} eat-fut.{subject_pronoun}
 
 {subject_pronoun} {thing} see-{tense}.{subject_pronoun}
 yesterday {subject_pronoun} {thing} see-pst.{subject_pronoun}
 today {subject_pronoun} {thing} see-prs.{subject_pronoun}
+tomorrow {subject_pronoun} {thing} see-fut.{subject_pronoun}
 
 {subject_pronoun} {inanimate} want-{tense}.{subject_pronoun}
 {animate} {inanimate} want-{tense}.3sg
@@ -69,8 +71,9 @@ cat food neg-prs.3sg
 
 yesterday 1sg forest-allative walk-pst.1sg and big lake-locative many fish see-pst.1sg
 2sg 1sg like.verb-prs.2sg q
-1sg fish food-essive like-neg-prs.1sg
-2sg fish food-essive like-prs.2sg q
+1sg {animal} food-essive like-prs.1sg
+1sg {animal} food-essive like-neg-prs.1sg
+2sg {animal} food-essive like-prs.2sg q
 1pl-genitive house-locative {pet_animal} exist
 1pl-genitive house-locative {non_pet_animal} exist
 person talk-prs.3sg
@@ -97,6 +100,135 @@ person animal neg-prs.3sg
 1sg lake-allative rock throw-pst.1sg
 rock throw-ser prohibitive
 2sg rock throw-pst.2sg q
-2sg 1sg-allative talk-ser imperative
-1sg 1sg-genitive {thing} very many like-prs.1sg
+1sg-allative talk-ser imperative
+{subject_pronoun} {subject_pronoun}-genitive {thing} very many like-prs.{subject_pronoun}
 1sg 2sg very many like-prs.1sg
+3sg 1sg like-neg-prs.3sg
+octopus-pl fish eat-nmzr like-prs.3pl
+bear-pl fish eat-nmzr like-prs.3pl
+dog-pl fish eat-nmzr many like-neg-prs.3pl
+bird-pl air-locative fly.verb-prs.3pl
+mountain-locative air very cold
+desert-locative air very hot
+desert-locative very many sun exist
+sky-locative cloud exist
+today many cloud 1pl-locative exist
+today 1sg-genitive city-locative many cloud exist
+desert-locative many cloud not.exist
+cloud exist time-locative rain come-prs.3sg
+air very hot time-locative many rain come-neg-prs.3sg
+desert-locative many rain come-neg-prs.3sg
+forest-locative many rain come-prs.3sg
+{subject_pronoun} {color} house-locative stay-prs.{subject_pronoun}
+tree very green
+water very blue
+sky very blue
+{subject_pronoun}-genitive {pet_animal} very {color}
+{subject_pronoun}-genitive {pet_animal}-genitive hair very {length}
+{demonstrative} {horizontal_thing} very {length}
+{demonstrative} {vertical_thing} very {height}
+{subject_pronoun} {demonstrative} {thing} see-{tense}.{subject_pronoun}
+blood very red
+{subject_pronoun} food taste-prs.{subject_pronoun}
+{food_item}-genitive taste-nmzr very {taste}
+{subject_pronoun} {food_item}-genitive taste-nmzr very {taste} cpzr {mental_verb}-prs.{subject_pronoun}
+{subject_pronoun} {thing} very {value_judgment} {mental_verb}-prs.{subject_pronoun}
+bear-pl very dangerous
+fish-pl very dangerous neg-prs.3pl
+alligator-pl very dangerous
+bear-pl person-pl kill-prs.3pl
+alligator-pl person-pl kill-prs.3pl
+one bear {subject_pronoun}-genitive {family_member} kill-pst.3sg
+one alligator {subject_pronoun}-genitive {family_member} kill-pst.3sg
+{subject_pronoun}-genitive {family_member} many animal kill-prs.3sg
+{demonstrative} house-locative {quantifier} person exist
+{person}-genitive {quantifier} {pet_animal} exist
+{person}-genitive {pet_animal} not.exist
+{demonstrative} {place}-locative {quantifier} {thing} exist
+{subject_pronoun}-genitive {family_member} {food_item} like-prs.3sg
+{subject_pronoun}-genitive {family_member} {food_item} like-neg-prs.3sg
+bird-pl {fruit} eat-prs.3pl
+yesterday {subject_pronoun} {quantifier} {fruit} eat-pst.{subject_pronoun}
+today {subject_pronoun} {quantifier} {fruit} eat-prs.{subject_pronoun}
+tomorrow {subject_pronoun} {quantifier} {fruit} eat-fut.{subject_pronoun}
+swamp-locative many alligator exist
+alligator-pl swamp-locative stay-prs.3pl
+{subject_pronoun} {fruit} cut-{tense}.{subject_pronoun}
+{person} {food_item} eat-{tense}.3sg
+{person}-pl {food_item} eat-{tense}.3pl
+{person} {place}-locative stay-{tense}.3sg
+{person}-pl {place}-locative stay-{tense}.3pl
+{animate} {place}-allative {motion_verb}-{tense}.3sg
+{animate}-pl {place}-allative {motion_verb}-{tense}.3pl
+{demonstrative} {animal} very clean neg-prs.3sg
+{demonstrative} {animal}-pl very clean neg-prs.3pl
+{demonstrative} {animal} very dirty
+{demonstrative} {animal}-pl very dirty
+{demonstrative} {subject_pronoun}-genitive
+{demonstrative}-pl {subject_pronoun}-genitive
+{demonstrative} {subject_pronoun}-genitive neg-prs.3sg
+{demonstrative}-pl {subject_pronoun}-genitive neg-prs.3pl
+{demonstrative} {thing} {subject_pronoun}-genitive
+{demonstrative} {thing}-pl {subject_pronoun}-genitive
+{demonstrative} {thing} {subject_pronoun}-genitive neg-prs.3sg
+{demonstrative} {thing}-pl {subject_pronoun}-genitive neg-prs.3pl
+
+summer-locative air very hot
+summer-locative many sun exist
+this city-locative summer-locative air very hot and 1pl house-pl-locative stay-prs.1pl
+this city-locative summer-locative air very hot and person-pl house-pl-locative stay-prs.3pl
+air very hot time-locative 2sg-genitive house-locative stay-ser imperative
+air very hot time-locative 2sg-genitive house-ablative go-ser prohibitive
+air very cold time-locative 2sg-genitive house-locative stay-ser imperative
+air very cold time-locative 2sg-genitive house-ablative go-ser prohibitive
+winter-locative air very cold
+winter-locative many cloud exist
+winter-locative many ice exist
+this city-locative winter-locative air very cold and 1pl house-pl-locative stay-prs.1pl
+this city-locative winter-locative air very cold and person-pl house-pl-locative stay-prs.3pl
+winter-locative animal-pl long sleep-3pl
+summer-locative day-pl very long
+winter-locative day-pl very short.length
+leaf-pl very green
+plant-pl-genitive many green leaf exist
+forest very green
+autumn-locative tree-genitive leaf-pl ground-allative fall-prs.3pl
+
+{subject_pronoun} {person} {weapon}-instr kill-{tense}.{subject_pronoun}
+{person} {tool}-instr {machine} fix-pst.3sg
+{person} {transportation}-instr {place}-allative go-{tense}.3sg
+{machine} machine
+{animate} machine neg-prs.3sg
+
+{person} book-pl read-prs.3sg
+{person} book-pl write-prs.3sg
+{person} many book read-prs.3sg
+{person} many book write-prs.3sg
+{subject_pronoun} book-pl read-prs.{subject_pronoun}
+{subject_pronoun} book-pl write-prs.{subject_pronoun}
+{subject_pronoun} many book read-prs.{subject_pronoun}
+{subject_pronoun} many book write-prs.{subject_pronoun}
+
+{subject_pronoun}-genitive {machine} exist
+{subject_pronoun}-genitive {machine} not.exist
+{subject_pronoun}-genitive {number} brother exist
+{subject_pronoun}-genitive {number} sister exist
+1sg-genitive brother not.exist
+1sg-genitive sister not.exist
+yesterday 1sg 1sg-genitive sister-genitive house-allative go-pst.1sg
+today 1sg 1sg-genitive sister-genitive house-allative go-prs.1sg
+today 1sg 1sg-genitive sister-genitive house-allative go-fut.1sg
+tomorrow 1sg 1sg-genitive sister-genitive house-allative go-fut.1sg
+1sg-genitive {family_member}-genitive house {demonstrative} city-locative
+1sg 1sg-genitive mother-instr 3sg-genitive house-locative stay-prs.1sg
+this cat very black and 3sg-genitive hair very black and 3sg-genitive ear-pl very black and 3sg-genitive nose very black but 3sg-genitive eye-pl very yellow
+cat 1sg-genitive leg-pl-locative sleep-prs.3sg
+{animal}-pl 3pl-genitive nose-instr smell-prs.3pl
+{animal}-pl 3pl-genitive ear-instr hear-prs.3pl
+{animal}-pl 3pl-genitive eye-instr see-prs.3pl
+{animal}-pl 3pl-genitive mouth-instr taste-prs.3pl
+{animal}-pl 3pl-genitive skin-instr touch-prs.3pl
+{animal}-genitive mouth-locative many tooth exist
+{animal}-genitive tooth-pl very white
+2sg many food eat-pst.2sg and now 2sg-genitive tooth-pl very dirty
+2sg-genitive mouth wash-ser imperative and then 2sg-genitive tooth-pl very clean fut.3pl

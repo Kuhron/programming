@@ -129,4 +129,4 @@ if __name__ == "__main__":
     templates = get_sentence_template_strings()
     translations = get_translation_dict()
     # write_sample_files_all_possibilities(templates, translations)
-    write_sample_files_random(templates, translations, n_samples=5000)
+    write_sample_files_random(templates, translations, n_samples=100000)

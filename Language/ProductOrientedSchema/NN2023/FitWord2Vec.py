@@ -63,18 +63,28 @@ def get_text_tokenized(fp):
     return text_tokens
 
 
-def convert_words_to_semantic_nn_input(words, model):
+def convert_words_to_semantic_nn_input(words, word_to_vector_dict):
     n_words = len(words)
-    n_cols = model.vector_size
+    n_cols = len(word_to_vector_dict[words[0]])
     arr = np.zeros((n_words, n_cols))
     for i, w in enumerate(words):
-        vec = model.wv[w]
+        vec = word_to_vector_dict[w]
+        assert len(vec) == n_cols
         arr[i,:] = vec
     return arr
 
 
 def get_eng_model(vector_size=100, window=5, sg=True):
     text_tokens = get_eng_text_tokenized()
+    return get_model(text_tokens, vector_size, window, sg)
+
+
+def get_lang_model(vector_size=100, window=5, sg=True):
+    text_tokens = get_lang_text_tokenized()
+    return get_model(text_tokens, vector_size, window, sg)
+
+
+def get_model(text_tokens, vector_size, window, sg=True):
     if sg:
         model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=vector_size, window=window, sg=1)
     else:
@@ -93,11 +103,39 @@ def get_words_and_vector_array_in_order_from_model(model):
     return words, arr
 
 
-def get_nearest_neighbors(test_words, test_vecs, model):
+def combine_model_embeddings(models):
+    # linear combination of the embeddings
+    # start with uniform weighting for simplicity
+    words = None
+    shape = None
+    arrs = []
+    for model in models:
+        these_words, this_arr = get_words_and_vector_array_in_order_from_model(model)
+        if words is None:
+            words = these_words
+        else:
+            assert these_words == words, "mismatch in words between models"
+        if shape is None:
+            shape = this_arr.shape
+        else:
+            assert this_arr.shape == shape, "mismatch in array shapes between models"
+        arrs.append(this_arr)
+    arr = sum(arrs) / len(arrs)
+    assert arr.shape == shape
+    return words, arr
+
+
+def get_word_to_vector_dict(words, vector_arr):
+    assert len(words) == vector_arr.shape[0]
+    return {words[i]: vector_arr[i, :] for i in range(len(words))}
+
+
+def get_nearest_neighbors(test_words, test_vecs, word_to_vector_dict):
     # trying to interpret a novel vector that is output by a neural net
     # what are the nearby meanings in the semantic space, and how far away are they?
     k = 5
-    words, all_vecs = get_words_and_vector_array_in_order_from_model(model)
+    all_words = sorted(word_to_vector_dict.keys())
+    all_vecs = [word_to_vector_dict[w] for w in all_words]
     nbrs = NearestNeighbors(n_neighbors=k, algorithm='ball_tree').fit(all_vecs)
     distances, indices = nbrs.kneighbors(test_vecs)
     d = {}
@@ -105,9 +143,24 @@ def get_nearest_neighbors(test_words, test_vecs, model):
         w = test_words[i]
         these_distances = distances[i]
         these_indices = indices[i]
-        neighbor_words = [words[i] for i in these_indices]
+        neighbor_words = [all_words[i] for i in these_indices]
         d[w] = dict(zip(neighbor_words, these_distances))
     return d
+
+
+def cosine_similarity(v1, v2):
+    return np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+
+
+def get_word_to_vector_dict_combined_model(text_tokens, vector_size, min_window, max_window_incl, sg=True):
+    models = []
+
+    for window in range(min_window, max_window_incl+1, 2):
+        model = get_model(text_tokens, vector_size, window, sg)
+        models.append(model)
+    
+    words, vecs = combine_model_embeddings(models)
+    return get_word_to_vector_dict(words, vecs)
 
 
 
@@ -117,38 +170,24 @@ if __name__ == "__main__":
 
     eng_to_lang = rst.get_translation_dict()
     eng_text_tokens = get_eng_text_tokenized()
-    lang_text_tokens = get_lang_text_tokenized()
+    # lang_text_tokens = get_lang_text_tokenized()
 
     words = get_all_words_from_text_tokens(eng_text_tokens)
-    lang_words = get_all_words_from_text_tokens(lang_text_tokens)
+    # lang_words = get_all_words_from_text_tokens(lang_text_tokens)
 
-    # Create CBOW model
-    eng_model1 = gensim.models.Word2Vec(eng_text_tokens, min_count=1, vector_size=100, window=5)
-    lang_model1 = gensim.models.Word2Vec(lang_text_tokens, min_count=1, vector_size=100, window=5)
-
-    # Create Skip Gram model
-    eng_model2 = gensim.models.Word2Vec(eng_text_tokens, min_count=1, vector_size=100, window=5, sg=1)
-    lang_model2 = gensim.models.Word2Vec(lang_text_tokens, min_count=1, vector_size=100, window=5, sg=1)
+    wv = get_word_to_vector_dict_combined_model(eng_text_tokens, vector_size=100, min_window=3, max_window_incl=13, sg=True)
 
     eng_test_words = random.sample(words, 5)
-    lang_test_words = rst.translate_word_glosses(eng_test_words, eng_to_lang)
+    # lang_test_words = rst.translate_word_glosses(eng_test_words, eng_to_lang)
 
     # see what they are doing when they get really similar to each other
     for w in eng_test_words:
-        v1 = eng_model1.wv[w]
-        v2 = eng_model2.wv[w]
-        print(f"{w} has CBOW vector {v1} of shape {v1.shape}")
-        print(f"{w} has Skip Gram vector {v2} of shape {v2.shape}")
-    for w in lang_test_words:
-        v1 = lang_model1.wv[w]
-        v2 = lang_model2.wv[w]
-        print(f"{w} has CBOW vector {v1} of shape {v1.shape}")
-        print(f"{w} has Skip Gram vector {v2} of shape {v2.shape}")
+        v = wv[w]
+        print(f"{w} has vector {v} of shape {v.shape}")
 
     for w1, w2 in itertools.combinations(eng_test_words, 2):
-        print(f"Cosine similarity between '{w1}' and '{w2}' - CBOW : ", eng_model1.wv.similarity(w1, w2))
-        print(f"Cosine similarity between '{w1}' and '{w2}' - Skip Gram : ", eng_model2.wv.similarity(w1, w2))
-    for w1, w2 in itertools.combinations(lang_test_words, 2):
-        print(f"Cosine similarity between '{w1}' and '{w2}' - CBOW : ", lang_model1.wv.similarity(w1, w2))
-        print(f"Cosine similarity between '{w1}' and '{w2}' - Skip Gram : ", lang_model2.wv.similarity(w1, w2))
+        v1 = wv[w1]
+        v2 = wv[w2]
+        sim = cosine_similarity(v1, v2)
+        print(f"Cosine similarity between '{w1}' and '{w2}': ", sim)
     

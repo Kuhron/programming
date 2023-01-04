@@ -170,6 +170,7 @@ features_by_sound = {
 }
 
 TIME_LENGTH = 120  # needs to be constant per input
+ARRAY_SHAPE = (TIME_LENGTH, N_FEATURES)
 
 
 
@@ -195,7 +196,7 @@ def convert_word_to_articulatory_array(w):
     n_segs = len(seg_features)
     if len(seg_features) >= TIME_LENGTH:
         raise ValueError("word too long")
-    arr = np.zeros((TIME_LENGTH, N_FEATURES))
+    arr = np.zeros(ARRAY_SHAPE)
     # place the segments approximately evenly divided along the time axis
     for i in range(n_segs):
         start_frac = i / n_segs
@@ -214,17 +215,23 @@ def convert_word_to_articulatory_array(w):
     return arr
 
 
+def plot_articulatory_array(arr, label):
+    plt.imshow(arr.T)
+    plt.gcf().set_size_inches(12, 3)
+    plt.title(label)
+    fp = f"images/{label}.png"
+    plt.savefig(fp)
+    print(f"plotted articulation array at {fp}")
+    plt.gcf().clear()
+
+
 def plot_words(words):
     for w in words:
         arr = convert_word_to_articulatory_array(w)
         print(w)
         row_sums = np.sum(abs(arr), axis=1)
         assert (row_sums != 0).all()
-        plt.imshow(arr.T)
-        plt.gcf().set_size_inches(12, 3)
-        plt.title(w)
-        plt.savefig(f"images/{w}.png")
-        plt.gcf().clear()
+        plot_articulatory_array(arr, label=f"articulations/{w}")
 
 
 def convert_word_to_nn_input(w):
