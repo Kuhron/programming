@@ -36,7 +36,7 @@ def get_random_dataset(n_words, eng_semantic_model):
         sent = random.choice(eng_text_tokens)
         eng_word = random.choice(sent)
         eng_words.append(eng_word)
-    lang_words = rst.translate_words(eng_words, translations)
+    lang_words = rst.translate_word_glosses(eng_words, translations)
 
     # want articulation in the language, but semantics from the unambiguous glosses
     articulation_arr = af.convert_words_to_articulatory_nn_input(lang_words)
@@ -48,16 +48,15 @@ def get_random_dataset(n_words, eng_semantic_model):
 
 if __name__ == "__main__":
     # allow for frequency effects by drawing randomly from the corpus
-    eng_semantic_model = w2v.get_eng_model()
+    translation_dict = rst.get_translation_dict()
+    eng_semantic_model = w2v.get_eng_model(vector_size=20, window=5, sg=True)
     eng_words = w2v.get_all_words_from_model(eng_semantic_model)
 
-    eng_words_train, lang_words_train, phon_train, sem_train = get_random_dataset(1000, eng_semantic_model)
+    eng_words_train, lang_words_train, phon_train, sem_train = get_random_dataset(10000, eng_semantic_model)
     eng_words_test, lang_words_test, phon_test, sem_test = get_random_dataset(10, eng_semantic_model)
 
     model_phon_to_sem = fit_nn(phon_train, sem_train)
-    print(model_phon_to_sem)
-    model_sem_to_phon = fit_nn(sem_train, phon_train)
-    print(model_sem_to_phon)
+    # model_sem_to_phon = fit_nn(sem_train, phon_train)
 
     print("testing sound to meaning")
     predicted_meanings = model_phon_to_sem.predict(phon_test)
@@ -67,5 +66,8 @@ if __name__ == "__main__":
         for w2, dist in sorted(d[w].items(), key=lambda kv: kv[1]):
             print(f"'{w2}' at distance {dist}")
 
-    print("testing meaning to sound")
-    predicted_sounds = model_sem_to_phon.predict(sem_test)
+    # print("testing meaning to sound")
+    # predicted_sounds = model_sem_to_phon.predict(sem_test)
+    # for w, vec in zip(eng_words_test, predicted_sounds):
+    #     lang_w = rst.translate_word_gloss(w, translation_dict)
+    # make a plot of how the articulations are made in the predicted wordform, see what existing phones it sounds like

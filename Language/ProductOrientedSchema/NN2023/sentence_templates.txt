@@ -9,3 +9,94 @@ today {subject_pronoun} {thing} see-prs.{subject_pronoun}
 {subject_pronoun} {inanimate} want-{tense}.{subject_pronoun}
 {animate} {inanimate} want-{tense}.3sg
 {animate}-pl {inanimate} want-{tense}.3pl
+
+{animate} {place}-allative {motion_verb}-{tense}.3sg
+{animate}-pl {place}-allative {motion_verb}-{tense}.3pl
+
+forest-locative many tree exist
+city-locative many house exist
+forest-locative house not.exist
+city-locative tree not.exist
+lake very big water
+lake-locative many water exist
+lake-locative house not.exist
+{aquatic_animal} lake-locative exist
+{aquatic_animal} desert-locative not.exist
+
+person-genitive two eye exist
+{animal}-genitive head exist
+fish-genitive leg not.exist
+octopus-genitive eight leg exist
+
+desert-locative many sand exist
+desert-locative some rock exist
+desert-locative water not.exist
+desert-locative lake not.exist
+desert-locative {aquatic_animal} not.exist
+
+count.verb-nmzr two one exceed-prs.3sg
+count.verb-nmzr three two exceed-prs.3sg
+count.verb-nmzr three one exceed-prs.3sg
+count.verb-nmzr four three exceed-prs.3sg
+count.verb-nmzr four two exceed-prs.3sg
+count.verb-nmzr four one exceed-prs.3sg
+count.verb-nmzr eight four exceed-prs.3sg
+count.verb-nmzr eight three exceed-prs.3sg
+count.verb-nmzr eight two exceed-prs.3sg
+count.verb-nmzr eight one exceed-prs.3sg
+
+count.verb-nmzr one two exceed-neg-prs.3sg
+count.verb-nmzr two three exceed-neg-prs.3sg
+count.verb-nmzr one three exceed-neg-prs.3sg
+count.verb-nmzr three four exceed-neg-prs.3sg
+count.verb-nmzr two four exceed-neg-prs.3sg
+count.verb-nmzr one four exceed-neg-prs.3sg
+count.verb-nmzr four eight exceed-neg-prs.3sg
+count.verb-nmzr three eight exceed-neg-prs.3sg
+count.verb-nmzr two eight exceed-neg-prs.3sg
+count.verb-nmzr one eight exceed-neg-prs.3sg
+
+{aquatic_animal} swim-prs.3sg
+{aquatic_animal}-pl swim-prs.3pl
+{inanimate} {motion_verb}-neg-prs.3sg
+{animal}-genitive two eye exist
+{subject_pronoun} {number} {thing} count.verb-{tense}.{subject_pronoun}
+
+dog food neg-prs.3sg
+cat food neg-prs.3sg
+{subject_pronoun} food neg-prs.{subject_pronoun}
+{aquatic_animal} food
+
+yesterday 1sg forest-allative walk-pst.1sg and big lake-locative many fish see-pst.1sg
+2sg 1sg like.verb-prs.2sg q
+1sg fish food-essive like-neg-prs.1sg
+2sg fish food-essive like-prs.2sg q
+1pl-genitive house-locative {pet_animal} exist
+1pl-genitive house-locative {non_pet_animal} exist
+person talk-prs.3sg
+person-pl talk-prs.3pl
+{subject_pronoun} talk-{tense}.{subject_pronoun}
+{inanimate} talk-neg-prs.3sg
+{inanimate}-pl talk-neg-prs.3pl
+{animal} talk-neg-prs.3sg
+{animal}-pl talk-neg-prs.3pl
+today 1sg forest-locative bear kill-pst.1sg and eat-pst.1sg
+bear-pl fish eat-prs.3pl
+cat-pl fish eat-prs.3pl
+{subject_pronoun} octopus food-essive like-neg-prs.{subject_pronoun}
+person-pl house-locative exist
+person-pl city-locative exist
+city-locative many person exist
+house-locative some person exist
+forest-locative many person not.exist
+lake-locative person not.exist
+mountain very big rock
+{animal} animal
+person animal neg-prs.3sg
+{inanimate} animal neg-prs.3sg
+1sg lake-allative rock throw-pst.1sg
+rock throw-ser prohibitive
+2sg rock throw-pst.2sg q
+2sg 1sg-allative talk-ser imperative
+1sg 1sg-genitive {thing} very many like-prs.1sg
+1sg 2sg very many like-prs.1sg

@@ -42,6 +42,7 @@ Genetics/NCBI/ncbi_dataset/
 
 # image files for random ML stuff
 ImageDatasets/
+Language/ProductOrientedSchema/NN2023/images/
 
 BasisSpectrumOutput/
 Mapping/NoiseImages/

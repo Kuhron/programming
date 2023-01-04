@@ -2,6 +2,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
+import RenderSentenceTemplates as rst
 import FitWord2Vec as w2v
 
 
@@ -249,7 +250,6 @@ if __name__ == "__main__":
     # don't bleed information across the other axis
     # because articulators should be treated as independent (for now)
 
-    # all_words = w2v.get_all_words_from_text_tokens(text_tokens)
-    # plot_words(all_words)
-
-    pass
+    text_tokens = w2v.get_lang_text_tokenized()
+    all_words = w2v.get_all_words_from_text_tokens(text_tokens)
+    plot_words(all_words)

@@ -18,7 +18,10 @@ def get_translation_dict():
     with open(translation_fp) as f:
         lines = f.readlines()
     pairs = [l.replace("\n","").split(" = ") for l in lines]
-    eng_to_lang = dict(pairs)
+    eng_to_lang = {}
+    for eng, lang in pairs:
+        assert eng not in eng_to_lang, f"{eng} already has a translation"
+        eng_to_lang[eng] = lang
     return eng_to_lang
 
 
@@ -57,22 +60,23 @@ def render_random_template_eng(templates):
     return render_template_random_possibility_eng(template)
 
 
-def translate_gloss(s, d):
+def translate_sentence_gloss(s, d):
     words = s.split()
-    w2 = translate_words(words, d)
+    w2 = translate_word_glosses(words, d)
     s2 = " ".join(w2)
     return s2
 
 
-def translate_words(words, d):
+def translate_word_gloss(w, d):
     # if the morpheme gloss has a dot (.), it needs to be in the dict
     # but if it has a dash, we can ignore the dash and concat the strings
-    w2 = []
-    for gloss in words:
-        morphemes = gloss.split("-")
-        w = "".join(d[m] for m in morphemes)
-        w2.append(w)
+    morphemes = w.split("-")
+    w2 = "".join(d[m] for m in morphemes)
     return w2
+
+
+def translate_word_glosses(words, d):
+    return [translate_word_gloss(w, d) for w in words]
 
 
 def write_sample_files_all_possibilities(templates, translations):
@@ -83,32 +87,41 @@ def write_sample_files_all_possibilities(templates, translations):
         eng_renditions = render_template_all_possibilities_eng(template)
         for eng in eng_renditions:
             eng_sample += eng + "\n"
-            lang = translate_gloss(eng, translations)
+            lang = translate_sentence_gloss(eng, translations)
             lang_sample += lang + "\n"
     write_eng_sample(eng_sample)
     write_lang_sample(lang_sample)
 
 
 def write_sample_files_random(templates, translations, n_samples):
-    eng_sample = ""
-    lang_sample = ""
+    eng_lines = []
+    lang_lines = []
     for i in range(n_samples):
         eng = render_random_template_eng(templates)
-        eng_sample += eng + "\n"
-        lang = translate_gloss(eng, translations)
-        lang_sample += lang + "\n"
-    write_eng_sample(eng_sample)
-    write_lang_sample(lang_sample)
+        eng_lines.append(eng)
+        lang = translate_sentence_gloss(eng, translations)
+        lang_lines.append(lang)
+    write_eng_sample(eng_lines)
+    write_lang_sample(lang_lines)
+    write_glosses_together(eng_lines, lang_lines)
 
 
-def write_eng_sample(eng_sample):
+def write_glosses_together(eng_lines, lang_lines):
+    with open("sample_glosses_together.txt", "w") as f:
+        for eng_line, lang_line in zip(eng_lines, lang_lines):
+            f.write(lang_line + "\n" + eng_line + "\n\n")
+
+
+def write_eng_sample(eng_lines):
     with open("eng_sample.txt", "w") as f:
-        f.write(eng_sample)
+        for l in eng_lines:
+            f.write(l + "\n")
     
 
-def write_lang_sample(lang_sample):
+def write_lang_sample(lang_lines):
     with open("lang_sample.txt", "w") as f:
-        f.write(lang_sample)
+        for l in lang_lines:
+            f.write(l + "\n")
 
 
 

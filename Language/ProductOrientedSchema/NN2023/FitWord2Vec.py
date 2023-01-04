@@ -73,12 +73,12 @@ def convert_words_to_semantic_nn_input(words, model):
     return arr
 
 
-def get_eng_model(sg=True):
+def get_eng_model(vector_size=100, window=5, sg=True):
     text_tokens = get_eng_text_tokenized()
     if sg:
-        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=100, window=5, sg=1)
+        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=vector_size, window=window, sg=1)
     else:
-        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=100, window=5)
+        model = gensim.models.Word2Vec(text_tokens, min_count=1, vector_size=vector_size, window=window)
     return model
 
 
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     lang_model2 = gensim.models.Word2Vec(lang_text_tokens, min_count=1, vector_size=100, window=5, sg=1)
 
     eng_test_words = random.sample(words, 5)
-    lang_test_words = rst.translate_words(eng_test_words, eng_to_lang)
+    lang_test_words = rst.translate_word_glosses(eng_test_words, eng_to_lang)
 
     # see what they are doing when they get really similar to each other
     for w in eng_test_words:
