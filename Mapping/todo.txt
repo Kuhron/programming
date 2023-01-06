@@ -5,6 +5,8 @@ DON'T do these (without good reason):
 
 TODO:
 
+- fix the error where a point is already outside of its elevation condition range when we first look at it, this comes from me having changed the conditions on the map images (or from different interpolation results which are rare but do happen). One way I can think of for doing this is to count how many points in the region are condition violators, and each circle added must not increase that number (so it can make a few new violators if it compensates for that by removing an equal or greater number of existing violators).
+
 - play with other noise math on the icosahedron
 
 - maybe write data as csv (pd.read_csv and df.to_csv) (still enforcing dtypes when it's loaded and written) if this takes less disk space
