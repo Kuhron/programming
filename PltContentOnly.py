@@ -21,19 +21,19 @@ def imshow_content_only(arr, size_inches=(6,6), save_fp=None, **kwargs):
         fig.savefig(save_fp)
 
 
-def scatter_content_only(xs, ys, size_inches=(6,6), save_fp=None, background_color=None):
+def scatter_content_only(xs, ys, size_inches=(6,6), save_fp=None, background_color=None, **kwargs):
     fig, ax = get_fig_ax(size_inches)
-    ax.scatter(xs, ys)
+    ax.scatter(xs, ys, **kwargs)
     if save_fp is not None:
         fig.savefig(save_fp)
         if background_color is not None:
             add_opaque_background(save_fp, background_color)
 
 
-def add_opaque_background(image_fp, color):
+def add_opaque_background(image_fp, color=(255,255,255)):
     # https://stackoverflow.com/questions/50898034/how-replace-transparent-with-a-color-in-pillow
     im = Image.open(image_fp)
-    image = Image.new("RGB", im.size, color)
+    image = Image.new("RGB", im.size, color=color)
     image.paste(im, (0, 0), im) 
     image.save(image_fp)
 

@@ -21,6 +21,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 # import pandas as pd
 
+import sys
+sys.path.insert(0, "/home/wesley/programming/")
 from BinomialObservation import BinomialObservation  # might need sys.path to look at parent dir
 
 class Concept:
