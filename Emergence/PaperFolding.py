@@ -12,6 +12,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+import re
 
 
 
@@ -88,12 +89,16 @@ def apply_function_with_mod(f, x, y):
 
 if __name__ == "__main__":
     # f0 = lambda x, y: (2*x*y**2 - y*x**2 - 6, -x**2 + 1/3 * y**2*x + 3)  # original function
-    # a = [-6, 0, 0, 0, 0, 0, 0, -1, 2, 0, 3, 0, 0, -1, 0, 0, 0, 0, 1/3, 0]  # array for original function (degree 3)
-    mask = np.array([1, 0, 0, 1, 0, 1, 0, 1, 1, 0] * 2)  # trying to see if something about the terms I included in the original function is why I got such a good shape
-    a = np.random.randint(-5, 6, (20,))
+    # a = np.array([-6, 0, 0, 0, 0, 0, 0, -1, 2, 0, 3, 0, 0, -1, 0, 0, 0, 0, 1/3, 0])  # array for original function (degree 3)
+
+    a = np.random.randint(-50, 60, (20,)) / 10
     a[np.random.random(20) < 0.5] = 0
-    a[mask == 0] = 0
-    print(list(a))  # list() so it will print commas for easier pasting into Python
+
+    # mask = np.array([1, 0, 0, 1, 0, 1, 0, 1, 1, 0] * 2)  # trying to see if something about the terms I included in the original function is why I got such a good shape
+    # a[mask == 0] = 0
+
+    print(list(a))  # print commas for easier pasting into Python
+
     f0 = lambda x, y: (
         + a[0]
         + a[1] * x
@@ -118,12 +123,12 @@ if __name__ == "__main__":
         + a[19] * y**3,
     )
 
-    resolution = 100
+    resolution = 200
     xs = np.linspace(0, 1, resolution)
     ys = np.linspace(0, 1, resolution)
     X, Y = np.meshgrid(xs, ys)
 
-    n_steps = 50
+    n_steps = 100
     for i in range(n_steps):
         edges = get_edge_order_default()  # remake the generator each time so it starts in the same place
         X1, Y1 = apply_function_with_fold(f0, X, Y, edges)
@@ -139,13 +144,14 @@ if __name__ == "__main__":
         X, Y = apply_function_with_mod(f0, X, Y)
     mod_attractor = X, Y
 
+    scatter_params = {"alpha": 0.5, "c": "k", "s": 4, "edgecolors": "none"}
     plt.subplot(1,2,1)
-    plt.scatter(*fold_attractor, alpha=0.5, c="k", s=4, edgecolors="none")
+    plt.scatter(*fold_attractor, **scatter_params)
     plt.title("fold")
     plt.xlim(0,1)
     plt.ylim(0,1)
     plt.subplot(1,2,2)
-    plt.scatter(*mod_attractor, alpha=0.5, c="k", s=4, edgecolors="none")
+    plt.scatter(*mod_attractor, **scatter_params)
     plt.title("mod")
     plt.xlim(0,1)
     plt.ylim(0,1)
@@ -160,4 +166,13 @@ if __name__ == "__main__":
     # [ 0,-5, 0, 0, 0, 0, 0, 1, 0,-5,-4, 0, 0, 0, 0, 0, 5, 0, 0, 0]  # clear relationship between fold and mod
     # [ 2, 0, 0,-4, 0, 0, 0, 0, 4, 0,-1, 0, 0, 0, 0, 0, 0, 0,-2, 0]  # good fold (curves)
     # [-4, 0, 0, 0, 0, 1, 0, 0, 0, 0,-3, 0, 0, 0, 0, 1, 0, 3, 0, 0]  # good fold (ring)
+    # [ 0, 0, 0,-5, 3, 0, 0, 0, 0, 0, 1,-5, 0, 0, 0, 0, 0, 5,-1, 0]  # loops, some relationship between fold and mod
+    # [ 0. , 2.6, 0. ,-0.5, 0. ,-4.2,-2. , 0. , 0. , 2.7,-4. ,-2.3, 0. , 1.3,  0. ,-0.6, 3. ,-4.5, 3.4, 0. ]  # good mod
+    # (I wonder if some of the good attractor ones are just when it never leaves the box? or the attractor happens to be inside the box even if we weren't folding/modding)
+    # [-5.94, 0.  , 0.  , 0.  , 0.  , 0.  , 0.  ,-0.99, 1.98, 0.  , 2.97, 0.  ,  0.  ,-0.99, 0.  , 0.  , 0.  , 0.  , 0.33, 0.  ]  # original function *0.99, loop that doesn't leave the box (so the original function just barely left the box and got folded slightly)
+    # [-5.7, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.95, 1.9, 0.0, 2.85, 0.0, 0.0, -0.95, 0.0, 0.0, 0.0, 0.0, 0.31666666666666665, 0.0]  # original function *0.95, very cool attractors when you zoom in on them, they're almost shrunk to a point
+    # [-0.9, 0.0, -0.3, 0.0, 0.0, 4.8, 0.0, -3.8, 0.0, 2.5, 0.0, 0.0, 0.0, -0.3, 0.0, 0.0, 0.0, -0.5, 0.0, 0.0]  # strange
+    # [0.0, 0.0, -1.1, 0.0, 0.0, 5.6, 0.0, 0.0, 0.0, 5.3, 0.0, 0.0, -2.1, 0.0, -0.3, -3.8, 0.0, 0.0, 0.0, 3.7]  # total internal reflection
+    # [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -4.7, 4.1, 0.0]  # good mod
+    # [-0.8, 0.0, 0.0, 0.7, -3.4, -0.5, 0.0, 5.8, 0.0, 1.8, 0.0, 0.0, 0.0, 0.0, 0.0, -4.3, -1.3, -4.2, 0.0, 4.1]  # weird shape in mod
 
