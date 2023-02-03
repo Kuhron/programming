@@ -10,3 +10,8 @@
 - Could also construct semantic space from a "corpus" of simple example utterances, like "I go", "you go", "he goes", "yesterday I went", etc. Build word vectors from this. Will be easier and cleaner than using Spanish corpus or something like that, but will also be less true to real semantics. Generate these utterances at random maybe? So we'll get slightly different embeddings each time, and some random set of possible forms will have been absent by chance, so the NN will have to figure out what they mean. Could use conlang words for Word2Vec or could use glosses to remove ambiguity, then get accurate vectors without homophony getting in the way. Then when training the NN on form-meaning correspondence, pick a gloss, then translate gloss to conlang form and convert gloss to meaning vector. Then train on that pair.
 - need to see what it can do on forms it's never seen, can it do wug tests? can it interpret the meaning of a form whose morphemes it knows but the whole of which it hasn't seen?
 - can we make an agent-based game with NNs trained like this and see if they undergo language change over time? would want sound changes and meaning changes, and resultant changes in the form-meaning mappings. If morphemes are generalizations over words, expect new morphemes to arise after enough changes have happened and new patterns appear that the agents can notice.
+
+2023-02-03
+
+- make a memorize/generalize sliding parameter (like duality between durable/storable, or the sliders in Universal Paperclips)
+

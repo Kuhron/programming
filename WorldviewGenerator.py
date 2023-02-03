@@ -389,6 +389,31 @@ cultural_principles = [
     "Things in nature do not belong to anyone and must be shared.",
     "Nothing belongs to anyone; private property does not exist.",
     "Anything, including things in nature, can be owned privately.",
+    "People can be either good or bad, with no in-between.",
+    "Some people are all good and some are all bad, but some are in between.",
+    "No one is all good or all bad; everyone is in between.",
+    "It doesn't make sense to call people good or bad; only actions are good or bad.",
+    "It doesn't make sense to call actions good or bad; only effects are good or bad.",
+    "Things should be placed into discrete categories.",
+    "Everything is a spectrum; there are no discrete categories.",
+    "Things have an essence that makes them different from other kinds of things.",
+    "Everything is emergent from the parts it is made of; there is no essence distinguishing different kinds of things.",
+    "Physical activity makes you stronger and is good.",
+    "Physical activity is a necessary evil for accomplishing things.",
+    "The best accomplishments are those that require no physical activity.",
+    "Altered states of the mind are to be avoided.",
+    "Altered states of the mind are educational.",
+    "One must go through rites of passage before being allowed to make important decisions.",
+    "You can tell which people will be good decision makers based on their behavior as a child.",
+    "You can tell which people will be good decision makers based on which family they were born into.",
+    "People from well-off families are more moral.",
+    "People from impoverished families are more moral.",
+    "Economic standing has no bearing on one's morality.",
+    "Poverty is a virtue that should be sought out.",
+    "The best life is one with material luxuries.",
+    "The best life is one with wisdom of the mind.",
+    "Talking to people who are not like you is dangerous.",
+    "Talking to people who are not like you is eye-opening.",
 
 ]
 
@@ -402,3 +427,10 @@ if __name__ == "__main__":
     print("Cultural principles in order of importance:")
     for l in get_ranked_principles(5):
         print("{}. {}".format(*l))
+
+
+# fun ones I've gotten:
+
+# - One where they value education a ton and rule with an iron fist; they'll either educate the crap out of you, or, if you refuse, they'll beat the crap out of you. Don't remember what the actual principles were.
+
+
