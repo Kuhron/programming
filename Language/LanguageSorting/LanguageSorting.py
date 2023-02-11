@@ -1,13 +1,52 @@
-import pandas as pd
 import random
 import itertools
-import numpy as np
+
+# fams_countries = pd.read_excel("LanguageSorting.ods", engine="odf", sheet_name="FamiliesCountries", header=0, index_col=0)
+fams_countries_fp = "fams_countries.tsv"
+with open(fams_countries_fp) as f:
+    lines = f.readlines()
+true_fams_by_country = {}
+distractor_fams_by_country = {}
+true_countries_by_fam = {}
+distractor_countries_by_fam = {}
+lines_arr = [l.replace("\n", "").split("\t") for l in lines]
+header = lines_arr[0]
+row_labels = [l[0] for l in lines_arr]
+n_rows = len(row_labels) - 1
+n_cols = len(header) - 1
+countries = row_labels[1:]
+fams = header[1:]
+for i in range(1, n_rows):
+    country = row_labels[i]
+    assert country not in true_fams_by_country
+    true_fams_by_country[country] = []
+    assert country not in distractor_fams_by_country
+    distractor_fams_by_country[country] = []
+    for j in range(1, n_cols):
+        lg = header[j]
+        val = lines_arr[i][j]
+        if lg not in true_countries_by_fam:
+            true_countries_by_fam[lg] = []
+        if lg not in distractor_countries_by_fam:
+            distractor_countries_by_fam[lg] = []
+        if val == "x":
+            true_fams_by_country[country].append(lg)
+            true_countries_by_fam[lg].append(country)
+        elif val == "d":
+            distractor_fams_by_country[country].append(lg)
+            distractor_countries_by_fam[lg].append(country)
+        else:
+            pass
+# print("\ntfc:", true_fams_by_country)
+# print("\ndfc:", distractor_fams_by_country)
+# print("\ntcf:", true_countries_by_fam)
+# print("\ndcf:", distractor_countries_by_fam)
 
 
-fams_countries = pd.read_excel("LanguageSorting.ods", engine="odf", sheet_name="FamiliesCountries", header=0, index_col=0)
-
-langs_fams = pd.read_excel("LanguageSorting.ods", engine="odf", sheet_name="LanguagesFamilies", header=None)
-langs_fams = langs_fams.loc[:,0]
+# langs_fams = pd.read_excel("LanguageSorting.ods", engine="odf", sheet_name="LanguagesFamilies", header=None)
+langs_fams_fp = "langs_fams.txt"
+with open(langs_fams_fp) as f:
+    langs_fams = [l.strip() for l in f.readlines()]
 langs_fams_lists = [s.split(" < ") for s in langs_fams]
 langs = [l[0] for l in langs_fams_lists]  # the actual languages, terminal nodes
 
@@ -29,17 +68,17 @@ def add_to_fam_graph(a, b):
         fam_graph[a] = b
 
 
-for fams in langs_fams_lists:
-    for x, y in zip(fams[:-1], fams[1:]):
+for fams2 in langs_fams_lists:
+    for x, y in zip(fams2[:-1], fams2[1:]):
         add_to_fam_graph(x, y)
 
 members_by_family = {}
-for fams in langs_fams_lists:
+for fams2 in langs_fams_lists:
     # everything in the list is a member of itself and everything to its right
-    for i in range(len(fams)):
-        smaller = fams[i]
-        for j in range(i, len(fams)):
-            larger = fams[j]
+    for i in range(len(fams2)):
+        smaller = fams2[i]
+        for j in range(i, len(fams2)):
+            larger = fams2[j]
             if larger not in members_by_family:
                 members_by_family[larger] = set()
             members_by_family[larger].add(smaller)
@@ -91,18 +130,21 @@ def make_family_containing_question():
     n_true = 1 if res_is_true else 3
     n_false = 4 - n_true
     answers = [make_family_containing_question_answer_true() for i in range(n_true)] + [make_family_containing_question_answer_false() for i in range(n_false)]
-    # answers[0 if res_is_true else -1] += "*"
+    a = answers[0 if res_is_true else -1]
     random.shuffle(answers)
     print(f"\nWhich of the following is {str(res_is_true).lower()}?")
     for x in answers:
         print(x)
+    input("\npress enter to see answer")
+    print(f"{str(res_is_true).lower()}: {a}")
 
 def make_language_in_country_question_answer_true():
     counter = 0
     while counter < 1000:
-        c = random.choice(fams_countries.index)
-        row = fams_countries.loc[c, :]
-        trues = fams_countries.columns[row == "x"]
+        c = random.choice(countries)
+        # row = fams_countries.loc[c, :]
+        # trues = fams_countries.columns[row == "x"]
+        trues = true_fams_by_country.get(c, [])
         if len(trues) < 1:
             counter += 1
             continue
@@ -113,9 +155,10 @@ def make_language_in_country_question_answer_true():
 def make_language_in_country_question_answer_false():
     counter = 0
     while counter < 1000:
-        c = random.choice(fams_countries.index)
-        row = fams_countries.loc[c, :]
-        distractors = fams_countries.columns[row == "d"]
+        c = random.choice(countries)
+        # row = fams_countries.loc[c, :]
+        # distractors = fams_countries.columns[row == "d"]
+        distractors = distractor_fams_by_country.get(c, [])
         if len(distractors) < 1:
             counter += 1
             continue
@@ -128,19 +171,23 @@ def make_language_in_country_question():
     n_true = 1 if res_is_true else 3
     n_false = 4 - n_true
     answers = [make_language_in_country_question_answer_true() for i in range(n_true)] + [make_language_in_country_question_answer_false() for i in range(n_false)]
-    # answers[0 if res_is_true else -1] += "*"
+    a = answers[0 if res_is_true else -1]
     random.shuffle(answers)
     print(f"\nWhich of the following is {str(res_is_true).lower()}?")
     for x in answers:
         print(x)
+    input("\npress enter to see answer")
+    print(f"{str(res_is_true).lower()}: {a}")
 
 def make_language_in_single_country_question():
     counter = 0
     while counter < 1000:
-        c = random.choice(fams_countries.index)
-        row = fams_countries.loc[c, :]
-        trues = fams_countries.columns[row == "x"]
-        distractors = fams_countries.columns[row == "d"]
+        c = random.choice(countries)
+        # row = fams_countries.loc[c, :]
+        # trues = fams_countries.columns[row == "x"]
+        # distractors = fams_countries.columns[row == "d"]
+        trues = true_fams_by_country.get(c, [])
+        distractors = distractor_fams_by_country.get(c, [])
         # need at least one true and at least one distractor, at least 4 total
         if len(trues) < 1 or len(distractors) < 1 or len(trues) + len(distractors) < 4:
             counter += 1
@@ -159,22 +206,28 @@ def make_language_in_single_country_question():
         n_true = 1 if res_is_true else 3
         n_false = 4 - n_true
         answers = random.sample(list(trues), n_true) + random.sample(list(distractors), n_false)
-        # answers[0 if res_is_true else -1] += "*"
+        a = answers[0 if res_is_true else -1]
         is_s = "IS" if res_is_true else "is NOT"
         print(f"\nWhich of the following languages or families {is_s} in {c}?")
         random.shuffle(answers)
         for x in answers:
             print(x)
+        input("\npress enter to see answer")
+        print(f"{is_s} in {c}: {a}")
         return
     raise RuntimeError
 
 def make_single_language_in_country_question():
     counter = 0
     while counter < 1000:
-        lg = random.choice(fams_countries.columns)
-        col = fams_countries.loc[:, lg]
-        trues = fams_countries.index[col == "x"]
-        distractors = fams_countries.index[col == "d"]
+        lg = random.choice(fams)
+        print(lg)
+        print(fams)
+        # col = fams_countries.loc[:, lg]
+        # trues = fams_countries.index[col == "x"]
+        # distractors = fams_countries.index[col == "d"]
+        trues = true_countries_by_fam.get(lg, [])
+        distractors = distractor_countries_by_fam.get(lg, [])
         # need at least one true and at least one distractor, at least 4 total
         if len(trues) < 1 or len(distractors) < 1 or len(trues) + len(distractors) < 4:
             counter += 1
@@ -193,12 +246,14 @@ def make_single_language_in_country_question():
         n_true = 1 if res_is_true else 3
         n_false = 4 - n_true
         answers = random.sample(list(trues), n_true) + random.sample(list(distractors), n_false)
-        # answers[0 if res_is_true else -1] += "*"
+        a = answers[0 if res_is_true else -1]
         is_s = "DOES" if res_is_true else "does NOT"
         print(f"\nWhich of the following countries {is_s} contain {lg}?")
         random.shuffle(answers)
         for x in answers:
             print(x)
+        input("\npress enter to see answer")
+        print(f"{is_s} contain {lg}: {a}")
         return
     raise RuntimeError
 
@@ -246,8 +301,9 @@ def make_odd_language_out_question():
         else:
             msize2 = min(s for s in sizes if s != min_size)
             weights = [(0 if s == min_size else 1/s) for s in sizes]
-            weights = np.array(weights) / sum(weights)
-            fam2 = np.random.choice(potential_matching_fams, p=weights)
+            wt = sum(weights)
+            weights = [w/wt for w in weights]
+            fam2 = weighted_choice(potential_matching_fams, weights)
         # print(fam, members_by_family[fam])
         # print(fam2, members_by_family[fam2])
         try:
@@ -263,6 +319,20 @@ def make_odd_language_out_question():
         input("\npress enter to see answer")
         print(f"answer: {a}\n({' < '.join(descent_by_lang[a])})\n(the others are {' < '.join(descent_by_lang[fam])})")
         return
+    raise RuntimeError
+
+def weighted_choice(xs, ws):
+    assert len(xs) == len(ws)
+    assert abs(sum(ws) - 1) < 1e-6, "weights must sum to 1"
+    r = random.random()
+    t = 0
+    ts = []
+    for w in ws:
+        t += w
+        ts.append(t)
+    for i, t in enumerate(ts):
+        if t >= r:
+            return xs[i]
     raise RuntimeError
 
 
