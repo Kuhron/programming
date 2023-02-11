@@ -87,7 +87,7 @@ def get_us_location_weighted_by_population():
 
 def get_us_location_population_data():
     data_fp = "Census_2010-2019_all.csv"
-    df = pd.read_csv(data_fp, engine='python')  # without engine="python", get UnicodeDecodeError
+    df = pd.read_csv(data_fp, engine='python', encoding="latin-1")  # without engine="python", get UnicodeDecodeError
     name_colname = "NAME"
     state_colname = "STNAME"
     pop_colname = "POPESTIMATE2019"
