@@ -6,7 +6,7 @@ block_cipher = None
 
 a = Analysis(
     ['LanguageSorting.py'],
-    pathex=['/home/wesley/.virtualenvs/lg/lib/python3.8/site-packages/'],
+    pathex=[],
     binaries=[],
     datas=[],
     hiddenimports=[],

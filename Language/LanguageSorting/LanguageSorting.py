@@ -269,7 +269,11 @@ def make_language_family_containing_languages_question():
     fam = potential_matching_fams[sizes.index(min_size)]
     print("\nWhat is the smallest family or branch of a family containing the following languages?")
     print(", ".join(lgs))
-    # print(f"Answer: {fam}")
+    input("\npress enter to see answer")
+    print(f"answer: {fam}")
+    print("the individual languages are:")
+    for lg in lgs:
+        print(' < '.join(descent_by_lang[lg]))
 
 def make_odd_language_out_question():
     # choose three languages in the same smaller group, and one in some other group
