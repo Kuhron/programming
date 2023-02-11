@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ['..\\LanguageSorting.py'],
+    ['..\\..\\LanguageSorting.py'],
     pathex=[],
     binaries=[],
     datas=[],
