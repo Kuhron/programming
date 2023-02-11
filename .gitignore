@@ -4,8 +4,8 @@
 !/**/
 !*.*
 
-# unignore a binary that I want to test on Windows
-!Language/LanguageSorting/dist/LanguageSorting
+# unignore binaries that I want to distribute
+!Language/LanguageSorting/executables/**/*
 
 # Byte-compiled / optimized / DLL files
 /**/__pycache__/
