@@ -221,8 +221,6 @@ def make_single_language_in_country_question():
     counter = 0
     while counter < 1000:
         lg = random.choice(fams)
-        print(lg)
-        print(fams)
         # col = fams_countries.loc[:, lg]
         # trues = fams_countries.index[col == "x"]
         # distractors = fams_countries.index[col == "d"]
