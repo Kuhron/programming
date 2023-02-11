@@ -1,0 +1,74 @@
+Ainu
+Albanian < Indo-European
+Ancient Egyptian < Afroasiatic
+Arabic < Semitic < Afroasiatic
+Arawak < Arawakan
+Armenian < Indo-European
+Aymara < Aymaran
+Basque
+Breton < Brythonic < Celtic < Indo-European
+Cantonese < Sinitic < Trans-Himalayan
+Cashibo-Cacataibo < Panoan
+Classical Tupi < Tupian
+Danish < North Germanic < Germanic < Indo-European
+Dari < Persian < Iranian < Indo-Iranian < Indo-European
+Diidxaza < Zapotecan < Oto-Manguean
+Dutch < West Germanic < Germanic < Indo-European
+English < West Germanic < Germanic < Indo-European
+Estonian < Finnic < Uralic
+Farsi < Persian < Iranian < Indo-Iranian < Indo-European
+Finnish < Finnic < Uralic
+French < Romance < Indo-European
+Georgian < Kartvelian
+German < West Germanic < Germanic < Indo-European
+Greek < Indo-European
+Guarani < Tupian
+Hawaiian < Polynesian < Oceanic < Malayo-Polynesian < Austronesian
+Hebrew < Semitic < Afroasiatic
+Hindi < Hindustani < Indic < Indo-Iranian < Indo-European
+Urdu < Hindustani < Indic < Indo-Iranian < Indo-European
+Horokoi < Madang < Trans-New Guinea
+Icelandic < North Germanic < Germanic < Indo-European
+Indonesian < Malayic < Malayo-Polynesian < Austronesian
+Inga < Quechuan
+Irish < Goidelic < Celtic < Indo-European
+Iskonawa < Panoan
+Italian < Romance < Indo-European
+Japanese
+Jaqaru < Aymaran
+Khmer < Austroasiatic
+Korean
+Latvian < Baltic < Balto-Slavic < Indo-European
+Mandarin < Sinitic < Trans-Himalayan
+Manx < Goidelic < Celtic < Indo-European
+Maori < Polynesian < Oceanic < Malayo-Polynesian < Austronesian
+Mapudungun
+Min < Sinitic < Trans-Himalayan
+Nepali < Indic < Indo-Iranian < Indo-European
+Nepali < Indic < Indo-Iranian < Indo-European
+Norwegian < North Germanic < Germanic < Indo-European
+Polish < West Slavic < Slavic < Balto-Slavic < Indo-European
+Portuguese < Romance < Indo-European
+Quechua < Quechuan
+Rma < Qiangic < Trans-Himalayan
+Romani < Indic < Indo-Iranian < Indo-European
+Romanian < Romance < Indo-European
+Russian < East Slavic < Slavic < Balto-Slavic < Indo-European
+Samoan < Polynesian < Oceanic < Malayo-Polynesian < Austronesian
+Serbian < South Slavic < Slavic < Balto-Slavic < Indo-European
+Shipibo-Conibo < Panoan
+Slovak < West Slavic < Slavic < Balto-Slavic < Indo-European
+Slovene < South Slavic < Slavic < Balto-Slavic < Indo-European
+Spanish < Romance < Indo-European
+Swedish < North Germanic < Germanic < Indo-European
+Tagalog < Philippine < Malayo-Polynesian < Austronesian
+Taino < Arawakan
+Tajik < Persian < Iranian < Indo-Iranian < Indo-European
+Thai < Kra-Dai
+Tibetan < Tibetic < Trans-Himalayan
+Tongan < Polynesian < Oceanic < Malayo-Polynesian < Austronesian
+Ukrainian < East Slavic < Slavic < Balto-Slavic < Indo-European
+Vietnamese < Austroasiatic
+Wakhi < Iranian < Indo-Iranian < Indo-European
+Wu < Sinitic < Trans-Himalayan
+
