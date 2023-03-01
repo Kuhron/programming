@@ -237,6 +237,9 @@ export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stack
 export MAVENPATH=$HOME/apache-maven-3.8.4/bin
 export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH:$MAVENPATH
 # export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
+export PATH=/usr/local/texlive/2022/bin/x86_64-linux:$PATH
+export INFOPATH=$INFOPATH:/usr/local/texlive/2022/texmf-dist/doc/info
+export MANPATH=$MANPATH:/usr/local/texlive/2022/texmf-dist/doc/man
 
 
 
