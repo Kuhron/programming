@@ -112,7 +112,7 @@ def interpolate_at_points_nearest_neighbor(lns_to_interpolate_at, lns_to_interpo
             else:
                 # don't interpolate here, the nearest neighbor is too far away
                 # print(f"placing undetermined value at {pc}")
-                interpolated.loc[ln] = -1
+                interpolated.loc[ln] = 0
     print("-- done interpolating nearest neighbor")
     
     # debug
@@ -137,25 +137,16 @@ def interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolut
     # pu.plot_variable_at_point_codes(points_to_interpolate_at, db, "elevation", show=True)
 
     # interpolate only from points that have a defined condition
+    # el_cond = -1 means the condition is unknown, no interpolation has happened
+    # el_cond = 0 means the condition is known to be no-condition, unrestricted, either from control image or interpolation
     existing_el_conds = db.get_series(lns_with_data_in_region, "elevation_condition")
     existing_els = db.get_series(lns_with_data_in_region, "elevation")
-    # but also want to make sure we are up to date with the images, TODO read conditions from images
+    # but also want to make sure we are up to date with the images
     existing_el_cond_is_defined_mask = existing_el_conds != -1
     lns_with_data_but_undefined_el_cond = lns_with_data_in_region[~existing_el_cond_is_defined_mask]
     lns_to_interpolate_at = list(set(lns_in_region_at_resolution) | set(lns_with_data_but_undefined_el_cond))
 
-    # if we've already generated data here,
-    # don't overwrite it with default just because the condition was -1,
-    # this means the condition is supposed to be -1
-    # (it underwent nearest-neighbor check already) so don't change what's already there
-    existing_el_is_defined_mask = existing_els != 0
-    print(f"there are {existing_el_is_defined_mask.sum()} points with elevation already")
-
-    # there will still be some false positives where condition is known to be -1
-    # (has already been checked for nearest neighbors)
-    # but by coincidence the elevation value is also still 0,
-    # nothing much to do about this I think
-    interpolate_from_mask = existing_el_cond_is_defined_mask | existing_el_is_defined_mask
+    interpolate_from_mask = existing_el_cond_is_defined_mask
     lns_to_interpolate_from = existing_el_conds.index[interpolate_from_mask]
 
     # db.validate()  # debug
@@ -199,30 +190,43 @@ def interpolate_conditions(db, lns_with_data_in_region, lns_in_region_at_resolut
         print("no points were changed by interpolation (thus not writing db to file)")
     else:
         print(f"{len(change_point_lns)} points have had their elevation condition inferred by interpolation")
+
         el_conds_at_change_points = interpolated_el_conds[change_point_mask]
         # print("el_conds_at_change_points:\n", el_conds_at_change_points)
-        els_at_change_points = lmd.translate_array_by_dict(el_conds_at_change_points, elevation_condition_to_default_value)
-        # print("els_at_change_points:\n", els_at_change_points)
+
+        # this sets the elevations to default at any point which gained an interpolated condition
+        # but we don't want to do this if there's already data there and I've just changed the control condition images and thus reset conditions at most points to unknown (-1)
+        # so use sparingly, know that it will overwrite elevation data to default:
+        if False:
+            els_at_change_points = lmd.translate_array_by_dict(el_conds_at_change_points, elevation_condition_to_default_value)
+            # print("els_at_change_points:\n", els_at_change_points)
+            db[change_point_lns, "elevation"] = els_at_change_points
+            # db.validate()  # debug
+
+        assert pd.isna(db.df["elevation"]).sum() == 0, "some elevations are NA"
 
         # debug
         # print("plotting elevation_condition after interpolating conditions")
         # pu.plot_variable_scattered_from_dict(interpolated_el_conds, title="elevation_condition")
 
-        if True: #input("commit these results to db in RAM? y/n (default n)") == "y":
-            db[change_point_lns, "elevation_condition"] = el_conds_at_change_points
-            # db.validate()   # debug
-            db[change_point_lns, "elevation"] = els_at_change_points
-            # db.validate()  # debug
+        db[change_point_lns, "elevation_condition"] = el_conds_at_change_points
+        # db.validate()   # debug
 
-            # debug
-            # print("plotting elevation after interpolating conditions")
-            # new_els_at_all_points = db.get_series(interpolated_el_conds.index, "elevation")
-            # pu.plot_variable_scattered_from_dict(new_els_at_all_points, title="elevation")  # so I can see what is already there
+        # debug
+        # print("plotting elevation after interpolating conditions")
+        # new_els_at_all_points = db.get_series(interpolated_el_conds.index, "elevation")
+        # pu.plot_variable_scattered_from_dict(new_els_at_all_points, title="elevation")  # so I can see what is already there
 
-        if True: #input("write these results to file? y/n (default n)") == "y":
-            db.write_hdf()
+        db.write_hdf()
     
     return lns_to_interpolate_at  # we didn't change anything else, so only need to send the points we interpolated to
+
+
+def reflect_values_into_range(x, a, b):
+    s = (-1) ** np.floor((x-a)/(b-a))
+    g = (lambda x: (a-b)/2 * x + (a+b)/2)(s)
+    y = s * ((x-a) % (b-a)) + g
+    return y
 
 
 def run_region_generation(db, planet_radius_km, xyzg):
@@ -232,7 +236,7 @@ def run_region_generation(db, planet_radius_km, xyzg):
     power_law = lambda: np.random.power(power_law_param)  # will be a fraction of region radius
     el_stdev = np.random.uniform(5, 25)
     resolution_iterations = 9
-    n_circles = 4000
+    n_circles = 100
 
     # to choose random one
     ## region_center_pc = icm.get_random_point_code(min_iterations=6, expected_iterations=9, max_iterations=9, prefix=desired_point_prefix)
@@ -355,6 +359,23 @@ def run_region_generation(db, planet_radius_km, xyzg):
     max_el_by_ln = lmd.translate_array_by_dict(el_cond_by_ln, el_cond_to_max_value)
     rises = max_el_by_ln - el_by_ln
     falls = min_el_by_ln - el_by_ln
+
+    # this can happen sometimes with condition interpolation, a point has a value that disobeys its condition
+    above_max = ~pd.isna(rises) & (rises < 0)
+    below_min = ~pd.isna(falls) & (falls > 0)
+    # pu.plot_variable_interpolated_from_dict(rises, xyzg, resolution=100)
+    # pu.plot_variable_interpolated_from_dict(falls, xyzg, resolution=100)
+
+    # try repairing this somehow
+    # el_by_ln = reflect_values_into_range(el_by_ln, a=min_el_by_ln, b=max_el_by_ln)  # doesn't play nice with NA values, for open-ended ranges e.g. (-inf, 0) we just need to add, can't squish into an unbounded range
+    # just set them to the limit if they are past it, have faith that the elevation generation will get rid of the plateaus that this will create
+    el_by_ln[above_max] = max_el_by_ln
+    el_by_ln[below_min] = min_el_by_ln
+    rises = max_el_by_ln - el_by_ln
+    falls = min_el_by_ln - el_by_ln
+    # pu.plot_variable_interpolated_from_dict(rises, xyzg, resolution=100)
+    # pu.plot_variable_interpolated_from_dict(falls, xyzg, resolution=100)
+
     assert (rises[~pd.isna(rises)] >= 0).all(), "some points currently are above their maximum elevation"
     assert (falls[~pd.isna(falls)] <= 0).all(), "some points currently are below their minimum elevation"
 
@@ -449,6 +470,7 @@ def run_region_generation(db, planet_radius_km, xyzg):
 if __name__ == "__main__":
     db_root_dir = "/home/wesley/Desktop/Construction/Conworlding/Cada World/Maps/CadaIIMapData/"
     db = IcosahedronPointDatabase.load(db_root_dir)
+    db.update_control_conditions_from_images()
     planet_radius_km = icm.CADA_II_RADIUS_KM
     xyzg = XyzLookupAncestryGraph()  # will add to it as needed
 

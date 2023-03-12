@@ -19,12 +19,13 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
+import json
 
 import IcosahedronMath as icm
 from BiDict import BiDict
 import FindPointsInCircle as find
 import PlottingUtil as pu
-from LoadMapData import get_default_values_of_conditions, translate_array_by_dict
+from LoadMapData import get_default_values_of_conditions, translate_array_by_dict, create_control_point_dataframe_from_images
 from XyzLookupAncestryGraph import XyzLookupAncestryGraph
 
 
@@ -42,7 +43,7 @@ class IcosahedronPointDatabase:
         pass
 
     @staticmethod
-    def new(root_dir, n_point_code_chars_per_level):
+    def new(root_dir, world_name):
         db = IcosahedronPointDatabase()
         db.root_dir = root_dir
         if os.path.exists(db.root_dir):
@@ -54,11 +55,11 @@ class IcosahedronPointDatabase:
 
         with open(os.path.join(root_dir, "IcosahedronPointDatabase.txt"), "w") as f:
             f.write("This is an IcosahedronPointDatabase.")
-        db.metadata_file = os.path.join(root_dir, "metadata.txt")
+        db.metadata_fp = get_metadata_fp(root_dir)
 
         db.variables_dict = BiDict(int, str)
         db.metadata = {
-            "n_point_code_chars_per_level": n_point_code_chars_per_level,
+            "world_name": world_name,
         }
         db.write_metadata()
         return db
@@ -68,9 +69,9 @@ class IcosahedronPointDatabase:
         print(f"loading database from {root_dir}")
         db = IcosahedronPointDatabase()
         db.root_dir = root_dir
-        db.metadata_file = os.path.join(root_dir, "metadata.txt")
-        db.data_file = os.path.join(root_dir, "data.h5")
-        db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_file)
+        db.metadata_fp = get_metadata_fp(root_dir)
+        db.data_file = get_data_fp(root_dir)
+        db.metadata = IcosahedronPointDatabase.get_metadata_from_file(db.metadata_fp)
         db.read_hdf()
         print(f"-- done loading database from {root_dir}")
         return db
@@ -96,13 +97,7 @@ class IcosahedronPointDatabase:
     def write_metadata(self):
         d = self.metadata
         assert type(d) is dict
-        lines = []
-        for k,v in sorted(d.items()):
-            l = f"{k}:{v}"
-            lines.append(l)
-        s = "\n".join(lines)
-        with open(self.metadata_file, "w") as f:
-            f.write(s)
+        json.dump(d, self.metadata_fp)
 
     def write_hdf(self):
         self.coerce_dtypes()
@@ -190,11 +185,7 @@ class IcosahedronPointDatabase:
     @staticmethod
     def get_metadata_from_file(fp):
         with open(fp) as f:
-            lines = f.readlines()
-        d = {}
-        for l in lines:
-            var, val = l.strip().split(":")
-            d[var] = int(val)
+            d = json.load(f)
         return d
 
     def get_variables_at_points(self, pcs, variable_names):
@@ -346,6 +337,9 @@ class IcosahedronPointDatabase:
         # im = Image.fromarray(arr)
         raise NotImplementedError
 
+    def get_all_lookup_numbers(self):
+        return self.df.index
+
     def get_mask_point_codes_with_prefix(self, prefix):
         # want to return true for things like "D" starting with "D00"
         return self.get_mask_point_codes_with_prefixes([prefix])
@@ -377,44 +371,69 @@ class IcosahedronPointDatabase:
     
     def write_old_block_format_to_hdf5(self):
         raise Exception("should not have to use again")
-        pns = list(db.get_all_point_numbers_with_data())
+        # pns = list(db.get_all_point_numbers_with_data())
 
-        if os.path.exists("data.h5"):
-            df = pd.read_hdf("data.h5")
-            n_points_in_file = (~df.index.duplicated()).sum()
-        else:
-            n_points_in_file = 0
-        
-        n_pns = len(pns)
-        print(f"{n_points_in_file=} / {n_pns=}")
+        # if os.path.exists("data.h5"):
+        #     df = pd.read_hdf("data.h5")
+        #     n_points_in_file = (~df.index.duplicated()).sum()
+        # else:
+        #     n_points_in_file = 0
+        # 
+        # n_pns = len(pns)
+        # print(f"{n_points_in_file=} / {n_pns=}")
 
-        df = pd.DataFrame(columns=variable_indices, dtype=int)  # blank df for adding points quicker
-        for i, pn in enumerate(pns):
-            # if df in file has 1001 rows, last i written was 1000, 
-            # so next i needs to be 1001, so skip i < n
-            if i < n_points_in_file:
-                continue
-            if i % 100 == 0:
-                print(f"{i}/{n_pns} points done")
-                print(df)
-            pc = icm.get_point_code_from_point_number(pn)
-            variables = db.get_single_point_all_variables(pn)
-            row_index = pc
-            df.loc[row_index, variables.keys()] = variables.values()
+        # df = pd.DataFrame(columns=variable_indices, dtype=int)  # blank df for adding points quicker
+        # for i, pn in enumerate(pns):
+        #     # if df in file has 1001 rows, last i written was 1000, 
+        #     # so next i needs to be 1001, so skip i < n
+        #     if i < n_points_in_file:
+        #         continue
+        #     if i % 100 == 0:
+        #         print(f"{i}/{n_pns} points done")
+        #         print(df)
+        #     pc = icm.get_point_code_from_point_number(pn)
+        #     variables = db.get_single_point_all_variables(pn)
+        #     row_index = pc
+        #     df.loc[row_index, variables.keys()] = variables.values()
 
-            if i % 10000 == 0 or i >= n_pns - 1:
-                df_in_file = pd.read_hdf("data.h5")
-                df = pd.concat([df_in_file, df])
-                df = df[~df.index.duplicated()]
-                n_points_in_file = len(df.index)
-                df.to_hdf("data.h5", key="df")
-                print("wrote h5")
-                print("total rows so far:", n_points_in_file)
-                df = pd.DataFrame(columns=variable_indices, dtype=int)  # start clean one for next round
-        
-        df_in_file = pd.read_hdf("data.h5")
-        assert len(df_in_file.index) == n_pns
-        print("process complete; all data is stored in data.h5")
+        #     if i % 10000 == 0 or i >= n_pns - 1:
+        #         df_in_file = pd.read_hdf("data.h5")
+        #         df = pd.concat([df_in_file, df])
+        #         df = df[~df.index.duplicated()]
+        #         n_points_in_file = len(df.index)
+        #         df.to_hdf("data.h5", key="df")
+        #         print("wrote h5")
+        #         print("total rows so far:", n_points_in_file)
+        #         df = pd.DataFrame(columns=variable_indices, dtype=int)  # start clean one for next round
+        # 
+        # df_in_file = pd.read_hdf("data.h5")
+        # assert len(df_in_file.index) == n_pns
+        # print("process complete; all data is stored in data.h5")
+
+    def update_control_conditions_from_images(self):
+        control_df = create_control_point_dataframe_from_images(self.metadata["world_name"])
+        lns_with_control = set(control_df.index)
+        lns_with_data = set(self.df.index)
+        lns_with_control_no_data = lns_with_control - lns_with_data
+        lns_with_data_no_control = lns_with_data - lns_with_control
+        print(f"{len(lns_with_control)} points have control conditions")
+        print(f"{len(lns_with_data)} points have data")
+        print(f"{len(lns_with_control_no_data)} points have control conditions but no data")
+        print(f"{len(lns_with_data_no_control)} points have data but no control conditions")
+
+        # any point that now has a control condition (from the images, not from what was saved in the df before)
+        # - will have its condition set to that new one
+        # - but its value will not be touched (let the elevation generation take care of that)
+        # any other point, even if the df had a condition for it before, is set to having no condition (the interpolation will run again, or if there is no interpolation being done for conditions, then those points will just be conditionless and we'll rely on the nearby control points to keep them in line)
+        for control_variable in control_df.columns:
+            assert control_variable.endswith("_condition"), control_variable
+            self.df[control_variable] = -1  # reset all of them to unknown condition
+            self.df.loc[control_df.index, control_variable] = control_df[control_variable]  # set the ones with new conditions
+
+        control_df.to_hdf(get_control_data_fp(self.root_dir), "control_data")
+        self.write_hdf()
+
+        print("- done updating control conditions in the database from images")
 
 
 
@@ -606,10 +625,24 @@ def check_no_trailing_zeros_in_point_codes(pcs):
         assert pc[-1] != "0", f"can't add point code with trailing zeros to database, {pc=}"
 
 
+def get_control_data_fp(db_root_dir):
+    return os.path.join(db_root_dir, "control_data.h5")
+
+
+def get_data_fp(db_root_dir):
+    return os.path.join(db_root_dir, "data.h5")
+
+
+def get_metadata_fp(db_root_dir):
+    return os.path.join(db_root_dir, "metadata.txt")
+
+
 def initialize_default_value_dataframe_from_control_points(db_root_dir):
     # might need to use this later once more variables are added as control point images
-    control_data_fp = os.path.join(db_root_dir, "control_data.h5")
-    data_fp = os.path.join(db_root_dir, "data.h5")
+    control_data_fp = get_control_data_fp(db_root_dir)
+    data_fp = get_data_fp(db_root_dir)
+    if os.path.exists(data_fp):
+        raise Exception(f"database would be overwritten: {data_fp}")
     df = pd.read_hdf(control_data_fp).copy(deep=True)
     default_values = {
         "elevation": get_default_values_of_conditions("Cada II", "elevation"),
@@ -619,7 +652,7 @@ def initialize_default_value_dataframe_from_control_points(db_root_dir):
     df.insert(list(df.columns).index("volcanism_condition")+1, "volcanism", [default_values["volcanism"][x] for x in df["volcanism_condition"]])
     print(df)
     df.to_hdf(data_fp, "data")
-    print("wrote default values to data.h5")
+    print(f"wrote default values to {data_fp}")
 
 
 

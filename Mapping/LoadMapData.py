@@ -506,7 +506,20 @@ def get_all_map_variable_names(world_name):
     return vars
 
 
-def get_control_point_dataframe(world_name):
+def flatten_list(lst):
+    assert type(lst) is list
+    res = []
+    for x in lst:
+        if type(x) is list:
+            x = flatten_list(x)
+            res += x
+        else:
+            res.append(x)
+    return res
+
+
+def create_control_point_dataframe_from_images(world_name):
+    print("creating control point dataframe from images")
     # make a dataframe with all control conditions for all variables
     region_metadata = get_region_metadata_dict()
     map_variables = get_all_map_variable_names(world_name)
@@ -514,14 +527,14 @@ def get_control_point_dataframe(world_name):
     for region_name in region_metadata.keys():
         region_df = pd.DataFrame(columns=[f"{x}_condition" for x in map_variables], dtype=np.int8)
         pc_arr = get_image_pixel_to_icosa_point_code_from_memo(region_name)
-        pcs = pc_arr.flatten()
+        pcs = flatten_list(pc_arr)
         lns = icm.get_prefix_lookup_numbers_from_point_codes(pcs)
         test_ln = lns[0]
         print(f"{test_ln=}")
         for var in map_variables:
             colname = f"{var}_condition"
             condition_arr = get_condition_int_array_for_region(region_name, var)
-            assert condition_arr.shape == pc_arr.shape
+            assert np.array(condition_arr).shape == np.array(pc_arr).shape
             print(f"adding {colname} in region {region_name} to DataFrame")
             conditions = condition_arr.flatten()
             max_condition = conditions.max()
@@ -534,7 +547,7 @@ def get_control_point_dataframe(world_name):
         region_dfs.append(region_df)
     df = pd.concat(region_dfs)
     # df["pc"] = icm.get_point_codes_from_point_numbers(df.index)
-    print("-- done getting control point dataframe")
+    print("-- done creating control point dataframe from images")
     return df
 
 
@@ -585,13 +598,13 @@ if __name__ == "__main__":
     world_metadata = get_world_metadata_dict()["Cada II"]
     map_variable = "elevation"
 
-    d = get_point_code_to_condition_dict_for_world(world_name, map_variable)
+    # d = get_point_code_to_condition_dict_for_world(world_name, map_variable)
     
     # plot_default_values_by_region(world_name, map_variable)
     # plot_conditions_by_region(world_name, map_variable)
 
-    # df = get_control_point_dataframe(world_name)
-    # df.to_hdf("control_data.h5", key="control_data")
+    df = create_control_point_dataframe_from_images(world_name)
+    df.to_hdf("control_data.h5", key="control_data")
 
     # for region_name in region_metadata.keys():
     #     # write_image_conditions_as_image_shape_in_shorthand(region_name, map_variable)
