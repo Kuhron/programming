@@ -236,7 +236,7 @@ def run_region_generation(db, planet_radius_km, xyzg):
     power_law = lambda: np.random.power(power_law_param)  # will be a fraction of region radius
     el_stdev = np.random.uniform(5, 25)
     resolution_iterations = 9
-    n_circles = 100
+    n_circles = 1000
 
     # to choose random one
     ## region_center_pc = icm.get_random_point_code(min_iterations=6, expected_iterations=9, max_iterations=9, prefix=desired_point_prefix)
@@ -248,13 +248,13 @@ def run_region_generation(db, planet_radius_km, xyzg):
     # )
 
     # to choose based on some condition
-    # lns_ocean = df.index[df["elevation_condition"] == 0]
-    lns_coast = df.index[df["elevation_condition"] == 1]
-    # lns_land = df.index[df["elevation_condition"] == 2]
-    # lns_shallow = df.index[df["elevation_condition"] == 3]
+    # lns_ocean = df.index[df["elevation_condition"] == 1]
+    lns_coast = df.index[df["elevation_condition"] == 2]
+    # lns_land = df.index[df["elevation_condition"] == 3]
+    # lns_shallow = df.index[df["elevation_condition"] == 4]
     ## region_center_ln = random.choice(list(lns_ocean) + list(lns_coast) + list(lns_land) + list(lns_shallow))
-    ## region_center_ln = random.choice(df.index[df["elevation_condition"] != -1])
-    region_center_ln = random.choice(lns_coast)
+    region_center_ln = random.choice(df.index[df["elevation_condition"] != -1])
+    # region_center_ln = random.choice(lns_coast)
     region_center_pc = icm.get_point_code_from_prefix_lookup_number(region_center_ln)
 
     circle_radius_dist = lambda: power_law() * region_radius_gc
