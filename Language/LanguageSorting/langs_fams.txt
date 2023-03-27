@@ -10,6 +10,7 @@ Breton < Brythonic < Celtic < Indo-European
 Cantonese < Sinitic < Trans-Himalayan
 Cashibo-Cacataibo < Panoan
 Classical Tupi < Tupian
+Cayuse
 Danish < North Germanic < Germanic < Indo-European
 Dari < Persian < Iranian < Indo-Iranian < Indo-European
 Diidxaza < Zapotecan < Oto-Manguean
@@ -38,15 +39,18 @@ Japanese
 Jaqaru < Aymaran
 Khmer < Austroasiatic
 Korean
+Molalla
+Kalapuya
 Latvian < Baltic < Balto-Slavic < Indo-European
 Mandarin < Sinitic < Trans-Himalayan
 Manx < Goidelic < Celtic < Indo-European
 Maori < Polynesian < Oceanic < Malayo-Polynesian < Austronesian
 Mapudungun
 Min < Sinitic < Trans-Himalayan
-Nepali < Indic < Indo-Iranian < Indo-European
+Nahuatl < Uto-Aztecan
 Nepali < Indic < Indo-Iranian < Indo-European
 Norwegian < North Germanic < Germanic < Indo-European
+Northern Paiute < Uto-Aztecan
 Polish < West Slavic < Slavic < Balto-Slavic < Indo-European
 Portuguese < Romance < Indo-European
 Quechua < Quechuan
@@ -58,13 +62,55 @@ Samoan < Polynesian < Oceanic < Malayo-Polynesian < Austronesian
 Serbian < South Slavic < Slavic < Balto-Slavic < Indo-European
 Shipibo-Conibo < Panoan
 Slovak < West Slavic < Slavic < Balto-Slavic < Indo-European
+Shoshone < Uto-Aztecan
+Chinook < Chinookan
+Wasco-Wishram < Chinookan
+Ichishkiin < Sahaptian < Plateau Penutian
+Nez Perce < Sahaptian < Plateau Penutian
+Clatskanie < Athabaskan < Na-Dene < Dene-Yeniseian
+Navajo < Athabaskan < Na-Dene < Dene-Yeniseian
+Apache < Athabaskan < Na-Dene < Dene-Yeniseian
+Tlingit < Na-Dene < Dene-Yeniseian
+Eyak < Na-Dene < Dene-Yeniseian
+Mohawk < Iroquoian
+Cherokee < Iroquoian
+Seneca < Iroquoian
+Tuscarora < Iroquoian
+Lakota < Sioux < Siouan
+Dakota < Sioux < Siouan
+Nakoda < Sioux < Siouan
+Hidatsa < Siouan
+Assiniboine < Siouan
+Cree < Algonquian < Algic
+Wiyot < Algic
+Yurok < Algic
+Cheyenne < Algonquian < Algic
+Arapaho < Algonquian < Algic
+Ojibwe < Algonquian < Algic
+Klamath < Plateau Penutian
+Modoc < Plateau Penutian
+Alsea
+Coos
+Siuslaw
+Tillamook < Salishan
+Lushootseed < Salishan
+Halkomelem < Salishan
+Squamish < Salishan
+Takelma
+Pipil < Uto-Aztecan
+Horokoi < Madang < Trans-New Guinea
+Sgi Bara < Madang < Trans-New Guinea
+Kursav < Sogeram < Madang < Trans-New Guinea
+Sirva < Sogeram < Madang < Trans-New Guinea
+Gants < Sogeram < Madang < Trans-New Guinea
+Mum < Sogeram < Madang < Trans-New Guinea
 Slovene < South Slavic < Slavic < Balto-Slavic < Indo-European
 Spanish < Romance < Indo-European
 Swedish < North Germanic < Germanic < Indo-European
 Tagalog < Philippine < Malayo-Polynesian < Austronesian
 Taino < Arawakan
 Tajik < Persian < Iranian < Indo-Iranian < Indo-European
-Thai < Kra-Dai
+Thai < Tai-Kadai
 Tibetan < Tibetic < Trans-Himalayan
 Tongan < Polynesian < Oceanic < Malayo-Polynesian < Austronesian
 Ukrainian < East Slavic < Slavic < Balto-Slavic < Indo-European
