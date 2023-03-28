@@ -104,17 +104,6 @@ def test_color_space_conversion(R,G,B):
     R1, G1, B1 = hr1(H,S,V)
     R2, G2, B2 = hr2(H,S,V)
 
-    # debug
-    # r2_bad_mask = abs(R-R2) >= 1e-9
-    # print("R", R[r2_bad_mask])
-    # print("G", G[r2_bad_mask])
-    # print("B", B[r2_bad_mask])
-    # print("H", H[r2_bad_mask])
-    # print("S", S[r2_bad_mask])
-    # print("V", V[r2_bad_mask])
-    # print("R1", R1[r2_bad_mask])
-    # print("R2", R2[r2_bad_mask])
-
     assert (abs(R - R1) < 1e-9).all(), abs(R-R1).max()
     assert (abs(R - R2) < 1e-9).all(), abs(R-R2).max()
     assert (abs(G - G1) < 1e-9).all(), abs(G-G1).max()
@@ -133,7 +122,6 @@ def rotate_hue(im, rotation_deg):
     arr = arr / 256
     assert (0 <= arr).all() and (arr <= 1).all(), f"min: {arr.min()}, max: {arr.max()}"
     R,G,B = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2]
-    test_color_space_conversion(R,G,B)  # debug
     H,S,V = rgb_to_hsv(R,G,B)
     # print("hue min:", H.min(), ", hue max:", H.max())
     rotation_01 = 1/360 * rotation_deg
@@ -155,11 +143,11 @@ def rotate_hue(im, rotation_deg):
 if __name__ == "__main__":
     photo_dir = "/home/wesley/Desktop/IPhone Media/IPhone Media Temp Storage/"
     test_photos = [
-        # "2022-03-30/20220330_230210.jpg",
-        "2022-11-12/20221112_221842.jpg",
-        "2022-10-17/20221017_234754.jpg",
-        "2022-10-15/20221015_210842.jpg",
-        "2022-09-14/20220914_001143.jpg",
+        "2022-03-30/20220330_230210.jpg",  # done
+        # "2022-11-12/20221112_221842.jpg",  # done
+        # "2022-10-17/20221017_234754.jpg",  # done
+        # "2022-10-15/20221015_210842.jpg",  # done
+        # "2022-09-14/20220914_001143.jpg",  # done
     ]
     fps = [os.path.join(photo_dir, fp) for fp in test_photos]
 
@@ -173,12 +161,12 @@ if __name__ == "__main__":
     output_dir = "Images/HueRotation"
     for fp in fps:
         # rotation_deg = random.randrange(360)
-        for rotation_deg in range(0, 360, 15):
-            print(f"rotating hue by {rotation_deg} deg: {fp}")
+        for rotation_deg in range(0, 360, 1):
+            print(f"rotating hue by {rotation_deg:03d} deg: {fp}")
             im = Image.open(fp)
             im = rotate_hue(im, rotation_deg)
             fname = os.path.basename(fp)
-            new_fname = f"{rotation_deg}deg_" + fname
+            new_fname = f"{rotation_deg:03d}deg_" + fname
             new_fp = os.path.join(output_dir, new_fname)
             print(f"saved to {new_fp}")
             im.save(new_fp)
