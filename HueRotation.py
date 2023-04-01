@@ -143,31 +143,37 @@ def rotate_hue(im, rotation_deg):
 if __name__ == "__main__":
     photo_dir = "/home/wesley/Desktop/IPhone Media/IPhone Media Temp Storage/"
     test_photos = [
-        "2022-03-30/20220330_230210.jpg",  # done
-        # "2022-11-12/20221112_221842.jpg",  # done
-        # "2022-10-17/20221017_234754.jpg",  # done
-        # "2022-10-15/20221015_210842.jpg",  # done
-        # "2022-09-14/20220914_001143.jpg",  # done
+        # "2022-03-30/20220330_230210.jpg",
+        # "2022-11-12/20221112_221842.jpg",
+        # "2022-10-17/20221017_234754.jpg",
+        # "2022-10-15/20221015_210842.jpg",
+        # "2022-09-14/20220914_001143.jpg",
+        # "2019-12-21/20191221_203951.jpg",
+        # "2018-07-11/IMG_1408.JPG",  # too overexposed
+        # "2017-11-16/IMG_9155.JPG",
+        # "2022-06-27/20220627_002539.jpg",
+        "2018-06-30/IMG_1340.JPG",
     ]
     fps = [os.path.join(photo_dir, fp) for fp in test_photos]
 
-    R = np.random.random((5000,))
-    G = np.random.random((5000,))
-    B = np.random.random((5000,))
-    test_color_space_conversion(R,G,B)
+    # debug
+    # R = np.random.random((5000,))
+    # G = np.random.random((5000,))
+    # B = np.random.random((5000,))
+    # test_color_space_conversion(R,G,B)
 
     # n_images = 500
     # fps = get_random_image_fps(n_images)
     output_dir = "Images/HueRotation"
     for fp in fps:
         # rotation_deg = random.randrange(360)
-        for rotation_deg in range(0, 360, 1):
+        im = Image.open(fp)
+        for rotation_deg in range(0, 360, 4):
             print(f"rotating hue by {rotation_deg:03d} deg: {fp}")
-            im = Image.open(fp)
-            im = rotate_hue(im, rotation_deg)
+            new_im = rotate_hue(im, rotation_deg)
             fname = os.path.basename(fp)
             new_fname = f"{rotation_deg:03d}deg_" + fname
             new_fp = os.path.join(output_dir, new_fname)
             print(f"saved to {new_fp}")
-            im.save(new_fp)
+            new_im.save(new_fp)
 

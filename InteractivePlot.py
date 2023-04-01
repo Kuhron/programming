@@ -136,6 +136,12 @@ class InteractivePlot():
     def gca(self, *args, **kwargs):
         return plt.gca(*args, **kwargs)
 
+    def xlim(self, *args, **kwargs):
+        return plt.xlim(*args, **kwargs)
+
+    def ylim(self, *args, **kwargs):
+        return plt.ylim(*args, **kwargs)
+
     @if_open
     def savefig(self, *args, **kwargs):
         print(f"saving fig at {args[0]}")
