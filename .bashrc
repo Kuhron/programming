@@ -242,10 +242,10 @@ export INFOPATH=$INFOPATH:/usr/local/texlive/2022/texmf-dist/doc/info
 export MANPATH=$MANPATH:/usr/local/texlive/2022/texmf-dist/doc/man
 
 # python3 virtualenvwrapper
+export WORKON_HOME=~/.virtualenvs
 export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3.8
-export VIRTUALENVWRAPPER_VIRTUALENV=/usr/local/bin/virtualenv
-source /usr/local/bin/virtualenvwrapper.sh
-
+export VIRTUALENVWRAPPER_VIRTUALENV=/usr/bin/virtualenv
+source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
 
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
