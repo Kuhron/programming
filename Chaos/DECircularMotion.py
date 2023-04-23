@@ -23,6 +23,7 @@ plt.scatter(xs1, ys1, alpha=0.7)
 # now we adjust the angle of the motion so it stays on the correct circle
 dx = lambda x, y, dt: x * np.cos(2*np.pi*dt) - y * np.sin(2*np.pi*dt) - x
 dy = lambda x, y, dt: y * np.cos(2*np.pi*dt) + x * np.sin(2*np.pi*dt) - y
+# if we treat higher powers of dt as negligible, then we get that sin(2 pi dt) = 2 pi dt and cos(2 pi dt) = 1, which causes these difference equations to reduce to the previous ones, so we need higher order terms of dt
 
 xs2, ys2 = get_trajectory_of_differential_equation([dx, dy], [x0, y0], 1, 0.01, 1e6)
 
@@ -31,4 +32,5 @@ plt.scatter([x0], [y0], c="k", marker="x")
 plt.savefig("Images/DECircle.png")
 plt.gcf().clear()
 
+# being able to make this correction relies on knowing the closed form of the trajectory so you can just subtract trajectory positions and simplify the expression, so yeah this won't work in general for a differential equation whose path you don't know
 
