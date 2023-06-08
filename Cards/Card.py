@@ -41,6 +41,7 @@ class DeckOfCards:
 
     def shuffle(self):
         random.shuffle(self.cards)
+        self.generator = self.deal()
 
     def deal(self):
         for card in self.cards:
@@ -54,7 +55,8 @@ class DeckOfCards:
 
 
 class Player:
-    def __init__(self):
+    def __init__(self, designation):
+        self.designation = designation
         self.hand = []
         self.opponents = []
 
@@ -89,6 +91,9 @@ class Player:
 
     def has_won(self):
         raise NotImplementedError
+
+    def __repr__(self):
+        return f"Player {self.designation}"
 
 
 class PlayerSet:
