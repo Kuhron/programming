@@ -64,7 +64,7 @@ def send_freq_to_stream(freq, seconds, stream, initial_click=False):
 
 
 def send_signal_to_stream(ys, stream):
-    ys_bytes = ys.astype("Int8").tobytes()
+    ys_bytes = ys.astype(np.int8).tobytes()
 
     # split into segments so it's not all sent at once, blocking the program from exiting with Ctrl-C
     seg_length = 1024  # even a few-second wav signal is ~50k
@@ -103,7 +103,7 @@ def write_signal_to_wav(signal, filepath, rate=RATE, amplitude_fraction=0.8):
         spf.setsampwidth(2)
         spf.setframerate(rate)
         spf.setnframes(len(signal))
-        spf.writeframes(signal.astype("Int16").tobytes())
+        spf.writeframes(signal.astype(np.int16).tobytes())
 
 
 def read_wav_to_array(filepath):
