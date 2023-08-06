@@ -29,9 +29,9 @@ def get_points_by_association(dim):
     g = nx.Graph()
     for i in range(n):
         g.add_node(i)
-    attributes = np.random.uniform(-1, 1, (n, 4))  # do fewer dimensions if points are still too centrally clustered
+    attributes = np.random.uniform(-1, 1, (n, 1))  # do fewer dimensions if points are still too centrally clustered
     attributes = mod_unit_sphere(attributes)
-    nbrs = NearestNeighbors(n_neighbors=5, algorithm='ball_tree').fit(attributes)
+    nbrs = NearestNeighbors(n_neighbors=6, algorithm='ball_tree').fit(attributes)
     _, indices = nbrs.kneighbors(attributes)
     for i in range(n):
         neighbor_indices = indices[i][1:]
