@@ -24,14 +24,14 @@ def get_points_by_association(dim):
     assert dim == 2 or dim == 3
 
     n = 1000
-    n_steps = 200
+    n_steps = 50
 
     g = nx.Graph()
     for i in range(n):
         g.add_node(i)
-    attributes = np.random.uniform(-1, 1, (n, 4))  # do fewer dimensions if points are still too centrally clustered
+    attributes = np.random.uniform(-1, 1, (n, 3))  # do fewer dimensions if points are still too centrally clustered
     attributes = mod_unit_sphere(attributes)
-    nbrs = NearestNeighbors(n_neighbors=5, algorithm='ball_tree').fit(attributes)
+    nbrs = NearestNeighbors(n_neighbors=6, algorithm='ball_tree').fit(attributes)
     _, indices = nbrs.kneighbors(attributes)
     for i in range(n):
         neighbor_indices = indices[i][1:]
@@ -71,8 +71,8 @@ def mod_unit_sphere(pos):
 
 
 if __name__ == "__main__":
-    dim = 3
-    mds = True
+    dim = 2
+    mds = False
     axis = False
 
     if dim == 2:
@@ -80,6 +80,7 @@ if __name__ == "__main__":
         plt.scatter(xs, ys)
         ax = plt.gca()
         ax.set_aspect('equal', adjustable='box')
+        coords = np.array([xs, ys]).T
     elif dim == 3:
         xs, ys, zs = get_points(dim)
 
@@ -88,14 +89,22 @@ if __name__ == "__main__":
             plt.scatter(xs, ys)
             ax = plt.gca()
             ax.set_aspect('equal', adjustable='box')
+            coords = np.array([xs, ys]).T
         else:
             fig = plt.figure()
             ax = fig.add_subplot(projection='3d')
             ax.scatter(xs, ys, zs)
+            coords = np.array([xs, ys, zs]).T
     else:
         raise ValueError(dim)
 
     if not axis:
         ax.set_axis_off()
     plt.show()
+
+    if input("save csv? (y for yes)") == "y":
+        with open("cluster_data.csv", "w") as f:
+            for row in coords:
+                s = ",".join(str(x) for x in row) + "\n"
+                f.write(s)
 
