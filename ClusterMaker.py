@@ -24,14 +24,14 @@ def get_points_by_association(dim):
     assert dim == 2 or dim == 3
 
     n = 1000
-    n_steps = 50
+    n_steps = 70
 
     g = nx.Graph()
     for i in range(n):
         g.add_node(i)
-    attributes = np.random.uniform(-1, 1, (n, 3))  # do fewer dimensions if points are still too centrally clustered
+    attributes = np.random.uniform(-1, 1, (n, 4))  # do fewer dimensions if points are still too centrally clustered
     attributes = mod_unit_sphere(attributes)
-    nbrs = NearestNeighbors(n_neighbors=6, algorithm='ball_tree').fit(attributes)
+    nbrs = NearestNeighbors(n_neighbors=4, algorithm='ball_tree').fit(attributes)
     _, indices = nbrs.kneighbors(attributes)
     for i in range(n):
         neighbor_indices = indices[i][1:]
@@ -44,9 +44,11 @@ def get_points_by_association(dim):
         if step_i % 10 == 0:
             print(f"step {step_i}/{n_steps}")
         distances = distance_matrix(positions, positions)  # will change
+        nbrs = NearestNeighbors(n_neighbors=18, algorithm='ball_tree').fit(positions)  # include some gravity from actual spatial neighbors as well
+        _, nbr_indices = nbrs.kneighbors(positions)
         new_positions = np.zeros((n, dim))
         for i in range(n):
-            neighbors_index = np.array([x for x in g.neighbors(i)])
+            neighbors_index = np.array(list(set(x for x in g.neighbors(i)) | set(j for j in nbr_indices[i] if j != i)))
             displacements = positions[neighbors_index] - positions[i]  # needed for what direction we'll move in
             mags = (lambda r: 1/(1e-9+r)**2)(distances[i, neighbors_index])
             # forces = (lambda w: -1 + w*(1 - -1))(similarities[i, not_self_index]) * mags
