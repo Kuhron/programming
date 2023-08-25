@@ -44,7 +44,7 @@ def get_points_by_association(dim):
         if step_i % 10 == 0:
             print(f"step {step_i}/{n_steps}")
         distances = distance_matrix(positions, positions)  # will change
-        nbrs = NearestNeighbors(n_neighbors=18, algorithm='ball_tree').fit(positions)  # include some gravity from actual spatial neighbors as well
+        nbrs = NearestNeighbors(n_neighbors=6, algorithm='ball_tree').fit(positions)  # include some gravity from actual spatial neighbors as well
         _, nbr_indices = nbrs.kneighbors(positions)
         new_positions = np.zeros((n, dim))
         for i in range(n):
