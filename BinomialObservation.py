@@ -48,6 +48,14 @@ class BinomialObservation:
         w1, w2 = self.get_wilson_ci(confidence_level)
         return w2 - w1
 
+    def get_centered_wilson_estimator(self, confidence_level):
+        # 1-p of the way from lower to upper bound, so it's more toward 50% to reflect uncertainty
+        s = self.successes
+        n = self.trials
+        p_hat = s/n
+        lower, upper = self.get_wilson_ci(confidence_level)
+        return lower + (1-p_hat) * (upper-lower)
+
     def choose_random_possible_probability(self):
         # the real way to do this fairly would be invert the Wilson CI as function of confidence, normalize that integral to 1,
         # and choose a binomial p from that (i.e., weighted choice of probability by how much it shows up in confidence intervals)
