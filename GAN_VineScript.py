@@ -15,6 +15,8 @@ import PIL
 # based on tutorial at https://www.tensorflow.org/tutorials/generative/dcgan
 
 
+raise Exception("do not use, too memory-intensive")
+
 def get_array_from_image_fp(fp):
     im = PIL.Image.open(fp)
     im_rgb = im.convert("RGB")
