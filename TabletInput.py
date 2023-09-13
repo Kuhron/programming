@@ -8,6 +8,8 @@ from datetime import datetime
 
 # https://groups.google.com/g/pyglet-users/c/NnF2xH_5GSY?pli=1
 
+MIN_PRESSURE_FOR_STROKE = 0.001
+
 def get_tablets(display=None):
     # Each cursor appears as a separate xinput device; find devices that look
     # like Wacom tablet cursors and amalgamate them into a single tablet. 
@@ -23,74 +25,6 @@ def get_tablets(display=None):
     return []
 
 
-window_x = 540
-window_y = 540
-window = pyglet.window.Window(window_x, window_y)
-batch = pyglet.graphics.Batch()
-
-tablet = pyglet.input.get_tablets()[0]
-tablet_canvas = tablet.open(window)
-t0 = time.time()
-motion_data = []
-last_touch_point = None
-lines = []  # so the line object won't be garbage collected before the batch can draw it on the window
-
-
-@tablet_canvas.event
-def on_motion(cursor_name, x, y, pressure, *extra_args):
-    assert all(a == 0 for a in extra_args), extra_args
-    t_ms = (time.time() - t0) * 1000
-    x_01 = x / window_x
-    y_01 = y / window_y
-
-    global last_touch_point  # seems like a bad idea but whatever, people are doing it
-    if last_touch_point is not None or pressure > 0:
-        # don't keep track of all the non-touching events
-        motion_data.append([t_ms, x_01, y_01, pressure])
-
-    print(f"t = {int(t_ms)} ms, x = {x_01:.6f}, y = {y_01:.6f}, {pressure = :.6f}")
-
-    if pressure == 0:
-        last_touch_point = None
-    else:
-        if last_touch_point is not None:
-            # draw most recent line segment
-            x1, y1 = last_touch_point
-            x2, y2 = x, y
-            line = pyglet.shapes.Line(x1, y1, x2, y2, color=(255, 255, 0), batch=batch)
-            global lines
-            lines.append(line)
-        last_touch_point = (x, y)
-
-
-@window.event
-def on_draw():
-    # gets called constantly throughout the running of the app
-    window.clear()
-    batch.draw()
-
-
-@window.event
-def on_key_press(symbol, modifiers):
-    global motion_data
-    if symbol == pyglet.window.key.SPACE or symbol == pyglet.window.key.ENTER:
-        if symbol == pyglet.window.key.ENTER:
-            # write data to file for NN training
-            now_str = datetime.utcnow().strftime("%Y-%m-%d-%H:%M:%S")
-            output_fp = f"VineScriptTabletInputData/{now_str}.tsv"
-            with open(output_fp, "w") as f:
-                f.write("time_ms\tx_01\ty_01\tpressure_01\n")
-                for t, x, y, p in motion_data:
-                    f.write(f"{t}\t{x}\t{y}\t{p}\n")
-        # clear the window and lines, reset time
-        global t0
-        t0 = time.time()
-        global lines
-        lines = []
-        motion_data = []
-        window.clear()
-
-
 def get_array_from_data_fp(fp):
     with open(fp) as f:
         lines = f.readlines()
@@ -98,51 +32,161 @@ def get_array_from_data_fp(fp):
         lines.remove("")
     assert lines[0].startswith("time_ms")  # header row
     l = [[float(x) for x in line.strip().split("\t")] for line in lines[1:]]
+    l = np.array(l)
+    assert l.shape[-1] == 4
+    xs = l[:, 1]
+    ys = l[:, 2]
     return l
 
 
-def plot_time_series(arr):
-    l = arr
-    ts = [x[0] for x in l]
-    xs = [x[1] for x in l]
-    ys = [x[2] for x in l]
-    ps = [x[3] for x in l]
+def plot_time_series(l, show=True):
+    assert type(l) is np.ndarray
+    n_ticks, n_cols = l.shape
+    if n_cols == 4:
+        ts = l[:, 0]
+        xs = l[:, 1]
+        ys = l[:, 2]
+        ps = l[:, 3]
+    elif n_cols == 3:
+        # no time specified
+        ts = list(range(l.shape[0]))
+        xs = l[:, 0]
+        ys = l[:, 1]
+        ps = l[:, 2]
+    else:
+        raise ValueError(f"bad shape {l.shape}")
 
     # time series of x, y, and pressure values
     plt.scatter(ts, xs, label="x", c="r")
     plt.scatter(ts, ys, label="y", c="b")
     plt.scatter(ts, ps, label="p", c="y")
     plt.legend()
-    plt.show()
+    if show:
+        plt.show()
 
 
-def draw_glyph(arr):
+def draw_glyph(l, show=True):
     # draw the shape that the data describes
     # I think the NN can completely ignore time? it just has a series of x,y values (and whether the pen lifts)
+    assert type(l) is np.ndarray
     strokes = []
     current_stroke = []
-    l = arr
+    n_cols = l.shape[-1]
     for i in range(len(l)):
-        t,x,y,p = l[i]
+        if n_cols == 4:
+            t,x,y,p = l[i]
+        elif n_cols == 3:
+            x,y,p = l[i]
+        else:
+            raise ValueError(f"bad shape: {l.shape}")
         current_stroke.append([x, y])
-        if p == 0:
+        if p < MIN_PRESSURE_FOR_STROKE or i == len(l) - 1:
             # end of this stroke
             strokes.append(current_stroke)
             current_stroke = []
-        if i == len(l) - 1:
-            assert p == 0, l[i]
+
+        # if i == len(l) - 1:
+        #     assert p == 0, l[i]  # not necessarily true for NN-generated ones
     for stroke in strokes:
         xs = [xy[0] for xy in stroke]
         ys = [xy[1] for xy in stroke]
         plt.plot(xs, ys, c="k")
     plt.axis("equal")
-    plt.show()
+    if show:
+        plt.show()
+
+
+def write_data_to_file(arr, output_fp):
+    if type(arr) is not np.ndarray:
+        arr = np.array(arr)
+    n_ticks, n_cols = arr.shape
+    with open(output_fp, "w") as f:
+        f.write("time_ms\tx_01\ty_01\tpressure_01\n")
+        for i in range(n_ticks):
+            if n_cols == 4:
+                t,x,y,p = arr[i]
+            elif n_cols == 3:
+                t = i
+                x,y,p = arr[i]
+            else:
+                raise ValueError(f"bad shape {arr.shape}")
+            f.write(f"{t}\t{x}\t{y}\t{p}\n")
+
+
+
 
 
 
 if __name__ == "__main__":
     collect_data = True
     plot_data = True
+
+    window_x = 540
+    window_y = 540
+    window = pyglet.window.Window(window_x, window_y)
+    batch = pyglet.graphics.Batch()
+
+    tablet = pyglet.input.get_tablets()[0]
+    tablet_canvas = tablet.open(window)
+    t0 = time.time()
+    motion_data = []
+    last_touch_point = None
+    last_x_01, last_y_01 = 0, 0
+    lines = []  # so the line object won't be garbage collected before the batch can draw it on the window
+
+
+    @tablet_canvas.event
+    def on_motion(cursor_name, x, y, pressure, *extra_args):
+        assert all(a == 0 for a in extra_args), extra_args
+        t_ms = (time.time() - t0) * 1000
+        x_01 = x / window_x
+        y_01 = y / window_y
+
+        global last_touch_point  # seems like a bad idea but whatever, people are doing it
+        if last_touch_point is not None or pressure >= MIN_PRESSURE_FOR_STROKE:
+            # don't keep track of all the non-touching events
+            motion_data.append([t_ms, x_01, y_01, pressure])
+
+        print(f"t = {int(t_ms)} ms, x = {x_01:.6f}, y = {y_01:.6f}, {pressure = :.6f}")
+
+        if pressure < MIN_PRESSURE_FOR_STROKE:
+            last_touch_point = None
+        else:
+            if last_touch_point is not None:
+                # draw most recent line segment
+                x1, y1 = last_touch_point
+                x2, y2 = x, y
+                line = pyglet.shapes.Line(x1, y1, x2, y2, color=(255, 255, 0), batch=batch)
+                global lines
+                lines.append(line)
+            last_touch_point = (x, y)
+
+
+    @window.event
+    def on_draw():
+        # gets called constantly throughout the running of the app
+        window.clear()
+        batch.draw()
+
+
+    @window.event
+    def on_key_press(symbol, modifiers):
+        global motion_data
+        if symbol == pyglet.window.key.SPACE or symbol == pyglet.window.key.ENTER:
+            if symbol == pyglet.window.key.ENTER:
+                # write data to file for NN training
+                now_str = datetime.utcnow().strftime("%Y-%m-%d-%H:%M:%S")
+                output_fname = f"{now_str}.tsv"
+                output_fp = os.path.join("VineScriptTabletInputData", output_fname)
+                write_data_to_file(motion_data, output_fp)
+            # clear the window and lines, reset time
+            global t0
+            t0 = time.time()
+            global lines
+            lines = []
+            motion_data = []
+            window.clear()
+
 
     if collect_data:
         window.clear()
@@ -157,6 +201,7 @@ if __name__ == "__main__":
         for fp in data_fps:
             l = get_array_from_data_fp(fp)
             print(fp)
+            # plot_time_series(l)
             draw_glyph(l)
 
 

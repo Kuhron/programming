@@ -3,7 +3,7 @@ silence_tensorflow()  # these warnings are super annoying and useless
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-import tensorflow_addons as tfa
+# from tensorflow.keras.utils.generic_utils import get_custom_objects
 
 import os
 import numpy as np
@@ -11,13 +11,14 @@ import matplotlib.pyplot as plt
 import random
 import time
 import PIL
+import glob
 
-# based on tutorial at https://www.tensorflow.org/tutorials/generative/dcgan
+from TabletInput import get_array_from_data_fp, draw_glyph, plot_time_series, write_data_to_file, MIN_PRESSURE_FOR_STROKE
 
 
-raise Exception("do not use, too memory-intensive")
 
 def get_array_from_image_fp(fp):
+    raise Exception("do not use, too memory-intensive")
     im = PIL.Image.open(fp)
     im_rgb = im.convert("RGB")
     a = np.array(im_rgb)
@@ -30,12 +31,14 @@ def get_array_from_image_fp(fp):
 
 
 def get_train_image_fps(image_dir):
+    raise Exception("do not use, too memory-intensive")
     img_fps = [os.path.join(image_dir, x) for x in os.listdir(image_dir) if x.endswith(".png")]
     # img_fps = random.sample(img_fps, 5)  # debug
     return img_fps
 
 
 def get_array_from_image_fps(img_fps):
+    raise Exception("do not use, too memory-intensive")
     arrs = []
     for img_fp in img_fps:
         this_arr = get_array_from_image_fp(img_fp)
@@ -44,64 +47,129 @@ def get_array_from_image_fps(img_fps):
 
 
 def get_train_images(image_dir):
+    raise Exception("do not use, too memory-intensive")
     img_fps = get_train_image_fps(image_dir)
     return get_array_from_image_fps(img_fps)
 
 
-image_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptCatalog/"
-# train_images = get_train_images(image_dir)
-img_fps = get_train_image_fps(image_dir)
-n_train_images = len(img_fps)
+def get_training_data_fps(parent_dir):
+    return glob.glob(f"{parent_dir}/**/*.tsv")
 
-print("got training images")
 
-# (train_images, train_labels), (_, _) = tf.keras.datasets.mnist.load_data()
-# train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
-# train_images = train_images.reshape(train_images.shape[0], train_images.shape[1], train_images.shape[2], 1).astype("float32")
-# train_images = (train_images - 127.5) / 127.5  # Normalize the images to [-1, 1]
+def get_training_data_array(training_data_fps):
+    arrs = []
+    n_cols = 3
+    max_n_rows = 0
+    for fp in training_data_fps:
+        l = get_array_from_data_fp(fp)
+        # ignore timestamps for now?
+        l = np.array(l)[:, 1:]
+        r, c = l.shape
+        assert c == n_cols
+        max_n_rows = max(r, max_n_rows)
+        arrs.append(l)
+    # now pad arrays with empty data
+    # or can try expanding them (like "justify margins") or something else to normalize shape
+    arrs = [pad_with_zeros(a, max_n_rows) for a in arrs]
+    arrs = np.array(arrs)
+    return arrs
+
+
+def pad_with_zeros(arr, n_rows):
+    r, c = arr.shape
+    zeros = np.zeros((n_rows - r, c))
+    new_arr = np.concatenate([arr, zeros], axis=0)
+    assert new_arr.shape == (n_rows, c)
+    return new_arr
+
+
+def sigmoid(x):
+    return 1/(1 + tf.math.exp(-x))
+
+
+def inverse_softplus(x):
+    return tf.where(x <= 0, 0*x, tf.math.log(tf.math.exp(x) - 1))
+
+
+def half_sigmoid(x):
+    e = np.exp(1)
+    # return sigmoid(e * inverse_softplus(x))
+    x = tf.where(x <= 0, 1+0*x, x)  # try hacking so no negative x is passed ANYWHERE into the sigmoid stuff (because it seems that a single NaN produced will pollute the whole array with NaNs)
+    return 1/(1+ (tf.math.exp(x) - 1)**(-e))  # simplified algebra to try to avoid NaN for x >= 0; might choose an exponent like -2 rather than -e so that this is still defined at zero?
+
+
+def sigmoid_in_01_box(x):
+    a = 2
+    c = 0.5
+    epsilon = 1e-16
+    return 1/(1+((1/(x+epsilon)-1)**a)*(1/c-1))
+
+
+def half_sigmoid_activation(x):
+    # avoid NaN by making all branches of all .where/.cond functions always differentiable and evaluable everywhere, because tf will evaluate both branches and propagate NaNs up even if they are in a branch that is not chosen
+
+    return tf.where(x <= 0, 0*x, tf.where(x >= 1, 1 + 0*x, sigmoid_in_01_box(x)))
+
+    # true_fn = lambda: 0*x  # so it will have the same "overall structure of return values" (a tensor of zeros or whatever it wants)
+    # false_fn = lambda: half_sigmoid(x)
+    # return tf.cond(x <= 0, true_fn, false_fn)
+
+    # max_0_x = keras.activations.relu(x)
+    # return half_sigmoid(max_0_x)
+
+
+def truncate_low_pressure(x):
+    # so that pressure that's low enough from generator sigmoid can be set to exactly zero,
+    # with minimal impact on x and y coordinates passed through this same function (since I basically never draw so close to the edge)
+    return tf.where(x < MIN_PRESSURE_FOR_STROKE, 0*x, x)
+
+
+
+# image_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptCatalog/"
+training_data_dir = "VineScriptTabletInputData"
+training_data_fps = get_training_data_fps(training_data_dir)
+n_train = len(training_data_fps)
+train_arr = get_training_data_array(training_data_fps)
+assert train_arr.shape[0] == n_train
+n_ticks = train_arr.shape[1]
+n_cols = 3  # x, y, pressure
+assert train_arr.shape[2] == n_cols
+
+print(f"got training data, of shape {train_arr.shape}")
+
 BUFFER_SIZE = 60000
-BATCH_SIZE = 5
-IMAGE_SHAPE = (2220, 1080)
-ROWS, COLS = IMAGE_SHAPE
+BATCH_SIZE = 100
 
 # Batch and shuffle the data
-# print("making dataset")
-# train_dataset = tf.data.Dataset.from_tensor_slices(train_images).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
-# print("made dataset")
+print("making dataset")
+train_dataset = tf.data.Dataset.from_tensor_slices(train_arr).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+print("made dataset")
 
 
 def make_generator_model():
-    # make schedule of how big each layer is, how many filters/strides, etc.
-    image_shapes_by_layer = [
-        (37, 18),
-        # (74, 36),
-        (148, 72),
-        # (444, 216),
-        (2220, 1080),
-    ]
-    # factors_by_layer = [2, 2, 3, 5]
-    factors_by_layer = [148//37, 2220//148]
-    # filters_by_layer = [64, 64, 64, 64, 1]
-    filters_by_layer = [16, 16, 1]
-
     model = tf.keras.Sequential()
 
-    # first layer
-    model.add(layers.Dense(filters_by_layer[0] * image_shapes_by_layer[0][0] * image_shapes_by_layer[0][1], use_bias=False, input_shape=(100,)))
+    model.add(layers.Dense(600, input_shape=(100,)))  # first layer connected to input from latent space
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU())
-    model.add(layers.Reshape((image_shapes_by_layer[0][0], image_shapes_by_layer[0][1], filters_by_layer[0])))
-    assert model.output_shape == (None, image_shapes_by_layer[0][0], image_shapes_by_layer[0][1], filters_by_layer[0])  # Note: None is the batch size
 
-    # subsequent layers with convolution
-    for i in range(1, len(image_shapes_by_layer)):
-        factor = factors_by_layer[i-1]
+    model.add(layers.Dense(600))
+    model.add(layers.LeakyReLU())
 
-        model.add(layers.Conv2DTranspose(filters=filters_by_layer[i], kernel_size=(5, 5), strides=(factor, factor), padding='same', use_bias=False))
-        assert model.output_shape == (None, image_shapes_by_layer[i][0], image_shapes_by_layer[i][1], filters_by_layer[i])
-        if i < len(image_shapes_by_layer) - 1:
-            model.add(layers.BatchNormalization())
-            model.add(layers.LeakyReLU())
+    # DON'T want activation on output layer, want it to be able to return whatever values it wants in the array
+    # (could cause problems trying to get zero pressure though)
+    # ideal would be activate x and y with sigmoid to keep them inside the image,
+    # and activate pressure with ReLU or some kind of half-sigmoid that is zero for input <=0 and goes up to 1
+    # can I make a custom activation function that will behave differently on the different columns like this?
+    # then can train on x and y rather than dx and dy (because the latter has too much cumulative drift making glyphs that go way out of bounds)
+    model.add(layers.Dense(n_ticks * n_cols, activation="sigmoid"))
+    # model.add(layers.Activation(half_sigmoid_activation))  # hopefully with nonzero minimum pressure for stroke, we can use sigmoid so we have gradient everywhere and pressure just has to go sufficiently low rather than all the way to zero
+    model.add(layers.Lambda(truncate_low_pressure))
+
+
+    model.add(layers.Reshape((n_ticks, n_cols)))
+    expected_output_shape = (None, n_ticks, n_cols)  # None is batch size
+    assert model.output_shape == expected_output_shape, f"expected model output shape {expected_output_shape} but got {model.output_shape}"
 
     return model
 
@@ -112,39 +180,28 @@ generator = make_generator_model()
 print("made generator model")
 
 noise = tf.random.normal([1, 100])
-generated_image = generator(noise, training=False)
-
-# plt.imshow(generated_image[0, :, :, 0], cmap='gray')
-# plt.show()
+generated_arr = generator(noise, training=False).numpy()
+assert generated_arr.shape[0] == 1  # 1 sample
+# plot_time_series(generated_arr[0])
+# draw_glyph(generated_arr[0])
 
 
 def make_discriminator_model():
-    # make schedule of how big each layer is, how many filters/strides, etc.
-    image_shapes_by_layer = [
-        (2220, 1080),
-        # (444, 216),
-        (148, 72),
-        # (74, 36),
-        (37, 18),
-    ]
-    # factors_by_layer = [5, 3, 2, 2]
-    factors_by_layer = [2220//148, 148//37]
-    # filters_by_layer = [64, 64, 64, 64, 64]
-    filters_by_layer = [16, 16, 16]
-
     model = tf.keras.Sequential()
-    model.add(layers.Conv2D(filters=filters_by_layer[0], kernel_size=(5, 5), strides=(factors_by_layer[0], factors_by_layer[0]), padding='same', input_shape=[image_shapes_by_layer[0][0], image_shapes_by_layer[0][1], 1]))
+
+    model.add(layers.InputLayer(input_shape=(n_ticks, n_cols)))
+    model.add(layers.Flatten())
+
+    model.add(layers.Dense(600))
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.3))
 
-    for i in range(len(image_shapes_by_layer)):
-        factor = factors_by_layer[i-1]
-        model.add(layers.Conv2D(filters=filters_by_layer[i], kernel_size=(5, 5), strides=(factor, factor), padding='same'))
-        model.add(layers.LeakyReLU())
-        model.add(layers.Dropout(0.3))
+    model.add(layers.Dense(600))
+    model.add(layers.LeakyReLU())
+    model.add(layers.Dropout(0.3))
 
-    model.add(layers.Flatten())
-    model.add(layers.Dense(1))
+    model.add(layers.Dense(1, activation="sigmoid"))  # want logistic regression-like output
+    assert model.output_shape == (None, 1), model.output_shape
 
     return model
 
@@ -153,12 +210,19 @@ def make_discriminator_model():
 print("making discriminator model")
 discriminator = make_discriminator_model()
 print("made discriminator model")
-decision = discriminator(generated_image)
+decision = discriminator(generated_arr)
 print("discriminator's decision about the previously shown random noise image:", decision)
 
 
+# def tf_print(x, message=None):
+#     if message is None:
+#         message = "values: "
+#     x = tf.Print(x, [x], message=message)
+#     return x
+
+
 # This method returns a helper function to compute cross entropy loss
-cross_entropy = tf.keras.losses.BinaryCrossentropy(from_logits=True)
+cross_entropy = tf.keras.losses.BinaryCrossentropy()
 
 
 def discriminator_loss(real_output, fake_output):
@@ -176,7 +240,7 @@ generator_optimizer = tf.keras.optimizers.Adam(1e-4)
 discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
 
 
-checkpoint_dir = './training_checkpoints'
+checkpoint_dir = './NeuralNetFiles/VineScriptGAN_checkpoints'
 checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
 checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
                                  discriminator_optimizer=discriminator_optimizer,
@@ -185,7 +249,7 @@ checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
 print("checkpoint dir declared")
 
 
-EPOCHS = 50
+EPOCHS = 2000
 noise_dim = 100
 num_examples_to_generate = 16
 
@@ -196,49 +260,43 @@ seed = tf.random.normal([num_examples_to_generate, noise_dim])
 
 # Notice the use of `tf.function`
 # This annotation causes the function to be "compiled".
-@tf.function
-def train_step(image_fps_in_batch):
+# @tf.function  # seems to do weird stuff like make random.random() always be the same! don't like this
+def train_step(batch):
     noise = tf.random.normal([BATCH_SIZE, noise_dim])
-    print("made noise", noise)
-
-    images = get_array_from_image_fps(image_fps_in_batch)
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-        generated_images = generator(noise, training=True)
+        generated_data = generator(noise, training=True)
+        # print("generated data:", generated_data)
 
-        real_output = discriminator(images, training=True)
-        fake_output = discriminator(generated_images, training=True)
+        real_output = discriminator(batch, training=True)
+        # print("real output:", real_output)
+        fake_output = discriminator(generated_data, training=True)
+        # print("fake output:", fake_output)
 
         gen_loss = generator_loss(fake_output)
         disc_loss = discriminator_loss(real_output, fake_output)
-        print(f"{gen_loss = }, {disc_loss = }")
 
+    print(f"gen_loss = {gen_loss.numpy()}, disc_loss = {disc_loss.numpy()}")
     gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
+    # print("gen grad:", gradients_of_generator)
     gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+    # print("disc grad:", gradients_of_discriminator)
 
     generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
     discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.trainable_variables))
 
 
-def train(img_fps, epochs):
+def train(dataset, epochs):
     for epoch in range(epochs):
         print(f"{epoch = }")
         start = time.time()
 
-        # batch up the fps myself
-        fp_batches = []
-        seen = set()
-        for i in range(n_train_images // BATCH_SIZE):
-            batch = random.sample([x for x in img_fps if x not in seen], BATCH_SIZE)
-            seen |= set(batch)
-            fp_batches.append(batch)
-
-        for batch_i, fp_batch in enumerate(fp_batches):
-            print(f"new image batch ({batch_i+1} of {len(fp_batches)}) at time {time.time()}")
-            train_step(fp_batch)
+        for batch in dataset:
+            train_step(batch)
 
         # Produce images as you go
-        generate_and_save_images(generator, epoch + 1, seed)
+        if epoch % 10 == 0:
+            generate_and_save_images(generator, epoch + 1, seed)
 
         # Save the model every 15 epochs
         if (epoch + 1) % 15 == 0:
@@ -247,33 +305,36 @@ def train(img_fps, epochs):
         print ('Time for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
 
     # Generate after the final epoch
-    generate_and_save_images(generator,
-                             epochs,
-                             seed)
+    generate_and_save_images(generator, epochs, seed)
 
 
-OUTPUT_IMAGE_DIR = "Images/VineScriptGAN/"
+OUTPUT_DIR = "Images/VineScriptGAN/"
 
 def generate_and_save_images(model, epoch, test_input):
     # Notice `training` is set to False.
     # This is so all layers run in inference mode (batchnorm).
-    predictions = model(test_input, training=False)
-
-    fig = plt.figure(figsize=(4, 4))
-
+    predictions = model(test_input, training=False).numpy()
+    print(f"{predictions.shape = }")
     for i in range(predictions.shape[0]):
-        plt.imshow(predictions[i, :, :, 0] * 127.5 + 127.5, cmap='gray')
-        plt.axis('off')
-        plt.savefig(os.path.join(OUTPUT_IMAGE_DIR, f"image_at_epoch_{epoch}-IMG{i}.png"))
+        l = predictions[i]
+        tsv_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Array.tsv")
+        write_data_to_file(l, tsv_fp)
+        plot_time_series(l, show=False)
+        time_series_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_TimeSeries.png")
+        plt.savefig(time_series_fp)
         plt.gcf().clear()
-
+        draw_glyph(l, show=False)
+        glyph_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Glyph.png")
+        plt.savefig(glyph_fp)
+        plt.gcf().clear()
+    print("generated images")
 
 print("training")
-train(img_fps, EPOCHS)
+train(train_dataset, EPOCHS)
 print("done training")
-
 
 # in case need to restore a checkpoint reached during earlier training, e.g. if the training was interrupted
 # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
+# TODO make sure pressure can be output as exactly zero by the model, so the pen can be picked up (might need ReLU or some other activation like that on the last layer for this to be possible)
 
