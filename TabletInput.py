@@ -10,6 +10,7 @@ from datetime import datetime
 
 MIN_PRESSURE_FOR_STROKE = 0.001
 
+
 def get_tablets(display=None):
     # Each cursor appears as a separate xinput device; find devices that look
     # like Wacom tablet cursors and amalgamate them into a single tablet. 
@@ -25,7 +26,7 @@ def get_tablets(display=None):
     return []
 
 
-def get_array_from_data_fp(fp):
+def get_array_from_data_fp(fp, binarize_pressure_threshold):
     with open(fp) as f:
         lines = f.readlines()
     while "" in lines:
@@ -36,6 +37,17 @@ def get_array_from_data_fp(fp):
     assert l.shape[-1] == 4
     xs = l[:, 1]
     ys = l[:, 2]
+    pressures_raw = l[:, 3]
+
+    if binarize_pressure_threshold is None:
+        # don't change pressures
+        pass
+    else:
+        if ((pressures_raw == 0) | (pressures_raw == 1)).all():
+            pass  # they're already binary
+        else:
+            pressures_binary = pressures_raw >= binarize_pressure_threshold
+            l[:, 3] = pressures_binary
     return l
 
 
@@ -65,13 +77,17 @@ def plot_time_series(l, show=True):
         plt.show()
 
 
-def draw_glyph(l, show=True):
+def draw_glyph(l, pressure_threshold, show=True):
     # draw the shape that the data describes
     # I think the NN can completely ignore time? it just has a series of x,y values (and whether the pen lifts)
     assert type(l) is np.ndarray
     strokes = []
     current_stroke = []
     n_cols = l.shape[-1]
+    pressures = l[:, -1]
+    if not ((pressures == 0) | (pressures == 1)).all():
+        pressures_binary = pressures >= pressure_threshold
+        l[:, -1] = pressures_binary
     for i in range(len(l)):
         if n_cols == 4:
             t,x,y,p = l[i]
@@ -80,7 +96,8 @@ def draw_glyph(l, show=True):
         else:
             raise ValueError(f"bad shape: {l.shape}")
         current_stroke.append([x, y])
-        if p < MIN_PRESSURE_FOR_STROKE or i == len(l) - 1:
+        # IMPORTANT: now we assume logistic pressure so the NN can output a logit of whether the pen is pressed down
+        if p < 0.5 or i == len(l) - 1:
             # end of this stroke
             strokes.append(current_stroke)
             current_stroke = []
@@ -145,7 +162,7 @@ if __name__ == "__main__":
         global last_touch_point  # seems like a bad idea but whatever, people are doing it
         if last_touch_point is not None or pressure >= MIN_PRESSURE_FOR_STROKE:
             # don't keep track of all the non-touching events
-            motion_data.append([t_ms, x_01, y_01, pressure])
+            motion_data.append([t_ms, x_01, y_01, pressure])  # just record actual pressure here, don't binarize it, do that later when prepping training data, this is just raw data recording
 
         print(f"t = {int(t_ms)} ms, x = {x_01:.6f}, y = {y_01:.6f}, {pressure = :.6f}")
 
@@ -199,9 +216,9 @@ if __name__ == "__main__":
         else:
             data_fps = sorted([os.path.join("VineScriptTabletInputData", subdir, x) for x in os.listdir(os.path.join("VineScriptTabletInputData", subdir)) if x.endswith(".tsv")])
         for fp in data_fps:
-            l = get_array_from_data_fp(fp)
+            l = get_array_from_data_fp(fp, binarize_pressure_threshold=None)
             print(fp)
             # plot_time_series(l)
-            draw_glyph(l)
+            draw_glyph(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE)
 
 
