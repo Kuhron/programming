@@ -2,8 +2,8 @@ from silence_tensorflow import silence_tensorflow
 silence_tensorflow()  # these warnings are super annoying and useless
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
-# from tensorflow.keras.utils.generic_utils import get_custom_objects
+from keras.models import Model
+from keras import layers
 
 import os
 import numpy as np
@@ -218,15 +218,11 @@ print("made dataset")
 def make_generator_model():
     model = tf.keras.Sequential()
 
-    n_dense_neurons = 100
-    n_filters = 64
+    n_dense_neurons = 50
+    n_filters = 6
 
     model.add(layers.Dense(n_dense_neurons * n_cols, input_shape=(100,)))  # first layer connected to input from latent space
     model.add(layers.BatchNormalization())
-    model.add(layers.LeakyReLU())
-    model.add(layers.Dropout(0.2))
-
-    model.add(layers.Dense(n_dense_neurons * n_cols))
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.2))
 
@@ -240,12 +236,18 @@ def make_generator_model():
     # try 1D convolution to capture the time series nature where adjacent points are correlated
     # model.add(layers.Dense(n_ticks * n_cols))  # so there will be the correct number of points for deconvolving into time series of the correct number of ticks and channels
     model.add(layers.Reshape((n_dense_neurons, n_cols)))  # there are n_cols channels in the data
-    model.add(layers.Conv1DTranspose(filters=n_filters, kernel_size=5, padding="same"))
+    model.add(layers.Conv1DTranspose(filters=n_filters, kernel_size=9, padding="same"))
 
     # not sure why convolution doesn't operate separately on the channels; is it convolving them together??? so I guess I'll just make another freaking dense layer to get the shape correct again
     model.add(layers.Flatten())
-    model.add(layers.Dense((n_ticks * n_cols)))
+
+    model.add(layers.Dense(n_dense_neurons * n_cols, activation=layers.LeakyReLU(alpha=0.01)))
+    model.add(layers.Dropout(0.2))
+
+    model.add(layers.Dense(n_ticks * n_cols))
     model.add(layers.Reshape((n_ticks, n_cols)))
+
+    model.add(layers.GaussianNoise(0.001))  # trying to prevent model from getting stuck in rut
 
     # model.add(layers.Activation(bowl_activation))
     model.add(layers.Activation("sigmoid"))
@@ -269,8 +271,8 @@ assert generated_arr.shape[0] == 1  # 1 sample
 
 
 def make_discriminator_model():
-    n_dense_neurons = 100
-    n_filters = 64
+    n_dense_neurons = 50
+    n_filters = 6
 
     model = tf.keras.Sequential()
     model.add(layers.InputLayer(input_shape=(n_ticks, n_cols)))
@@ -278,7 +280,7 @@ def make_discriminator_model():
     model.add(layers.BatchNormalization())
 
     # model.add(layers.Reshape((n_ticks, n_cols)))  # there are n_cols channels in the data and n_ticks timesteps
-    model.add(layers.Conv1D(filters=n_filters, kernel_size=5, padding="same"))
+    model.add(layers.Conv1D(filters=n_filters, kernel_size=9, padding="same"))
     model.add(layers.Flatten())
 
     model.add(layers.Dense(n_dense_neurons * n_cols))
@@ -288,6 +290,8 @@ def make_discriminator_model():
     model.add(layers.Dense(n_dense_neurons * n_cols))
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.2))
+
+    model.add(layers.GaussianNoise(0.01)) # trying to prevent model from getting stuck in rut
 
     model.add(layers.Dense(1, activation="sigmoid"))  # want logistic regression-like output
     assert model.output_shape == (None, 1), model.output_shape
@@ -301,6 +305,9 @@ discriminator = make_discriminator_model()
 print("made discriminator model")
 decision = discriminator(generated_arr)
 print("discriminator's decision about the previously shown random noise image:", decision)
+
+keras.utils.plot_model(generator, to_file=os.path.join(OUTPUT_DIR, "model_generator.png"))
+keras.utils.plot_model(discriminator, to_file=os.path.join(OUTPUT_DIR, "model_discriminator.png"))
 
 
 # def tf_print(x, message=None):
@@ -347,10 +354,26 @@ num_examples_to_generate = 5
 seed = tf.random.normal([num_examples_to_generate, noise_dim])
 
 
+def print_layers(model, x_train):
+    # print("Model summary:")
+    # print(model.summary())
+    # print()
+    x = x_train[:1]
+    for i in range(len(model.layers)):
+        print(f"Layer {i}: {model.layers[i]}")
+        new_model = keras.models.Sequential(model.layers[:i+1])
+        # print("New model summary:")
+        # print(new_model.summary())
+        # print()
+        # print("output as of this layer:")
+        print(new_model(x, training=True))  # need training=True to make the GaussianNoise layer apply
+        print()
+
+
 # Notice the use of `tf.function`
 # This annotation causes the function to be "compiled".
 # @tf.function  # seems to do weird stuff like make random.random() always be the same! don't like this
-def train_step(batch):
+def train_step(batch, epoch):
     noise = tf.random.normal([BATCH_SIZE, noise_dim])
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
@@ -366,13 +389,25 @@ def train_step(batch):
         disc_loss = discriminator_loss(real_output, fake_output)
 
     print(f"gen_loss = {gen_loss.numpy()}, disc_loss = {disc_loss.numpy()}")
-    gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
-    # print("gen grad:", gradients_of_generator)
-    gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
-    # print("disc grad:", gradients_of_discriminator)
+    acceptable_ratio = 2/3
+    # for each model, if the loss is too low, don't train it
+    if gen_loss / disc_loss >= acceptable_ratio:
+        gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
+        # print("gen grad:", gradients_of_generator)
+        generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
+    else:
+        print("not training generator because its loss is too low relative to discriminator")
+    if disc_loss / gen_loss >= acceptable_ratio:
+        gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
+        # print("disc grad:", gradients_of_discriminator)
+        discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.trainable_variables))
+    else:
+        print("not training discriminator because its loss is too low relative to generator")
 
-    generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
-    discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.trainable_variables))
+    # print("\nGenerator:")
+    # print_layers(generator, noise)
+    # print("Discriminator:")
+    # print_layers(discriminator, batch)
 
 
 def train(dataset, epochs):
@@ -381,11 +416,11 @@ def train(dataset, epochs):
         start = time.time()
 
         for batch in dataset:
-            train_step(batch)
+            train_step(batch, epoch)
 
         # Produce images as you go
         if epoch == 0 or (epoch + 1) % 10 == 0:
-            generate_and_save_images(generator, epoch + 1, seed)
+            generate_and_save_images(generator, epoch + 1, test_input=None)
 
         # Save the model
         if (epoch + 1) % 100 == 0:
@@ -403,6 +438,8 @@ OUTPUT_DIR = "Images/VineScriptGAN/"
 def generate_and_save_images(model, epoch, test_input):
     # Notice `training` is set to False.
     # This is so all layers run in inference mode (batchnorm).
+    if test_input is None:
+        test_input = tf.random.normal([num_examples_to_generate, noise_dim])
     predictions = model(test_input, training=False).numpy()
     print(f"{predictions.shape = }")
     for i in range(predictions.shape[0]):
