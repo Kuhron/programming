@@ -193,33 +193,11 @@ def bowl_activation(x):
 #     return tf.where(x < MIN_PRESSURE_FOR_STROKE, 0*x, x)
 
 
-
-# image_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptCatalog/"
-training_data_dir = "VineScriptTabletInputData"
-training_data_fps = get_training_data_fps(training_data_dir)
-n_train = len(training_data_fps)
-train_arr = get_training_data_array(training_data_fps)
-assert train_arr.shape[0] == n_train
-n_ticks = train_arr.shape[1]
-n_cols = 3  # x, y, pressure
-assert train_arr.shape[2] == n_cols
-
-print(f"got training data, of shape {train_arr.shape}")
-
-BUFFER_SIZE = 60000
-BATCH_SIZE = 72
-
-# Batch and shuffle the data
-print("making dataset")
-train_dataset = tf.data.Dataset.from_tensor_slices(train_arr).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
-print("made dataset")
-
-
 def make_generator_model():
     model = tf.keras.Sequential()
 
     n_dense_neurons = 50
-    n_filters = 6
+    n_filters = 16
 
     model.add(layers.Dense(n_dense_neurons * n_cols, input_shape=(100,)))  # first layer connected to input from latent space
     model.add(layers.BatchNormalization())
@@ -258,21 +236,9 @@ def make_generator_model():
     return model
 
 
-print("making generator model")
-input("watch RAM usage")
-generator = make_generator_model()
-print("made generator model")
-
-noise = tf.random.normal([1, 100])
-generated_arr = generator(noise, training=False).numpy()
-assert generated_arr.shape[0] == 1  # 1 sample
-# plot_time_series(generated_arr[0])
-# draw_glyph(generated_arr[0])
-
-
 def make_discriminator_model():
     n_dense_neurons = 50
-    n_filters = 6
+    n_filters = 16
 
     model = tf.keras.Sequential()
     model.add(layers.InputLayer(input_shape=(n_ticks, n_cols)))
@@ -299,26 +265,11 @@ def make_discriminator_model():
     return model
 
 
-
-print("making discriminator model")
-discriminator = make_discriminator_model()
-print("made discriminator model")
-decision = discriminator(generated_arr)
-print("discriminator's decision about the previously shown random noise image:", decision)
-
-keras.utils.plot_model(generator, to_file=os.path.join(OUTPUT_DIR, "model_generator.png"))
-keras.utils.plot_model(discriminator, to_file=os.path.join(OUTPUT_DIR, "model_discriminator.png"))
-
-
 # def tf_print(x, message=None):
 #     if message is None:
 #         message = "values: "
 #     x = tf.Print(x, [x], message=message)
 #     return x
-
-
-# This method returns a helper function to compute cross entropy loss
-cross_entropy = tf.keras.losses.BinaryCrossentropy()
 
 
 def discriminator_loss(real_output, fake_output):
@@ -330,28 +281,6 @@ def discriminator_loss(real_output, fake_output):
 
 def generator_loss(fake_output):
     return cross_entropy(tf.ones_like(fake_output), fake_output)
-
-
-generator_optimizer = tf.keras.optimizers.Adam(1e-4)
-discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
-
-
-checkpoint_dir = './NeuralNetFiles/VineScriptGAN_checkpoints'
-checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
-checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
-                                 discriminator_optimizer=discriminator_optimizer,
-                                 generator=generator,
-                                 discriminator=discriminator)
-print("checkpoint dir declared")
-
-
-EPOCHS = 100000
-noise_dim = 100
-num_examples_to_generate = 5
-
-# You will reuse this seed overtime (so it's easier)
-# to visualize progress in the animated GIF
-seed = tf.random.normal([num_examples_to_generate, noise_dim])
 
 
 def print_layers(model, x_train):
@@ -433,8 +362,6 @@ def train(dataset, epochs):
     generate_and_save_images(generator, epochs, seed)
 
 
-OUTPUT_DIR = "Images/VineScriptGAN/"
-
 def generate_and_save_images(model, epoch, test_input):
     # Notice `training` is set to False.
     # This is so all layers run in inference mode (batchnorm).
@@ -456,12 +383,83 @@ def generate_and_save_images(model, epoch, test_input):
         plt.gcf().clear()
     print("generated images")
 
-print("training")
-train(train_dataset, EPOCHS)
-print("done training")
 
-# in case need to restore a checkpoint reached during earlier training, e.g. if the training was interrupted
-# checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
-# TODO make sure pressure can be output as exactly zero by the model, so the pen can be picked up (might need ReLU or some other activation like that on the last layer for this to be possible)
+if __name__ == "__main__":
+    # image_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptCatalog/"
+    training_data_dir = "VineScriptTabletInputData"
+    OUTPUT_DIR = "Images/VineScriptGAN/"
+    training_data_fps = get_training_data_fps(training_data_dir)
+    n_train = len(training_data_fps)
+    train_arr = get_training_data_array(training_data_fps)
+    assert train_arr.shape[0] == n_train
+    n_ticks = train_arr.shape[1]
+    n_cols = 3  # x, y, pressure
+    assert train_arr.shape[2] == n_cols
+
+    print(f"got training data, of shape {train_arr.shape}")
+
+    BUFFER_SIZE = 60000
+    BATCH_SIZE = 72
+
+    # Batch and shuffle the data
+    print("making dataset")
+    train_dataset = tf.data.Dataset.from_tensor_slices(train_arr).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+    print("made dataset")
+
+    print("making generator model")
+    input("watch RAM usage")
+    generator = make_generator_model()
+    print("made generator model")
+
+    noise = tf.random.normal([1, 100])
+    generated_arr = generator(noise, training=False).numpy()
+    assert generated_arr.shape[0] == 1  # 1 sample
+    # plot_time_series(generated_arr[0])
+    # draw_glyph(generated_arr[0])
+
+    print("making discriminator model")
+    discriminator = make_discriminator_model()
+    print("made discriminator model")
+    decision = discriminator(generated_arr)
+    print("discriminator's decision about the previously shown random noise image:", decision)
+
+    keras.utils.plot_model(generator, to_file=os.path.join(OUTPUT_DIR, "model_generator.png"))
+    keras.utils.plot_model(discriminator, to_file=os.path.join(OUTPUT_DIR, "model_discriminator.png"))
+
+    # This method returns a helper function to compute cross entropy loss
+    cross_entropy = tf.keras.losses.BinaryCrossentropy()
+
+    generator_optimizer = tf.keras.optimizers.Adam(1e-4)
+    discriminator_optimizer = tf.keras.optimizers.Adam(1e-4)
+
+    checkpoint_dir = './NeuralNetFiles/VineScriptGAN_checkpoints'
+    checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt")
+    checkpoint = tf.train.Checkpoint(generator_optimizer=generator_optimizer,
+                                     discriminator_optimizer=discriminator_optimizer,
+                                     generator=generator,
+                                     discriminator=discriminator)
+    print("checkpoint dir declared")
+
+    EPOCHS = 100000
+    noise_dim = 100
+    num_examples_to_generate = 5
+
+    # You will reuse this seed overtime (so it's easier)
+    # to visualize progress in the animated GIF
+    seed = tf.random.normal([num_examples_to_generate, noise_dim])
+
+
+    print("training")
+    train(train_dataset, EPOCHS)
+    print("done training")
+
+    # in case need to restore a checkpoint reached during earlier training, e.g. if the training was interrupted
+    # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+
+    # TODO idea: make all glyphs the same width and start them all at 0,0; so that model doesn't have to worry about moving stuff around the plane as much
+    # TODO get some normalization stats for each glyph and plot them, e.g. plot the glyph with the center of mass (average all the endpoints of line segments?), xmin and xmax in one color and some number of standard deviations of x in another color as bars that bound the figure (simil with y), and just have it show you a bunch of the glyphs in the dataset with these stats on the figure so you can see what might be good for normalization
+    # TODO can also make all strokes same length in time, all gaps same length in time
+    # TODO another idea for data transformation: make each stroke a separate channel (or pair of channels for x and y) and dilate them all to the same time length and then treat them as if they are happening simultaneously, so then the network doesn't even have to learn pressure at all and we don't have to worry about interpolating in gaps; can pad to make extra strokes by just putting all zeros in extra stroke channels? will that make a dot on the plot? if so then tell it to not plot those line segments where both endpoints are just (0,0)
+
 
