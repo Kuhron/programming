@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow import keras
 from keras.models import Model
 from keras import layers
+from scipy.interpolate import CubicSpline
 
 import os
 import numpy as np
@@ -13,7 +14,7 @@ import time
 import PIL
 import glob
 
-from TabletInput import get_array_from_data_fp, draw_glyph, plot_time_series, write_data_to_file, MIN_PRESSURE_FOR_STROKE
+from TabletInput import get_array_from_data_fp, draw_glyph_from_xyp_time_series, draw_glyph_from_simultaneous_strokes, plot_xyp_time_series, plot_simultaneous_strokes, write_data_to_file_from_xyp_time_series, write_data_to_file_from_simultaneous_strokes, MIN_PRESSURE_FOR_STROKE
 
 
 
@@ -58,64 +59,125 @@ def get_training_data_fps(parent_dir):
 
 def get_training_data_array(training_data_fps):
     arrs = []
-    n_cols = 4
-    all_dts = set()
+
+    raw_arrs_per_glyph = []
     for fp in training_data_fps:
         l = get_array_from_data_fp(fp, binarize_pressure_threshold=MIN_PRESSURE_FOR_STROKE)
-        # plot_time_series(l)  # debug
+        raw_arrs_per_glyph.append(l)
+
+    stroke_arrs_per_glyph = []
+    for l in raw_arrs_per_glyph:
+        ts = l[:, 0]
+
+        # plot_xyp_time_series(l)  # debug
+        # draw_glyph_from_xyp_time_series(l, pressure_threshold=0.5)  # debug
         assert ((l[:, -1] == 0) | (l[:, -1] == 1)).all(), f"training data should have binary pressure; problem fp is {fp}"
         zero_p_indices, = np.where(l[:, -1] == 0)
         assert zero_p_indices[-1] == l.shape[0] - 1
-        ts = l[:, 0]
-        dts = np.diff(ts)
 
-        # now add interpolation zones for when the pen is up, with pressure at zero and x and y going from the last touch point to the first of the next stroke
-        # this will hopefully help the network learn better since it won't be a discontinuous jump
-        dts_at_nonzero_pressure = dts[np.where(l[:, -1] != 0)[0]]
-        assert (dts_at_nonzero_pressure < 100).all(), f"unusual dt values: {sorted(set(dts_at_nonzero_pressure))}"
-        mean_dt = np.mean(dts_at_nonzero_pressure)
-
-        stroke_arrs = [l[:zero_p_indices[0]]]  # there must be at least one zero p, at the very end of the glyph
+        stroke_arrs_this_glyph = [l[:zero_p_indices[0]+1]]  # there must be at least one zero p, at the very end of the glyph
         for ii in range(len(zero_p_indices) - 1):
             i = zero_p_indices[ii]
-            t0, x0, y0, p0 = l[i]
-            # fill the gap after this with some fake points that have zero pressure and interpolate x and y until the next stroke starts
-            dt = dts[i]  # time from i to i+1
-            n_ticks = int(round(dt / mean_dt))
-            if n_ticks > 0:
-                dx = l[i+1, 1] - l[i, 1]
-                dy = l[i+1, 2] - l[i, 2]
-                dt_per_tick = dt / n_ticks
-                dx_per_tick = dx / n_ticks
-                dy_per_tick = dy / n_ticks
-                gap_arr = []
-                for j in range(1, n_ticks):  # already have the j=0 point which is the zero-pressure point, don't want to duplicate it
-                    t = t0 + j*dt_per_tick
-                    x = x0 + j*dx_per_tick
-                    y = y0 + j*dy_per_tick
-                    p = 0
-                    gap_arr.append([t, x, y, p])
-                if len(gap_arr) > 0:
-                    gap_arr = np.array(gap_arr)
-                    stroke_arrs.append(gap_arr)
             next_stroke_arr = l[i+1 : zero_p_indices[ii+1] + 1]
-            stroke_arrs.append(next_stroke_arr)
-        l = np.concatenate(stroke_arrs, axis=0)
-        # plot_time_series(l)  # debug
-        # draw_glyph(l, pressure_threshold=0.5)  # debug
-        r, c = l.shape
-        assert c == n_cols
+            stroke_arrs_this_glyph.append(next_stroke_arr)
+        stroke_arrs_per_glyph.append(stroke_arrs_this_glyph)
+    max_n_time_points = max(max(stroke_arr.shape[0] for stroke_arr in stroke_arrs_this_glyph) for stroke_arrs_this_glyph in stroke_arrs_per_glyph)
+    max_n_strokes = max(len(stroke_arrs_this_glyph) for stroke_arrs_this_glyph in stroke_arrs_per_glyph)
+    # print(f"{max_n_time_points = }, {max_n_strokes = }")
+
+    for stroke_arrs in stroke_arrs_per_glyph:
+        stroke_arrs = normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points=max_n_time_points, desired_n_strokes=max_n_strokes)
+        l = np.stack(stroke_arrs)
+        # plot_simultaneous_strokes(l)  # debug
+        # draw_glyph_from_simultaneous_strokes(l)  # debug
+        n_strokes, n_time_points, n_channels = l.shape
+        assert n_strokes == max_n_strokes
+        assert n_channels == 2  # x and y
+        assert n_time_points == max_n_time_points
         arrs.append(l)
 
-    max_n_rows = max(l.shape[0] for l in arrs)
+    arr = np.stack(arrs)
+    return arr
 
-    # once have the time padding between strokes figured out, get rid of timestamps so network doesn't have to learn them
-    arrs = [l[:, 1:] for l in arrs]
-    # now pad arrays with empty data
-    # or can try expanding them (like "justify margins") or something else to normalize shape
-    arrs = [pad_with_zeros(a, max_n_rows, xy_val=0.5) for a in arrs]
-    arrs = np.array(arrs)
-    return arrs
+
+def normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points, desired_n_strokes):
+    # make all strokes the same length in time
+    # treat all strokes as happening simultaneously in different channels
+    # pad with zeros for extra stroke slots when glyph has less than max number of strokes
+    # always start first stroke at (x,y) = (0,0)
+    # remove pressure completely
+    # scale xs and ys to be standard deviations away from origin
+
+    xs_per_stroke = []
+    ys_per_stroke = []
+    for stroke_arr in stroke_arrs:
+        ts = stroke_arr[:, 0]
+        xs = stroke_arr[:, 1]
+        ys = stroke_arr[:, 2]
+        ps = stroke_arr[:, 3]
+        assert ps[-1] == 0 and (ps[:-1] == 1).all(), ps
+        # now ignore time and pressure completely
+        xs_per_stroke.append(xs)
+        ys_per_stroke.append(ys)
+    xs_this_glyph = np.concatenate(xs_per_stroke)
+    ys_this_glyph = np.concatenate(ys_per_stroke)
+    assert len(xs_this_glyph.shape) == len(ys_this_glyph.shape) == 1
+    assert xs_this_glyph.shape == ys_this_glyph.shape
+    x_std = np.std(xs_this_glyph)
+    y_std = np.std(ys_this_glyph)
+    std = (x_std * y_std) ** 0.5  # geometric mean so aspect ratio is same (I want to preserve aspect ratio, maybe a bad idea? idk, we'll see)
+    x0 = stroke_arrs[0][0,1]
+    y0 = stroke_arrs[0][0,2]
+
+    new_xs_per_stroke = []
+    new_ys_per_stroke = []
+    for xs, ys in zip(xs_per_stroke, ys_per_stroke):
+        # first scale in space
+        xs = [(x-x0)/std for x in xs]
+        ys = [(y-y0)/std for y in ys]
+
+        # then dilate time
+        assert len(xs) == len(ys)
+        assert len(xs) <= desired_n_time_points
+        raw_n_time_points = len(xs)
+        ts_raw = np.linspace(0, 1, raw_n_time_points)
+
+        use_spline = False  # spline ends up looking too wobbly
+        ts_desired = np.linspace(0, 1, desired_n_time_points)
+        if use_spline:
+            xs_spl = CubicSpline(ts_raw, xs)
+            ys_spl = CubicSpline(ts_raw, ys)
+            new_xs = xs_spl(ts_desired)
+            new_ys = ys_spl(ts_desired)
+        else:
+            new_xs = np.interp(ts_desired, ts_raw, xs)
+            new_ys = np.interp(ts_desired, ts_raw, ys)
+
+        assert len(new_xs) == len(new_ys) == desired_n_time_points
+        assert np.isclose(new_xs[0], xs[0], rtol=1e-8), f"{new_xs[0] = } != {xs[0] = }"
+        assert np.isclose(new_xs[-1], xs[-1], rtol=1e-8), f"{new_xs[-1] = } != {xs[-1] = }"
+        assert np.isclose(new_ys[0], ys[0], rtol=1e-8), f"{new_ys[0] = } != {ys[0] = }"
+        assert np.isclose(new_ys[-1], ys[-1], rtol=1e-8), f"{new_ys[-1] = } != {ys[-1] = }"
+        new_xs_per_stroke.append(new_xs)
+        new_ys_per_stroke.append(new_ys)
+
+        # plt.plot(new_xs, new_ys)
+
+    # plt.axis("equal")
+    # plt.show()
+
+    n_strokes_left = desired_n_strokes - len(stroke_arrs)
+    assert n_strokes_left >= 0
+    for i in range(n_strokes_left):
+        xs = [0] * desired_n_time_points
+        ys = [0] * desired_n_time_points
+        new_xs_per_stroke.append(xs)
+        new_ys_per_stroke.append(ys)
+    new_stroke_arrs = []
+    for i in range(desired_n_strokes):
+        new_stroke_arr = np.stack([new_xs_per_stroke[i], new_ys_per_stroke[i]], axis=-1)
+        new_stroke_arrs.append(new_stroke_arr)
+    return new_stroke_arrs
 
 
 def pad_with_zeros(arr, n_rows, xy_val=0):
@@ -193,13 +255,13 @@ def bowl_activation(x):
 #     return tf.where(x < MIN_PRESSURE_FOR_STROKE, 0*x, x)
 
 
-def make_generator_model():
+def make_generator_model(n_strokes, n_time_points, n_channels):
     model = tf.keras.Sequential()
 
     n_dense_neurons = 50
     n_filters = 16
 
-    model.add(layers.Dense(n_dense_neurons * n_cols, input_shape=(100,)))  # first layer connected to input from latent space
+    model.add(layers.Dense(n_dense_neurons * n_channels, input_shape=(100,)))  # first layer connected to input from latent space
     model.add(layers.BatchNormalization())
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.2))
@@ -212,48 +274,44 @@ def make_generator_model():
     # then can train on x and y rather than dx and dy (because the latter has too much cumulative drift making glyphs that go way out of bounds)
 
     # try 1D convolution to capture the time series nature where adjacent points are correlated
-    # model.add(layers.Dense(n_ticks * n_cols))  # so there will be the correct number of points for deconvolving into time series of the correct number of ticks and channels
-    model.add(layers.Reshape((n_dense_neurons, n_cols)))  # there are n_cols channels in the data
+    # model.add(layers.Dense(n_time_points * n_channels))  # so there will be the correct number of points for deconvolving into time series of the correct number of ticks and channels
+    model.add(layers.Reshape((n_dense_neurons, n_channels)))
     model.add(layers.Conv1DTranspose(filters=n_filters, kernel_size=9, padding="same"))
 
     # not sure why convolution doesn't operate separately on the channels; is it convolving them together??? so I guess I'll just make another freaking dense layer to get the shape correct again
     model.add(layers.Flatten())
-
-    model.add(layers.Dense(n_dense_neurons * n_cols, activation=layers.LeakyReLU(alpha=0.01)))
-    model.add(layers.Dropout(0.2))
-
-    model.add(layers.Dense(n_ticks * n_cols))
-    model.add(layers.Reshape((n_ticks, n_cols)))
-
     model.add(layers.GaussianNoise(0.001))  # trying to prevent model from getting stuck in rut
 
-    # model.add(layers.Activation(bowl_activation))
-    model.add(layers.Activation("sigmoid"))
+    model.add(layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU(alpha=0.01)))
+    model.add(layers.Dropout(0.2))
 
-    expected_output_shape = (None, n_ticks, n_cols)  # first element is batch size, can be None
+    model.add(layers.Dense(n_strokes * n_time_points * n_channels))
+    model.add(layers.Reshape((n_strokes, n_time_points, n_channels)))
+
+    expected_output_shape = (None, n_strokes, n_time_points, n_channels)  # first element is batch size, can be None
     assert model.output_shape == expected_output_shape, f"expected model output shape {expected_output_shape} but got {model.output_shape}"
 
     return model
 
 
-def make_discriminator_model():
+def make_discriminator_model(n_strokes, n_time_points, n_channels):
     n_dense_neurons = 50
     n_filters = 16
 
     model = tf.keras.Sequential()
-    model.add(layers.InputLayer(input_shape=(n_ticks, n_cols)))
+    model.add(layers.InputLayer(input_shape=(n_strokes, n_time_points, n_channels)))
     # model.add(layers.Flatten())
     model.add(layers.BatchNormalization())
 
-    # model.add(layers.Reshape((n_ticks, n_cols)))  # there are n_cols channels in the data and n_ticks timesteps
+    # model.add(layers.Reshape((n_time_points, n_channels)))
     model.add(layers.Conv1D(filters=n_filters, kernel_size=9, padding="same"))
     model.add(layers.Flatten())
 
-    model.add(layers.Dense(n_dense_neurons * n_cols))
+    model.add(layers.Dense(n_dense_neurons * n_channels))
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.2))
 
-    model.add(layers.Dense(n_dense_neurons * n_cols))
+    model.add(layers.Dense(n_dense_neurons * n_channels))
     model.add(layers.LeakyReLU())
     model.add(layers.Dropout(0.2))
 
@@ -317,21 +375,21 @@ def train_step(batch, epoch):
         gen_loss = generator_loss(fake_output)
         disc_loss = discriminator_loss(real_output, fake_output)
 
-    print(f"gen_loss = {gen_loss.numpy()}, disc_loss = {disc_loss.numpy()}")
-    acceptable_ratio = 2/3
+    gen_over_disc_loss_min = 0.1
+    disc_over_gen_loss_min = 0.1
     # for each model, if the loss is too low, don't train it
-    if gen_loss / disc_loss >= acceptable_ratio:
+    train_gen = gen_loss / disc_loss >= gen_over_disc_loss_min
+    train_disc = disc_loss / gen_loss >= disc_over_gen_loss_min
+
+    if train_gen:
         gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
-        # print("gen grad:", gradients_of_generator)
         generator_optimizer.apply_gradients(zip(gradients_of_generator, generator.trainable_variables))
-    else:
-        print("not training generator because its loss is too low relative to discriminator")
-    if disc_loss / gen_loss >= acceptable_ratio:
+    if train_disc:
         gradients_of_discriminator = disc_tape.gradient(disc_loss, discriminator.trainable_variables)
-        # print("disc grad:", gradients_of_discriminator)
         discriminator_optimizer.apply_gradients(zip(gradients_of_discriminator, discriminator.trainable_variables))
-    else:
-        print("not training discriminator because its loss is too low relative to generator")
+    train_str = (["gen"] if train_gen else []) + (["disc"] if train_disc else [])
+    s = f"gen_loss = {gen_loss.numpy():.6f}, disc_loss = {disc_loss.numpy():.6f}, training: {train_str}"
+    print(s)
 
     # print("\nGenerator:")
     # print_layers(generator, noise)
@@ -359,7 +417,7 @@ def train(dataset, epochs):
         print ('Time for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
 
     # Generate after the final epoch
-    generate_and_save_images(generator, epochs, seed)
+    generate_and_save_images(generator, epochs, test_input=None)
 
 
 def generate_and_save_images(model, epoch, test_input):
@@ -372,16 +430,39 @@ def generate_and_save_images(model, epoch, test_input):
     for i in range(predictions.shape[0]):
         l = predictions[i]
         tsv_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Array.tsv")
-        write_data_to_file(l, tsv_fp)
-        plot_time_series(l, show=False)
+        write_data_to_file_from_simultaneous_strokes(l, tsv_fp)
+        plot_simultaneous_strokes(l, show=False)
         time_series_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_TimeSeries.png")
         plt.savefig(time_series_fp)
         plt.gcf().clear()
-        draw_glyph(l, pressure_threshold=0.5, show=False)
+        draw_glyph_from_simultaneous_strokes(l, show=False)
         glyph_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Glyph.png")
         plt.savefig(glyph_fp)
         plt.gcf().clear()
     print("generated images")
+
+
+def get_xy_marks(xs, ys, ps, pressure_threshold):
+    # averages and other stats about xs and ys where p is not zero
+    xs = xs[ps >= pressure_threshold]
+    ys = ys[ps >= pressure_threshold]
+    n_std = 1
+
+    x_mean = np.mean(xs)
+    x_min = min(xs)
+    x_max = max(xs)
+    x_std = np.std(xs)
+    x_low = x_mean - n_std * x_std
+    x_high = x_mean + n_std * x_std
+
+    y_mean = np.mean(ys)
+    y_min = min(ys)
+    y_max = max(ys)
+    y_std = np.std(ys)
+    y_low = y_mean - n_std * y_std
+    y_high = y_mean + n_std * y_std
+
+    return x_min, x_low, x_mean, x_high, x_max, y_min, y_low, y_mean, y_high, y_max
 
 
 
@@ -390,14 +471,43 @@ if __name__ == "__main__":
     training_data_dir = "VineScriptTabletInputData"
     OUTPUT_DIR = "Images/VineScriptGAN/"
     training_data_fps = get_training_data_fps(training_data_dir)
+    # training_data_fps = [x for x in training_data_fps if "/44/" in x]  # debug
+    random.shuffle(training_data_fps)
     n_train = len(training_data_fps)
     train_arr = get_training_data_array(training_data_fps)
+    print(train_arr.shape)
+    assert len(train_arr.shape) == 4
     assert train_arr.shape[0] == n_train
-    n_ticks = train_arr.shape[1]
-    n_cols = 3  # x, y, pressure
-    assert train_arr.shape[2] == n_cols
+    n_strokes = train_arr.shape[1]
+    n_time_points = train_arr.shape[2]
+    n_channels = train_arr.shape[3]
+    assert n_channels == 2  # x and y
 
     print(f"got training data, of shape {train_arr.shape}")
+
+    # indices = list(range(n_train))
+    # random.shuffle(indices)
+    # for i in indices:
+    #     row = train_arr[i]
+    #     xs = row[:, 0]
+    #     ys = row[:, 1]
+    #     ps = row[:, 2]
+    #     x_min, x_low, x_mean, x_high, x_max, y_min, y_low, y_mean, y_high, y_max = get_xy_marks(xs, ys, ps, 0.5)
+    #     draw_glyph_from_xyp_time_series(row, 0.5, show=False)
+
+    #     plt.plot([x_min, x_min], [y_min, y_max], c="g")
+    #     plt.plot([x_max, x_max], [y_min, y_max], c="g")
+    #     plt.plot([x_min, x_max], [y_min, y_min], c="g")
+    #     plt.plot([x_min, x_max], [y_max, y_max], c="g")
+    #     plt.plot([x_low, x_low], [y_low, y_high], c="y")
+    #     plt.plot([x_high, x_high], [y_low, y_high], c="y")
+    #     plt.plot([x_low, x_high], [y_low, y_low], c="y")
+    #     plt.plot([x_low, x_high], [y_high, y_high], c="y")
+    #     plt.plot([x_mean, x_mean], [y_low, y_high], c="r")
+    #     plt.plot([x_low, x_high], [y_mean, y_mean], c="r")
+
+    #     plt.show()
+
 
     BUFFER_SIZE = 60000
     BATCH_SIZE = 72
@@ -409,17 +519,17 @@ if __name__ == "__main__":
 
     print("making generator model")
     input("watch RAM usage")
-    generator = make_generator_model()
+    generator = make_generator_model(n_strokes, n_time_points, n_channels)
     print("made generator model")
 
     noise = tf.random.normal([1, 100])
     generated_arr = generator(noise, training=False).numpy()
     assert generated_arr.shape[0] == 1  # 1 sample
-    # plot_time_series(generated_arr[0])
-    # draw_glyph(generated_arr[0])
+    # plot_xyp_time_series(generated_arr[0])
+    # draw_glyph_from_xyp_time_series(generated_arr[0])
 
     print("making discriminator model")
-    discriminator = make_discriminator_model()
+    discriminator = make_discriminator_model(n_strokes, n_time_points, n_channels)
     print("made discriminator model")
     decision = discriminator(generated_arr)
     print("discriminator's decision about the previously shown random noise image:", decision)
@@ -456,10 +566,4 @@ if __name__ == "__main__":
 
     # in case need to restore a checkpoint reached during earlier training, e.g. if the training was interrupted
     # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
-
-    # TODO idea: make all glyphs the same width and start them all at 0,0; so that model doesn't have to worry about moving stuff around the plane as much
-    # TODO get some normalization stats for each glyph and plot them, e.g. plot the glyph with the center of mass (average all the endpoints of line segments?), xmin and xmax in one color and some number of standard deviations of x in another color as bars that bound the figure (simil with y), and just have it show you a bunch of the glyphs in the dataset with these stats on the figure so you can see what might be good for normalization
-    # TODO can also make all strokes same length in time, all gaps same length in time
-    # TODO another idea for data transformation: make each stroke a separate channel (or pair of channels for x and y) and dilate them all to the same time length and then treat them as if they are happening simultaneously, so then the network doesn't even have to learn pressure at all and we don't have to worry about interpolating in gaps; can pad to make extra strokes by just putting all zeros in extra stroke channels? will that make a dot on the plot? if so then tell it to not plot those line segments where both endpoints are just (0,0)
-
 
