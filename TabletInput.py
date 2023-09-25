@@ -1,6 +1,7 @@
 import pyglet
 import time
 import os
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -113,12 +114,16 @@ def draw_glyph_from_xyp_time_series(l, pressure_threshold, show=True):
         plt.show()
 
 
-def plot_simultaneous_strokes(l, show=True):
-    n_strokes, n_time_points, n_channels = l.shape
+def plot_simultaneous_strokes(l, n_strokes=None, show=True):
+    n_strokes_raw, n_time_points, n_channels = l.shape
+    if n_strokes is None:
+        n_strokes = n_strokes_raw
+    assert 0 < n_strokes <= n_strokes_raw
     assert n_channels == 2
-    n_channels = 2
+    n_cols = 2
+    n_rows = math.ceil(n_strokes/n_cols)
     for i in range(n_strokes):
-        plt.subplot(int(round(n_strokes/n_channels)), n_channels, i+1)
+        plt.subplot(n_rows, n_cols, i+1)
         xs = l[i, :, 0]
         ys = l[i, :, 1]
         plt.plot(xs)
@@ -127,13 +132,19 @@ def plot_simultaneous_strokes(l, show=True):
         plt.show()
 
 
-def draw_glyph_from_simultaneous_strokes(l, show=True):
-    n_strokes, n_time_points, n_channels = l.shape
+def draw_glyph_from_simultaneous_strokes(l, n_strokes=None, all_black=False, show=True):
+    n_strokes_raw, n_time_points, n_channels = l.shape
+    if n_strokes is None:
+        n_strokes = n_strokes_raw
+    assert 0 < n_strokes <= n_strokes_raw
     assert n_channels == 2
     for i in range(n_strokes):
         xs = l[i, :, 0]
         ys = l[i, :, 1]
-        plt.plot(xs, ys, c="k")
+        if all_black:
+            plt.plot(xs, ys, c="k")
+        else:
+            plt.plot(xs, ys)  # let it auto-cycle through colors
     plt.axis("equal")
     if show:
         plt.show()

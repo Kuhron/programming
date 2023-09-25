@@ -85,6 +85,7 @@ def get_training_data_array(training_data_fps):
     max_n_strokes = max(len(stroke_arrs_this_glyph) for stroke_arrs_this_glyph in stroke_arrs_per_glyph)
     # print(f"{max_n_time_points = }, {max_n_strokes = }")
 
+    n_strokes_vector_per_glyph = []
     for stroke_arrs in stroke_arrs_per_glyph:
         stroke_arrs = normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points=max_n_time_points, desired_n_strokes=max_n_strokes)
         l = np.stack(stroke_arrs)
@@ -95,9 +96,12 @@ def get_training_data_array(training_data_fps):
         assert n_channels == 2  # x and y
         assert n_time_points == max_n_time_points
         arrs.append(l)
+        n_strokes_vector = [int(i == n_strokes) for i in range(1, max_n_strokes+1)]
+        n_strokes_vector_per_glyph.append(n_strokes_vector)
 
-    arr = np.stack(arrs)
-    return arr
+    xy_arr = np.stack(arrs)
+    n_strokes_arr = np.array(n_strokes_vector_per_glyph)
+    return xy_arr, n_strokes_arr
 
 
 def normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points, desired_n_strokes):
@@ -256,39 +260,41 @@ def bowl_activation(x):
 
 
 def make_generator_model(n_strokes, n_time_points, n_channels):
-    model = tf.keras.Sequential()
-
     n_dense_neurons = 50
     n_filters = 16
 
-    model.add(layers.Dense(n_dense_neurons * n_channels, input_shape=(100,)))  # first layer connected to input from latent space
-    model.add(layers.BatchNormalization())
-    model.add(layers.LeakyReLU())
-    model.add(layers.Dropout(0.2))
+    # going to use the functional API of Keras to be able to handle multiple inputs and outputs (one for the simultaneous-strokes array, and one for the small vector just saying how many strokes this glyph has)
 
-    # DON'T want activation on output layer, want it to be able to return whatever values it wants in the array
-    # (could cause problems trying to get zero pressure though)
-    # ideal would be activate x and y with sigmoid to keep them inside the image,
-    # and activate pressure with ReLU or some kind of half-sigmoid that is zero for input <=0 and goes up to 1
-    # can I make a custom activation function that will behave differently on the different columns like this?
-    # then can train on x and y rather than dx and dy (because the latter has too much cumulative drift making glyphs that go way out of bounds)
+    inputs = keras.Input(shape=(noise_dim,))
+    mid = layers.BatchNormalization()(inputs)
+    mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
+    mid = layers.Dropout(0.2)(mid)
+    mid = layers.Reshape((n_dense_neurons * n_channels, 1))(mid)
 
     # try 1D convolution to capture the time series nature where adjacent points are correlated
-    # model.add(layers.Dense(n_time_points * n_channels))  # so there will be the correct number of points for deconvolving into time series of the correct number of ticks and channels
-    model.add(layers.Reshape((n_dense_neurons, n_channels)))
-    model.add(layers.Conv1DTranspose(filters=n_filters, kernel_size=9, padding="same"))
 
-    # not sure why convolution doesn't operate separately on the channels; is it convolving them together??? so I guess I'll just make another freaking dense layer to get the shape correct again
-    model.add(layers.Flatten())
-    model.add(layers.GaussianNoise(0.001))  # trying to prevent model from getting stuck in rut
+    conv1 = layers.Conv1DTranspose(filters=n_filters, kernel_size=9, strides=2, padding="same")(mid)
+    conv1 = layers.Flatten()(conv1)
 
-    model.add(layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU(alpha=0.01)))
-    model.add(layers.Dropout(0.2))
+    conv2 = layers.Conv1DTranspose(filters=n_filters, kernel_size=23, strides=3, padding="same")(mid)
+    conv2 = layers.Flatten()(conv2)
 
-    model.add(layers.Dense(n_strokes * n_time_points * n_channels))
-    model.add(layers.Reshape((n_strokes, n_time_points, n_channels)))
+    conv3 = layers.Conv1DTranspose(filters=n_filters, kernel_size=64, strides=7, padding="same")(mid)
+    conv3 = layers.Flatten()(conv3)
 
-    expected_output_shape = (None, n_strokes, n_time_points, n_channels)  # first element is batch size, can be None
+    mid = layers.concatenate([conv1, conv2, conv3])
+
+    mid = layers.GaussianNoise(0.001)(mid)  # trying to prevent model from getting stuck in rut
+    mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
+    mid = layers.Dropout(0.2)(mid)
+    mid = layers.Dense(n_strokes * n_time_points * n_channels)(mid)
+
+    # from here now we make the simultaneous-strokes array (xs and ys), and also the vector saying how many strokes to use
+    out_xys = layers.Reshape((n_strokes, n_time_points, n_channels))(mid)
+    out_n_strokes = layers.Dense(n_strokes, activation="softmax")(mid)
+
+    model = keras.Model(inputs=inputs, outputs=[out_xys, out_n_strokes])
+    expected_output_shape = [(None, n_strokes, n_time_points, n_channels), (None, n_strokes)]  # first element is batch size, can be None
     assert model.output_shape == expected_output_shape, f"expected model output shape {expected_output_shape} but got {model.output_shape}"
 
     return model
@@ -298,36 +304,38 @@ def make_discriminator_model(n_strokes, n_time_points, n_channels):
     n_dense_neurons = 50
     n_filters = 16
 
-    model = tf.keras.Sequential()
-    model.add(layers.InputLayer(input_shape=(n_strokes, n_time_points, n_channels)))
-    # model.add(layers.Flatten())
-    model.add(layers.BatchNormalization())
+    xy_inputs = keras.Input(shape=(n_strokes, n_time_points, n_channels))
+    n_strokes_inputs = keras.Input(shape=(n_strokes,))  # greatest value in this vector tells how many strokes to pay attention to (first n)
 
-    # model.add(layers.Reshape((n_time_points, n_channels)))
-    model.add(layers.Conv1D(filters=n_filters, kernel_size=9, padding="same"))
-    model.add(layers.Flatten())
+    xy_mid = layers.BatchNormalization()(xy_inputs)
 
-    model.add(layers.Dense(n_dense_neurons * n_channels))
-    model.add(layers.LeakyReLU())
-    model.add(layers.Dropout(0.2))
+    conv1 = layers.Conv1D(filters=n_filters, kernel_size=9, strides=2, padding="same")(xy_mid)
+    conv1 = layers.Flatten()(conv1)
 
-    model.add(layers.Dense(n_dense_neurons * n_channels))
-    model.add(layers.LeakyReLU())
-    model.add(layers.Dropout(0.2))
+    conv2 = layers.Conv1D(filters=n_filters, kernel_size=19, strides=3, padding="same")(xy_mid)
+    conv2 = layers.Flatten()(conv2)
 
-    model.add(layers.GaussianNoise(0.01)) # trying to prevent model from getting stuck in rut
+    conv3 = layers.Conv1D(filters=n_filters, kernel_size=119, strides=16, padding="same")(xy_mid)
+    conv3 = layers.Flatten()(conv3)
 
-    model.add(layers.Dense(1, activation="sigmoid"))  # want logistic regression-like output
+    xy_mid = layers.concatenate([conv1, conv2, conv3])
+
+    n_strokes_mid = layers.Flatten()(n_strokes_inputs)
+
+    mid = layers.concatenate([xy_mid, n_strokes_mid])
+    mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
+    mid = layers.Dropout(0.2)(mid)
+
+    mid = layers.GaussianNoise(0.01)(mid)  # trying to prevent model from getting stuck in rut
+
+    mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
+    mid = layers.Dropout(0.2)(mid)
+
+    out = layers.Dense(1, activation="sigmoid")(mid)  # want logistic regression-like output
+    model = keras.Model(inputs=[xy_inputs, n_strokes_inputs], outputs=[out])
     assert model.output_shape == (None, 1), model.output_shape
 
     return model
-
-
-# def tf_print(x, message=None):
-#     if message is None:
-#         message = "values: "
-#     x = tf.Print(x, [x], message=message)
-#     return x
 
 
 def discriminator_loss(real_output, fake_output):
@@ -362,14 +370,15 @@ def print_layers(model, x_train):
 # @tf.function  # seems to do weird stuff like make random.random() always be the same! don't like this
 def train_step(batch, epoch):
     noise = tf.random.normal([BATCH_SIZE, noise_dim])
+    batch_xys = batch["xy"]
+    batch_n_strokes = batch["n_strokes"]
 
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-        generated_data = generator(noise, training=True)
-        # print("generated data:", generated_data)
+        generated_xys, generated_n_strokes = generator(noise, training=True)
 
-        real_output = discriminator(batch, training=True)
+        real_output = discriminator([batch_xys, batch_n_strokes], training=True)
         # print("real output:", real_output)
-        fake_output = discriminator(generated_data, training=True)
+        fake_output = discriminator([generated_xys, generated_n_strokes], training=True)
         # print("fake output:", fake_output)
 
         gen_loss = generator_loss(fake_output)
@@ -425,17 +434,20 @@ def generate_and_save_images(model, epoch, test_input):
     # This is so all layers run in inference mode (batchnorm).
     if test_input is None:
         test_input = tf.random.normal([num_examples_to_generate, noise_dim])
-    predictions = model(test_input, training=False).numpy()
+    predictions, n_strokes_vector = model(test_input, training=False)
+    predictions = predictions.numpy()
+    n_strokes_vector = n_strokes_vector.numpy()
     print(f"{predictions.shape = }")
     for i in range(predictions.shape[0]):
         l = predictions[i]
+        n_strokes_this_glyph = 1 + np.argmax(n_strokes_vector[i])
         tsv_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Array.tsv")
         write_data_to_file_from_simultaneous_strokes(l, tsv_fp)
-        plot_simultaneous_strokes(l, show=False)
+        plot_simultaneous_strokes(l, n_strokes_this_glyph, show=False)
         time_series_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_TimeSeries.png")
         plt.savefig(time_series_fp)
         plt.gcf().clear()
-        draw_glyph_from_simultaneous_strokes(l, show=False)
+        draw_glyph_from_simultaneous_strokes(l, n_strokes_this_glyph, show=False)
         glyph_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Glyph.png")
         plt.savefig(glyph_fp)
         plt.gcf().clear()
@@ -474,16 +486,16 @@ if __name__ == "__main__":
     # training_data_fps = [x for x in training_data_fps if "/44/" in x]  # debug
     random.shuffle(training_data_fps)
     n_train = len(training_data_fps)
-    train_arr = get_training_data_array(training_data_fps)
-    print(train_arr.shape)
-    assert len(train_arr.shape) == 4
-    assert train_arr.shape[0] == n_train
-    n_strokes = train_arr.shape[1]
-    n_time_points = train_arr.shape[2]
-    n_channels = train_arr.shape[3]
+    train_xy_arr, train_n_strokes_arr = get_training_data_array(training_data_fps)
+    print(train_xy_arr.shape)
+    assert len(train_xy_arr.shape) == 4
+    assert train_xy_arr.shape[0] == n_train
+    max_n_strokes = train_xy_arr.shape[1]
+    n_time_points = train_xy_arr.shape[2]
+    n_channels = train_xy_arr.shape[3]
     assert n_channels == 2  # x and y
 
-    print(f"got training data, of shape {train_arr.shape}")
+    print(f"got training data, of shape {train_xy_arr.shape} for xys and {train_n_strokes_arr.shape} for n_strokes")
 
     # indices = list(range(n_train))
     # random.shuffle(indices)
@@ -511,31 +523,34 @@ if __name__ == "__main__":
 
     BUFFER_SIZE = 60000
     BATCH_SIZE = 72
+    noise_dim = 100
 
     # Batch and shuffle the data
     print("making dataset")
-    train_dataset = tf.data.Dataset.from_tensor_slices(train_arr).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
+    train_dataset = tf.data.Dataset.from_tensor_slices({"xy": train_xy_arr, "n_strokes": train_n_strokes_arr}).shuffle(BUFFER_SIZE).batch(BATCH_SIZE)
     print("made dataset")
 
     print("making generator model")
     input("watch RAM usage")
-    generator = make_generator_model(n_strokes, n_time_points, n_channels)
+    generator = make_generator_model(max_n_strokes, n_time_points, n_channels)
     print("made generator model")
 
-    noise = tf.random.normal([1, 100])
-    generated_arr = generator(noise, training=False).numpy()
+    noise = tf.random.normal([1, noise_dim])
+    generated_arr, generated_n_strokes_vector = generator(noise, training=False)
+    generated_arr = generated_arr.numpy()
+    generated_n_strokes_vector = generated_n_strokes_vector.numpy()
     assert generated_arr.shape[0] == 1  # 1 sample
-    # plot_xyp_time_series(generated_arr[0])
-    # draw_glyph_from_xyp_time_series(generated_arr[0])
+    plot_simultaneous_strokes(generated_arr[0], n_strokes = 1 + np.argmax(generated_n_strokes_vector[0]))
+    draw_glyph_from_simultaneous_strokes(generated_arr[0], n_strokes = 1 + np.argmax(generated_n_strokes_vector[0]))
 
     print("making discriminator model")
-    discriminator = make_discriminator_model(n_strokes, n_time_points, n_channels)
+    discriminator = make_discriminator_model(max_n_strokes, n_time_points, n_channels)
     print("made discriminator model")
-    decision = discriminator(generated_arr)
+    decision = discriminator([generated_arr, generated_n_strokes_vector])
     print("discriminator's decision about the previously shown random noise image:", decision)
 
-    keras.utils.plot_model(generator, to_file=os.path.join(OUTPUT_DIR, "model_generator.png"))
-    keras.utils.plot_model(discriminator, to_file=os.path.join(OUTPUT_DIR, "model_discriminator.png"))
+    keras.utils.plot_model(generator, to_file=os.path.join(OUTPUT_DIR, "model_generator.png"), show_shapes=True)
+    keras.utils.plot_model(discriminator, to_file=os.path.join(OUTPUT_DIR, "model_discriminator.png"), show_shapes=True)
 
     # This method returns a helper function to compute cross entropy loss
     cross_entropy = tf.keras.losses.BinaryCrossentropy()
@@ -552,7 +567,6 @@ if __name__ == "__main__":
     print("checkpoint dir declared")
 
     EPOCHS = 100000
-    noise_dim = 100
     num_examples_to_generate = 5
 
     # You will reuse this seed overtime (so it's easier)
