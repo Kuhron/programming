@@ -2,6 +2,7 @@ import pyglet
 import time
 import os
 import math
+import random
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
@@ -189,6 +190,7 @@ def write_data_to_file_from_simultaneous_strokes(arr, output_fp):
 
 
 if __name__ == "__main__":
+    data_dir = "VineScriptTabletInputData"
     collect_data = True
     plot_data = True
 
@@ -248,8 +250,8 @@ if __name__ == "__main__":
                 # write data to file for NN training
                 now_str = datetime.utcnow().strftime("%Y-%m-%d-%H:%M:%S")
                 output_fname = f"{now_str}.tsv"
-                output_fp = os.path.join("VineScriptTabletInputData", output_fname)
-                write_data_to_file(motion_data, output_fp)
+                output_fp = os.path.join(data_dir, output_fname)
+                write_data_to_file_from_xyp_time_series(motion_data, output_fp)
             # clear the window and lines, reset time
             global t0
             t0 = time.time()
@@ -266,13 +268,29 @@ if __name__ == "__main__":
     if plot_data:
         subdir = None
         if subdir is None:
-            data_fps = sorted([os.path.join("VineScriptTabletInputData", x) for x in os.listdir("VineScriptTabletInputData") if x.endswith(".tsv")])
+            data_fps = sorted([os.path.join(data_dir, x) for x in os.listdir(data_dir) if x.endswith(".tsv")])
         else:
-            data_fps = sorted([os.path.join("VineScriptTabletInputData", subdir, x) for x in os.listdir(os.path.join("VineScriptTabletInputData", subdir)) if x.endswith(".tsv")])
+            data_fps = sorted([os.path.join(data_dir, subdir, x) for x in os.listdir(os.path.join(data_dir, subdir)) if x.endswith(".tsv")])
         for fp in data_fps:
             l = get_array_from_data_fp(fp, binarize_pressure_threshold=None)
             print(fp)
             # plot_xyp_time_series(l)
             draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE)
 
+    # create exemplar images for the known glyphs so I can look through them to find an existing glyph
+    subdirs = os.listdir(data_dir)
+    subdirs = sorted([x for x in subdirs if os.path.isdir(os.path.join(data_dir, x)) and x not in ["Uncz", "GlyphExemplars"]])  # don't do exemplar for the uncategorized glyphs
+    for subdir in subdirs:
+        exemplar_fname = f"exemplar_{subdir}.png"
+        exemplar_fp = os.path.join(data_dir, "GlyphExemplars", exemplar_fname)
+        if not os.path.exists(exemplar_fp):
+            tsvs = [x for x in os.listdir(os.path.join(data_dir, subdir)) if x.endswith(".tsv")]
+            tsv = random.choice(tsvs)
+            tsv_fp = os.path.join(data_dir, subdir, tsv)
+            l = get_array_from_data_fp(tsv_fp, binarize_pressure_threshold=None)
+            draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, show=False)
+            plt.gca().set_axis_off()
+            plt.savefig(exemplar_fp)
+            plt.gcf().clear()
+            print(f"created exemplar image for glyph {subdir}")
 
