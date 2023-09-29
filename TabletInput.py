@@ -79,7 +79,7 @@ def plot_xyp_time_series(l, show=True):
         plt.show()
 
 
-def draw_glyph_from_xyp_time_series(l, pressure_threshold, show=True):
+def draw_glyph_from_xyp_time_series(l, pressure_threshold, all_black=False, with_stroke_starts=True, show=True):
     # draw the shape that the data describes
     # I think the NN can completely ignore time? it just has a series of x,y values (and whether the pen lifts)
     assert type(l) is np.ndarray
@@ -109,7 +109,10 @@ def draw_glyph_from_xyp_time_series(l, pressure_threshold, show=True):
     for stroke in strokes:
         xs = [xy[0] for xy in stroke]
         ys = [xy[1] for xy in stroke]
-        plt.plot(xs, ys, c="k")
+        c = "k" if all_black else None
+        if with_stroke_starts:
+            plt.scatter([xs[0]], [ys[0]], c=c)
+        plt.plot(xs, ys, c=c)
     plt.axis("equal")
     if show:
         plt.show()
@@ -142,10 +145,10 @@ def draw_glyph_from_simultaneous_strokes(l, n_strokes=None, all_black=False, sho
     for i in range(n_strokes):
         xs = l[i, :, 0]
         ys = l[i, :, 1]
-        if all_black:
-            plt.plot(xs, ys, c="k")
-        else:
-            plt.plot(xs, ys)  # let it auto-cycle through colors
+        c = "k" if all_black else None
+        if with_stroke_starts:
+            plt.scatter([xs[0]], [ys[0]], c=c)
+        plt.plot(xs, ys, c=c)
     plt.axis("equal")
     if show:
         plt.show()
@@ -279,7 +282,8 @@ if __name__ == "__main__":
 
     # create exemplar images for the known glyphs so I can look through them to find an existing glyph
     subdirs = os.listdir(data_dir)
-    subdirs = sorted([x for x in subdirs if os.path.isdir(os.path.join(data_dir, x)) and x not in ["Uncz", "GlyphExemplars"]])  # don't do exemplar for the uncategorized glyphs
+    subdirs = sorted([x for x in subdirs if os.path.isdir(os.path.join(data_dir, x)) and x not in ["Uncz", "GlyphExemplars"]])
+    tsv_exemplar_pairs = []
     for subdir in subdirs:
         exemplar_fname = f"exemplar_{subdir}.png"
         exemplar_fp = os.path.join(data_dir, "GlyphExemplars", exemplar_fname)
@@ -287,10 +291,32 @@ if __name__ == "__main__":
             tsvs = [x for x in os.listdir(os.path.join(data_dir, subdir)) if x.endswith(".tsv")]
             tsv = random.choice(tsvs)
             tsv_fp = os.path.join(data_dir, subdir, tsv)
-            l = get_array_from_data_fp(tsv_fp, binarize_pressure_threshold=None)
-            draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, show=False)
-            plt.gca().set_axis_off()
-            plt.savefig(exemplar_fp)
-            plt.gcf().clear()
-            print(f"created exemplar image for glyph {subdir}")
+            tsv_exemplar_pairs.append([tsv_fp, exemplar_fp])
+
+    # each uncategorized glyph gets its own exemplar, but keep them in the Uncz directory
+    subdir = os.path.join(data_dir, "Uncz")
+    uncz_tsv_fnames = [x for x in os.listdir(subdir) if x.endswith(".tsv")]
+    for tsv_fname in uncz_tsv_fnames:
+        tsv_fp = os.path.join(subdir, tsv_fname)
+        exemplar_fname = "exemplar_" + tsv_fname.replace(".tsv", ".png")
+        exemplar_fp = os.path.join(subdir, exemplar_fname)
+        if not os.path.exists(exemplar_fp):
+            tsv_exemplar_pairs.append([tsv_fp, exemplar_fp])
+
+    for tsv_fp, exemplar_fp in tsv_exemplar_pairs:
+        l = get_array_from_data_fp(tsv_fp, binarize_pressure_threshold=None)
+        exemplar_fp_minimal = exemplar_fp.replace(".png", "_minimal.png")
+        exemplar_fp_guide = exemplar_fp.replace(".png", "_guide.png")
+
+        draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, all_black=True, with_stroke_starts=False, show=False)
+        plt.gca().set_axis_off()
+        plt.savefig(exemplar_fp_minimal)
+        plt.gcf().clear()
+        print(f"created exemplar image {exemplar_fp_minimal}")
+
+        draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, all_black=False, with_stroke_starts=True, show=False)
+        plt.gca().set_axis_off()
+        plt.savefig(exemplar_fp_guide)
+        plt.gcf().clear()
+        print(f"created exemplar image {exemplar_fp_guide}")
 
