@@ -287,11 +287,13 @@ if __name__ == "__main__":
     for subdir in subdirs:
         exemplar_fname = f"exemplar_{subdir}.png"
         exemplar_fp = os.path.join(data_dir, "GlyphExemplars", exemplar_fname)
-        if not os.path.exists(exemplar_fp):
-            tsvs = [x for x in os.listdir(os.path.join(data_dir, subdir)) if x.endswith(".tsv")]
-            tsv = random.choice(tsvs)
-            tsv_fp = os.path.join(data_dir, subdir, tsv)
-            tsv_exemplar_pairs.append([tsv_fp, exemplar_fp])
+        tsvs = [x for x in os.listdir(os.path.join(data_dir, subdir)) if x.endswith(".tsv")]
+        tsv = random.choice(tsvs)
+        tsv_fp = os.path.join(data_dir, subdir, tsv)
+        exemplar_fp_minimal = exemplar_fp.replace(".png", "_minimal.png")
+        exemplar_fp_guide = exemplar_fp.replace(".png", "_guide.png")
+        tsv_exemplar_pairs.append([tsv_fp, exemplar_fp_minimal])
+        tsv_exemplar_pairs.append([tsv_fp, exemplar_fp_guide])
 
     # each uncategorized glyph gets its own exemplar, but keep them in the Uncz directory
     subdir = os.path.join(data_dir, "Uncz")
@@ -300,23 +302,26 @@ if __name__ == "__main__":
         tsv_fp = os.path.join(subdir, tsv_fname)
         exemplar_fname = "exemplar_" + tsv_fname.replace(".tsv", ".png")
         exemplar_fp = os.path.join(subdir, exemplar_fname)
-        if not os.path.exists(exemplar_fp):
-            tsv_exemplar_pairs.append([tsv_fp, exemplar_fp])
-
-    for tsv_fp, exemplar_fp in tsv_exemplar_pairs:
-        l = get_array_from_data_fp(tsv_fp, binarize_pressure_threshold=None)
         exemplar_fp_minimal = exemplar_fp.replace(".png", "_minimal.png")
         exemplar_fp_guide = exemplar_fp.replace(".png", "_guide.png")
+        tsv_exemplar_pairs.append([tsv_fp, exemplar_fp_minimal])
+        tsv_exemplar_pairs.append([tsv_fp, exemplar_fp_guide])
 
-        draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, all_black=True, with_stroke_starts=False, show=False)
-        plt.gca().set_axis_off()
-        plt.savefig(exemplar_fp_minimal)
-        plt.gcf().clear()
-        print(f"created exemplar image {exemplar_fp_minimal}")
+    for tsv_fp, exemplar_fp in tsv_exemplar_pairs:
+        if os.path.exists(exemplar_fp):
+            continue
+        l = get_array_from_data_fp(tsv_fp, binarize_pressure_threshold=None)
 
-        draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, all_black=False, with_stroke_starts=True, show=False)
+        if "_minimal.png" in exemplar_fp:
+            draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, all_black=True, with_stroke_starts=False, show=False)
+        elif "_guide.png" in exemplar_fp:
+            draw_glyph_from_xyp_time_series(l, pressure_threshold=MIN_PRESSURE_FOR_STROKE, all_black=False, with_stroke_starts=True, show=False)
+        else:
+            raise Exception(f"bad exemplar fp: {exemplar_fp}")
+
         plt.gca().set_axis_off()
-        plt.savefig(exemplar_fp_guide)
+        plt.savefig(exemplar_fp)
         plt.gcf().clear()
-        print(f"created exemplar image {exemplar_fp_guide}")
+        print(f"created exemplar image {exemplar_fp}")
+
 
