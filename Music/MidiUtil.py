@@ -22,11 +22,30 @@ class MidiEvent:
         self.timestamp = timestamp
         self.loudness = 64  # max is 127
 
-        self.status_name = "note" if status == 144 else "instrument" if status == 192 else "unknown_status"
-        if self.status_name == "note":
-            self.event_name = "note_on" if self.event == 75 else "note_off" if self.event == 0 else "unknown_event"
+        status_names = {
+            144: "note_on",
+            128: "note_off",
+            176: "pedal",
+            192: "instrument",  # Yamaha P125 does a lot of events for changing instrument, can mess with handling these later if I even want to deal with it
+        }
+        self.status_name = status_names.get(status, "unknown status")
+
+        if self.status_name == "note_on":
+            pressure = event
+            self.loudness = pressure
+            self.event_name = "note_on"
+        elif self.status_name == "note_off":
+            assert event == 64
+            self.event_name = "note_off"
+        elif self.status_name == "pedal":
+            if event == 127:
+                self.event_name = "pedal_on"
+            elif event == 0:
+                self.event_name = "pedal_off"
+            else:
+                self.event_name = "unknown pedal event"
         else:
-            self.event_name = "N/A"
+            self.event_name = "unknown event"
 
     def to_raw_data(self):
         return [[self.status, self.pitch, self.event, self.data3], self.timestamp]
@@ -42,7 +61,7 @@ class MidiEvent:
         return [MidiEvent.from_raw_data(x) for x in lst]
 
     def is_note(self):
-        return self.status_name == "note"
+        return self.status_name in ["note_on", "note_off"]
 
     def is_instrument(self):
         return self.status_name == "instrument"
@@ -50,6 +69,9 @@ class MidiEvent:
     def invert_pitch(self, pivot):
         if self.is_note():
             new_pitch = pivot + (pivot - self.pitch)
+        else:
+            new_pitch = self.pitch
+        self.pitch = new_pitch
         return self
 
     def add_time(self, time):
@@ -68,13 +90,16 @@ class MidiEvent:
     #         player.set_instrument(self.pitch)
 
     def __repr__(self):
-        return str(self.to_raw_data())
+        return f"<MidiEvent status={self.status} pitch={self.pitch} event={self.event} data3={self.data3} timestamp={self.timestamp} status_name={self.status_name} event_name={self.event_name}>"
 
 
 def get_input_and_output_devices(verbose=False):
-    INTERFACE_NAME = b"UM-2"  # Edirol UM-2 EX
-    # INTERFACE_OTHER_NAME = b"MIDIOUT2 (UM-2)"
+    INTERFACE_NAME = b"Digital Piano MIDI 1"  # Yamaha P125
+    # INTERFACE_NAME = b"UM-2"  # Edirol UM-2 EX
     # INTERFACE_NAME = b"US-144"  # Tascam US-144
+
+    INTERFACE_OTHER_NAME = None
+    # INTERFACE_OTHER_NAME = b"MIDIOUT2 (UM-2)"
 
     infos = [midi.get_device_info(device_id) for device_id in range(midi.get_count())]
     if verbose:
@@ -85,12 +110,12 @@ def get_input_and_output_devices(verbose=False):
     alt_device_id = None
     for device_id, info in enumerate(infos):
         interf, name, is_input, is_output, is_opened = info
-        if name == INTERFACE_NAME:
+        if name == INTERFACE_NAME and INTERFACE_NAME is not None:
             if is_input:
                 input_device_id = device_id
             elif is_output:
                 output_device_id = device_id
-        elif name == INTERFACE_OTHER_NAME:
+        elif name == INTERFACE_OTHER_NAME and INTERFACE_OTHER_NAME is not None:
             raise Exception("OTHER_NAME should not be used; check that input/output device names are as you expect")
             alt_device_id = device_id
 
@@ -103,23 +128,43 @@ def get_input_and_output_devices(verbose=False):
 
 
 def send_data_to_midi_out(data, midi_output):
-    pygame_time_ms = midi.time()
-    transform = lambda lst, timestamp: [lst, timestamp + pygame_time_ms + 1000]
+    t0 = midi.time()
+    transform = lambda lst, timestamp: [lst, timestamp + t0 + 1000]
     data = [transform(*x) for x in data]
 
     final_timestamp = data[-1][-1]
+    last_n_seconds_to_write = final_timestamp // 1000
+
+    # maybe break the data into 1-second chunks or some other buffering method so we don't get weird gaps when the piano is trying to process the commands
+    MAX_OUTPUT_LENGTH = 1024  # due to pypm
+    data_segments_by_second = []
+    for second_i in range(last_n_seconds_to_write + 1):
+        segment = [x for x in data if x[-1] // 1000 == second_i]
+        if len(segment) > MAX_OUTPUT_LENGTH:
+            raise Exception("too many events in one second")
+            # hopefully shouldn't happen with any pieces I'm playing
+        data_segments_by_second.append(segment)
+
+    assert sum(len(x) for x in data_segments_by_second) == len(data), "wrong number of events in segments"
+
+    # go ahead and write the first second, and always send the next second's data to the piano ahead of time
+    midi_output.write(data_segments_by_second[0])
+    last_n_seconds_written = 0
+    while True:
+        n_seconds_now = (midi.time() - t0) // 1000
+        n_seconds_to_write = n_seconds_now + 1
+        if last_n_seconds_written is None or n_seconds_to_write != last_n_seconds_written:
+            segment = data_segments_by_second[n_seconds_to_write]
+            midi_output.write(segment)
+            last_n_seconds_written = n_seconds_to_write
+            print(f"wrote data for second {n_seconds_to_write} out of {last_n_seconds_to_write}")
+        if n_seconds_to_write == last_n_seconds_to_write:
+            break
 
     # kill time so program doesn't end before midi is done playing
-
-    i = 0
-    MAX_OUTPUT_LENGTH = 1024  # due to pypm
-    while i < len(data):
-        sub_data = data[i: i + MAX_OUTPUT_LENGTH]
-        midi_output.write(sub_data)
-        i += MAX_OUTPUT_LENGTH
-
     while midi.time() < final_timestamp:
-        time.sleep(0.1)
+        print(f"not done yet; {midi.time() = }, {final_timestamp = }")
+        time.sleep(1)
 
 
 def send_notes_to_midi_out(notes, midi_output):
@@ -170,8 +215,10 @@ def read_data_from_midi_in(midi_input, max_silence_seconds):
             assert len(new_data) == 1
             new_data = new_data[0]
             data.append(new_data)
-            print(new_data)
+            print(f"{new_data = }")
             event = MidiEvent.from_raw_data(new_data)
+            print(f"{event = }")
+            print(event.event_name)
             last_time = event.timestamp
             
             note_imbalance += 1 if event.event_name == "note_on" else -1 if event.event_name == "note_off" else 0
@@ -191,18 +238,22 @@ def read_notes_from_midi_in(midi_input, timeout_seconds):
 
 def dump_data(data):
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filepath = "Music/midi_input_{}.pickle".format(now_str)
+    filepath = "/home/wesley/programming/Music/midi_input/midi_input_{}.pickle".format(now_str)
     with open(filepath, "wb") as f:
         pickle.dump(data, f)
 
 
-def load_random_data():
-    data_dir = "Music/"
+def load_random_data(data_dir):
+    if data_dir is None:
+        data_dir = "/home/wesley/programming/Music/midi_input"
     ls = os.listdir(data_dir)
     choices = [x for x in filter(lambda x: x.startswith("midi_input_"), ls)]
-    # print(choices)
+    print(choices)
+    choices = [x for x in choices if "1001" in x]
     choice = random.choice(choices)
-    with open(data_dir + choice, "rb") as f:
+    fp = os.path.join(data_dir, choice)
+    print(f"loading data from {fp}")
+    with open(fp, "rb") as f:
         data = pickle.load(f)
     return data
 
@@ -215,9 +266,25 @@ def load_data_from_datetime_string(s):
 
 
 def invert_data(data, pivot):
+    print("inverting data")
     lst = MidiEvent.from_data_list(data)
     lst = [x.invert_pitch(pivot) for x in lst]
-    return [x.to_raw_data() for x in lst]
+    data = [x.to_raw_data() for x in lst]
+    print("got inverted data")
+    return data
+
+
+def transpose_data(data, offset):
+    print("transposing data")
+    assert type(offset) is int
+    lst = MidiEvent.from_data_list(data)
+    new_lst = []
+    for x in lst:
+        x.pitch += offset
+        new_lst.append(x)
+    data = [x.to_raw_data() for x in new_lst]
+    print("got transposed data")
+    return data
 
 
 def note_number_to_hertz(n, a=440):

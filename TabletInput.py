@@ -136,7 +136,7 @@ def plot_simultaneous_strokes(l, n_strokes=None, show=True):
         plt.show()
 
 
-def draw_glyph_from_simultaneous_strokes(l, n_strokes=None, all_black=False, show=True):
+def draw_glyph_from_simultaneous_strokes(l, n_strokes=None, all_black=False, with_stroke_starts=True, show=True):
     n_strokes_raw, n_time_points, n_channels = l.shape
     if n_strokes is None:
         n_strokes = n_strokes_raw

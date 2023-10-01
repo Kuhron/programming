@@ -1,3 +1,6 @@
+import sys
+sys.path.insert(0, "/home/wesley/programming/")
+
 import Music.MidiUtil as mu
 import Music.MusicalStructureUtil as structure
 import Music.WavUtil as wav

@@ -87,16 +87,16 @@ def get_training_data_array(training_data_fps):
 
     n_strokes_vector_per_glyph = []
     for stroke_arrs in stroke_arrs_per_glyph:
-        stroke_arrs = normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points=max_n_time_points, desired_n_strokes=max_n_strokes)
+        stroke_arrs, n_strokes_in_glyph = normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points=max_n_time_points, desired_n_strokes=max_n_strokes)
         l = np.stack(stroke_arrs)
         # plot_simultaneous_strokes(l)  # debug
         # draw_glyph_from_simultaneous_strokes(l)  # debug
-        n_strokes, n_time_points, n_channels = l.shape
-        assert n_strokes == max_n_strokes
+        n_strokes_raw, n_time_points, n_channels = l.shape
+        assert n_strokes_raw == max_n_strokes
         assert n_channels == 2  # x and y
         assert n_time_points == max_n_time_points
         arrs.append(l)
-        n_strokes_vector = [int(i == n_strokes) for i in range(1, max_n_strokes+1)]
+        n_strokes_vector = [int(i == n_strokes_in_glyph) for i in range(1, max_n_strokes+1)]
         n_strokes_vector_per_glyph.append(n_strokes_vector)
 
     xy_arr = np.stack(arrs)
@@ -170,7 +170,8 @@ def normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points, desired
     # plt.axis("equal")
     # plt.show()
 
-    n_strokes_left = desired_n_strokes - len(stroke_arrs)
+    n_strokes_in_glyph = len(stroke_arrs)
+    n_strokes_left = desired_n_strokes - n_strokes_in_glyph
     assert n_strokes_left >= 0
     for i in range(n_strokes_left):
         xs = [0] * desired_n_time_points
@@ -181,7 +182,7 @@ def normalize_stroke_arrays_of_glyph(stroke_arrs, desired_n_time_points, desired
     for i in range(desired_n_strokes):
         new_stroke_arr = np.stack([new_xs_per_stroke[i], new_ys_per_stroke[i]], axis=-1)
         new_stroke_arrs.append(new_stroke_arr)
-    return new_stroke_arrs
+    return new_stroke_arrs, n_strokes_in_glyph
 
 
 def pad_with_zeros(arr, n_rows, xy_val=0):
@@ -266,12 +267,17 @@ def make_generator_model(n_strokes, n_time_points, n_channels):
     # going to use the functional API of Keras to be able to handle multiple inputs and outputs (one for the simultaneous-strokes array, and one for the small vector just saying how many strokes this glyph has)
 
     inputs = keras.Input(shape=(noise_dim,))
-    mid = layers.BatchNormalization()(inputs)
+    mid = inputs
+    # mid = layers.BatchNormalization()(mid)
     mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
-    mid = layers.Dropout(0.2)(mid)
-    mid = layers.Reshape((n_dense_neurons * n_channels, 1))(mid)
+    # mid = layers.Dropout(0.2)(mid)
+
+    # mid = layers.GaussianNoise(0.001)(mid)  # trying to prevent model from getting stuck in rut
+    mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
+    # mid = layers.Dropout(0.2)(mid)
 
     # try 1D convolution to capture the time series nature where adjacent points are correlated
+    mid = layers.Reshape((n_dense_neurons * n_channels, 1))(mid)
 
     conv1 = layers.Conv1DTranspose(filters=n_filters, kernel_size=9, strides=2, padding="same")(mid)
     conv1 = layers.Flatten()(conv1)
@@ -283,10 +289,6 @@ def make_generator_model(n_strokes, n_time_points, n_channels):
     conv3 = layers.Flatten()(conv3)
 
     mid = layers.concatenate([conv1, conv2, conv3])
-
-    mid = layers.GaussianNoise(0.001)(mid)  # trying to prevent model from getting stuck in rut
-    mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
-    mid = layers.Dropout(0.2)(mid)
     mid = layers.Dense(n_strokes * n_time_points * n_channels)(mid)
 
     # from here now we make the simultaneous-strokes array (xs and ys), and also the vector saying how many strokes to use
@@ -305,9 +307,11 @@ def make_discriminator_model(n_strokes, n_time_points, n_channels):
     n_filters = 16
 
     xy_inputs = keras.Input(shape=(n_strokes, n_time_points, n_channels))
+    xy_mid = xy_inputs
     n_strokes_inputs = keras.Input(shape=(n_strokes,))  # greatest value in this vector tells how many strokes to pay attention to (first n)
+    n_strokes_mid = n_strokes_inputs
 
-    xy_mid = layers.BatchNormalization()(xy_inputs)
+    # xy_mid = layers.BatchNormalization()(xy_mid)
 
     conv1 = layers.Conv1D(filters=n_filters, kernel_size=9, strides=2, padding="same")(xy_mid)
     conv1 = layers.Flatten()(conv1)
@@ -320,16 +324,16 @@ def make_discriminator_model(n_strokes, n_time_points, n_channels):
 
     xy_mid = layers.concatenate([conv1, conv2, conv3])
 
-    n_strokes_mid = layers.Flatten()(n_strokes_inputs)
+    n_strokes_mid = layers.Flatten()(n_strokes_mid)
 
     mid = layers.concatenate([xy_mid, n_strokes_mid])
     mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
-    mid = layers.Dropout(0.2)(mid)
+    # mid = layers.Dropout(0.2)(mid)
 
-    mid = layers.GaussianNoise(0.01)(mid)  # trying to prevent model from getting stuck in rut
+    # mid = layers.GaussianNoise(0.01)(mid)  # trying to prevent model from getting stuck in rut
 
     mid = layers.Dense(n_dense_neurons * n_channels, activation=layers.LeakyReLU())(mid)
-    mid = layers.Dropout(0.2)(mid)
+    # mid = layers.Dropout(0.2)(mid)
 
     out = layers.Dense(1, activation="sigmoid")(mid)  # want logistic regression-like output
     model = keras.Model(inputs=[xy_inputs, n_strokes_inputs], outputs=[out])
@@ -477,19 +481,43 @@ def get_xy_marks(xs, ys, ps, pressure_threshold):
     return x_min, x_low, x_mean, x_high, x_max, y_min, y_low, y_mean, y_high, y_max
 
 
+def draw_glyphs_with_xy_marks():
+    indices = list(range(n_train))
+    random.shuffle(indices)
+    for i in indices:
+        row = train_arr[i]
+        xs = row[:, 0]
+        ys = row[:, 1]
+        ps = row[:, 2]
+        x_min, x_low, x_mean, x_high, x_max, y_min, y_low, y_mean, y_high, y_max = get_xy_marks(xs, ys, ps, 0.5)
+        draw_glyph_from_xyp_time_series(row, 0.5, show=False)
+
+        plt.plot([x_min, x_min], [y_min, y_max], c="g")
+        plt.plot([x_max, x_max], [y_min, y_max], c="g")
+        plt.plot([x_min, x_max], [y_min, y_min], c="g")
+        plt.plot([x_min, x_max], [y_max, y_max], c="g")
+        plt.plot([x_low, x_low], [y_low, y_high], c="y")
+        plt.plot([x_high, x_high], [y_low, y_high], c="y")
+        plt.plot([x_low, x_high], [y_low, y_low], c="y")
+        plt.plot([x_low, x_high], [y_high, y_high], c="y")
+        plt.plot([x_mean, x_mean], [y_low, y_high], c="r")
+        plt.plot([x_low, x_high], [y_mean, y_mean], c="r")
+
+        plt.show()
+
+
+
 
 if __name__ == "__main__":
     # image_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptCatalog/"
     training_data_dir = "VineScriptTabletInputData"
     OUTPUT_DIR = "Images/VineScriptGAN/"
     training_data_fps = get_training_data_fps(training_data_dir)
-    # training_data_fps = [x for x in training_data_fps if "/44/" in x]  # debug
     random.shuffle(training_data_fps)
     n_train = len(training_data_fps)
     train_xy_arr, train_n_strokes_arr = get_training_data_array(training_data_fps)
-    print(train_xy_arr.shape)
-    assert len(train_xy_arr.shape) == 4
-    assert train_xy_arr.shape[0] == n_train
+    assert len(train_xy_arr.shape) == 4, train_xy_arr.shape
+    assert train_xy_arr.shape[0] == n_train, train_xy_arr.shape
     max_n_strokes = train_xy_arr.shape[1]
     n_time_points = train_xy_arr.shape[2]
     n_channels = train_xy_arr.shape[3]
@@ -497,29 +525,13 @@ if __name__ == "__main__":
 
     print(f"got training data, of shape {train_xy_arr.shape} for xys and {train_n_strokes_arr.shape} for n_strokes")
 
-    # indices = list(range(n_train))
-    # random.shuffle(indices)
-    # for i in indices:
-    #     row = train_arr[i]
-    #     xs = row[:, 0]
-    #     ys = row[:, 1]
-    #     ps = row[:, 2]
-    #     x_min, x_low, x_mean, x_high, x_max, y_min, y_low, y_mean, y_high, y_max = get_xy_marks(xs, ys, ps, 0.5)
-    #     draw_glyph_from_xyp_time_series(row, 0.5, show=False)
+    # trying to understand what the convolutions look like
+    sub_arr = train_xy_arr[0]
+    sub_arr_n_strokes = 1 + np.argmax(train_n_strokes_arr[0])
+    plot_simultaneous_strokes(sub_arr, sub_arr_n_strokes)
+    input("a")
 
-    #     plt.plot([x_min, x_min], [y_min, y_max], c="g")
-    #     plt.plot([x_max, x_max], [y_min, y_max], c="g")
-    #     plt.plot([x_min, x_max], [y_min, y_min], c="g")
-    #     plt.plot([x_min, x_max], [y_max, y_max], c="g")
-    #     plt.plot([x_low, x_low], [y_low, y_high], c="y")
-    #     plt.plot([x_high, x_high], [y_low, y_high], c="y")
-    #     plt.plot([x_low, x_high], [y_low, y_low], c="y")
-    #     plt.plot([x_low, x_high], [y_high, y_high], c="y")
-    #     plt.plot([x_mean, x_mean], [y_low, y_high], c="r")
-    #     plt.plot([x_low, x_high], [y_mean, y_mean], c="r")
-
-    #     plt.show()
-
+    # draw_glyphs_with_xy_marks()  # to see e.g. what the min/max width are, or the standard deviation of height and width, drawn as lines on the glyph, for understanding of how to scale the data
 
     BUFFER_SIZE = 60000
     BATCH_SIZE = 72
