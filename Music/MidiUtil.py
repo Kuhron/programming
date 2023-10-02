@@ -12,6 +12,8 @@ midi.init()
 
 import Music.MusicalStructureUtil as structure
 
+MIDI_INPUT_DIR = "/home/wesley/programming/Music/midi_input/"
+
 
 class MidiEvent:
     def __init__(self, status, pitch, event, data3, timestamp):
@@ -248,8 +250,6 @@ def load_random_data(data_dir):
         data_dir = "/home/wesley/programming/Music/midi_input"
     ls = os.listdir(data_dir)
     choices = [x for x in filter(lambda x: x.startswith("midi_input_"), ls)]
-    print(choices)
-    choices = [x for x in choices if "1001" in x]
     choice = random.choice(choices)
     fp = os.path.join(data_dir, choice)
     print(f"loading data from {fp}")
@@ -258,8 +258,8 @@ def load_random_data(data_dir):
     return data
 
 
-def load_data_from_datetime_string(s):
-    filepath = "Music/midi_input_{}.pickle".format(s)
+def load_data_from_datetime_string(data_dir, s):
+    filepath = os.path.join(data_dir, f"midi_input_{s}.pickle")
     with open(filepath, "rb") as f:
         data = pickle.load(f)
     return data
