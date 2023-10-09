@@ -228,6 +228,10 @@ function base() {
     echo "$s2$s3$1" | bc
 }
 
+function all-webp-to-png() {
+    find -name "*.webp" | xargs -d "\n" -I "{}" python3.8 ~/programming/WebpToPng.py "{}"
+}
+
 export LESS="-SR"  # turns off line wrapping in less
 # export PYTHONPATH=$PYTHONPATH:/home/wesley/programming  # this is a bad idea if using python outside of programming dir, it will try to look for libraries there
 export PYTHONPATH=$PYTHONPATH:/home/wesley/linux-tone-keyboard

@@ -13,6 +13,7 @@ import random
 import time
 import PIL
 import glob
+from datetime import datetime
 
 from TabletInput import get_array_from_data_fp, draw_glyph_from_xyp_time_series, draw_glyph_from_simultaneous_strokes, plot_xyp_time_series, plot_simultaneous_strokes, write_data_to_file_from_xyp_time_series, write_data_to_file_from_simultaneous_strokes, MIN_PRESSURE_FOR_STROKE
 
@@ -289,7 +290,7 @@ def make_generator_model(n_strokes, n_time_points, n_channels):
     conv3 = layers.Flatten()(conv3)
 
     mid = layers.concatenate([conv1, conv2, conv3])
-    mid = layers.Dense(n_strokes * n_time_points * n_channels)(mid)
+    mid = layers.Dense(n_strokes * n_time_points * n_channels)(mid)  # DON'T want activation on the last layer since we want it to be able to take various positive and negative values
 
     # from here now we make the simultaneous-strokes array (xs and ys), and also the vector saying how many strokes to use
     out_xys = layers.Reshape((n_strokes, n_time_points, n_channels))(mid)
@@ -423,7 +424,7 @@ def train(dataset, epochs):
             generate_and_save_images(generator, epoch + 1, test_input=None)
 
         # Save the model
-        if (epoch + 1) % 100 == 0:
+        if (epoch + 1) % 25 == 0:
             checkpoint.save(file_prefix = checkpoint_prefix)
             print("saved checkpoint")
 
@@ -442,17 +443,19 @@ def generate_and_save_images(model, epoch, test_input):
     predictions = predictions.numpy()
     n_strokes_vector = n_strokes_vector.numpy()
     print(f"{predictions.shape = }")
+    now_str = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     for i in range(predictions.shape[0]):
         l = predictions[i]
         n_strokes_this_glyph = 1 + np.argmax(n_strokes_vector[i])
-        tsv_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Array.tsv")
+        fp_prefix = f"{now_str}_E{epoch}_testinput{i}_"
+        tsv_fp = os.path.join(OUTPUT_DIR, fp_prefix + "Array.tsv")
         write_data_to_file_from_simultaneous_strokes(l, tsv_fp)
         plot_simultaneous_strokes(l, n_strokes_this_glyph, show=False)
-        time_series_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_TimeSeries.png")
+        time_series_fp = os.path.join(OUTPUT_DIR, fp_prefix + "TimeSeries.png")
         plt.savefig(time_series_fp)
         plt.gcf().clear()
         draw_glyph_from_simultaneous_strokes(l, n_strokes_this_glyph, show=False)
-        glyph_fp = os.path.join(OUTPUT_DIR, f"E{epoch}_testinput{i}_Glyph.png")
+        glyph_fp = os.path.join(OUTPUT_DIR, fp_prefix + "Glyph.png")
         plt.savefig(glyph_fp)
         plt.gcf().clear()
     print("generated images")
@@ -506,6 +509,17 @@ def draw_glyphs_with_xy_marks():
         plt.show()
 
 
+def show_example_of_model_output():
+    noise = tf.random.normal([1, noise_dim])
+    generated_arr, generated_n_strokes_vector = generator(noise, training=False)
+    generated_arr = generated_arr.numpy()
+    generated_n_strokes_vector = generated_n_strokes_vector.numpy()
+    assert generated_arr.shape[0] == 1  # 1 sample
+    plot_simultaneous_strokes(generated_arr[0], n_strokes = 1 + np.argmax(generated_n_strokes_vector[0]))
+    draw_glyph_from_simultaneous_strokes(generated_arr[0], n_strokes = 1 + np.argmax(generated_n_strokes_vector[0]))
+    decision = discriminator([generated_arr, generated_n_strokes_vector])
+    print("discriminator's decision about the previously shown random noise image:", decision)
+
 
 
 if __name__ == "__main__":
@@ -526,15 +540,16 @@ if __name__ == "__main__":
     print(f"got training data, of shape {train_xy_arr.shape} for xys and {train_n_strokes_arr.shape} for n_strokes")
 
     # trying to understand what the convolutions look like
-    sub_arr = train_xy_arr[0]
-    sub_arr_n_strokes = 1 + np.argmax(train_n_strokes_arr[0])
-    plot_simultaneous_strokes(sub_arr, sub_arr_n_strokes)
-    input("a")
+    for i in range(4):
+        sub_arr = train_xy_arr[i]
+        sub_arr_n_strokes = 1 + np.argmax(train_n_strokes_arr[i])
+        plot_simultaneous_strokes(sub_arr, sub_arr_n_strokes)
+        draw_glyph_from_simultaneous_strokes(sub_arr, sub_arr_n_strokes)
 
     # draw_glyphs_with_xy_marks()  # to see e.g. what the min/max width are, or the standard deviation of height and width, drawn as lines on the glyph, for understanding of how to scale the data
 
     BUFFER_SIZE = 60000
-    BATCH_SIZE = 72
+    BATCH_SIZE = 256
     noise_dim = 100
 
     # Batch and shuffle the data
@@ -547,19 +562,9 @@ if __name__ == "__main__":
     generator = make_generator_model(max_n_strokes, n_time_points, n_channels)
     print("made generator model")
 
-    noise = tf.random.normal([1, noise_dim])
-    generated_arr, generated_n_strokes_vector = generator(noise, training=False)
-    generated_arr = generated_arr.numpy()
-    generated_n_strokes_vector = generated_n_strokes_vector.numpy()
-    assert generated_arr.shape[0] == 1  # 1 sample
-    plot_simultaneous_strokes(generated_arr[0], n_strokes = 1 + np.argmax(generated_n_strokes_vector[0]))
-    draw_glyph_from_simultaneous_strokes(generated_arr[0], n_strokes = 1 + np.argmax(generated_n_strokes_vector[0]))
-
     print("making discriminator model")
     discriminator = make_discriminator_model(max_n_strokes, n_time_points, n_channels)
     print("made discriminator model")
-    decision = discriminator([generated_arr, generated_n_strokes_vector])
-    print("discriminator's decision about the previously shown random noise image:", decision)
 
     keras.utils.plot_model(generator, to_file=os.path.join(OUTPUT_DIR, "model_generator.png"), show_shapes=True)
     keras.utils.plot_model(discriminator, to_file=os.path.join(OUTPUT_DIR, "model_discriminator.png"), show_shapes=True)
@@ -578,6 +583,11 @@ if __name__ == "__main__":
                                      discriminator=discriminator)
     print("checkpoint dir declared")
 
+    print("restoring checkpoint")
+    checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
+    print("restored latest checkpoint")
+    show_example_of_model_output()
+
     EPOCHS = 100000
     num_examples_to_generate = 5
 
@@ -585,11 +595,9 @@ if __name__ == "__main__":
     # to visualize progress in the animated GIF
     seed = tf.random.normal([num_examples_to_generate, noise_dim])
 
-
     print("training")
     train(train_dataset, EPOCHS)
     print("done training")
 
     # in case need to restore a checkpoint reached during earlier training, e.g. if the training was interrupted
-    # checkpoint.restore(tf.train.latest_checkpoint(checkpoint_dir))
 
