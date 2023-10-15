@@ -282,7 +282,7 @@ if __name__ == "__main__":
 
     # create exemplar images for the known glyphs so I can look through them to find an existing glyph
     subdirs = os.listdir(data_dir)
-    subdirs = sorted([x for x in subdirs if os.path.isdir(os.path.join(data_dir, x)) and x not in ["Uncz", "GlyphExemplars"]])
+    subdirs = sorted([x for x in subdirs if os.path.isdir(os.path.join(data_dir, x)) and x not in ["Uncz", "GlyphExemplars", "BranchShapes", "VineShapes"]])
     tsv_exemplar_pairs = []
     for subdir in subdirs:
         exemplar_fname = f"exemplar_{subdir}.png"
@@ -290,8 +290,10 @@ if __name__ == "__main__":
         tsvs = [x for x in os.listdir(os.path.join(data_dir, subdir)) if x.endswith(".tsv")]
         tsv = random.choice(tsvs)
         tsv_fp = os.path.join(data_dir, subdir, tsv)
-        exemplar_fp_minimal = exemplar_fp.replace(".png", "_minimal.png")
-        exemplar_fp_guide = exemplar_fp.replace(".png", "_guide.png")
+        exemplar_fname_minimal = exemplar_fname.replace(".png", "_minimal.png")
+        exemplar_fname_guide = exemplar_fname.replace(".png", "_guide.png")
+        exemplar_fp_minimal = os.path.join(data_dir, "GlyphExemplars", "minimal", exemplar_fname_minimal)
+        exemplar_fp_guide = os.path.join(data_dir, "GlyphExemplars", "guide", exemplar_fname_guide)
         tsv_exemplar_pairs.append([tsv_fp, exemplar_fp_minimal])
         tsv_exemplar_pairs.append([tsv_fp, exemplar_fp_guide])
 

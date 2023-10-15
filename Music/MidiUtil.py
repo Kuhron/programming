@@ -9,6 +9,7 @@ import time
 import pygame
 import pygame.midi as midi
 midi.init()
+import mido  # for getting list of tracks and events in a .mid file
 
 import Music.MusicalStructureUtil as structure
 
