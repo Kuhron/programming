@@ -37,10 +37,13 @@ def get_populous_us_cities(n_cities):
     # wikipedia_url = "https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population"
 
     # static revision, if I can get it to work for one of them
-    wikipedia_url = "https://en.wikipedia.org/w/index.php?title=List_of_United_States_cities_by_population&oldid=854477638"
+    # wikipedia_url = "https://en.wikipedia.org/w/index.php?title=List_of_United_States_cities_by_population&oldid=854477638"
+    html_fp = "List of United States cities by population - Wikipedia.html"
     print("using revision as of 2018-08-11")
 
-    html = requests.get(wikipedia_url).text
+    # html = requests.get(wikipedia_url).text
+    with open(html_fp) as f:
+        html = f.read()
     soup = BeautifulSoup(html, "html5lib")
     tables = soup.find_all("table", attrs={"class": "wikitable sortable"})
     table = tables[0]
