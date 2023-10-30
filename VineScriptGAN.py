@@ -524,7 +524,7 @@ def show_example_of_model_output():
 
 if __name__ == "__main__":
     # image_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptCatalog/"
-    training_data_dir = "VineScriptTabletInputData"
+    training_data_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptTabletInputData"
     OUTPUT_DIR = "Images/VineScriptGAN/"
     training_data_fps = get_training_data_fps(training_data_dir)
     random.shuffle(training_data_fps)

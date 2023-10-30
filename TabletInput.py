@@ -193,7 +193,7 @@ def write_data_to_file_from_simultaneous_strokes(arr, output_fp):
 
 
 if __name__ == "__main__":
-    data_dir = "VineScriptTabletInputData"
+    data_dir = "/home/wesley/Desktop/Construction/Conlanging/Cadan Languages/Ilausan/IlausanVineScript/VineScriptTabletInputData"
     collect_data = True
     plot_data = True
 
