@@ -1,0 +1,7 @@
+TODO
+- implement duet graph, where one piece is played plus some transformation and then I improvise on top of that
+- 
+
+DONE
+- change recording of midi from piano to just the raw midi data rather than my midi objects, so no info is lost, and then can convert to another object type on the fly if so desired (DONE, it never was my own objects, it was always pickling the MIDI raw data as a list)
+
