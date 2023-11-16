@@ -1,7 +1,8 @@
 TODO
 - implement duet graph, where one piece is played plus some transformation and then I improvise on top of that
-- 
+- make some nice terminal interface for navigating the midi files and deciding what to do with them (play, record, transform, show duet tree, etc.)
+
 
 DONE
 - change recording of midi from piano to just the raw midi data rather than my midi objects, so no info is lost, and then can convert to another object type on the fly if so desired (DONE, it never was my own objects, it was always pickling the MIDI raw data as a list)
-
+- play midi data files from computer audio (I think this is already implemented?)

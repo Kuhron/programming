@@ -7,6 +7,7 @@ import random
 import time
 
 import pygame
+# pygame.init()  # for initializing pygame.midi.mixer, if I use that
 import pygame.midi as midi
 midi.init()
 import mido  # for getting list of tracks and events in a .mid file
@@ -14,6 +15,7 @@ import mido  # for getting list of tracks and events in a .mid file
 import Music.MusicalStructureUtil as structure
 
 MIDI_INPUT_DIR = "/home/wesley/programming/Music/midi_input/"
+TIMIDITY_PORT = 2
 
 
 class MidiEvent:
@@ -62,6 +64,26 @@ class MidiEvent:
     @staticmethod
     def from_data_list(lst):
         return [MidiEvent.from_raw_data(x) for x in lst]
+
+    def to_mido_message(self):
+        if self.event_name in ["note_on", "note_off"]:
+            msg_type = self.event_name
+            msg_kwargs = {
+                "channel": 0,
+                "note": self.pitch,
+                "velocity": self.loudness,
+            }
+        elif self.event_name in ["pedal_on", "pedal_off"]:
+            msg_type = "control_change"
+            msg_kwargs = {
+                "channel": 0,
+                "control": 64,
+                "value": 127 if self.event_name == "pedal_on" else 0,
+            }
+        else:
+            raise Exception(self)
+        msg_kwargs.update({"time": self.timestamp/1000})
+        return mido.Message(msg_type, **msg_kwargs)
 
     def is_note(self):
         return self.status_name in ["note_on", "note_off"]
@@ -131,6 +153,7 @@ def get_input_and_output_devices(verbose=False):
 
 
 def send_data_to_midi_out(data, midi_output):
+    print(f"sending MIDI data to {midi_output=}")
     t0 = midi.time()
     transform = lambda lst, timestamp: [lst, timestamp + t0 + 1000]
     data = [transform(*x) for x in data]
@@ -159,15 +182,23 @@ def send_data_to_midi_out(data, midi_output):
         if last_n_seconds_written is None or n_seconds_to_write != last_n_seconds_written:
             segment = data_segments_by_second[n_seconds_to_write]
             midi_output.write(segment)
+            for x in segment:
+                print(x)
             last_n_seconds_written = n_seconds_to_write
             print(f"wrote data for second {n_seconds_to_write} out of {last_n_seconds_to_write}")
         if n_seconds_to_write == last_n_seconds_to_write:
             break
 
+    wait_for_final_timestamp(final_timestamp, (lambda: midi.time()))
+
+
+def wait_for_final_timestamp(final_timestamp, get_time_func):
     # kill time so program doesn't end before midi is done playing
-    while midi.time() < final_timestamp:
-        print(f"not done yet; {midi.time() = }, {final_timestamp = }")
-        time.sleep(1)
+    while True:
+        t = get_time_func()
+        if t < final_timestamp:
+            print(f"not done yet; {t = }, {final_timestamp = }")
+            time.sleep(1)
 
 
 def send_notes_to_midi_out(notes, midi_output):
@@ -178,11 +209,46 @@ def send_notes_to_midi_out(notes, midi_output):
         note.output_to_midi(midi_output)
 
 
+def send_data_to_standard_out(data):
+    # player = midi.Output(TIMIDITY_PORT)  # doesn't work well with timidity, it wants to play the whole segment's notes all at once
+    # send_data_to_midi_out(data, player)
+
+    # pygame.mixer.music.load(data)  # needs a file, not just a list of data
+    # pygame.mixer.music.play()
+
+    msgs = []
+    for lst in data:
+        event = MidiEvent.from_raw_data(lst)
+        msg = event.to_mido_message()
+        msgs.append(msg)
+    assert all(msgs[i].time <= msgs[i+1].time for i in range(len(msgs)-1)), "msgs out of order"
+
+    final_timestamp = data[-1][-1]
+    with mido.open_output("TiMidity:TiMidity port 0 128:0") as out_port:
+        print(f"{out_port = }")
+        t0 = time.time()
+        start_delay = 0.5
+        for msg in msgs:
+            t = msg.time
+            loops_wasted = 0
+            while True:
+                dt = time.time() - t0
+                if dt >= t:
+                    out_port.send(msg)
+                    print(msg, final_timestamp)
+                    # print(f"{loops_wasted = }")
+                    break
+                else:
+                    loops_wasted += 1
+                    time.sleep(0.001)
+        # wait_for_final_timestamp(final_timestamp, (lambda: 1000*(time.time() - t0)))
+    return
+
+
 def send_events_to_standard_out(events):
-    player = midi.Output(0)
     data = [x.to_raw_data() for x in events]
-    send_data_to_midi_out(data, player)
-    return    
+    send_data_to_standard_out(data)
+    return
 
     # pygame_time_ms = midi.time()
     # transform = lambda event: event.add_time(pygame_time_ms + 1000)
