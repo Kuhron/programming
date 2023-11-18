@@ -153,6 +153,7 @@ alias ipa="vim /usr/share/kmfl/IPA14.kmn"
 alias zotero="/usr/bin/zotero/zotero &"
 # alias nwc="killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"  # if you killall & timidity then it will kill the one you just started  # this is for the demo version before I bought a license
 alias nwc="sudo killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2/NWC2.exe\" &"  # if you killall & timidity then it will kill the one you just started
+alias timid="timidity -iA -B2,8 -Os &"
 alias flex="/usr/bin/fieldworks-flex"
 alias antlr4='java -Xmx500M -cp "/usr/local/lib/antlr-4.12.0-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
 alias grun='echo "do not use; use ParsingDebugging.py which I wrote instead"' #'java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
