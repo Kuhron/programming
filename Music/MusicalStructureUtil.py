@@ -4,7 +4,7 @@ import time
 import MIDI as midi
 import numpy as np
 
-import Music.WavUtil as wav
+import WavUtil as wav
 
 
 EPSILON = 1e-9

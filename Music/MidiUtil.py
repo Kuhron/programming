@@ -12,7 +12,7 @@ import pygame.midi as midi
 midi.init()
 import mido  # for getting list of tracks and events in a .mid file
 
-import Music.MusicalStructureUtil as structure
+import MusicalStructureUtil as structure
 
 MIDI_INPUT_DIR = "/home/wesley/programming/Music/midi_input/"
 TIMIDITY_PORT = 2
@@ -182,12 +182,11 @@ def send_data_to_midi_out(data, midi_output):
         if last_n_seconds_written is None or n_seconds_to_write != last_n_seconds_written:
             segment = data_segments_by_second[n_seconds_to_write]
             midi_output.write(segment)
-            for x in segment:
-                print(x)
             last_n_seconds_written = n_seconds_to_write
-            print(f"wrote data for second {n_seconds_to_write} out of {last_n_seconds_to_write}")
+            print(f"wrote data for second {n_seconds_to_write} out of {last_n_seconds_to_write}", end="\r")
         if n_seconds_to_write == last_n_seconds_to_write:
             break
+        time.sleep(0.1)
 
     wait_for_final_timestamp(final_timestamp, (lambda: midi.time()))
 
@@ -235,7 +234,7 @@ def send_data_to_standard_out(data):
                 dt = time.time() - t0
                 if dt >= t:
                     out_port.send(msg)
-                    print(msg, final_timestamp)
+                    print(int(1000*msg.time), final_timestamp, end="\r")
                     # print(f"{loops_wasted = }")
                     break
                 else:
@@ -325,7 +324,7 @@ def load_random_data(data_dir):
     return data
 
 
-def load_data_from_datetime_string(data_dir, s):
+def load_data_from_fname_string(data_dir, s):
     filepath = os.path.join(data_dir, f"midi_input_{s}.pickle")
     with open(filepath, "rb") as f:
         data = pickle.load(f)

@@ -16,7 +16,7 @@ if __name__ == "__main__":
         # data = mu.invert_data(data, 66)
 
         # datetime_str = "20170220-010435"
-        # data = mu.load_data_from_datetime_string(datetime_str)
+        # data = mu.load_data_from_fname_string(datetime_str)
 
         if outp is not None:
             mu.send_data_to_midi_out(data, outp)
