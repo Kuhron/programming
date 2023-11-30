@@ -13,13 +13,14 @@ if __name__ == "__main__":
     # data = mu.load_random_data(data_dir)
     # data = mu.load_data_from_fname_string(data_dir, "20231109-065457")
     # data = mu.load_data_from_fname_string(data_dir, "20231014-222344")
-    data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
+    # data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
     # good one: 20231002-020531, either inverted or not; inverted +5 gives nice B/F# key in the second half
+    data = mu.load_data_from_fname_string(data_dir, "20231130-074300")
     drumtrack_fp = "/home/wesley/Desktop/Construction/MusicComposition/Wesley's/2023/Piano Accompaniments/COcta_20231001-200554_drumtrack.mid"
     # TODO use mido library to read the events from the drumtrack file, shift the times of the events in `data` such that its first note matches the first note of the third measure of the drumtrack: https://www.twilio.com/blog/working-with-midi-data-in-python-using-mido
 
     # shift the times in the file if necessary
-    start_time_s = 180
+    start_time_s = 0
     start_time_ms = int(1000 * start_time_s)
     data = [[x, t-start_time_ms] for x,t in data if t >= start_time_ms]
 
@@ -35,5 +36,5 @@ if __name__ == "__main__":
     print(f"{offset = }")
     data = mu.transpose_data(data, offset)
 
-    # mu.send_data_to_midi_out(data, outp)
-    mu.send_data_to_standard_out(data)
+    mu.send_data_to_midi_out(data, outp)
+    # mu.send_data_to_standard_out(data)

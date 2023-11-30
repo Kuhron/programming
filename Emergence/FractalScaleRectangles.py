@@ -81,6 +81,7 @@ if __name__ == "__main__":
     get_reference_points = get_points_positive_reinforcement
 
     points = get_reference_points(n)
+    random.shuffle(points)
     xs = points[:,0]
     ys = points[:,1]
     plt.scatter(xs, ys)
