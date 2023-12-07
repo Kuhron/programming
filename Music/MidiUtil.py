@@ -318,17 +318,36 @@ def load_random_data(data_dir):
     choices = [x for x in filter(lambda x: x.startswith("midi_input_"), ls)]
     choice = random.choice(choices)
     fp = os.path.join(data_dir, choice)
-    print(f"loading data from {fp}")
+    return load_data_from_filepath(fp)
+
+
+def load_data_from_fname_string(data_dir, s):
+    fp = os.path.join(data_dir, f"midi_input_{s}.pickle")
+    return load_data_from_filepath(fp)
+
+
+def load_data_from_filepath(fp):
+    print(f"loading pickled midi data from {fp}")
     with open(fp, "rb") as f:
         data = pickle.load(f)
     return data
 
 
-def load_data_from_fname_string(data_dir, s):
-    filepath = os.path.join(data_dir, f"midi_input_{s}.pickle")
-    with open(filepath, "rb") as f:
-        data = pickle.load(f)
-    return data
+def verify_data_list_format_for_filepath(fp):
+    data = load_data_from_filepath(fp)
+    assert type(data) is list
+    for x in data:
+        assert type(x) is list
+        lst, t = x
+        assert type(lst) is list
+        assert all(type(y) is int for y in lst)
+        assert type(t) is int
+
+
+def verify_data_list_format_for_files_in_dir(d):
+    for fname in os.listdir(d):
+        fp = os.path.join(d, fname)
+        verify_data_list_format_for_filepath(fp)
 
 
 def invert_data(data, pivot):
@@ -343,6 +362,8 @@ def invert_data(data, pivot):
 def transpose_data(data, offset):
     print("transposing data")
     assert type(offset) is int
+    if offset == 0:
+        return data
     lst = MidiEvent.from_data_list(data)
     new_lst = []
     for x in lst:
