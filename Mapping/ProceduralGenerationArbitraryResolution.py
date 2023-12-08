@@ -4,52 +4,88 @@
 # like you only get huge mountains on a large scale of the domain, you don't get tiny areas that spike up really far
 
 import random
+import string
 import numpy as np
 import matplotlib.pyplot as plt
 
 
+# TODO move these binary tree classes to a DataStructures directory in programming dir so I can use it elsewhere
 class BinaryTree1D:
     # to help looking at nearby points efficiently
     def __init__(self):
         self.root = None
 
     def add(self, key, value):
-        print(f"adding {key=}, {value=} to BinaryTree1D")
+        # print(f"adding {key=}, {value=} to BinaryTree1D")
         # things are organized by key in the tree, and they can carry whatever value they want, the tree doesn't care about that
         if self.root is None:
             # make a node with just this key and some interval around it
             node = BinaryTreeNode(min_key=key-1, center_key=key, max_key=key+1)
             self.root = node
             self.root.add(key, value)
-        elif self.root.contains_key(key):
+        elif self.root.contains_key_strict(key):
+            # if it's equal to the min value, we can't hang it on the center of an interval so we need to make a bigger interval in a new root above this and hang it on that root
             self.root.add(key, value)
         else:
-            # make a new node where this key is central and spans the gap between it and the root
-            key_on_left = self.root.is_off_left_edge(key)
-            if key_on_left:
-                new_max_key = self.root.min_key
-                new_center_key = key
-                distance = new_max_key - new_center_key
-                new_min_key = key - distance
+            # make new root and move old root to child of the new one
+            key_on_left = self.root.is_off_left_edge(key) or key == self.root.min_key
+            if key == self.root.min_key:
+                # this can happen if the root goes up to but not including X, then we add key=X
+                # then we will make a new root above this where the old root is one of the new children and there is no other child yet
+                new_root_max_key = self.root.max_key
+                new_root_center_key = self.root.min_key
+                distance = new_root_max_key - new_root_center_key
+                new_root_min_key = new_root_center_key - distance
+                new_node = None
+            elif key == self.root.max_key:
+                new_root_min_key = self.root.min_key
+                new_root_center_key = self.root.max_key
+                distance = new_root_center_key - new_root_min_key
+                new_root_max_key = new_root_center_key + distance
+                new_node = None
             else:
-                assert self.root.is_off_right_edge(key)
-                new_min_key = self.root.max_key
-                new_center_key = key
-                distance = new_center_key - new_min_key
-                new_max_key = key + distance
-            new_node = BinaryTreeNode(min_key=new_min_key, center_key=new_center_key, max_key=new_max_key)
-            new_node.add(key, value)
-            # now make a new root with the old root and this new node as children
-            new_root_min_key = min(self.root.min_key, new_node.min_key)
-            new_root_center_key = self.root.min_key if key_on_left else self.root.max_key
-            new_root_max_key = max(self.root.max_key, new_node.max_key)
+                # make a new node where this key is central and spans the gap between it and the root
+                if key_on_left:
+                    new_max_key = self.root.min_key
+                    new_center_key = key
+                    distance = new_max_key - new_center_key
+                    new_min_key = key - distance
+                else:
+                    assert self.root.is_off_right_edge(key)
+                    new_min_key = self.root.max_key
+                    new_center_key = key
+                    distance = new_center_key - new_min_key
+                    new_max_key = key + distance
+
+                new_node = BinaryTreeNode(min_key=new_min_key, center_key=new_center_key, max_key=new_max_key)
+                # now make a new root with the old root and this new node as children
+                new_root_min_key = min(self.root.min_key, new_node.min_key)
+                new_root_center_key = self.root.min_key if key_on_left else self.root.max_key
+                new_root_max_key = max(self.root.max_key, new_node.max_key)
+
             new_root = BinaryTreeNode(min_key=new_root_min_key, center_key=new_root_center_key, max_key=new_root_max_key)
             new_root.left_child = new_node if key_on_left else self.root
             new_root.right_child = self.root if key_on_left else new_node
+            if new_node is not None:
+                new_node.parent = new_root
+            self.root.parent = new_root
             self.root = new_root
+            self.root.add(key, value)
+        # print()
+        # print(f"added {key}")
+        # print(self)
+        # input("check\n")
+
+    @staticmethod
+    def test_data_structure():
+        for i in range(10000):
+            test_tree = BinaryTree1D()
+            strs = random.sample(string.ascii_lowercase, 26)
+            for c in strs:
+                key = string.ascii_lowercase.index(c)
+                test_tree.add(key, c)
+            print(f"successfully built {i+1} trees", end="\r")
         print()
-        print(self)
-        input("check\n")
 
     def __repr__(self):
         return "BinaryTree1D with root:\n" + repr(self.root)
@@ -63,34 +99,37 @@ class BinaryTreeNode:
     def __init__(self, min_key, center_key, max_key):
         # min_key is included, max_key is excluded
         self.min_key = min_key
-        self.max_key = max_key
-        assert self.max_key > self.min_key
         self.center_key = center_key
+        self.max_key = max_key
+        assert self.min_key < self.center_key < self.max_key, f"{min_key=}, {center_key=}, {max_key=}"
 
         self.left_child = None
         self.right_child = None
+        self.parent = None
         self.values = []
 
     def contains_key(self, key):
         return self.min_key <= key and key < self.max_key
 
+    def contains_key_strict(self, key):
+        return self.min_key < key and key < self.max_key
+
     def add(self, key, value):
-        print(f"adding {key=}, {value=} to BinaryTreeNode")
+        # print(f"adding {key=}, {value=} to BinaryTreeNode")
         assert self.contains_key(key)
         if key == self.center_key:
             self.values.append(value)
         elif self.is_on_left(key):
             if self.left_child is None:
                 self.left_child = BinaryTreeNode(self.min_key, key, self.center_key)
+                self.left_child.parent = self
             self.left_child.add(key, value)
         else:
             if self.right_child is None:
                 self.right_child = BinaryTreeNode(self.center_key, key, self.max_key)
+                self.right_child.parent = self
             self.right_child.add(key, value)
-        # maybe should hang some keys directly from this node if they're equal to center value? see what happens, if adding key=center to the right child causes infinite recursion or something
-        print()
-        print(self)
-        input("check\n")
+        # should hang some keys directly from this node if they're equal to center value; otherwise, adding center to the right child causes infinite recursion, or setting new node center not equal to the added key makes it split down a lot to get to float accuracy
 
     def is_on_left(self, key):
         return self.min_key <= key < self.center_key
@@ -104,22 +143,43 @@ class BinaryTreeNode:
     def is_off_right_edge(self, key):
         return self.max_key <= key
 
-    def get_print_str_lines(self, prefix=""):
-        padding = " " * 2
-        self_str = f"{prefix}[{self.min_key}, {self.center_key}, {self.max_key}] : {self.values}"
-        child_strs = []
+    def has_parent(self):
+        return self.parent is not None
+
+    def is_left_child(self):
+        return self.parent.left_child is self
+
+    def is_right_child(self):
+        return self.parent.right_child is self
+
+    def get_n_levels(self):
         if self.left_child is not None:
-            new_strs = self.left_child.get_print_str_lines(prefix="L: ")
-            child_strs += new_strs
+            left_levels = 1 + self.left_child.get_n_levels()
         else:
-            pass #strs.append(padding + "NoLeftChild")
+            left_levels = 0
         if self.right_child is not None:
-            new_strs = self.right_child.get_print_str_lines(prefix="R: ")
-            child_strs += new_strs
+            right_levels = 1 + self.right_child.get_n_levels()
         else:
-            pass #strs.append(padding + "NoRightChild")
-        child_strs = [padding + x for x in child_strs]
-        return [self_str] + child_strs
+            right_levels = 0
+        return max(left_levels, right_levels)
+
+    def get_print_str_lines(self, is_root_call=True):
+        padding = "| "
+        self_str = f"[{self.min_key}, {self.center_key}, {self.max_key}] : {self.values}"
+        if self.left_child is not None:
+            left_child_strs = self.left_child.get_print_str_lines(is_root_call=False)
+        else:
+            left_child_strs = []
+        if self.right_child is not None:
+            right_child_strs = self.right_child.get_print_str_lines(is_root_call=False)
+        else:
+            right_child_strs = []
+
+        left_child_strs = [padding + x for x in left_child_strs]
+        right_child_strs = [padding + x for x in right_child_strs]
+
+        strs = left_child_strs + [self_str] + right_child_strs
+        return strs
 
     def __repr__(self):
         lines = self.get_print_str_lines()
@@ -133,7 +193,7 @@ class BinaryTree2D:
         self.y_tree = BinaryTree1D()
 
     def add(self, point):
-        print(f"adding {point} to BinaryTree2D")
+        # print(f"adding {point} to BinaryTree2D")
         x,y = point
         self.x_tree.add(key=x, value=point)
         self.y_tree.add(key=y, value=point)
@@ -161,6 +221,9 @@ class BinaryTree2D:
     def get_points_by_y_range(self, y_min, y_max):
         return self.y_tree.get_values_by_key_range(y_min, y_max)
 
+    def __repr__(self):
+        return f"PointTree with x_tree:\n{self.x_tree}\n----\nand y_tree:\n{self.y_tree}"
+
 
 class XYPointSet:
     # for easier iteration over the points based on X and Y coordinates
@@ -182,15 +245,14 @@ if __name__ == "__main__":
     starting_points = [(x,y) for x in range(side_length) for y in range(side_length)]
     values_at_points = {p: 0 for p in starting_points}
 
-    test_tree = BinaryTree1D()
-    for i in range(100):
-        key = random.randint(0, 100)
-        value = "".join(random.choice("pyfgcrlaoeuidhtnsqjkxbmwvz") for j in range(random.randrange(3, 6)))
-        test_tree.add(key, value)
+    BinaryTree1D.test_data_structure()
+    raise
 
     point_tree = BinaryTree2D()
     for p in random.sample(starting_points, len(starting_points)):
         point_tree.add(p)
+
+    print(point_tree)
 
     center = (61.3, 17.8)
     radius = 4.4
