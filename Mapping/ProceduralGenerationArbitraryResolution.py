@@ -23,7 +23,7 @@ class BinaryTree1D:
             node = BinaryTreeNode(min_key=key-1, center_key=key, max_key=key+1)
             self.root = node
             self.root.add(key, value)
-        elif self.root.contains_key_strict(key):
+        elif self.root.contains_key(key):
             # if it's equal to the min value, we can't hang it on the center of an interval so we need to make a bigger interval in a new root above this and hang it on that root
             self.root.add(key, value)
         else:
@@ -76,28 +76,41 @@ class BinaryTree1D:
         # print(self)
         # input("check\n")
 
+    def get_values_by_key_range(self, k_min, k_max):
+        return self.root.get_values_by_key_range(k_min, k_max)
+
     @staticmethod
     def test_data_structure():
-        for i in range(10000):
-            test_tree = BinaryTree1D()
+        def get_test_items_26_letters():
             strs = random.sample(string.ascii_lowercase, 26)
             for c in strs:
                 key = string.ascii_lowercase.index(c)
-                test_tree.add(key, c)
-            print(f"successfully built {i+1} trees", end="\r")
-        print()
+                yield (key, c)
+
+        def get_test_items_floats():
+            for i in range(100):
+                r = np.random.normal(0, 1)
+                yield (r, r)
+
+        for get_test_items in [get_test_items_26_letters, get_test_items_floats]:
+            for i in range(10000):
+                test_tree = BinaryTree1D()
+                for key, value in get_test_items():
+                    test_tree.add(key, value)
+                print(f"successfully built {i+1} trees", end="\r")
+            print()
 
     def __repr__(self):
         return "BinaryTree1D with root:\n" + repr(self.root)
 
 
 class BinaryTreeNode:
-    # should correspond to the center of some interval, like [1,2) can be broken into two as [1,1.5) and [1.5, 2)
+    # should correspond to the center of some interval, like (1,2) can be broken into two as (1,1.5) and (1.5, 2)
+    # values whose keys are exactly equal to the center point should be hung on the root and not descend into the children
     # and so each of those intervals is a node that has a center point and intervals on either side
     # equivalently, can keep track of its min and max key
     # but can be asymmetrical like left=1, center=2, right=7; so allow that too, don't assume equal on each side
     def __init__(self, min_key, center_key, max_key):
-        # min_key is included, max_key is excluded
         self.min_key = min_key
         self.center_key = center_key
         self.max_key = max_key
@@ -109,9 +122,6 @@ class BinaryTreeNode:
         self.values = []
 
     def contains_key(self, key):
-        return self.min_key <= key and key < self.max_key
-
-    def contains_key_strict(self, key):
         return self.min_key < key and key < self.max_key
 
     def add(self, key, value):
@@ -132,13 +142,13 @@ class BinaryTreeNode:
         # should hang some keys directly from this node if they're equal to center value; otherwise, adding center to the right child causes infinite recursion, or setting new node center not equal to the added key makes it split down a lot to get to float accuracy
 
     def is_on_left(self, key):
-        return self.min_key <= key < self.center_key
+        return self.min_key < key < self.center_key
 
     def is_on_right(self, key):
-        return self.center_key <= key < self.max_key
+        return self.center_key < key < self.max_key
 
     def is_off_left_edge(self, key):
-        return key < self.min_key
+        return key <= self.min_key
 
     def is_off_right_edge(self, key):
         return self.max_key <= key
@@ -163,15 +173,18 @@ class BinaryTreeNode:
             right_levels = 0
         return max(left_levels, right_levels)
 
-    def get_print_str_lines(self, is_root_call=True):
+    def get_values_by_key_range(self, k_min, k_max):
+        ?
+
+    def get_print_str_lines(self):
         padding = "| "
         self_str = f"[{self.min_key}, {self.center_key}, {self.max_key}] : {self.values}"
         if self.left_child is not None:
-            left_child_strs = self.left_child.get_print_str_lines(is_root_call=False)
+            left_child_strs = self.left_child.get_print_str_lines()
         else:
             left_child_strs = []
         if self.right_child is not None:
-            right_child_strs = self.right_child.get_print_str_lines(is_root_call=False)
+            right_child_strs = self.right_child.get_print_str_lines()
         else:
             right_child_strs = []
 
@@ -203,6 +216,8 @@ class BinaryTree2D:
         # then for each row, start on the left edge, calculate distance, if it's too far then throw it out, repeat inward
         # and do same on right edge
         # can do some more optimizations later like mirror image vertically but this should be fine for now
+        square_points = self.get_square_around_point(point, radius)
+        print(square_points)
         raise NotImplementedError
 
     def get_square_around_point(self, point, radius):
@@ -245,14 +260,11 @@ if __name__ == "__main__":
     starting_points = [(x,y) for x in range(side_length) for y in range(side_length)]
     values_at_points = {p: 0 for p in starting_points}
 
-    BinaryTree1D.test_data_structure()
-    raise
+    # BinaryTree1D.test_data_structure()
 
     point_tree = BinaryTree2D()
     for p in random.sample(starting_points, len(starting_points)):
         point_tree.add(p)
-
-    print(point_tree)
 
     center = (61.3, 17.8)
     radius = 4.4
