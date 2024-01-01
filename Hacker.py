@@ -4,7 +4,7 @@ from pathlib import Path
 
 print("loading...")
 
-directory = "/home/wesley/programming/"
+directory = "/home/kuhron/programming/"
 
 py_files = list(Path(directory).rglob('*.py'))
 

@@ -123,6 +123,25 @@ if ! shopt -oq posix; then
   fi
 fi
 
+export LESS="-SR"  # turns off line wrapping in less
+# export PYTHONPATH=$PYTHONPATH:/home/wesley/programming  # this is a bad idea if using python outside of programming dir, it will try to look for libraries there
+export PYTHONPATH=$PYTHONPATH:/home/wesley/linux-tone-keyboard
+export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
+export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
+export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
+export MAVENPATH=$HOME/apache-maven-3.8.4/bin
+export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH:$MAVENPATH
+export CLASSPATH=".:/usr/local/lib/antlr-4.13.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
+export PATH=/usr/local/texlive/2022/bin/x86_64-linux:$PATH
+export INFOPATH=$INFOPATH:/usr/local/texlive/2022/texmf-dist/doc/info
+export MANPATH=$MANPATH:/usr/local/texlive/2022/texmf-dist/doc/man
+
+# python3 virtualenvwrapper
+export WORKON_HOME=~/.virtualenvs
+export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+export VIRTUALENVWRAPPER_VIRTUALENV=/usr/bin/virtualenv
+source ~/.local/bin/virtualenvwrapper.sh
+
 alias vbrc="vim ~/.bashrc"
 alias sbrc="source ~/.bashrc"
 function gbrc() { 
@@ -132,7 +151,7 @@ function pygrep() {
   grep --include \*.py $@
 }
 # alias python2="/usr/bin/python"
-alias python="python3.8"
+alias python="python3"
 # alias pip2="pip"
 alias pip="pip3"
 alias battery="upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep \"state\|percentage\""
@@ -155,7 +174,7 @@ alias zotero="/usr/bin/zotero/zotero &"
 alias nwc="sudo killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2/NWC2.exe\" &"  # if you killall & timidity then it will kill the one you just started
 alias timid="timidity -iA -B2,8 -Os &"
 alias flex="/usr/bin/fieldworks-flex"
-alias antlr4='java -Xmx500M -cp "/usr/local/lib/antlr-4.12.0-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
+alias antlr4='java -Xmx500M -cp "~/antlr-4.13.1-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
 alias grun='echo "do not use; use ParsingDebugging.py which I wrote instead"' #'java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
 alias antlrworks='java -jar ~/antlrworks-1.5.2-complete.jar'
 alias grepdocx="/home/wesley/grepdocx.sh"
@@ -165,6 +184,7 @@ alias synctime="sudo tlsdate -s -H mail.google.com"
 alias gitsize="git status --porcelain | sed 's/^...//g;s/\"//g' | xargs -d '\n' -I {} du -h {} | sort -h"
 alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 alias tmux="TERM=screen-256color-bce tmux"
+alias ft="find . -printf '%T@ %Tc %p\\n' | sort -n"
 
 function midtomp3() { echo "this is broken because I don't know how to embed sed result as output filename"; timidity "$1" -Ow -o - | ffmpeg -i - -acodec libmp3lame -ab 64k $(sed -e "s/mid$/mp3/" "$1") ;}
 
@@ -230,30 +250,13 @@ function base() {
 }
 
 function all-webp-to-png() {
-    find -name "*.webp" | xargs -d "\n" -I "{}" python3.8 ~/programming/WebpToPng.py "{}"
+    find -name "*.webp" | xargs -d "\n" -I "{}" python3 ~/programming/WebpToPng.py "{}"
 }
-
-export LESS="-SR"  # turns off line wrapping in less
-# export PYTHONPATH=$PYTHONPATH:/home/wesley/programming  # this is a bad idea if using python outside of programming dir, it will try to look for libraries there
-export PYTHONPATH=$PYTHONPATH:/home/wesley/linux-tone-keyboard
-export GOPATH=$HOME/gopath:$HOME/gopath/bin:/usr/local/go/bin
-export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
-export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
-export MAVENPATH=$HOME/apache-maven-3.8.4/bin
-export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH:$MAVENPATH
-# export CLASSPATH=".:/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
-export PATH=/usr/local/texlive/2022/bin/x86_64-linux:$PATH
-export INFOPATH=$INFOPATH:/usr/local/texlive/2022/texmf-dist/doc/info
-export MANPATH=$MANPATH:/usr/local/texlive/2022/texmf-dist/doc/man
-
-# python3 virtualenvwrapper
-export WORKON_HOME=~/.virtualenvs
-export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3.8
-export VIRTUALENVWRAPPER_VIRTUALENV=/usr/bin/virtualenv
-source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
 
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
 gsettings set com.canonical.indicator.datetime time-format "'custom'"
 gsettings set com.canonical.indicator.datetime custom-time-format "'%Y-%m-%d %H:%M:%S %Z  ||  %w  %j  %s'"
+
+gsettings set org.gnome.desktop.peripherals.touchpad disable-while-typing false
 
