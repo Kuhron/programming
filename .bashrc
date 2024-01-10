@@ -170,7 +170,7 @@ alias lynx="lynx -accept_all_cookies"
 alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar &"
 alias sublime="/opt/sublime_text/sublime_text &"
 alias ipa="vim /usr/share/kmfl/IPA14.kmn"
-alias zotero="/usr/bin/zotero/zotero &"
+# alias zotero="/usr/bin/zotero/zotero &"
 # alias nwc="killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"  # if you killall & timidity then it will kill the one you just started  # this is for the demo version before I bought a license
 alias nwc="sudo killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2/NWC2.exe\" &"  # if you killall & timidity then it will kill the one you just started
 alias timid="timidity -iA -B2,8 -Os &"
@@ -211,6 +211,10 @@ function tab4() {
 function cdiff() { /usr/bin/diff -u $1 $2 | colordiff | less -R ;}  # https://stackoverflow.com/a/20288437/7376935
 alias diff="cdiff"  # this way it's unambiguous what I want when I type "diff", it goes to the custom function
 
+function setmainfont() {
+    dconf write /org/gnome/desktop/interface/monospace-font-name "'Ubuntu Mono 15'"
+}
+
 # nox, for obscuring entire terminal into a font unreadable by others, usually for use with lynx browser
 function nox() {
     : # nop
@@ -229,7 +233,7 @@ function nox() {
 function denox() {
     : # nop
     clear
-    dconf write /org/gnome/desktop/interface/monospace-font-name "'Ubuntu Mono 13'"
+    setmainfont
 }
 #function g() { git add -A; git commit -m "$1"; git push; }  # doesn't work
 
@@ -260,4 +264,6 @@ gsettings set com.canonical.indicator.datetime time-format "'custom'"
 gsettings set com.canonical.indicator.datetime custom-time-format "'%Y-%m-%d %H:%M:%S %Z  ||  %w  %j  %s'"
 
 gsettings set org.gnome.desktop.peripherals.touchpad disable-while-typing false
+
+setmainfont
 
