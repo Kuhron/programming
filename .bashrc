@@ -131,6 +131,7 @@ export ANDROIDSTUDIOPATH=$HOME/android-studio:$HOME/android-studio/bin
 export GIO_EXTRA_MODULES=/usr/lib/x86_64-linux-gnu/gio/modules/  # https://stackoverflow.com/questions/44934641/
 export MAVENPATH=$HOME/apache-maven-3.8.4/bin
 export AUTOTRACE=$HOME/autotrace-0.31.0/
+export PATH=~/.npm-global/bin:$PATH
 export PATH=$PATH:$PYTHONPATH:$GOPATH:$ANDROIDSTUDIOPATH:$MAVENPATH
 export CLASSPATH=".:/usr/local/lib/antlr-4.13.1-complete.jar:$CLASSPATH"  # for getting ANTLR java to compile so I can use grun to visualize parse trees
 export PATH=/usr/local/texlive/2022/bin/x86_64-linux:$PATH
