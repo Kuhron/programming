@@ -141,7 +141,7 @@ export MANPATH=$MANPATH:/usr/local/texlive/2022/texmf-dist/doc/man
 # python3 virtualenvwrapper
 export WORKON_HOME=~/.virtualenvs
 export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
-export VIRTUALENVWRAPPER_VIRTUALENV=/usr/bin/virtualenv
+export VIRTUALENVWRAPPER_VIRTUALENV=~/.local/bin/virtualenv
 source ~/.local/bin/virtualenvwrapper.sh
 
 alias vbrc="vim ~/.bashrc"
