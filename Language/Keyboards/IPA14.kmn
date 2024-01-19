@@ -21,16 +21,357 @@ begin Unicode > use(Unicode)
 store(&mnemoniclayout) "1"
 
 c WKJ: character names since I don't want to have to read all the Unicode points, will make it easier to modify this keyboard
+store(plus) U+002B
+store(lsquare) U+005B
+store(backslash) U+005C
+store(rsquare) U+005D
+store(pipe) U+007C
+store(super2) U+00B2
+store(super3) U+00B3
+store(super1) U+00B9
+store(capital_c_cedilla) U+00C7
+store(capital_o_slash) U+00D8
+store(eszett) U+00DF
+store(ash) U+00E6
+store(c_cedilla) U+00E7
+store(eth) U+00F0
+store(o_slash) U+00F8
+store(thorn) U+00FE
+store(capital_yumusak_g) U+011E
+store(yumusak_g) U+011F
+store(h_bar) U+0127
+store(capital_i_dot) U+0130
+store(i_dotless) U+0131
+store(engma) U+014B
+store(ethel) U+0153
+store(capital_s_cedilla) U+015E
+store(s_cedilla) U+015F
+store(c_toprighthook) U+0188
+store(k_toprighthook) U+0199
+store(p_toprighthook) U+01A5
+store(t_toprighthook) U+01AD
+store(click_single_pipe) U+01C0
+store(click_double_pipe) U+01C1
+store(click_cross) U+01C2
 store(ipa_excl) U+01C3
-store(ipa_colon) U+02D0
+store(d_curl) U+0221
+store(l_curl) U+0234
+store(n_curl) U+0235
+store(t_curl) U+0236
+store(turned_a) U+0250
+store(latin_alpha) U+0251
+store(turned_alpha) U+0252
+store(b_toprighthook) U+0253
+store(open_o) U+0254
+store(curly_c) U+0255
+store(d_retro) U+0256
+store(d_toprighthook) U+0257
+store(backwards_e) U+0258
+store(schwa) U+0259
+store(epsilon) U+025B
+store(three_vowel) U+025C
+store(closed_three_vowel) U+025E
+store(j_stroke) U+025F
+store(g_toprighthook) U+0260
+store(singlestory_g) U+0261
+store(smallcap_g) U+0262
+store(gamma) U+0263
+store(rams_horn) U+0264
+store(turned_h) U+0265
+store(h_toprighthook) U+0266
+store(sj) U+0267
+store(i_bar) U+0268
+store(smallcap_i) U+026A
+store(l_tilde) U+026B
+store(l_belt) U+026C
+store(l_retro) U+026D
+store(lezh) U+026E
+store(turned_m) U+026F
+store(velapp) U+0270
+store(meng) U+0271
+store(palatal_n) U+0272
+store(n_retro) U+0273
+store(smallcap_n) U+0274
+store(bardos) U+0275
+store(smallcap_ethel) U+0276
+store(closed_omega) U+0277
+store(phi) U+0278
+store(turned_r) U+0279
+store(latflap) U+027A
+store(turned_r_retro) U+027B
+store(r_retro) U+027D
+store(fishhook) U+027E
+store(backwards_fishhook) U+027F
+store(smallcap_r) U+0280
+store(flipped_smallcap_r) U+0281
+store(s_retro) U+0282
+store(esh) U+0283
+store(j_stroke_toprighthook) U+0284
+store(squat_reversed_esh) U+0285
+store(turned_t) U+0287
+store(t_retro) U+0288
+store(u_bar) U+0289
+store(upsilon) U+028A
+store(labiodental_app) U+028B
+store(turned_v) U+028C
+store(turned_w) U+028D
+store(turned_y) U+028E
+store(smallcap_y) U+028F
+store(z_retro) U+0290
+store(curly_z) U+0291
+store(ezh) U+0292
+store(glottal_stop) U+0294
+store(pharyngeal_app) U+0295
+store(bilabial_click) U+0298
+store(smallcap_b) U+0299
+store(closed_epsilon) U+029A
+store(smallcap_g_toprighthook) U+029B
+store(smallcap_h) U+029C
+store(curly_j) U+029D
+store(smallcap_l) U+029F
+store(q_toprighthook) U+02A0
+store(epiglottal_stop) U+02A1
+store(epiglottal_app) U+02A2
+store(turned_h_fishhook) U+02AE
+store(turned_h_fishhook_tail) U+02AF
+store(super_h) U+02B0
+store(super_h_toprighthook) U+02B1
+store(super_j) U+02B2
+store(super_r) U+02B3
+store(super_turned_r) U+02B4
+store(super_turned_r_retro) U+02B5
+store(super_flipped_smallcap_r) U+02B6
+store(super_w) U+02B7
+store(super_y) U+02B8
+store(quote_6) U+02BB
+store(quote_9) U+02BC
+store(quote_e) U+02BD
+store(super_glottal) U+02C0
 store(primary_stress) U+02C8
+store(secondary_stress) U+02CC
+store(ipa_colon) U+02D0
+store(half_long) U+02D1
+store(rhotic) U+02DE
+store(super_gamma) U+02E0
+store(super_l) U+02E1
+store(super_s) U+02E2
+store(super_x) U+02E3
+store(super_pharyngeal) U+02E4
+store(tone_letter_4) U+02E5
+store(tone_letter_3) U+02E6
+store(tone_letter_2) U+02E7
+store(tone_letter_1) U+02E8
+store(tone_letter_0) U+02E9
+store(grave) U+0300
+store(acute) U+0301
+store(circumflex) U+0302
+store(tilde) U+0303
+store(macron) U+0304
+store(breve) U+0306
+store(dot) U+0307
+store(umlaut) U+0308
+store(ring) U+030A
+store(double_acute) U+030B
+store(caron) U+030C
+store(vertical_stroke_above) U+030D
+store(double_grave) U+030F
+store(candrabindu) U+0310
+store(left_tack_below) U+0318
+store(right_tack_below) U+0319
+store(unreleased) U+031A
+store(left_half_ring_below) U+031C
+store(up_tack_below) U+031D
+store(down_tack_below) U+031E
+store(plus_below) U+031F
 store(minus_below) U+0320
+store(dot_below) U+0323
+store(umlaut_below) U+0324
+store(ring_below) U+0325
+store(cedilla) U+0327
+store(vertical_stroke_below) U+0329
+store(bridge_below) U+032A
+store(caron_below) U+032C
+store(inverted_breve_below) U+032F
+store(tilde_below) U+0330
+store(macron_below) U+0331
+store(right_half_ring_below) U+0339
+store(inverted_bridge_below) U+033A
+store(square_below) U+033B
+store(seagull_below) U+033C
+store(x_above) U+033D
+store(double_vertical_stroke_below) U+0348
+store(cgj) U+034F
+store(tie_below) U+035C
+store(tie_above) U+0361
+store(greek_alpha) U+03B1
+store(beta) U+03B2
+store(theta) U+03B8
+store(mu) U+03BC
+store(sigma) U+03C3
+store(chi) U+03C7
+store(cyrillic_dje) U+0452
+store(smallcap_a) U+1D00
+store(turned_ash) U+1D02
+store(smallcap_e) U+1D07
+store(super_a) U+1D43
+store(super_turned_a) U+1D44
+store(super_latin_alpha) U+1D45
+store(super_turned_ash) U+1D46
+store(super_b) U+1D47
+store(super_d) U+1D48
+store(super_e) U+1D49
+store(super_schwa) U+1D4A
+store(super_epsilon) U+1D4B
+store(super_g) U+1D4D
+store(super_k) U+1D4F
+store(super_m) U+1D50
+store(super_engma) U+1D51
+store(super_o) U+1D52
+store(super_open_o) U+1D53
+store(super_p) U+1D56
+store(super_t) U+1D57
+store(super_u) U+1D58
+store(super_turned_m) U+1D5A
+store(super_v) U+1D5B
+store(super_beta) U+1D5D
+store(b_tilde) U+1D6C
+store(d_tilde) U+1D6D
+store(f_tilde) U+1D6E
+store(m_tilde) U+1D6F
+store(n_tilde) U+1D70
+store(p_tilde) U+1D71
+store(r_tilde) U+1D72
+store(fishhook_tilde) U+1D73
+store(s_tilde) U+1D74
+store(t_tilde) U+1D75
+store(z_tilde) U+1D76
+store(smallcap_i_bar) U+1D7B
+store(iota_bar) U+1D7C
+store(smallcap_u_bar) U+1D7E
+store(b_palhook) U+1D80
+store(d_palhook) U+1D81
+store(f_palhook) U+1D82
+store(g_palhook) U+1D83
+store(k_palhook) U+1D84
+store(l_palhook) U+1D85
+store(m_palhook) U+1D86
+store(n_palhook) U+1D87
+store(p_palhook) U+1D88
+store(r_palhook) U+1D89
+store(s_palhook) U+1D8A
+store(esh_palhook) U+1D8B
+store(v_palhook) U+1D8C
+store(x_palhook) U+1D8D
+store(z_palhook) U+1D8E
+store(a_retro) U+1D8F
+store(alpha_retro) U+1D90
+store(d_toprighthook_retro) U+1D91
+store(e_retro) U+1D92
+store(epsilon_retro) U+1D93
+store(three_vowel_retro) U+1D94
+store(schwa_retro) U+1D95
+store(i_retro) U+1D96
+store(open_o_retro) U+1D97
+store(esh_retro) U+1D98
+store(u_retro) U+1D99
+store(ezh_retro) U+1D9A
+store(super_turned_alpha) U+1D9B
+store(super_c) U+1D9C
+store(super_curly_c) U+1D9D
+store(super_eth) U+1D9E
+store(super_three_vowel) U+1D9F
+store(super_f) U+1DA0
+store(super_j_stroke) U+1DA1
+store(super_single_story_g) U+1DA2
+store(super_turned_h) U+1DA3
+store(super_i_bar) U+1DA4
+store(super_smallcap_i) U+1DA6
+store(super_curly_j) U+1DA8
+store(super_l_retro) U+1DA9
+store(super_smallcap_l) U+1DAB
+store(super_meng) U+1DAC
+store(super_velapp) U+1DAD
+store(super_palatal_n) U+1DAE
+store(super_n_retro) U+1DAF
+store(super_smallcap_n) U+1DB0
+store(super_bardos) U+1DB1
+store(super_phi) U+1DB2
+store(super_s_retro) U+1DB3
+store(super_esh) U+1DB4
+store(super_u_bar) U+1DB6
+store(super_upsilon) U+1DB7
+store(super_labiodental_app) U+1DB9
+store(super_turned_v) U+1DBA
+store(super_z) U+1DBB
+store(super_z_retro) U+1DBC
+store(super_curly_z) U+1DBD
+store(super_ezh) U+1DBE
+store(super_theta) U+1DBF
+store(snake_below) U+1DC2
+store(tone_mh) U+1DC4
+store(tone_lm) U+1DC5
+store(tone_ml) U+1DC6
+store(tone_hm) U+1DC7
+store(tone_lhl) U+1DC8
+store(tone_hlh) U+1DC9
+store(double_vertical_line) U+2016
+store(tie_below_2) U+203F
+store(super_0) U+2070
+store(super_i) U+2071
+store(super_4) U+2074
+store(super_5) U+2075
+store(super_6) U+2076
+store(super_7) U+2077
+store(super_8) U+2078
+store(super_9) U+2079
+store(super_plus) U+207A
+store(super_minus) U+207B
+store(super_equals) U+207C
+store(super_lparen) U+207D
+store(super_rparen) U+207E
+store(super_n) U+207F
+store(rightarrow) U+2192
+store(uprightarrow) U+2197
+store(downrightarrow) U+2198
+store(emptyset) U+2205
+store(dotted_circle) U+25CC
+store(v_righthook) U+2C71
+store(w_righthook) U+2C73
+store(left_tone_4) U+A712
+store(left_tone_3) U+A713
+store(left_tone_2) U+A714
+store(left_tone_1) U+A715
+store(left_tone_0) U+A716
+store(super_uparrow) U+A71B
+store(super_downarrow) U+A71C
+store(super_excl) U+A71D
+store(super_turned_excl) U+A71E
+store(sub_turned_excl) U+A71F
+store(super_ethel) U+A7F9
+store(super_ash_white) U+F1A1
+store(super_backwards_e_white) U+F1A3
+store(super_closed_three_white) U+F1A4
+store(super_o_slash_white) U+F1AB
+store(super_smallcap_ethel_white) U+F1AE
+store(super_smallcap_y_white) U+F1B4
+store(super_rams_horn_white) U+F1B5
+store(super_h_bar_white) U+F1BC
+store(super_turned_y_white) U+F1CE
+store(unknown_f1f1) U+F1F1
+store(unknown_f1f2) U+F1F2
+store(unknown_f1f3) U+F1F3
+store(unknown_f1f4) U+F1F4
+store(unknown_f1f5) U+F1F5
+store(unknown_f1f6) U+F1F6
+store(unknown_f1f7) U+F1F7
+store(unknown_f1f8) U+F1F8
+store(unknown_f1f9) U+F1F9
 
 c This new store (10-Sept-2007) is a fix for the problem of fast typing reordering keystrokes when using Keyman with TSF
 store(chars) 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]\{}|;:",./<>?' "'`~"
 
 c need to include international keyboards in this list also
-c store(nonK) "ACDFJKMPSTVWXYZ`|<>0123456789=^&*()';" U+0153
+c store(nonK) "ACDFJKMPSTVWXYZ`|<>0123456789=^&*()';" $ethel
 c store(notrans) "abcdefghijklmnopqrstuvwxyz- /"
 
 store(singleK) "BEHILNOQRU.#?!:}_"
@@ -40,243 +381,243 @@ c TODO move the exclamation point so it's != rather than just !, similarly with 
 c store(equalK) "BEGHILNOQRU#?.!abcdefghijlnoprstuvwxyz" "#="
   store(equalD) "B"    "C"    "E"    "G"    "H"    "I"    "L"    "N"    "O" \
                 "Q"    "R"    "S"    "T"    "U"    "Z"    "#"    "?"    "."    $ipa_excl \
-                "abcdefghi" "jlmnoprst" "uvwxyz" U+203F U+031F \
+                "abcdefghi" "jlmnoprst" "uvwxyz" $tie_below_2 $plus_below \
                 "0"
-  store(equalU) U+0299 U+00C7 U+0258 U+0262 U+029C U+0268 U+029F U+0274 U+0275 \
-                U+02A1 U+0280 U+1D98 U+00FE U+0289 U+1D9A U+203F U+0294 U+2016 U+01C2 \
-                U+0251 U+03B2 U+00E7 U+00F0 U+0259 U+0278 U+0263 U+0265 U+026A \
-                U+025F U+026C U+03BC U+0272 U+0252 U+0298 U+0279 U+0283 U+03B8 \
-                U+026F U+028B U+028D U+03C7 U+028F U+0292 U+203F U+002B \
-                U+2205
+  store(equalU) $smallcap_b $capital_c_cedilla $backwards_e $smallcap_g $smallcap_h $i_bar $smallcap_l $smallcap_n $bardos \
+                $epiglottal_stop $smallcap_r $esh_retro $thorn $u_bar $ezh_retro $tie_below_2 $glottal_stop $double_vertical_line $click_cross \
+                $latin_alpha $beta $c_cedilla $eth $schwa $phi $gamma $turned_h $smallcap_i \
+                $j_stroke $l_belt $mu $palatal_n $turned_alpha $bilabial_click $turned_r $esh $theta \
+                $turned_m $labiodental_app $turned_w $chi $smallcap_y $ezh $tie_below_2 $plus \
+                $emptyset
 
 c store(greatK) "AEGHLOR#!abdeghjlmnoruwz" "#>"
   store(greatD) "A"    "E"    "G"    "H"    "I"    "L"    "O"    "R"    "S"    "#" \
                 "="    $ipa_excl "a"    "b"    "c"    "d"    "e"    "g" \
                 "h"    "j"    "k"    "l"    "m"    "n"    "o"    "p" \
                 "q"    "r"    "s"    "t"    "u"    "w"    "U"    "z" \
-                U+A71B "0" c unused "fivxy"
-  store(greatU) U+1D02 U+0276 U+029B U+0267 U+1D7C U+027A U+0264 U+0281 U+00DF U+A71B \
-                U+2192 U+01C1 U+0250 U+0253 U+0188 U+0257 U+025C U+0260 \
-                U+0127 U+0284 U+0199 U+026E U+0271 U+014B U+00F8 U+01A5 \
-                U+02A0 U+027E U+03C3 U+01AD U+028C U+0270 U+1D7E U+0291 \
-                U+2197 U+25CC 
+                $super_uparrow "0" c unused "fivxy"
+  store(greatU) $turned_ash $smallcap_ethel $smallcap_g_toprighthook $sj $iota_bar $latflap $rams_horn $flipped_smallcap_r $eszett $super_uparrow \
+                $rightarrow $click_double_pipe $turned_a $b_toprighthook $c_toprighthook $d_toprighthook $three_vowel $g_toprighthook \
+                $h_bar $j_stroke_toprighthook $k_toprighthook $lezh $meng $engma $o_slash $p_toprighthook \
+                $q_toprighthook $fishhook $sigma $t_toprighthook $turned_v $velapp $smallcap_u_bar $curly_z \
+                $uprightarrow $dotted_circle 
 
 c store(lessK)  "ELOQR?.#!acdehjlnorstuz" "#<"
   store(lessD)  "E"    "I"    "L"    "O"    "Q"    "R"    "?"    "."    "#" \   
                 $ipa_excl "a"    "c"    "d"    "e"    "g"    "h"    "j" \
                 "l"    "n"    "o"    "r"    "s"    "t"    "u"    "v" \  
-                "w"    "y"    "z"    U+A71C "="
-  store(lessU)  U+0153 U+1D7B U+028E U+025E U+02A2 U+027B U+0295 U+007C U+A71C \
-                U+01C0 U+00E6 U+0255 U+0256 U+025B U+0261 U+0266 U+029D \
-                U+026D U+0273 U+0254 U+027D U+0282 U+0288 U+028A U+2C71 \
-                U+2C73 U+0265 U+0290 U+2198 U+034F
+                "w"    "y"    "z"    $super_downarrow "="
+  store(lessU)  $ethel $smallcap_i_bar $turned_y $closed_three_vowel $epiglottal_app $turned_r_retro $pharyngeal_app $pipe $super_downarrow \
+                $click_single_pipe $ash $curly_c $d_retro $epsilon $singlestory_g $h_toprighthook $curly_j \
+                $l_retro $n_retro $open_o $r_retro $s_retro $t_retro $upsilon $v_righthook \
+                $w_righthook $turned_h $z_retro $downrightarrow $cgj
 
 c store(hatK)  "?gjnwlh" "0123456789-" "m" "n=" "n>"
    store(hatD)  "0123456789" \
                 "-"    "+"    "="    "("    ")"    $ipa_excl \
-                U+0295 U+0294 "b"    U+03B2 "c"    U+0255 "d"    U+00F0 "f" \
-                "g"    U+0261 U+0263 "h"    U+0266 U+0265 U+0127 "j"    U+029D \
-                U+025F "k" \
-                "l"    U+026D U+029F "m"    U+0271 "n"    U+0272 U+014B U+0273 U+0274 \
-                "p"    U+0278 "r"    U+0279 U+027B U+0281 "s"    U+0282 U+0283 \
-                "t"    U+0270 "v"    U+028B "w"    "x"    "z"    U+0291 U+0290 U+0292 \
-                U+03B8 U+028E \
-                "a"    U+0250 U+0251 U+0252 U+00E6 U+1D02 "e"    U+0259 U+025B U+025C \
-                U+0258 "i"    U+0268 U+026A "o"    U+00F8 U+0153 U+0276 U+0275 U+0254 \
-                "u"    U+0289 "y"    U+028F U+026F U+0264 U+025E U+028C U+028A
+                $pharyngeal_app $glottal_stop "b"    $beta "c"    $curly_c "d"    $eth "f" \
+                "g"    $singlestory_g $gamma "h"    $h_toprighthook $turned_h $h_bar "j"    $curly_j \
+                $j_stroke "k" \
+                "l"    $l_retro $smallcap_l "m"    $meng "n"    $palatal_n $engma $n_retro $smallcap_n \
+                "p"    $phi "r"    $turned_r $turned_r_retro $flipped_smallcap_r "s"    $s_retro $esh \
+                "t"    $velapp "v"    $labiodental_app "w"    "x"    "z"    $curly_z $z_retro $ezh \
+                $theta $turned_y \
+                "a"    $turned_a $latin_alpha $turned_alpha $ash $turned_ash "e"    $schwa $epsilon $three_vowel \
+                $backwards_e "i"    $i_bar $smallcap_i "o"    $o_slash $ethel $smallcap_ethel $bardos $open_o \
+                "u"    $u_bar "y"    $smallcap_y $turned_m $rams_horn $closed_three_vowel $turned_v $upsilon
 
-   store(hatU)  U+2070 U+00B9 U+00B2 U+00B3 U+2074 U+2075 U+2076 U+2077 U+2078 U+2079 \
-                U+207B U+207A U+207C U+207D U+207E U+A71D \
-                U+02E4 U+02C0 U+1D47 U+1D5D U+1D9C U+1D9D U+1D48 U+1D9E U+1DA0 \
-                U+1D4D U+1Da2 U+02E0 U+02B0 U+02B1 U+1DA3 U+F1BC U+02B2 U+1DA8 \
-                U+1DA1 U+1D4F \
-                U+02E1 U+1DA9 U+1DAB U+1D50 U+1DAC U+207F U+1DAE U+1D51 U+1DAF U+1DB0 \
-                U+1D56 U+1DB2 U+02B3 U+02B4 U+02B5 U+02B6 U+02E2 U+1DB3 U+1DB4 \
-                U+1D57 U+1DAD U+1D5B U+1DB9 U+02B7 U+02E3 U+1DBB U+1DBD U+1DBC U+1DBE \
-                U+1DBF U+F1CE \
-                U+1D43 U+1D44 U+1D45 U+1D9B U+F1A1 U+1D46 U+1D49 U+1D4A U+1D4B U+1D9F \
-                U+F1A3 U+2071 U+1DA4 U+1DA6 U+1D52 U+F1AB U+A7F9 U+F1AE U+1DB1 U+1D53 \
-                U+1D58 U+1DB6 U+02B8 U+F1B4 U+1D5A U+F1B5 U+F1A4 U+1DBA U+1DB7
+   store(hatU)  $super_0 $super1 $super2 $super3 $super_4 $super_5 $super_6 $super_7 $super_8 $super_9 \
+                $super_minus $super_plus $super_equals $super_lparen $super_rparen $super_excl \
+                $super_pharyngeal $super_glottal $super_b $super_beta $super_c $super_curly_c $super_d $super_eth $super_f \
+                $super_g $super_single_story_g $super_gamma $super_h $super_h_toprighthook $super_turned_h $super_h_bar_white $super_j $super_curly_j \
+                $super_j_stroke $super_k \
+                $super_l $super_l_retro $super_smallcap_l $super_m $super_meng $super_n $super_palatal_n $super_engma $super_n_retro $super_smallcap_n \
+                $super_p $super_phi $super_r $super_turned_r $super_turned_r_retro $super_flipped_smallcap_r $super_s $super_s_retro $super_esh \
+                $super_t $super_velapp $super_v $super_labiodental_app $super_w $super_x $super_z $super_curly_z $super_z_retro $super_ezh \
+                $super_theta $super_turned_y_white \
+                $super_a $super_turned_a $super_latin_alpha $super_turned_alpha $super_ash_white $super_turned_ash $super_e $super_schwa $super_epsilon $super_three_vowel \
+                $super_backwards_e_white $super_i $super_i_bar $super_smallcap_i $super_o $super_o_slash_white $super_ethel $super_smallcap_ethel_white $super_bardos $super_open_o \
+                $super_u $super_u_bar $super_y $super_smallcap_y_white $super_turned_m $super_rams_horn_white $super_closed_three_white $super_turned_v $super_upsilon
 
 c "AETYZ" "adehilntuyz"  and un-superscript "1234567890"
 c WKJ note: I used pipes for Turkish characters that were otherwise inconvenient (s_____ for s-cedilla) or impossible (dotless i) to type
 store(pipeD)  "A"    "E"    "G"    "I"    "O"    "S"    "T"    "Y"    "Z"    \
               "a"    "d"    "e"    "g"    "h"    "i"    "l"    "n"    "s" \
               "t"    "u"    "y"    "z" 
-store(pipeU)  U+1D00 U+1D07 U+011E U+0130 U+00D8 U+015E U+0287 U+02AF U+0285 \
-              U+03B1 U+0221 U+029A U+011F U+0452 U+0131 U+0234 U+0235 U+015F \
-              U+0236 U+0277 U+02AE U+027F
+store(pipeU)  $smallcap_a $smallcap_e $capital_yumusak_g $capital_i_dot $capital_o_slash $capital_s_cedilla $turned_t $turned_h_fishhook_tail $squat_reversed_esh \
+              $greek_alpha $d_curl $closed_epsilon $yumusak_g $cyrillic_dje $i_dotless $l_curl $n_curl $s_cedilla \
+              $t_curl $closed_omega $turned_h_fishhook $backwards_fishhook
 
 store(ldiaK) "+_%${"
-store(ldiaU) U+031F U+0331 U+0325 U+0329 U+032A
+store(ldiaU) $plus_below $macron_below $ring_below $vertical_stroke_below $bridge_below
 
 c this one shouldn't work LP
 store(udiaK) '~*'
-store(udiaU) U+0303 U+0308 U+033D U+0306 U+030A
+store(udiaU) $tilde $umlaut $x_above $breve $ring
 
-store(toneU) U+030F U+030C U+0300 U+0304 U+0301 U+0302 U+030B \
-             U+1DC4 U+1DC6 U+1DC8 U+1DC9
+store(toneU) $double_grave $caron $grave $macron $acute $circumflex $double_acute \
+             $tone_mh $tone_ml $tone_lhl $tone_hlh
 
-store(segmentU) U+02E9 U+02E8 U+02E7 U+02E6 U+02E5 U+A71C U+A71B U+2197 \
-                U+2198 $ipa_colon U+02D1 U+207F U+02DE U+02BC U+031A U+005B \
-                U+005C U+005D $primary_stress U+02CC U+035C U+0361 U+203F
+store(segmentU) $tone_letter_0 $tone_letter_1 $tone_letter_2 $tone_letter_3 $tone_letter_4 $super_downarrow $super_uparrow $uprightarrow \
+                $downrightarrow $ipa_colon $half_long $super_n $rhotic $quote_9 $unreleased $lsquare \
+                $backslash $rsquare $primary_stress $secondary_stress $tie_below $tie_above $tie_below_2
 
-store(fenceU) U+02E5 U+02E6 U+02E7 U+02E8 U+02E9
-store(leftstemU) U+A712 U+A713 U+A714 U+A715 U+A716
+store(fenceU) $tone_letter_4 $tone_letter_3 $tone_letter_2 $tone_letter_1 $tone_letter_0
+store(leftstemU) $left_tone_4 $left_tone_3 $left_tone_2 $left_tone_1 $left_tone_0
 
 store(PitchContoursK) "1"    "2"    "3"    "4"    "5"    "6"    "7"    "8"    "9"    
-store(PitchContoursU) U+F1F1 U+F1F2 U+F1F3 U+F1F4 U+F1F5 U+F1F6 U+F1F7 U+F1F8 U+F1F9 
+store(PitchContoursU) $unknown_f1f1 $unknown_f1f2 $unknown_f1f3 $unknown_f1f4 $unknown_f1f5 $unknown_f1f6 $unknown_f1f7 $unknown_f1f8 $unknown_f1f9 
 
 store(tildeK) "b"    "d"    "f"    "l"    "m"    "n"    "p"    "r"    \
-              U+027E "s"    "t"    "z"
-store(tildeU) U+1D6C U+1D6D U+1D6E U+026B U+1D6F U+1D70 U+1D71 U+1D72 \
-              U+1D73 U+1D74 U+1D75 U+1D76
+              $fishhook "s"    "t"    "z"
+store(tildeU) $b_tilde $d_tilde $f_tilde $l_tilde $m_tilde $n_tilde $p_tilde $r_tilde \
+              $fishhook_tilde $s_tilde $t_tilde $z_tilde
 
-store(PalatalHookK) "b"    "d"    "f"    U+0261 "k"    "l"    "m"    "n" \
-                    "p"    "r"    "s"    U+0283 "v"    "x"    "z"
-store(PalatalHookU) U+1D80 U+1D81 U+1D82 U+1D83 U+1D84 U+1D85 U+1D86 U+1D87 \
-                    U+1D88 U+1D89 U+1D8A U+1D8B U+1D8C U+1D8D U+1D8E     
-store(RetroflexHookK) "a"    U+0251 U+0257 "e"    U+025B U+025C U+0259 "i" \
-                      U+0254 U+0283 "u"    U+0292
-store(RetroflexHookU) U+1D8F U+1D90 U+1D91 U+1D92 U+1D93 U+1D94 U+1D95 U+1D96 \
-                      U+1D97 U+1D98 U+1D99 U+1D9A 
+store(PalatalHookK) "b"    "d"    "f"    $singlestory_g "k"    "l"    "m"    "n" \
+                    "p"    "r"    "s"    $esh "v"    "x"    "z"
+store(PalatalHookU) $b_palhook $d_palhook $f_palhook $g_palhook $k_palhook $l_palhook $m_palhook $n_palhook \
+                    $p_palhook $r_palhook $s_palhook $esh_palhook $v_palhook $x_palhook $z_palhook     
+store(RetroflexHookK) "a"    $latin_alpha $d_toprighthook "e"    $epsilon $three_vowel $schwa "i" \
+                      $open_o $esh "u"    $ezh
+store(RetroflexHookU) $a_retro $alpha_retro $d_toprighthook_retro $e_retro $epsilon_retro $three_vowel_retro $schwa_retro $i_retro \
+                      $open_o_retro $esh_retro $u_retro $ezh_retro 
 group(Unicode) using keys
 
 
 c handle ~~ for centre tilde
-any(tildeK) U+0303 + '~' > index(tildeU,1)
+any(tildeK) $tilde + '~' > index(tildeU,1)
 
 c handle * (upper diacritic)
-U+0308 + '*' > U+033D
-U+033D + '*' > U+0306
-U+0306 + '*' > U+0307
-U+0307 + '*' > U+0310
+$umlaut + '*' > $x_above
+$x_above + '*' > $breve
+$breve + '*' > $dot
+$dot + '*' > $candrabindu
 
 c handle $ (lower diacritic)
-U+0329 + '$' > U+032F
-U+032F + '$' > U+0330  
-any(RetroflexHookK) U+0330 + '$' > index(RetroflexHookU,1)
-U+0330 + '$' > U+0329
+$vertical_stroke_below + '$' > $inverted_breve_below
+$inverted_breve_below + '$' > $tilde_below  
+any(RetroflexHookK) $tilde_below + '$' > index(RetroflexHookU,1)
+$tilde_below + '$' > $vertical_stroke_below
 
 c handle { (lower diacritic)
-U+032A + '{' > U+033A
-U+033A + '{' > U+033B
-U+033B + '{' > U+033C 
-U+033C + '{' > U+0323
-U+0323 + '{' > U+032A
+$bridge_below + '{' > $inverted_bridge_below
+$inverted_bridge_below + '{' > $square_below
+$square_below + '{' > $seagull_below 
+$seagull_below + '{' > $dot_below
+$dot_below + '{' > $bridge_below
 
 c handle % (lower diacritic)
-U+0325 + '%' > U+032C
-U+032C + '%' > U+0324
-any(PalatalHookK) U+0324 + '%' > index(PalatalHookU,1)
-U+0324 + '%' > U+0325
+$ring_below + '%' > $caron_below
+$caron_below + '%' > $umlaut_below
+any(PalatalHookK) $umlaut_below + '%' > index(PalatalHookU,1)
+$umlaut_below + '%' > $ring_below
 
 c #0 #1 #2 #3 #4 #02 #20 #42 #24 #04 #40
-any(fenceU) + "0" > context U+02E9
-any(fenceU) + "1" > context U+02E8
-any(fenceU) + "2" > context U+02E7
-any(fenceU) + "3" > context U+02E6
-any(fenceU) + "4" > context U+02E5
+any(fenceU) + "0" > context $tone_letter_0
+any(fenceU) + "1" > context $tone_letter_1
+any(fenceU) + "2" > context $tone_letter_2
+any(fenceU) + "3" > context $tone_letter_3
+any(fenceU) + "4" > context $tone_letter_4
 
-'#' + "0" > U+02E9
-'#' + "1" > U+02E8
-'#' + "2" > U+02E7
-'#' + "3" > U+02E6
-'#' + "4" > U+02E5
+'#' + "0" > $tone_letter_0
+'#' + "1" > $tone_letter_1
+'#' + "2" > $tone_letter_2
+'#' + "3" > $tone_letter_3
+'#' + "4" > $tone_letter_4
 
-any(leftstemU) + "0" > context U+A712
-any(leftstemU) + "1" > context U+A713
-any(leftstemU) + "2" > context U+A714
-any(leftstemU) + "3" > context U+A715
-any(leftstemU) + "4" > context U+A716
+any(leftstemU) + "0" > context $left_tone_4
+any(leftstemU) + "1" > context $left_tone_3
+any(leftstemU) + "2" > context $left_tone_2
+any(leftstemU) + "3" > context $left_tone_1
+any(leftstemU) + "4" > context $left_tone_0
 
 c ##1 ##2 ##3 ##4 ##5 ##6 ##7 ##8 ##9
 
 '##' + any(PitchContoursK) > index(PitchContoursU,3)
 any(PitchContoursU) + any(PitchContoursK) > context index(PitchContoursU,2)
 c 
-'&' + "0" > U+A712
-'&' + "1" > U+A713
-'&' + "2" > U+A714
-'&' + "3" > U+A715
-'&' + "4" > U+A716
+'&' + "0" > $left_tone_4
+'&' + "1" > $left_tone_3
+'&' + "2" > $left_tone_2
+'&' + "3" > $left_tone_1
+'&' + "4" > $left_tone_0
 
 c tie bar
-'#' + "&" > U+0361
+'#' + "&" > $tie_above
 
-'#' + "!" > U+A71E c raised Africanist downstep
-'##' + "!" > U+A71F c raised Africanist downstep
+'#' + "!" > $super_turned_excl c raised Africanist downstep
+'##' + "!" > $sub_turned_excl c raised Africanist downstep
 
 c @& for overlink
-U+030A + "&" > U+035C
+$ring + "&" > $tie_below
 
 c handle ::
-$ipa_colon + ":" > U+02D1
-U+02D1 + ":" > $ipa_colon $ipa_colon
+$ipa_colon + ":" > $half_long
+$half_long + ":" > $ipa_colon $ipa_colon
 
 c handle [[ which is really [[[
-"[" + "[" > U+02BD    c light aspiration
-U+02BD + "[" > U+02DE c rhoticity
-U+02DE + "[" > context
+"[" + "[" > $quote_e    c light aspiration
+$quote_e + "[" > $rhotic c rhoticity
+$rhotic + "[" > context
 
 c handle ]] and ]]]
-"]" + "]" > U+02BC
-U+02BC + "]" > U+031A
-U+031A + "]" > U+02BB c added for Chinese IPA
+"]" + "]" > $quote_9
+$quote_9 + "]" > $unreleased
+$unreleased + "]" > $quote_6 c added for Chinese IPA
 
 c handle }}
-$primary_stress + "}" > U+02CC
-U+02CC + "}" > U+0348 c fortis
-U+0348 + "}" > U+1DC2 c lenis
+$primary_stress + "}" > $secondary_stress
+$secondary_stress + "}" > $double_vertical_stroke_below c fortis
+$double_vertical_stroke_below + "}" > $snake_below c lenis
 
 
 c Now all the diacritics
 
 c @
 c o-width first
-U+030A + "0" > U+030F
-U+030F + "0" > U+030F
-U+030F + "4" > U+030C
+$ring + "0" > $double_grave
+$double_grave + "0" > $double_grave
+$double_grave + "4" > $caron
 
 c any(high) "*" + "1" > index(high,1) d152
 c any(high) any(ldia) "*" + "1" > index(high,1) index(ldia, 2) d152
-U+030A + "1" > U+0300
-U+0300 + "1" > U+0300
-U+0300 + "2" > U+1DC5 c low rising
-U+0300 + "3" > U+030C
-U+0301 + "2" > U+1DC7 c mid rising
-U+030C + "1" > U+1DC8 c low-high-low
+$ring + "1" > $grave
+$grave + "1" > $grave
+$grave + "2" > $tone_lm c low rising
+$grave + "3" > $caron
+$acute + "2" > $tone_hm c mid rising
+$caron + "1" > $tone_lhl c low-high-low
 
-U+030A + "2" > U+0304
-U+0304 + "2" > U+0304 c mid
-U+0304 + "3" > U+1DC4 c mid-high
-U+0304 + "1" > U+1DC6 c mid-low
+$ring + "2" > $macron
+$macron + "2" > $macron c mid
+$macron + "3" > $tone_mh c mid-high
+$macron + "1" > $tone_ml c mid-low
 
-U+030A + "3" > U+0301
-U+0301 + "3" > U+0301
-U+0301 + "1" > U+0302
-U+0302 + "3" > U+1DC9 c high-low-high
+$ring + "3" > $acute
+$acute + "3" > $acute
+$acute + "1" > $circumflex
+$circumflex + "3" > $tone_hlh c high-low-high
 
-U+030A + "4" > U+030B
-U+030B + "4" > U+030B
-U+030B + "0" > U+0302
+$ring + "4" > $double_acute
+$double_acute + "4" > $double_acute
+$double_acute + "0" > $circumflex
 
 c making circumflex and caron easier to type
-U+030A + "5" > U+030C c caron
-U+030A + "6" > U+0302 c circumflex
+$ring + "5" > $caron c caron
+$ring + "6" > $circumflex c circumflex
 
 c + and _ sequences
-U+031F + "+" > U+031D
-U+031D + "+" > U+0318
-U+0318 + "+" > U+0339
-U+0339 + "+" > U+031F
+$plus_below + "+" > $up_tack_below
+$up_tack_below + "+" > $left_tack_below
+$left_tack_below + "+" > $right_half_ring_below
+$right_half_ring_below + "+" > $plus_below
 
-$minus_below + "_" > U+031E
-U+031E + "_" > U+0319
-U+0319 + "_" > U+031C                      
-"c"    + "_" > U+00E7 c preserve c cedilla at one codepoint
-U+031C + "_" > U+0327 c 0327 was added for Chinese IPA
-U+0327 + "_" > $minus_below
+$minus_below + "_" > $down_tack_below
+$down_tack_below + "_" > $right_tack_below
+$right_tack_below + "_" > $left_half_ring_below                      
+"c"    + "_" > $c_cedilla c preserve c cedilla at one codepoint
+$left_half_ring_below + "_" > $cedilla c 0327 was added for Chinese IPA
+$cedilla + "_" > $minus_below
 
 c General rules
     + any(singleK) > index(singleU,1)
@@ -302,8 +643,8 @@ c any(udiaU) + any(udiaK) > context beep
 c tones
 any(toneU)    + "@" > context beep
 c any(segmentU) + "@" > context beep
-              + "@" > U+030A
-U+030A        + "@" > U+030D
+              + "@" > $ring
+$ring        + "@" > $vertical_stroke_above
 
 c This new rule (10-Sept-2007) is a fix for the problem of fast typing reordering keystrokes when using Keyman with TSF. I apparently must be the last rule in the group.
 
