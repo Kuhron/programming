@@ -17,3 +17,6 @@ set list
 
 " prevent scrolling cursor too far away from middle of screen (useful for keeping search results centered)
 set scrolloff=15
+
+" custom color scheme for easily visible warm colors on dark mode
+colorscheme volcano

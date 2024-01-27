@@ -2,6 +2,7 @@
 c TODO make normal space, get rid of whatever weird space character this keyboard has
 c TODO make asterisk and other punctuation chars typeable here, then ** is the first IPA char from pressing asterisk, simil with $, %
 c fix stupid stuff if it's simple: extra spaces, extra backspaces, breaking Ctrl and Shift
+c fix problem where it won't do diacritics correctly if there are characters after it on the same line
 
 store(&NAME) 'IPADvorak'
 store(&BITMAP) "ipadvorak.ico"
