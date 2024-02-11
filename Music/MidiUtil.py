@@ -81,7 +81,9 @@ class MidiEvent:
                 "value": 127 if self.event_name == "pedal_on" else 0,
             }
         else:
-            raise Exception(self)
+            print(f"ignoring event {self}")
+            return None
+            # raise Exception(self)
         msg_kwargs.update({"time": self.timestamp/1000})
         return mido.Message(msg_type, **msg_kwargs)
 
@@ -126,6 +128,7 @@ def get_input_and_output_devices(verbose=False):
     INTERFACE_OTHER_NAME = None
     # INTERFACE_OTHER_NAME = b"MIDIOUT2 (UM-2)"
 
+    print(f"{midi.get_count()} devices found")
     infos = [midi.get_device_info(device_id) for device_id in range(midi.get_count())]
     if verbose:
         print("got midi infos:", infos)
@@ -219,7 +222,8 @@ def send_data_to_standard_out(data):
     for lst in data:
         event = MidiEvent.from_raw_data(lst)
         msg = event.to_mido_message()
-        msgs.append(msg)
+        if msg is not None:
+            msgs.append(msg)
     assert all(msgs[i].time <= msgs[i+1].time for i in range(len(msgs)-1)), "msgs out of order"
 
     final_timestamp = data[-1][-1]

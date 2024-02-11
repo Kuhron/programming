@@ -33,7 +33,7 @@ hi FoldColumn	guibg=grey30 guifg=LightSalmon
 hi IncSearch	guifg=slategrey guibg=HotPink
 hi LineNr   guifg=orange
 hi ModeMsg	guifg=yellow1
-hi MoreMsg	guifg=coral1
+hi MoreMsg	guifg=orange
 hi NonText	guifg=tan1 guibg=grey30
 hi Question	guifg=gold1
 hi Search	guibg=peru guifg=wheat
@@ -51,22 +51,22 @@ hi WarningMsg	guifg=salmon
 
 " syntax highlighting groups
 hi Comment	guifg=OrangeRed
-hi Constant	guifg=#ffa0a0
-hi Identifier	guifg=goldenrod2
-hi Statement	guifg=HotPink
+hi Constant	guifg=grey90
+hi Identifier	guifg=goldenrod
+hi Statement	guifg=red
 hi PreProc	guifg=indianred
-hi Type		guifg=magenta
-hi Special	guifg=navajowhite
+hi Type		guifg=maroon1
+hi Special	guifg=salmon
 "hi Underlined
 hi Ignore	guifg=grey80
 "hi Error
-hi Todo		guifg=orangered guibg=yellow2
+hi Todo		guifg=yellow2 guibg=red
 
 " color terminal definitions
 hi SpecialKey	ctermfg=yellow
 hi NonText	cterm=bold ctermfg=red
 hi Directory	ctermfg=darkcyan
-hi ErrorMsg	cterm=bold ctermfg=red ctermbg=yellow
+hi ErrorMsg	cterm=bold ctermfg=yellow ctermbg=darkred
 hi IncSearch	cterm=NONE ctermfg=yellow ctermbg=red
 hi Search	cterm=NONE ctermfg=white ctermbg=red
 hi MoreMsg	ctermfg=yellow
@@ -90,11 +90,11 @@ hi DiffText	cterm=bold ctermbg=white
 hi Comment	ctermfg=yellow
 hi Constant	ctermfg=red
 hi Special	ctermfg=lightblue
-hi Identifier	ctermfg=lightred
-hi Statement	ctermfg=lightgreen
+hi Identifier	ctermfg=red
+hi Statement	ctermfg=lightyellow
 hi PreProc	ctermfg=lightyellow
 hi Type		ctermfg=lightyellow
-hi Underlined	cterm=underline ctermfg=lightred
+hi Underlined	cterm=underline ctermfg=red
 hi Ignore	cterm=bold ctermfg=grey
 hi Ignore	ctermfg=grey
 hi Error	cterm=bold ctermfg=yellow ctermbg=red

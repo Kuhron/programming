@@ -187,6 +187,7 @@ alias gitsize="git status --porcelain | sed 's/^...//g;s/\"//g' | xargs -d '\n' 
 alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 alias tmux="TERM=screen-256color-bce tmux"
 alias ft="find . -printf '%T@ %Tc %p\\n' | sort -n"
+alias dry="python /home/kuhron/drybones/drybones.py"
 
 function midtomp3() { echo "this is broken because I don't know how to embed sed result as output filename"; timidity "$1" -Ow -o - | ffmpeg -i - -acodec libmp3lame -ab 64k $(sed -e "s/mid$/mp3/" "$1") ;}
 
@@ -261,8 +262,10 @@ function all-webp-to-png() {
 
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
-gsettings set com.canonical.indicator.datetime time-format "'custom'"
-gsettings set com.canonical.indicator.datetime custom-time-format "'%Y-%m-%d %H:%M:%S %Z  ||  %w  %j  %s'"
+gsettings set org.gnome.desktop.interface clock-show-seconds true
+# - in gnome, com.canonical.indicator.datetime doesn't work, need to use Gnome Shell Extension "Panel Date Format", but keeping these lines here in case of future switch back to Unity, and so I still have the format string
+# gsettings set com.canonical.indicator.datetime time-format "'custom'"
+# gsettings set com.canonical.indicator.datetime custom-time-format "'%Y-%m-%d %H:%M:%S %Z  ||  %w  %j  %s'"
 
 gsettings set org.gnome.desktop.peripherals.touchpad disable-while-typing false
 

@@ -5,7 +5,7 @@ import Music.MidiUtil as mu
 
 
 if __name__ == "__main__":
-    inp, outp = mu.get_input_and_output_devices()
+    inp, outp = mu.get_input_and_output_devices(verbose=True)
     if inp is None:
         raise Exception("no input device")
     else:

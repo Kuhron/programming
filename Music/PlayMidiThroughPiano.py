@@ -1,6 +1,7 @@
 import os
 import random
 import mido
+import sys
 
 import MidiUtil as mu
 
@@ -19,6 +20,11 @@ import MidiUtil as mu
 
 
 if __name__ == "__main__":
+    try:
+        s = sys.argv[1]
+    except IndexError:
+        s = None
+
     inp, outp = mu.get_input_and_output_devices()
     data_dir = "/home/wesley/programming/Music/midi_input/YamahaP125"
     # mu.verify_data_list_format_for_files_in_dir(data_dir)
@@ -26,9 +32,15 @@ if __name__ == "__main__":
     # data = mu.load_random_data(data_dir)
     # data = mu.load_data_from_fname_string(data_dir, "20231109-065457")
     # data = mu.load_data_from_fname_string(data_dir, "20231014-222344")
-    data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
+    # data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
     # good one: 20231002-020531, either inverted or not; inverted +5 gives nice B/F# key in the second half
     # data = mu.load_data_from_fname_string(data_dir, "20231130-074300")
+
+    if s is not None:
+        data = mu.load_data_from_fname_string(data_dir, s)
+
+    # 20240201-000329 was recorded at the same time as playing 20240131-235023, 20240201-000329 is supposed to be piano but the program doesn't seem to know that
+
     nwc_parent_dir = "/home/wesley/Desktop/Construction/MusicComposition/Wesley's/2023/Piano Accompaniments/"
     accompaniment_fstr = "COcta_20231001-200554"
     accompaniment_fname = f"{accompaniment_fstr}_accompaniment.mid"
@@ -61,5 +73,5 @@ if __name__ == "__main__":
     print(f"{offset = }")
     data = mu.transpose_data(data, offset)
 
-    # mu.send_data_to_midi_out(data, outp)
-    mu.send_data_to_standard_out(data)
+    mu.send_data_to_midi_out(data, outp)
+    # mu.send_data_to_standard_out(data)
