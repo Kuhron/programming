@@ -40,6 +40,7 @@ if __name__ == "__main__":
         data = mu.load_data_from_fname_string(data_dir, s)
 
     # 20240201-000329 was recorded at the same time as playing 20240131-235023, 20240201-000329 is supposed to be piano but the program doesn't seem to know that
+    # 20240222-070311 was played while 20240222-071155 was recorded
 
     nwc_parent_dir = "/home/wesley/Desktop/Construction/MusicComposition/Wesley's/2023/Piano Accompaniments/"
     accompaniment_fstr = "COcta_20231001-200554"
