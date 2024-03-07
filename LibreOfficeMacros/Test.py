@@ -18,6 +18,8 @@
 #   the License at http://www.apache.org/licenses/LICENSE-2.0 .
 #
 
+import time
+
 def TestUserPythonMacro():
     """Prints a string into the current document.
     """
@@ -40,7 +42,7 @@ def TestUserPythonMacro():
     tRange = text.End
 
     # and set the string
-    tRange.String = "asdf (in Python)"
+    tRange.String = f"asdf {time.time()} (in Python)"
 
     return None
 
