@@ -20,6 +20,7 @@
 
 import time
 
+
 def TestUserPythonMacro():
     """Prints a string into the current document.
     """
@@ -33,7 +34,8 @@ def TestUserPythonMacro():
     # Otherwise, create a new one
     if not hasattr(model, "Text"):
         model = desktop.loadComponentFromURL(
-            "private:factory/swriter", "_blank", 0, ())
+            "private:factory/swriter", "_blank", 0, ()
+        )
 
     # get the XText interface
     text = model.Text
@@ -46,4 +48,64 @@ def TestUserPythonMacro():
 
     return None
 
+
+# Capitalize.py copied from https://wiki.openoffice.org/wiki/PyUNO_samples so I can learn how this works
+
+# helper function
+def getNewString(theString):
+    if not theString or len(theString) ==0:
+        return ""
+    # should we tokenize on "."?
+    if theString[0].isupper() and len(theString)>=2 and theString[1].isupper():
+    # first two chars are UC => first UC, rest LC
+        newString=theString.capitalize()
+    elif theString[0].isupper():
+    # first char UC => all to LC
+        newString=theString.lower()
+    else: # all to UC.
+        newString=theString.upper()
+    return newString
+
+
+def CapitalizePython():
+    """Change the case of a selection, or current word from uppercase, to first char uppercase, to all lowercase to uppercase..."""
+
+    # The context variable is of type XScriptContext and is available to
+    # all BeanShell scripts executed by the Script Framework
+    xModel = XSCRIPTCONTEXT.getDocument()
+
+    #the writer controller impl supports the css.view.XSelectionSupplier interface
+    xSelectionSupplier = xModel.getCurrentController()
+
+    #see section 7.5.1 of developers' guide
+    xIndexAccess = xSelectionSupplier.getSelection()
+    count = xIndexAccess.getCount()
+    for i in range(count):
+        xTextRange = xIndexAccess.getByIndex(i)
+        #print "string: " + xTextRange.getString()
+        theString = xTextRange.getString()
+        if len(theString) == 0:
+            # sadly we can have a selection where nothing is selected
+            # in this case we get the XWordCursor and make a selection!
+            xText = xTextRange.getText()
+            xWordCursor = xText.createTextCursorByRange(xTextRange)
+            if not xWordCursor.isStartOfWord():
+                xWordCursor.gotoStartOfWord(False)
+            xWordCursor.gotoNextWord(True)
+            theString = xWordCursor.getString()
+            newString = getNewString(theString)
+            if newString:
+                xWordCursor.setString(newString)
+                xSelectionSupplier.select(xWordCursor)
+        else:
+            newString = getNewString(theString)
+            if newString:
+                xTextRange.setString(newString)
+                xSelectionSupplier.select(xTextRange)
+
+
 # vim: set shiftwidth=4 softtabstop=4 expandtab:
+
+# lists the scripts, that shall be visible inside OOo. Can be omitted, if
+# all functions shall be visible, however here getNewString shall be suppressed
+g_exportedScripts = CapitalizePython, TestUserPythonMacro

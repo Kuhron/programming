@@ -5,3 +5,7 @@ pyuno object (com.sun.star.uno.XInterface)0x55fb5068a800{implementationName=SwXT
 ---- begin running script ----
 
 pyuno object (com.sun.star.uno.XInterface)0x55fb44b5d4f0{implementationName=SwXTextRanges, supportedServices={com.sun.star.text.TextRanges}, supportedInterfaces={com.sun.star.lang.XUnoTunnel,com.sun.star.lang.XServiceInfo,com.sun.star.container.XIndexAccess,com.sun.star.lang.XTypeProvider,com.sun.star.uno.XWeak}}
+
+---- begin running script ----
+
+pyuno object (com.sun.star.uno.XInterface)0x55fb4641b7e0{implementationName=SwXTextRanges, supportedServices={com.sun.star.text.TextRanges}, supportedInterfaces={com.sun.star.lang.XUnoTunnel,com.sun.star.lang.XServiceInfo,com.sun.star.container.XIndexAccess,com.sun.star.lang.XTypeProvider,com.sun.star.uno.XWeak}}
