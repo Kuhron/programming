@@ -1,6 +1,15 @@
 TODO
+- convert all saved MIDI recordings to actual .mid files or whatever mido works best with
+- remove pygame from code wherever possible, replace it with mido
+- remove homebrew MidiEvent class and other old homebrew stuff that can be replaced with mido code, use mido for as much of this as possible to make it clean
+- implement drum track syncing with first note of improv that is played on top of it
 - implement duet graph, where one piece is played plus some transformation and then I improvise on top of that
 - make some nice terminal interface for navigating the midi files and deciding what to do with them (play, record, transform, show duet tree, etc.)
+- figure out a way to stop the notes that are still being pressed when I KeyboardInterrupt out of playing MIDI data
+
+
+more ambitious:
+- implement a way for user to change the volume of a midi track while it's playing from the computer, so I can hear myself play quieter instruments like epiano without the accompaniment drowning it out
 
 
 DONE

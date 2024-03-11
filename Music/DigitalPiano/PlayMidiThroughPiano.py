@@ -3,7 +3,8 @@ import random
 import mido
 import sys
 
-import MidiUtil as mu
+sys.path.insert(0, "/home/wesley/programming/")
+import Music.MidiUtil as mu
 
 
 # def play_accompaniment(dirpath, fname, with_drumtrack=True):
@@ -25,14 +26,15 @@ if __name__ == "__main__":
     except IndexError:
         s = None
 
-    inp, outp = mu.get_input_and_output_devices()
-    data_dir = "/home/wesley/programming/Music/midi_input/YamahaP125"
+    # inp, outp = mu.get_input_and_output_devices()
+    inp, outp = mu.get_digital_piano_input_and_output()
+    data_dir = "/home/wesley/programming/Music/DigitalPiano/midi_input/YamahaP125"
     # mu.verify_data_list_format_for_files_in_dir(data_dir)
 
     # data = mu.load_random_data(data_dir)
     # data = mu.load_data_from_fname_string(data_dir, "20231109-065457")
     # data = mu.load_data_from_fname_string(data_dir, "20231014-222344")
-    # data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
+    data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
     # good one: 20231002-020531, either inverted or not; inverted +5 gives nice B/F# key in the second half
     # data = mu.load_data_from_fname_string(data_dir, "20231130-074300")
 
@@ -42,12 +44,16 @@ if __name__ == "__main__":
     # 20240201-000329 was recorded at the same time as playing 20240131-235023, 20240201-000329 is supposed to be piano but the program doesn't seem to know that
     # 20240222-070311 was played while 20240222-071155 was recorded
 
-    nwc_parent_dir = "/home/wesley/Desktop/Construction/MusicComposition/Wesley's/2023/Piano Accompaniments/"
+    nwc_parent_dir = "/home/wesley/Desktop/Construction/MusicComposition/Wesley's/Piano Accompaniments/"
     accompaniment_fstr = "COcta_20231001-200554"
     accompaniment_fname = f"{accompaniment_fstr}_accompaniment.mid"
     drumtrack_fname = f"{accompaniment_fstr}_drumtrack.mid"
     accompaniment_fp = os.path.join(nwc_parent_dir, accompaniment_fname)
     drumtrack_fp = os.path.join(nwc_parent_dir, drumtrack_fname)
+
+    mu.send_midi_file_to_port(accompaniment_fp, outp)
+    sys.exit()
+
 
     # accompaniment_midi = mido.MidiFile(accompaniment_fp)
     # for msg in accompaniment_midi.play():
@@ -63,7 +69,7 @@ if __name__ == "__main__":
     data = [[x, t-start_time_ms] for x,t in data if t >= start_time_ms]
 
     # mess with it
-    invert, offset = False, 0
+    invert, offset = False, -3
     # invert, offset = True, 5
     # invert = False
     # invert = random.random() < 0.5

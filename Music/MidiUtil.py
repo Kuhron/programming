@@ -6,13 +6,16 @@ import numpy as np
 import random
 import time
 
-import pygame
+# import pygame
 # pygame.init()  # for initializing pygame.midi.mixer, if I use that
-import pygame.midi as midi
-midi.init()
-import mido  # for getting list of tracks and events in a .mid file
+# import pygame.midi as midi
+# midi.init()
+import mido
 
-import MusicalStructureUtil as structure
+import sys
+sys.path.insert(0, "/home/wesley/programming/")
+
+# import Music.MusicalStructureUtil as structure
 
 MIDI_INPUT_DIR = "/home/wesley/programming/Music/midi_input/"
 TIMIDITY_PORT = 2
@@ -105,27 +108,25 @@ class MidiEvent:
         self.timestamp += time
         return self
 
-    # def send_to_standard_out(self, player):
-    #     if self.is_note():
-    #         if self.event_name == "note_on":
-    #             player.note_on(self.pitch, self.loudness)
-    #         elif self.event_name == "note_off":
-    #             player.note_off(self.pitch, self.loudness)
-    #         else:
-    #             raise Exception("cannot send event: {}".format(self.to_raw_data()))
-    #     elif self.is_instrument():
-    #         player.set_instrument(self.pitch)
-
     def __repr__(self):
         return f"<MidiEvent status={self.status} pitch={self.pitch} event={self.event} data3={self.data3} timestamp={self.timestamp} status_name={self.status_name} event_name={self.event_name}>"
 
 
+def get_digital_piano_input_and_output():
+    device_name = "Digital Piano:Digital Piano MIDI 1 20:0"  # Yamaha P125
+    inport = mido.open_input(device_name)
+    outport = mido.open_output(device_name)
+    return inport, outport
+
+
 def get_input_and_output_devices(verbose=False):
-    INTERFACE_NAME = b"Digital Piano MIDI 1"  # Yamaha P125
+    raise Exception("deprecated")
+    INTERFACE_NAME = "Digital Piano:Digital Piano MIDI 1 20:0"  # Yamaha P125 on mido
+    # INTERFACE_NAME = b"Digital Piano MIDI 1"  # Yamaha P125 on pygame
     # INTERFACE_NAME = b"UM-2"  # Edirol UM-2 EX
     # INTERFACE_NAME = b"US-144"  # Tascam US-144
 
-    INTERFACE_OTHER_NAME = None
+    # INTERFACE_OTHER_NAME = None
     # INTERFACE_OTHER_NAME = b"MIDIOUT2 (UM-2)"
 
     print(f"{midi.get_count()} devices found")
@@ -157,7 +158,7 @@ def get_input_and_output_devices(verbose=False):
 
 def send_data_to_midi_out(data, midi_output):
     print(f"sending MIDI data to {midi_output=}")
-    t0 = midi.time()
+    t0 = time.time()
     transform = lambda lst, timestamp: [lst, timestamp + t0 + 1000]
     data = [transform(*x) for x in data]
 
@@ -180,7 +181,7 @@ def send_data_to_midi_out(data, midi_output):
     midi_output.write(data_segments_by_second[0])
     last_n_seconds_written = 0
     while True:
-        n_seconds_now = (midi.time() - t0) // 1000
+        n_seconds_now = (time.time() - t0) // 1000
         n_seconds_to_write = n_seconds_now + 1
         if last_n_seconds_written is None or n_seconds_to_write != last_n_seconds_written:
             segment = data_segments_by_second[n_seconds_to_write]
@@ -191,7 +192,7 @@ def send_data_to_midi_out(data, midi_output):
             break
         time.sleep(0.1)
 
-    wait_for_final_timestamp(final_timestamp, (lambda: midi.time()))
+    wait_for_final_timestamp(final_timestamp, (lambda: time.time()))
 
 
 def wait_for_final_timestamp(final_timestamp, get_time_func):
@@ -211,6 +212,21 @@ def send_notes_to_midi_out(notes, midi_output):
         note.output_to_midi(midi_output)
 
 
+def send_midi_file_to_standard_out(fp):
+    port = get_standard_out_port()
+    send_midi_file_to_port(fp, port)
+
+
+def send_midi_file_to_port(fp, port):
+    mid = mido.MidiFile(fp)
+    for msg in mid.play():
+        port.send(msg)
+
+
+def get_standard_out_port():
+    return mido.open_output("TiMidity:TiMidity port 0 128:0")
+
+
 def send_data_to_standard_out(data):
     # player = midi.Output(TIMIDITY_PORT)  # doesn't work well with timidity, it wants to play the whole segment's notes all at once
     # send_data_to_midi_out(data, player)
@@ -227,7 +243,7 @@ def send_data_to_standard_out(data):
     assert all(msgs[i].time <= msgs[i+1].time for i in range(len(msgs)-1)), "msgs out of order"
 
     final_timestamp = data[-1][-1]
-    with mido.open_output("TiMidity:TiMidity port 0 128:0") as out_port:
+    with get_standard_out_port() as out_port:
         print(f"{out_port = }")
         t0 = time.time()
         start_delay = 0.5
@@ -296,7 +312,7 @@ def read_data_from_midi_in(midi_input, max_silence_seconds):
             note_imbalance += 1 if event.event_name == "note_on" else -1 if event.event_name == "note_off" else 0
             # ? = data3
             print("notes on:", note_imbalance)
-        elif note_imbalance == 0 and last_time is not None and midi.time() - last_time > max_silence_seconds * 1000:
+        elif note_imbalance == 0 and last_time is not None and time.time() - last_time > max_silence_seconds * 1000:
             print("data collection timed out")
             break
     return data
@@ -436,5 +452,6 @@ def test_note_number_math():
     h = note_number_to_hertz(n)
     nn = hertz_to_note_number(h)
     assert abs(nn - n) < 1e-6, "n={}, h={}, nn={}".format(n, h, nn)
+
 
 
