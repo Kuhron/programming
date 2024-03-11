@@ -172,9 +172,6 @@ alias kgs="java -jar ~/Desktop/Learning/Games/Go/cgoban.jar &"
 alias sublime="/opt/sublime_text/sublime_text &"
 alias ipa="vim /usr/share/kmfl/IPA14.kmn"
 alias zotero="/opt/zotero/zotero &"
-# alias nwc="killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"  # if you killall & timidity then it will kill the one you just started  # this is for the demo version before I bought a license
-alias nwc="sudo killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2/NWC2.exe\" &"  # if you killall & timidity then it will kill the one you just started
-alias timid="timidity -iA -B2,8 -Os &"
 alias flex="/usr/bin/fieldworks-flex"
 alias antlr4='java -Xmx500M -cp "~/antlr-4.13.1-complete.jar:$CLASSPATH" org.antlr.v4.Tool'
 alias grun='echo "do not use; use ParsingDebugging.py which I wrote instead"' #'java -Xmx500M -cp "/usr/local/lib/antlr-4.7.1-complete.jar:$CLASSPATH" org.antlr.v4.gui.TestRig'
@@ -188,6 +185,18 @@ alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 alias tmux="TERM=screen-256color-bce tmux"
 alias ft="find . -printf '%T@ %Tc %p\\n' | sort -n"
 alias dry="python /home/kuhron/drybones/drybones.py"
+
+function nwc() {
+    # alias nwc="killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"  # if you killall & timidity then it will kill the one you just started  # this is for the demo version before I bought a license
+    # sudo killall timidity
+    # timid
+    wine "/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2/NWC2.exe" &
+}
+
+function timid() {
+    # timidity -iA -B2,8 -Os &  # -Os option causes segfault on Ubuntu 22
+    timidity -iA -B2,8 &
+}
 
 function midtomp3() { echo "this is broken because I don't know how to embed sed result as output filename"; timidity "$1" -Ow -o - | ffmpeg -i - -acodec libmp3lame -ab 64k $(sed -e "s/mid$/mp3/" "$1") ;}
 

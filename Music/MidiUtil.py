@@ -353,6 +353,18 @@ def load_data_from_filepath(fp):
     return data
 
 
+def load_text_data(fp):
+    with open(fp) as f:
+        lines = f.readlines()
+    data = []
+    for l in lines:
+        s = l.strip().split("\t")
+        a,b,c,d,t = s
+        lst = [[int(a), int(b), int(c), int(d)], int(t)]
+        data.append(lst)
+    return data
+
+
 def verify_data_list_format_for_filepath(fp):
     data = load_data_from_filepath(fp)
     assert type(data) is list

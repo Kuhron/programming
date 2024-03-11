@@ -7,9 +7,12 @@
 # documentation for the PyUNO API that this uses to communicate with LibreOffice:
 # - http://www.openoffice.org/udk/python/python-bridge.html
 # - https://wiki.openoffice.org/wiki/Python
+# - e.g. https://www.openoffice.org/api/docs/common/ref/com/sun/star/frame/XController.html
 
 
 import os
+from com.sun.star.style import TabStop
+# from com.sun.star.style import TabAlign  # doesn't exist for some reason, I'll just do it myself
 
 
 LOG_FP = "/home/kuhron/programming/LibreOfficeMacros/log.txt"
@@ -20,17 +23,52 @@ def print(x):
         f.write(str(x) + "\n")
 
 
-def MoveTabStops():
+class TabAlign:
+    # https://www.openoffice.org/api/docs/common/ref/com/sun/star/style/TabAlign.html
+    LEFT = 0
+    CENTER = 1
+    RIGHT = 2
+    DECIMAL = 3
+    DEFAULT = 4
+
+
+# https://forum.openoffice.org/en/forum/viewtopic.php?t=106673
+def tabs(*args):
+    tbs = []
+    for position, alignment in args:
+        tb = TabStop()
+        tb.Position = position
+        tb.Alignment = alignment
+        tbs.append(tb)
+    tbs = tuple(tbs)
+    return tbs
+
+
+def get_cursor():
     xModel = XSCRIPTCONTEXT.getDocument()
-    xSelectionSupplier = xModel.getCurrentController()
-    xIndexAccess = xSelectionSupplier.getSelection()
-    print(xIndexAccess)
+    controller = xModel.getCurrentController()
+    cursor = controller.getViewCursor()
+    return cursor
+
+
+def ClearTabStops():
+    cursor = get_cursor()
+    cursor.ParaTabStops = [] # this to clear tabs from paragraph
+
+
+def MoveTabStops():
+    # want to set properties of the current paragraph, NOT the whole style
+    cursor = get_cursor()
+    print(cursor.getText())
+
+    # example of setting them:
+    # cursor.ParaTabStops = tabs((3000, TabAlign.LEFT), (5000, TabAlign.CENTER), (10000, TabAlign.RIGHT))
 
     # TODO how to get width of a set of characters so we can set the tab stop to some point after that?
     # XFont: https://www.openoffice.org/api/docs/common/ref/com/sun/star/awt/XFont.html#getStringWidth
     # getStringWidth()
 
-    # want to set properties of the current paragraph, NOT the whole style
+    print("finished setting tab stops")
 
 
 # stuff to translate or use as guide, from https://forum.openoffice.org/en/forum/viewtopic.php?t=20217

@@ -34,7 +34,7 @@ if __name__ == "__main__":
     # data = mu.load_random_data(data_dir)
     # data = mu.load_data_from_fname_string(data_dir, "20231109-065457")
     # data = mu.load_data_from_fname_string(data_dir, "20231014-222344")
-    data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
+    # data = mu.load_data_from_fname_string(data_dir, "20231002-020531")  # name this one "Land of Ash", "Rivers of Ash" or something similar
     # good one: 20231002-020531, either inverted or not; inverted +5 gives nice B/F# key in the second half
     # data = mu.load_data_from_fname_string(data_dir, "20231130-074300")
 
