@@ -341,12 +341,20 @@ def load_random_data(data_dir):
     return load_data_from_filepath(fp)
 
 
-def load_data_from_fname_string(data_dir, s):
-    fp = os.path.join(data_dir, f"midi_input_{s}.pickle")
+def load_data_from_fname_string(data_dir, s, extension="pickle"):
+    fp = os.path.join(data_dir, f"midi_input_{s}.{extension}")
     return load_data_from_filepath(fp)
 
 
 def load_data_from_filepath(fp):
+    if fp.endswith(".pickle"):
+        return load_pickle_data(fp)
+    elif fp.endswith(".txt"):
+        return load_text_data(fp)
+    else:
+        raise Exception(f"bad extension: {os.path.splitext(fp)[-1]}")
+
+def load_pickle_data(fp):
     print(f"loading pickled midi data from {fp}")
     with open(fp, "rb") as f:
         data = pickle.load(f)
