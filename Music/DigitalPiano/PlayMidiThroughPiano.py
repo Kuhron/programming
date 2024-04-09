@@ -70,7 +70,7 @@ if __name__ == "__main__":
     data = [[x, transform_time(t)] for x,t in data if t >= start_time_ms]
 
     # mess with it
-    invert, offset = False, 5
+    invert, offset = False, 4
     # invert, offset = True, 5
     # invert = False
     # invert = random.random() < 0.5

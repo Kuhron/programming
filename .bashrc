@@ -278,5 +278,10 @@ gsettings set org.gnome.desktop.interface clock-show-seconds true
 
 gsettings set org.gnome.desktop.peripherals.touchpad disable-while-typing false
 
+# make desktop background plain black
+gsettings set org.gnome.desktop.background picture-uri ''
+gsettings set org.gnome.desktop.background picture-uri-dark ''
+gsettings set org.gnome.desktop.background primary-color 'rgb(0, 0, 0)'
+
 setmainfont
 

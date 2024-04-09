@@ -235,11 +235,14 @@ def send_data_to_standard_out(data):
     # pygame.mixer.music.play()
 
     msgs = []
+    nums_to_print = []
     for lst in data:
         event = MidiEvent.from_raw_data(lst)
         msg = event.to_mido_message()
         if msg is not None:
             msgs.append(msg)
+            nums, t = lst
+            nums_to_print.append(nums + [t])
     assert all(msgs[i].time <= msgs[i+1].time for i in range(len(msgs)-1)), "msgs out of order"
 
     final_timestamp = data[-1][-1]
@@ -247,14 +250,20 @@ def send_data_to_standard_out(data):
         print(f"{out_port = }")
         t0 = time.time()
         start_delay = 0.5
-        for msg in msgs:
+        for msg, nums in zip(msgs, nums_to_print):
             t = msg.time
             loops_wasted = 0
             while True:
                 dt = time.time() - t0
                 if dt >= t:
                     out_port.send(msg)
-                    print(int(1000*msg.time), final_timestamp, end="\r")
+
+                    print_message_numbers = True
+                    if print_message_numbers:
+                        print("\t".join(str(x) for x in nums) + "\t" + str(final_timestamp))
+                        # TODO implement a printing style that looks kind of like the piano keys being pressed (like the roller on a player piano)
+                    else:
+                        print(int(1000*msg.time), final_timestamp, end="\r")
                     # print(f"{loops_wasted = }")
                     break
                 else:
