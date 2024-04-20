@@ -185,6 +185,9 @@ alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 alias tmux="TERM=screen-256color-bce tmux"
 alias ft="find . -printf '%T@ %Tc %p\\n' | sort -n"
 alias dry="python /home/kuhron/drybones/drybones.py"
+alias dark='gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark && gsettings set org.gnome.desktop.interface color-scheme prefer-dark'
+alias light='gsettings set org.gnome.desktop.interface gtk-theme Adwaita && gsettings set org.gnome.desktop.interface color-scheme prefer-light'
+
 
 function nwc() {
     # alias nwc="killall timidity ; timidity -iA -B2,8 -Os & wine \"/home/wesley/.wine/drive_c/Program Files (x86)/Noteworthy Software/NoteWorthy Composer 2 Demo/NWC2Demo.exe\" &"  # if you killall & timidity then it will kill the one you just started  # this is for the demo version before I bought a license

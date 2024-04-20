@@ -7,4 +7,6 @@
 # watch how the topography evolves
 # later can allow the rain distribution to change over time, e.g. seasonality or other kinds of variation independent of the landscape, and also allow it to be affected by the landscape, e.g. rain shadow effects
 
-# TODO
+
+# TODO first, split out all the icosahedron code into its own git repo, public, meant as a python library
+
