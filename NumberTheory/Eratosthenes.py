@@ -91,10 +91,16 @@ def get_all_primes():
         end *= 2
 
 
-g = get_all_primes()
-for i,p in enumerate(g):
-    if i >= 1000:
-        break
-    print(p)
+if __name__ == "__main__":
+    g = get_all_primes()
+    # for i,p in enumerate(g):
+    #     if i >= 1000:
+    #         break
+    #     print(p)
+    n = 100000
+    for i,p in enumerate(g):
+        if i >= n:
+            break
+        print(p)
 
 
