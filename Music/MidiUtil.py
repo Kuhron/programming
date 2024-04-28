@@ -22,21 +22,24 @@ TIMIDITY_PORT = 2
 
 
 class MidiEvent:
+    STATUS_CODE_TO_NAME = {
+        144: "note_on",
+        128: "note_off",
+        176: "pedal",
+        192: "instrument",  # Yamaha P125 does a lot of events for changing instrument, can mess with handling these later if I even want to deal with it
+    }
+    STATUS_NAME_TO_CODE = {v:k for k,v in STATUS_CODE_TO_NAME.items()}
+
     def __init__(self, status, pitch, event, data3, timestamp):
         self.status = status
         self.pitch = pitch
         self.event = event
+        assert data3 == 0, f"non-zero data3: {data3!r}"
         self.data3 = data3
         self.timestamp = timestamp
         self.loudness = 64  # max is 127
 
-        status_names = {
-            144: "note_on",
-            128: "note_off",
-            176: "pedal",
-            192: "instrument",  # Yamaha P125 does a lot of events for changing instrument, can mess with handling these later if I even want to deal with it
-        }
-        self.status_name = status_names.get(status, "unknown status")
+        self.status_name = MidiEvent.STATUS_CODE_TO_NAME.get(status, "unknown status")
 
         if self.status_name == "note_on":
             pressure = event
@@ -112,6 +115,50 @@ class MidiEvent:
         return f"<MidiEvent status={self.status} pitch={self.pitch} event={self.event} data3={self.data3} timestamp={self.timestamp} status_name={self.status_name} event_name={self.event_name}>"
 
 
+def mido_message_to_data_list(msg):
+    # need timestamp passed since mido doesn't give it to us
+    if msg.time == 0:
+        raise Warning("msg.time is exactly zero, which likely means the time was not recorded because mido does not receive it from the piano; make sure you assign msg.time as you receive messages")
+    loudness = 64  # default if it's never overwritten
+    if msg.type == "note_on":
+        pitch = msg.note
+        loudness = msg.velocity
+        event_code = loudness  # a.k.a. pressure
+        # event_name = "note_on"
+        status_name = "note_on"
+    elif msg.type == "note_off":
+        pitch = msg.note
+        loudness = msg.velocity
+        assert loudness == 64, loudness
+        event_code = loudness
+        # event_name = "note_off"
+        status_name = "note_off"
+    elif msg.type == "control_change":
+        assert msg.control == 64, msg.control
+        if msg.value == 127:
+            # event_name = "pedal_on"
+            event_code = 127
+            status_name = "pedal"
+        elif msg.value == 0:
+            # event_name = "pedal_off"
+            event_code = 0
+            status_name = "pedal"
+        else:
+            raise ValueError(f"unknown {msg.value = }")
+    else:
+        print(f"unknown {msg.type = } in {msg = }; skipping")
+        return None
+        # raise ValueError(f"unknown {msg.type = }")
+
+    status_code = MidiEvent.STATUS_NAME_TO_CODE[status_name]
+    pitch = msg.note
+    data3 = 0
+    timestamp = int(round(msg.time * 1000))
+    lst = [[status_code, pitch, event_code, data3], timestamp]
+
+    return lst
+
+
 def get_digital_piano_input_and_output():
     device_name = "Digital Piano:Digital Piano MIDI 1 20:0"  # Yamaha P125
     inport = mido.open_input(device_name)
@@ -159,35 +206,58 @@ def get_input_and_output_devices(verbose=False):
 def send_data_to_midi_out(data, midi_output):
     print(f"sending MIDI data to {midi_output=}")
     t0 = time.time()
-    transform = lambda lst, timestamp: [lst, timestamp + t0 + 1000]
+    transform = lambda lst, timestamp: [lst, timestamp + 1000]
     data = [transform(*x) for x in data]
 
     final_timestamp = data[-1][-1]
-    last_n_seconds_to_write = final_timestamp // 1000
+    last_n_seconds_to_write = int(final_timestamp // 1000)
 
-    # maybe break the data into 1-second chunks or some other buffering method so we don't get weird gaps when the piano is trying to process the commands
-    MAX_OUTPUT_LENGTH = 1024  # due to pypm
-    data_segments_by_second = []
-    for second_i in range(last_n_seconds_to_write + 1):
-        segment = [x for x in data if x[-1] // 1000 == second_i]
-        if len(segment) > MAX_OUTPUT_LENGTH:
-            raise Exception("too many events in one second")
-            # hopefully shouldn't happen with any pieces I'm playing
-        data_segments_by_second.append(segment)
+    if False:  # not needed now that I'm doing the time of sending myself
+        # maybe break the data into 1-second chunks or some other buffering method so we don't get weird gaps when the piano is trying to process the commands
+        MAX_OUTPUT_LENGTH = 1024  # due to pypm
+        data_segments_by_second = []
+        for second_i in range(last_n_seconds_to_write + 1):
+            segment = [x for x in data if x[-1] // 1000 == second_i]
+            if len(segment) > MAX_OUTPUT_LENGTH:
+                raise Exception("too many events in one second")
+                # hopefully shouldn't happen with any pieces I'm playing
+            msgs = [raw_data_to_mido_message(lst) for lst in segment]
+            data_segments_by_second.append(msgs)
 
-    assert sum(len(x) for x in data_segments_by_second) == len(data), "wrong number of events in segments"
+        assert sum(len(x) for x in data_segments_by_second) == len(data), "wrong number of events in segments"
 
+    msgs = [raw_data_to_mido_message(lst) for lst in data]
+    t0 = time.time()
+    for msg in msgs:
+        assert type(msg) is mido.Message
+        a = 0
+        while time.time() - t0 < msg.time:
+            time.sleep(0.001)
+            a += 1
+        # print(f"{a:4d} iterations in while loop")
+        print(msg)
+        midi_output.send(msg)
+    return
+
+    # old stuff below; as of 2024-04-27, Yamaha piano isn't paying attention to `time` attribute of mido messages and just does them upon receipt, so I'm doing the time buffering myself now
     # go ahead and write the first second, and always send the next second's data to the piano ahead of time
-    midi_output.write(data_segments_by_second[0])
+    for msg in data_segments_by_second[0]:
+        midi_output.send(msg)
     last_n_seconds_written = 0
     while True:
-        n_seconds_now = (time.time() - t0) // 1000
+        n_seconds_now = int(time.time() - t0)
         n_seconds_to_write = n_seconds_now + 1
         if last_n_seconds_written is None or n_seconds_to_write != last_n_seconds_written:
             segment = data_segments_by_second[n_seconds_to_write]
-            midi_output.write(segment)
+
+            for msg in segment:
+                while time.time() - t0 < msg.time:
+                    time.sleep(0.0001)
+                print(msg)
+                midi_output.send(msg)
+                # fun to think about what small amounts of time inaccuracy will accumulate over a duet ancestry line due to milliseconds getting added/subtracted in code like this
             last_n_seconds_written = n_seconds_to_write
-            print(f"wrote data for second {n_seconds_to_write} out of {last_n_seconds_to_write}", end="\r")
+            print(f"wrote data for second {n_seconds_to_write} out of {last_n_seconds_to_write}", end="\n")
         if n_seconds_to_write == last_n_seconds_to_write:
             break
         time.sleep(0.1)
@@ -237,8 +307,7 @@ def send_data_to_standard_out(data):
     msgs = []
     nums_to_print = []
     for lst in data:
-        event = MidiEvent.from_raw_data(lst)
-        msg = event.to_mido_message()
+        msg = raw_data_to_mido_message(lst)
         if msg is not None:
             msgs.append(msg)
             nums, t = lst
@@ -307,21 +376,23 @@ def read_data_from_midi_in(midi_input, max_silence_seconds):
     last_time = None
     note_imbalance = 0
     while True:
-        if midi_input.poll():
-            new_data = midi_input.read(1)
-            assert len(new_data) == 1
-            new_data = new_data[0]
-            data.append(new_data)
-            print(f"{new_data = }")
-            event = MidiEvent.from_raw_data(new_data)
-            print(f"{event = }")
-            print(event.event_name)
-            last_time = event.timestamp
+        msg = midi_input.poll()
+        if msg is not None:
+            assert type(msg) is mido.Message
+            t = time.time() - t0
+            msg.time = t  # have to do this myself since mido doesn't get it from the piano
+            data.append(msg)
+            print(f"{msg = }")
+            # event = MidiEvent.from_raw_data(new_data)
+            # print(f"{event = }")
+            # print(event.event_name)
+            # last_time = event.timestamp
+            last_time = msg.time
             
-            note_imbalance += 1 if event.event_name == "note_on" else -1 if event.event_name == "note_off" else 0
+            note_imbalance += 1 if msg.type == "note_on" else -1 if msg.type == "note_off" else 0
             # ? = data3
             print("notes on:", note_imbalance)
-        elif note_imbalance == 0 and last_time is not None and time.time() - last_time > max_silence_seconds * 1000:
+        elif note_imbalance == 0 and last_time is not None and time.time() - last_time - t0 > max_silence_seconds:
             print("data collection timed out")
             break
     return data
@@ -335,7 +406,21 @@ def read_notes_from_midi_in(midi_input, timeout_seconds):
 
 def dump_data(data):
     now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
-    filepath = "/home/wesley/programming/Music/midi_input/midi_input_{}.pickle".format(now_str)
+    filepath = "/home/wesley/programming/Music/DigitalPiano/midi_input/YamahaP125/midi_input_{}.txt".format(now_str)
+    with open(filepath, "w") as f:
+        for msg in data:
+            lst = mido_message_to_data_list(msg)
+            if lst is not None:
+                (a, b, c, d), t = lst
+                s = "\t".join([str(x) for x in [a, b, c, d, t]])
+                f.write(s + "\n")
+
+    return {
+        "fp": filepath,
+        "now_str": datetime.now().strftime("%Y%m%d-%H%M%S"),
+    }
+
+    # old, using pickle
     with open(filepath, "wb") as f:
         pickle.dump(data, f)
 
@@ -363,6 +448,7 @@ def load_data_from_filepath(fp):
     else:
         raise Exception(f"bad extension: {os.path.splitext(fp)[-1]}")
 
+
 def load_pickle_data(fp):
     print(f"loading pickled midi data from {fp}")
     with open(fp, "rb") as f:
@@ -377,6 +463,7 @@ def load_text_data(fp):
     for l in lines:
         s = l.strip().split("\t")
         a,b,c,d,t = s
+        assert d == "0", f"got non-zero data3: {d!r}"
         lst = [[int(a), int(b), int(c), int(d)], int(t)]
         data.append(lst)
     return data
@@ -397,6 +484,13 @@ def verify_data_list_format_for_files_in_dir(d):
     for fname in os.listdir(d):
         fp = os.path.join(d, fname)
         verify_data_list_format_for_filepath(fp)
+
+
+def raw_data_to_mido_message(lst):
+    # maybe later can cut out the middleman of MidiEvent object, but fine for now
+    event = MidiEvent.from_raw_data(lst)
+    msg = event.to_mido_message()
+    return msg
 
 
 def invert_data(data, pivot):

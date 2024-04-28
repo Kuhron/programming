@@ -27,7 +27,7 @@ if __name__ == "__main__":
         s = None
 
     # inp, outp = mu.get_input_and_output_devices()
-    # inp, outp = mu.get_digital_piano_input_and_output()
+    inp, outp = mu.get_digital_piano_input_and_output()
     data_dir = "/home/wesley/programming/Music/DigitalPiano/midi_input/YamahaP125"
     # mu.verify_data_list_format_for_files_in_dir(data_dir)
 
@@ -70,16 +70,16 @@ if __name__ == "__main__":
     data = [[x, transform_time(t)] for x,t in data if t >= start_time_ms]
 
     # mess with it
-    invert, offset = False, 4
+    invert, offset = False, 0
     # invert, offset = True, 5
     # invert = False
     # invert = random.random() < 0.5
-    # offset = random.randint(-6, 6)
+    offset = random.randint(-6, 6)
 
     if invert:
         data = mu.invert_data(data, pivot=60)
     print(f"{offset = }")
     data = mu.transpose_data(data, offset)
 
-    # mu.send_data_to_midi_out(data, outp)
-    mu.send_data_to_standard_out(data)
+    mu.send_data_to_midi_out(data, outp)
+    # mu.send_data_to_standard_out(data)
