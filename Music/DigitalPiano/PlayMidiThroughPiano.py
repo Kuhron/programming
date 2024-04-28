@@ -74,7 +74,7 @@ if __name__ == "__main__":
     # invert, offset = True, 5
     # invert = False
     # invert = random.random() < 0.5
-    offset = random.randint(-6, 6)
+    # offset = random.randint(-6, 6)
 
     if invert:
         data = mu.invert_data(data, pivot=60)

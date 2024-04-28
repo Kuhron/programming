@@ -1,6 +1,5 @@
 TODO
-- convert all saved MIDI recordings to actual .mid files or whatever mido works best with
-- remove pygame from code wherever possible, replace it with mido
+- handle sysex messages and instrument changes from Yamaha piano, make sure instrument changes work in playback
 - remove homebrew MidiEvent class and other old homebrew stuff that can be replaced with mido code, use mido for as much of this as possible to make it clean
 - implement drum track syncing with first note of improv that is played on top of it
 - implement duet graph, where one piece is played plus some transformation and then I improvise on top of that
@@ -15,3 +14,4 @@ more ambitious:
 DONE
 - change recording of midi from piano to just the raw midi data rather than my midi objects, so no info is lost, and then can convert to another object type on the fly if so desired (DONE, it never was my own objects, it was always pickling the MIDI raw data as a list)
 - play midi data files from computer audio (I think this is already implemented?)
+- convert all saved MIDI recordings to txt format and implemented reading/writing those with mido

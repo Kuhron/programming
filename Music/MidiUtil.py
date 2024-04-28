@@ -228,15 +228,32 @@ def send_data_to_midi_out(data, midi_output):
 
     msgs = [raw_data_to_mido_message(lst) for lst in data]
     t0 = time.time()
-    for msg in msgs:
-        assert type(msg) is mido.Message
-        a = 0
-        while time.time() - t0 < msg.time:
-            time.sleep(0.001)
-            a += 1
-        # print(f"{a:4d} iterations in while loop")
-        print(msg)
-        midi_output.send(msg)
+
+    pitch_is_on = {}
+    try:
+        for msg in msgs:
+            assert type(msg) is mido.Message
+            a = 0
+            while time.time() - t0 < msg.time:
+                time.sleep(0.001)
+                a += 1
+            # print(f"{a:4d} iterations in while loop")
+            print(msg)
+            midi_output.send(msg)
+
+            # account for which notes are still pressed
+            if msg.type == "note_on":
+                pitch_is_on[msg.note] = True
+            elif msg.type == "note_off":
+                pitch_is_on[msg.note] = False
+    except KeyboardInterrupt:
+        # close the open notes
+        for pitch, is_on in pitch_is_on.items():
+            if is_on:
+                msg = mido.Message("note_off", channel=0, note=pitch, velocity=64, time=0)
+                midi_output.send(msg)
+                print(f"turned off note {pitch}")
+        raise
     return
 
     # old stuff below; as of 2024-04-27, Yamaha piano isn't paying attention to `time` attribute of mido messages and just does them upon receipt, so I'm doing the time buffering myself now
