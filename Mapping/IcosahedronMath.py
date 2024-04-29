@@ -22,6 +22,7 @@ import PlottingUtil as pu
 EARTH_RADIUS_KM = 6371
 CADA_II_RADIUS_FACTOR = 2.116
 CADA_II_RADIUS_KM = CADA_II_RADIUS_FACTOR * EARTH_RADIUS_KM
+RING_LATITUDE_DEG = math.atan(1/2) * 180/math.pi
 
 # for converting between {point code, number array, lookup number}
 LETTER_TO_NUMBER_DICT = {c:i for i,c in enumerate("CDEFGHIJKL")}

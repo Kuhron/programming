@@ -161,9 +161,12 @@ def mido_message_to_data_list(msg):
 
 def get_digital_piano_input_and_output():
     device_name = "Digital Piano:Digital Piano MIDI 1 20:0"  # Yamaha P125
-    inport = mido.open_input(device_name)
-    outport = mido.open_output(device_name)
-    return inport, outport
+    try:
+        inport = mido.open_input(device_name)
+        outport = mido.open_output(device_name)
+        return inport, outport
+    except OSError:
+        return None, None
 
 
 def get_input_and_output_devices(verbose=False):

@@ -70,9 +70,8 @@ if __name__ == "__main__":
     data = [[x, transform_time(t)] for x,t in data if t >= start_time_ms]
 
     # mess with it
-    invert, offset = False, 0
+    invert, offset = False, 1
     # invert, offset = True, 5
-    # invert = False
     # invert = random.random() < 0.5
     # offset = random.randint(-6, 6)
 
@@ -81,5 +80,5 @@ if __name__ == "__main__":
     print(f"{offset = }")
     data = mu.transpose_data(data, offset)
 
-    mu.send_data_to_midi_out(data, outp)
-    # mu.send_data_to_standard_out(data)
+    # mu.send_data_to_midi_out(data, outp)
+    mu.send_data_to_standard_out(data)
