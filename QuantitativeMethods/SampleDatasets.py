@@ -207,12 +207,19 @@ def get_multilobe_dataset(n_points, centers=None, stdevs=None, n_lobes=None):
     return np.array(arr), n_lobes
 
 
-def scatterplot_3d_from_array(arr, ax=None, colors=None):
+def scatterplot_3d_from_array(arr, ax=None, colors=None, marker_to_indices=None):
     xs, ys, zs = arr.T
     if ax is None:
         fig = plt.figure()
         ax = fig.add_subplot(projection='3d')
-    ax.scatter(xs, ys, zs, c=colors)
+
+    if marker_to_indices is None:
+        ax.scatter(xs, ys, zs, c=colors)
+    else:
+        for marker, indices in marker_to_indices.items():
+            these_colors = [colors[i] for i in indices]
+            ax.scatter(xs[indices], ys[indices], zs[indices], c=these_colors, marker=marker)
+
     ax.set_aspect('equal')
     ax.set_title("Actual dataset in 3D")
     ax.set_xticks([])
@@ -220,24 +227,39 @@ def scatterplot_3d_from_array(arr, ax=None, colors=None):
     ax.set_zticks([])
 
 
-def mds_plot_2d_from_array(arr, ax=None, colors=None):
+def mds_plot_2d_from_array(arr, ax=None, colors=None, marker_to_indices=None):
     mds_fit = MDS(n_components=2).fit_transform(arr)
     xs, ys = mds_fit.T
     if ax is None:
         fig, ax = plt.subplots()
-    ax.scatter(xs, ys, c=colors)
+
+    if marker_to_indices is None:
+        ax.scatter(xs, ys, c=colors)
+    else:
+        for marker, indices in marker_to_indices.items():
+            these_colors = [colors[i] for i in indices]
+            ax.scatter(xs[indices], ys[indices], c=these_colors, marker=marker)
+
     ax.set_aspect('equal')
     ax.set_title("MDS")
     ax.set_xticks([])
     ax.set_yticks([])
 
 
-def pca_plot_2d_from_array(arr, ax=None, colors=None):
+def pca_plot_2d_from_array(arr, ax=None, colors=None, marker_to_indices=None):
     pca_fit = PCA(n_components=2).fit_transform(arr)
     xs, ys = pca_fit.T
     if ax is None:
         fig, ax = plt.subplots()
-    ax.scatter(xs, ys, c=colors)
+
+    # should probably make this part a function to avoid repetition, but annoying with 3d vs 2d (could just do 2 separate functions)
+    if marker_to_indices is None:
+        ax.scatter(xs, ys, c=colors)
+    else:
+        for marker, indices in marker_to_indices.items():
+            these_colors = [colors[i] for i in indices]
+            ax.scatter(xs[indices], ys[indices], c=these_colors, marker=marker)
+
     ax.set_aspect('equal')
     ax.set_title("PCA")
     ax.set_xticks([])
