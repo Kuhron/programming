@@ -272,6 +272,13 @@ function all-webp-to-png() {
     find -name "*.webp" | xargs -d "\n" -I "{}" python3 ~/programming/WebpToPng.py "{}"
 }
 
+# COD MW2 controls
+function cod_without_mouse() {
+    cp ~/Games/custom_configs/mw2_controls_without_mouse.cfg ~/.steam/steam/steamapps/common/Call\ of\ Duty\ Modern\ Warfare\ 2/players/config_mp.cfg
+}
+function cod_with_mouse() {
+    cp ~/Games/custom_configs/mw2_controls_with_mouse.cfg ~/.steam/steam/steamapps/common/Call\ of\ Duty\ Modern\ Warfare\ 2/players/config_mp.cfg
+}
 
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
 gsettings set org.gnome.desktop.interface clock-show-seconds true
