@@ -60,6 +60,7 @@ Chaos/Images/**/*.png
 MomentOfInertiaImages/
 RecurrenceRelationImages/
 Genetics/ChemicalDiagrams/
+NumberTheory/PrimeTurtleImages/
 
 # saved GAN models
 NeuralNetFiles/

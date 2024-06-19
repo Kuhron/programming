@@ -1,13 +1,12 @@
 import matplotlib.pyplot as plt
-
-from Eratosthenes import get_all_primes
+import sympy
 
 
 def get_primes_in_decades(dec_max):
     # dec_max is the last decade we want (p // 10), inclusive
     # e.g. dec_max=3 will give highest prime of 37
     d = {dec: [] for dec in range(dec_max + 1)}
-    ps = get_all_primes()
+    ps = sympy.sieve.primerange(0, (dec_max+1)*10)
     for p in ps:
         dec = p // 10
         if dec > dec_max:
