@@ -2,11 +2,6 @@ import sympy
 import numpy as np
 import matplotlib.pyplot as plt
 
-n_min = 10**7
-n_max = 2*(10**7)
-# angle_deg = 45
-
-
 
 def plot_path_of_numbers(n_min, n_max, angle_deg, show=True):
     xs, ys = get_path_of_numbers(n_min, n_max, angle_deg)
@@ -54,9 +49,14 @@ def get_path_of_numbers(n_min, n_max, angle_deg):
 
 
 if __name__ == "__main__":
-    for angle_deg in range(5, 180, 5):
-        print(angle_deg)
-        plot_path_of_numbers(n_min, n_max, angle_deg, show=False)
+    n_min = 1
+    n_max = 10**7
+    angle_deg = 80
+
+    # for angle_deg in range(5, 180, 5):
+    #     print(angle_deg)
+    #     plot_path_of_numbers(n_min, n_max, angle_deg, show=False)
+
 
 
 # questions:
