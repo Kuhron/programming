@@ -162,7 +162,7 @@ def show_table(base, tuple_to_seq_number):
 
     def color(x):
         assert 0 <= x <= n_seqs
-        return cm.get_cmap("hsv")(x/(n_seqs+1))  # want 0 and 1 not to be the same color
+        return plt.get_cmap("hsv")(x/(n_seqs+1))  # want 0 and 1 not to be the same color
 
     text_array = []
     color_array = []
