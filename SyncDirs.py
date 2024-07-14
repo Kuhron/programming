@@ -45,6 +45,7 @@ def compare_hash_dicts(d1, d2, dir1, dir2, out_dir):
     ks = sorted(ks)
 
     copy_operations_to_make = []
+    dests_seen = set()
 
     print(f"\n{len(ks)} unique files found\n")
     for hx in ks:
@@ -78,6 +79,11 @@ def compare_hash_dicts(d1, d2, dir1, dir2, out_dir):
             dest_fp = os.path.join(out_dir, get_fp_choice(fps_combined))
         else:
             raise Exception("unhandled case")
+
+        while dest_fp in dests_seen:
+            print(f"destination filepath {dest_fp!r} is already taken; please enter another:\n")
+            dest_fp = input().strip()
+        dests_seen.add(dest_fp)
 
         pair = (src_fp, dest_fp)
         print(f"\nnew copy operation:\n    {src_fp}\n--> {dest_fp}")
@@ -153,6 +159,7 @@ if __name__ == "__main__":
 
     for src_fp, dest_fp in copy_operations:
         os.makedirs(os.path.dirname(dest_fp), exist_ok=True)
+        print(f"\ncopying\n    {src_fp}\n--> {dest_fp}")
         shutil.copy(src_fp, dest_fp)
 
     verify_all_files_were_copied(dir1, dir2, out_dir)
