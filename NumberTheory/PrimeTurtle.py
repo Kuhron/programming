@@ -50,12 +50,12 @@ def get_path_of_numbers(n_min, n_max, angle_deg):
 
 if __name__ == "__main__":
     n_min = 1
-    n_max = 10**7
+    n_max = 10**5
     angle_deg = 80
 
-    # for angle_deg in range(5, 180, 5):
-    #     print(angle_deg)
-    #     plot_path_of_numbers(n_min, n_max, angle_deg, show=False)
+    for angle_deg in range(5, 180, 5):
+        print(angle_deg)
+        plot_path_of_numbers(n_min, n_max, angle_deg, show=False)
 
 
 
