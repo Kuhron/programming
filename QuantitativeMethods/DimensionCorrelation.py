@@ -20,6 +20,7 @@ def find_cost_minimizing_transformation_brute_force(points):
     n_dim, n_points = points.shape
     steps_without_improvement = 0
     last_improvement_size = None
+    best_m = None
     while True:
         m = np.random.uniform(-1, 1, (n_dim, n_dim))
         m /= (abs(np.linalg.det(m)) ** (1/n_dim))  # normalize so det is 1 or -1
@@ -33,16 +34,17 @@ def find_cost_minimizing_transformation_brute_force(points):
             print(f"{last_improvement_size = :.4f}")
             steps_without_improvement = 0
             cost = new_cost
+            best_m = m
         else:
             steps_without_improvement += 1
             print(f"{steps_without_improvement = }", end="\r")
             if steps_without_improvement > 10000:
-                return m
+                return best_m
 
 
 
 if __name__ == "__main__":
-    n_dim = 5
+    n_dim = 3
     n_points = 100
     points = np.zeros((n_dim, n_points))  # use column vectors for points
     r = lambda: np.random.random((n_dim,))
