@@ -38,15 +38,30 @@ def find_cost_minimizing_transformation_brute_force(points):
         else:
             steps_without_improvement += 1
             print(f"{steps_without_improvement = }", end="\r")
-            if steps_without_improvement > 10000:
+            if steps_without_improvement >= 10000:
+                print()  # so there's not a carriage return still there
                 return best_m
 
 
+def normalize_variances(points):
+    # make var=stdev=1 on all axes
+    n_dim, n_points = points.shape
+    for i in range(n_dim):
+        vals = points[i, :]
+        stdev = np.std(vals)
+        points[i, :] /= stdev
+    return points
+
 
 if __name__ == "__main__":
+    # TODO:
+    # - it turns out that there's a solution where simply rotating the dataset gives zero cost (at least in 2D and I suspect in other dims too)
+    # -- this is NOT what I want; I want a "prying-apart" transformation where lines sort of parallel to the correlation line are used as the new basis
+
+
     n_dim = 3
     n_points = 100
-    points = np.zeros((n_dim, n_points))  # use column vectors for points
+    points = np.zeros((n_dim, n_points))  # use column vectors for points so the transformation can just be applied as M @ points and the corrcoef function can be called on points rather than points.T (the array `points` is a list whose elements each correspond to the values on one dimension)
     r = lambda: np.random.random((n_dim,))
     points[:, 0] = r()
 
