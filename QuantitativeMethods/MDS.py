@@ -21,4 +21,5 @@ def mds_plot_2d_from_array(arr, ax=None, colors=None, marker_to_indices=None):
     ax.set_xticks([])
     ax.set_yticks([])
 
+    return xs, ys
 
