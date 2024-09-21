@@ -19,4 +19,5 @@ set list
 set scrolloff=15
 
 " custom color scheme for easily visible warm colors on dark mode
-colorscheme volcano
+" (commenting out on field laptop C)
+" colorscheme volcano
