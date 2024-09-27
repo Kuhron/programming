@@ -63,7 +63,7 @@ if __name__ == "__main__":
     # TODO use mido library to read the events from the drumtrack file, shift the times of the events in `data` such that its first note matches the first note of the third measure of the drumtrack: https://www.twilio.com/blog/working-with-midi-data-in-python-using-mido
 
     # shift the times in the file if necessary
-    start_time_s = 0
+    start_time_s = 170
     dilation = 1
     start_time_ms = int(1000 * start_time_s)
     transform_time = lambda t: dilation * (t - start_time_ms)
