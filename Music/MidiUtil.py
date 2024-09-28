@@ -26,7 +26,9 @@ class MidiEvent:
         144: "note_on",
         128: "note_off",
         176: "pedal",
-        192: "instrument",  # Yamaha P125 does a lot of events for changing instrument, can mess with handling these later if I even want to deal with it
+        192: "instrument",  # Yamaha P125 does a lot of events for changing instrument
+        999: "program_change",  # made-up value for this status name
+        998: "unknown_control_change",  # made-up value for this status name
     }
     STATUS_NAME_TO_CODE = {v:k for k,v in STATUS_CODE_TO_NAME.items()}
 
@@ -55,6 +57,12 @@ class MidiEvent:
                 self.event_name = "pedal_off"
             else:
                 self.event_name = "unknown pedal event"
+        elif self.status_name == "instrument":
+            self.event_name = "instrument"
+        elif self.status_name == "program_change":
+            self.event_name = "program change"
+        elif self.status_name == "unknown_control_change":
+            self.event_name = "unknown control change"
         else:
             self.event_name = "unknown event"
 
@@ -86,8 +94,28 @@ class MidiEvent:
                 "control": 64,
                 "value": 127 if self.event_name == "pedal_on" else 0,
             }
+        elif self.event_name == "instrument":
+            msg_type = "sysex"
+            assert type(self.event) is tuple and all(type(x) is int for x in self.event)
+            msg_kwargs = {
+                "data": self.event,
+            }
+        elif self.event_name == "program change":
+            msg_type = "program_change"
+            msg_kwargs = {
+                "channel": 0,
+                "program": self.pitch,
+            }
+        elif self.event_name == "unknown control change":
+            msg_type = "control_change"
+            msg_kwargs = {
+                "channel": 0,
+                "control": self.pitch,
+                "value": self.event,
+            }
         else:
             print(f"ignoring event {self}")
+            input("check, is this supposed to happen?\n^^^^\n")
             return None
             # raise Exception(self)
         msg_kwargs.update({"time": self.timestamp/1000})
@@ -116,6 +144,7 @@ class MidiEvent:
 
 
 def mido_message_to_data_list(msg):
+    print(f"converting to data list: {msg = }")
     # need timestamp passed since mido doesn't give it to us
     if msg.time == 0:
         raise Warning("msg.time is exactly zero, which likely means the time was not recorded because mido does not receive it from the piano; make sure you assign msg.time as you receive messages")
@@ -134,28 +163,51 @@ def mido_message_to_data_list(msg):
         # event_name = "note_off"
         status_name = "note_off"
     elif msg.type == "control_change":
-        assert msg.control == 64, msg.control
-        if msg.value == 127:
-            # event_name = "pedal_on"
-            event_code = 127
-            status_name = "pedal"
-        elif msg.value == 0:
-            # event_name = "pedal_off"
-            event_code = 0
-            status_name = "pedal"
+        if msg.control == 64:
+            # pedal presses/releases
+            pitch = 0
+            if msg.value == 127:
+                # event_name = "pedal_on"
+                event_code = 127
+                status_name = "pedal"
+            elif msg.value == 0:
+                # event_name = "pedal_off"
+                event_code = 0
+                status_name = "pedal"
+            else:
+                raise ValueError(f"unknown {msg.value = }")
         else:
-            raise ValueError(f"unknown {msg.value = }")
+            channel = msg.channel
+            assert channel == 0, channel
+            pitch = msg.control
+            status_name = "unknown_control_change"
+            event_code = msg.value
+    elif msg.type == "sysex":
+        # instrument changes
+        # this one is more complicated because it just has an attribute "data" which is a tuple of numbers, length not guaranteed to be the same across instances
+        # best to just store it as a string and re-parse to a tuple of ints when loading txt file
+        pitch = 0
+        status_name = "instrument"
+        event_code = ".".join(str(x) for x in msg.data)
+    elif msg.type == "program_change":
+        # I don't know what this is, just record the data
+        channel = msg.channel
+        assert channel == 0, channel
+        program = msg.program
+        status_name = "program_change"
+        pitch = program
+        event_code = 0
     else:
         print(f"unknown {msg.type = } in {msg = }; skipping")
         return None
         # raise ValueError(f"unknown {msg.type = }")
 
     status_code = MidiEvent.STATUS_NAME_TO_CODE[status_name]
-    pitch = msg.note
     data3 = 0
     timestamp = int(round(msg.time * 1000))
     lst = [[status_code, pitch, event_code, data3], timestamp]
 
+    print(f"done converting to data list: {msg = }\n- returning {lst}\n")
     return lst
 
 
@@ -482,9 +534,20 @@ def load_text_data(fp):
     data = []
     for l in lines:
         s = l.strip().split("\t")
-        a,b,c,d,t = s
-        assert d == "0", f"got non-zero data3: {d!r}"
-        lst = [[int(a), int(b), int(c), int(d)], int(t)]
+        status_code_str, pitch_str, event_code_str, data3_str, timestamp_str = s
+        assert data3_str == "0", f"got non-zero data3: {data3_str!r}"
+
+        if "." in event_code_str:
+            # sysex message for instrument changes on Yamaha P125
+            event_code = tuple(int(x) for x in event_code_str.split("."))
+        else:
+            event_code = int(event_code_str)
+
+        status_code = int(status_code_str)
+        pitch = int(pitch_str)
+        data3 = int(data3_str)
+        timestamp = int(timestamp_str)
+        lst = [[status_code, pitch, event_code, data3], timestamp]
         data.append(lst)
     return data
 

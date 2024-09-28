@@ -11,6 +11,7 @@ if __name__ == "__main__":
     else:
         data = mu.read_data_from_midi_in(inp, max_silence_seconds=5)
         dump_res = mu.dump_data(data)
+        print(f"\nsaved to {dump_res['fp']}\n")
 
     playback = True
     if playback:
@@ -18,4 +19,4 @@ if __name__ == "__main__":
         fp = dump_res["fp"]
         data = mu.load_data_from_filepath(fp)
         mu.send_data_to_midi_out(data, outp)
-        print("\nplayback complete\n")
+        print(f"\nplayback complete, from {fp}\n")
