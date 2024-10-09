@@ -103,14 +103,44 @@ def if_none(x, default):
     return x
 
 
+def node_number_to_display_string(x):
+    # return node_number_to_display_string_symbols(x)
+    return node_number_to_display_string_sounds(x)
+
+
+def node_number_to_display_string_symbols(x):
+    x = str(x)
+    d = {"1": "𝼑", "2": "Ꜿ", "3": "𝼍", "4": "ʯ", "5": "§", "6": "Ꝣ", "7": "ꝏ", "8": "ɯ", "9": "ꝯ", "0": "₼"}
+    return "".join(d[c] for c in x)
+
+
+def node_number_to_display_string_sounds(x):
+    x = str(x)
+    # vs = {"1":"e", "2":"ɤ", "3":"y", "4":"u", "5":"ø", "6":"i", "7":"o", "8":"ɯ", "9":"a", "0":"æ"}
+    vs = {"1":"é", "2":"ë", "3":"ü", "4":"ú", "5":"ö", "6":"í", "7":"ó", "8":"ï", "9":"á", "0":"ä"}
+    cs = {"1":"l", "2":"k", "3":"t", "4":"n", "5":"ʃ", "6":"s", "7":"x", "8":"v", "9":"ŋ", "0":"m"}
+
+    if len(x) == 0:
+        return ""
+    elif len(x) == 1:
+        return vs[x]
+    elif len(x) == 2:
+        return cs[x[0]] + vs[x[1]]
+    elif len(x) == 3:
+        return cs[x[0]] + vs[x[1]] + cs[x[2]]
+    else:
+        raise ValueError(x)
+
+
 def draw_tree(paths_dict):
     g = get_tree_graph(paths_dict)
     plt.figure()
     pos = nx.spring_layout(g)
     edge_colors = ["#00cccc" if e["factor"] is None else "black" for (a,b), e in g.edges.items()]
-    nx.draw(g, pos, node_color="white", edge_color=edge_colors, with_labels=True)
-    edge_labels = {(a,b): if_none(e["factor"], "") for (a,b), e in g.edges.items()}
-    nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, font_color="red")
+    nx.draw(g, pos, node_color="white", edge_color=edge_colors, labels={node_number: node_number_to_display_string(node_number) for node_number in g.nodes}, font_family="Charis SIL", font_size=16)
+    edge_labels = {(a,b): node_number_to_display_string(if_none(e["factor"], "")) for (a,b), e in g.edges.items()}
+    nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, font_color="red", font_family="Charis SIL", font_size=14)
+    plt.gca().set_aspect("equal")
     plt.show()
 
 
