@@ -1,0 +1,13 @@
+- store the .kmn source file here to be compiled
+- there is a symlink in ~/keyman-developer to it
+- do all the building and compiling stuff there, not here
+
+- instruction pages:
+-- https://help.keyman.com/knowledge-base/?id=114
+
+- to compile:
+kmc build mykeyboard.kpj
+
+
+- downloads for Keyman and Keyman Developer: https://keyman.com/downloads/
+

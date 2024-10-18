@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, date
 import time
 
 # the strangely-named West Memphis Radio Rolling clock convention from a dream I had in high school
-# minutes:seconds, where minutes have 90 seconds and a day has 960 minutes
+# pines:seconds, where pines have 90 seconds and a day has 960 pines
 
 def seconds_from_datetime(dt, offset):
     try:

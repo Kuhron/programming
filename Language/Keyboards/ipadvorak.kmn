@@ -4,7 +4,7 @@ c TODO make asterisk and other punctuation chars typeable here, then ** is the f
 c fix stupid stuff if it's simple: extra spaces, extra backspaces, breaking Ctrl and Shift
 c fix problem where it won't do diacritics correctly if there are characters after it on the same line
 
-store(&NAME) 'IPADvorak'
+store(&NAME) 'ipadvorak'
 store(&BITMAP) "ipadvorak.ico"
 store(&COPYRIGHT) '© 2002-2014 SIL International'
 store(&VERSION) '10.0'
