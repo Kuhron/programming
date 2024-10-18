@@ -1,0 +1,11 @@
+response,1,2,3,4,5
+2,bs,fs,aa,pp,ph
+3,bs,fs,ph,aa,pp
+5,aa,ph,bs,fs,pp
+6,pp,aa,fs,bs,ph
+7,fs,ph,aa,pp,bs
+8,aa,fs,ph,bs,pp
+10,aa,ph,pp,bs,fs
+11,bs,ph,aa,fs,pp
+4,bs,ph,pp,fs,aa
+9,bs,ph,pp,fs,aa
