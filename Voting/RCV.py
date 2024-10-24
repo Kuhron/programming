@@ -1,5 +1,6 @@
 import sys
 import math
+import re
 
 
 def get_rankings(fp):
@@ -7,22 +8,35 @@ def get_rankings(fp):
         lines = f.readlines()
     lines = [l.strip().split(",") for l in lines]
     header = lines[0]
-    assert header[0] == "response", f"bad header: {header!r}"
-    assert all(header[i] == str(i) for i in range(1, len(header))), f"bad header: {header!r}"
+    candidates = get_candidate_names_from_header(header)
     response_ids = set()
-    candidates = set()
     rankings = {}
     for row in lines[1:]:
-        response_id, *ranking = row
+        response_id, *ranking_indices = row
         if response_id in response_ids:
             raise ValueError(f"repeated {response_id = !r}")
-        if candidates == set():
-            candidates = set(ranking)
-        if set(ranking) != candidates:
+        ranking = get_ranking_list_from_indices(ranking_indices, candidates)
+        if set(ranking) != set(candidates):
             raise ValueError(f"expected candidates {sorted(candidates)} but got {sorted(ranking)}")
         rankings[response_id] = ranking
 
     return rankings
+
+
+def get_ranking_list_from_indices(ranking_indices, candidates):
+    # indices start at 1 for top choice
+    ranking = [None for i in range(len(candidates))]
+    for i, j in enumerate(ranking_indices):
+        c = candidates[i]
+        ranking[int(j)-1] = c
+    assert not any(x is None for x in ranking)  # could optimize out later by checking correctness in single pass as we construct the ranking, but whatever
+    return ranking
+
+
+def get_candidate_names_from_header(header):
+    # header[0] can be anything, it's the corner of the table
+    pattern = r"\[(?P<candidate>.*)\]"
+    return [re.search(pattern, x).group("candidate") for x in header[1:]]
 
 
 def get_all_candidates(rankings):
