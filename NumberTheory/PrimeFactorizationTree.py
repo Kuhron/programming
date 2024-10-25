@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from sympy import nextprime, prime, factorint
 import math
 
+import sys
+sys.path.insert(0, "/home/kuhron/Desktop/Construction/Conlanging/Cadan Languages/Subetic-Sertorisunic/")
+from SertorisunicNumeralConverter import arab_to_sert
+
 
 def get_tree_graph(paths_dict):
     base_primes = sorted(paths_dict.keys())
@@ -104,8 +108,20 @@ def if_none(x, default):
 
 
 def node_number_to_display_string(x):
+    if x == "": return x
+
     # return node_number_to_display_string_symbols(x)
-    return node_number_to_display_string_sounds(x)
+    # return node_number_to_display_string_sounds(x)
+    return node_number_to_display_string_sertorisunic(x)
+
+
+def node_number_to_display_string_sertorisunic(x):
+    try:
+        sert = arab_to_sert(str(x))
+        return sert.replace("X", "0")  # because I put the symbol for 10 as 0 in the font
+    except:
+        print(f"!!!!!!!\nproblem with {x = }\n!!!!!!!")
+        raise
 
 
 def node_number_to_display_string_symbols(x):
@@ -134,13 +150,18 @@ def node_number_to_display_string_sounds(x):
 
 
 def draw_tree(paths_dict):
+    # font = "Charis SIL"
+    font = "PSertorisunicConceptScript"
+
+    display_func = node_number_to_display_string
+
     g = get_tree_graph(paths_dict)
     plt.figure()
     pos = nx.spring_layout(g)
     edge_colors = ["#00cccc" if e["factor"] is None else "black" for (a,b), e in g.edges.items()]
-    nx.draw(g, pos, node_color="white", edge_color=edge_colors, labels={node_number: node_number_to_display_string(node_number) for node_number in g.nodes}, font_family="Charis SIL", font_size=16)
-    edge_labels = {(a,b): node_number_to_display_string(if_none(e["factor"], "")) for (a,b), e in g.edges.items()}
-    nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, font_color="red", font_family="Charis SIL", font_size=14)
+    nx.draw(g, pos, node_color="white", edge_color=edge_colors, labels={node_number: display_func(node_number) for node_number in g.nodes}, font_family=font, font_size=16)
+    edge_labels = {(a,b): display_func(if_none(e["factor"], "")) for (a,b), e in g.edges.items()}
+    nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, font_color="red", font_family=font, font_size=14)
     plt.gca().set_aspect("equal")
     plt.show()
 
