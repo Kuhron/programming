@@ -6,7 +6,7 @@ import math
 
 import sys
 sys.path.insert(0, "/home/kuhron/Desktop/Construction/Conlanging/Cadan Languages/Subetic-Sertorisunic/")
-from SertorisunicNumeralConverter import arab_to_sert
+import SertorisunicNumeralConverter as snc
 
 
 def get_tree_graph(paths_dict):
@@ -107,60 +107,16 @@ def if_none(x, default):
     return x
 
 
-def node_number_to_display_string(x):
-    if x == "": return x
-
-    # return node_number_to_display_string_symbols(x)
-    # return node_number_to_display_string_sounds(x)
-    return node_number_to_display_string_sertorisunic(x)
-
-
-def node_number_to_display_string_sertorisunic(x):
-    try:
-        sert = arab_to_sert(str(x))
-        return sert.replace("X", "0")  # because I put the symbol for 10 as 0 in the font
-    except:
-        print(f"!!!!!!!\nproblem with {x = }\n!!!!!!!")
-        raise
-
-
-def node_number_to_display_string_symbols(x):
-    x = str(x)
-    d = {"1": "𝼑", "2": "Ꜿ", "3": "𝼍", "4": "ʯ", "5": "§", "6": "Ꝣ", "7": "ꝏ", "8": "ɯ", "9": "ꝯ", "0": "₼"}
-    return "".join(d[c] for c in x)
-
-
-def node_number_to_display_string_sounds(x):
-    x = str(x)
-    # vs = {"1":"e", "2":"ɤ", "3":"y", "4":"u", "5":"ø", "6":"i", "7":"o", "8":"ɯ", "9":"a", "0":"æ"}  # IPA vowels
-    vs = {"1":"é", "2":"ë", "3":"ü", "4":"ú", "5":"ö", "6":"í", "7":"ó", "8":"ï", "9":"á", "0":"ä"}  # obligatory-diacritic vowels
-    cs = {"1":"l", "2":"k", "3":"t", "4":"n", "5":"ʃ", "6":"s", "7":"x", "8":"v", "9":"ŋ", "0":"m"}  # IPA consonants
-    # cs = {"1":"l", "2":"k", "3":"t", "4":"n", "5":"s", "6":"z", "7":"h", "8":"v", "9":"g", "0":"m"}  # ortho consonants (Hungarian-Spanish variant; Espagyar)
-
-    if len(x) == 0:
-        return ""
-    elif len(x) == 1:
-        return vs[x]
-    elif len(x) == 2:
-        return cs[x[0]] + vs[x[1]]
-    elif len(x) == 3:
-        return cs[x[0]] + vs[x[1]] + cs[x[2]]
-    else:
-        raise ValueError(x)
-
-
 def draw_tree(paths_dict):
-    # font = "Charis SIL"
-    font = "PSertorisunicConceptScript"
-
-    display_func = node_number_to_display_string
+    font, display_func = "Charis SIL", snc.arab_str_to_pronunciation
+    # font, display_func = "PSertorisunicConceptScript", snc.arab_str_to_sert_str
 
     g = get_tree_graph(paths_dict)
     plt.figure()
     pos = nx.spring_layout(g)
     edge_colors = ["#00cccc" if e["factor"] is None else "black" for (a,b), e in g.edges.items()]
-    nx.draw(g, pos, node_color="white", edge_color=edge_colors, labels={node_number: display_func(node_number) for node_number in g.nodes}, font_family=font, font_size=16)
-    edge_labels = {(a,b): display_func(if_none(e["factor"], "")) for (a,b), e in g.edges.items()}
+    nx.draw(g, pos, node_color="white", edge_color=edge_colors, labels={node_number: display_func(str(node_number)) for node_number in g.nodes}, font_family=font, font_size=16)
+    edge_labels = {(a,b): display_func(str(if_none(e["factor"], ""))) for (a,b), e in g.edges.items()}
     nx.draw_networkx_edge_labels(g, pos, edge_labels=edge_labels, font_color="red", font_family=font, font_size=14)
     plt.gca().set_aspect("equal")
     plt.show()
