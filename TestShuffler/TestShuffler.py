@@ -2,6 +2,7 @@ import sys
 import random
 import json
 import string
+import os
 
 
 
@@ -26,6 +27,8 @@ class Exam:
     def get_new_version(self, codename):
         new_questions_by_type = {}
         for qtype in Question.types:
+            if qtype not in self.questions_by_type:
+                continue
             questions_of_type = [x for x in self.questions_by_type[qtype]]
             random.shuffle(questions_of_type)
             new_questions_by_type[qtype] = []
@@ -40,16 +43,20 @@ class ExamVersion:
     def __init__(self, codename, questions_by_type):
         self.questions_by_type = questions_by_type
 
-    def print(self):
-        for qtype in Question.types:
+    def print(self, file=None):
+        fprint = lambda *args, **kwargs: print(*args, **kwargs, file=file)
+        for qtype_i, qtype in enumerate(x for x in Question.types if x in self.questions_by_type):
+            section_letter = string.ascii_uppercase[qtype_i]
             questions_of_type = self.questions_by_type[qtype]
             section_title = Question.qtype_to_section_title(qtype)
-            print(section_title)
-            print()
-            for q in questions_of_type:
+            fprint(f"<h3>Section {section_letter}: {section_title}</h3>")
+            fprint()
+            fprint("<ul>")
+            for q_i, q in enumerate(questions_of_type):
                 assert type(q) is QuestionToPrint  # not the actual question types
-                q.print()
-            print("----")
+                q.print(label=f"{section_letter}{q_i+1}", file=file)
+            fprint("</ul>")
+            fprint("----")
 
 
 class QuestionToPrint:
@@ -57,15 +64,17 @@ class QuestionToPrint:
         self.prompt = prompt
         self.answer_choices = answer_choices
 
-    def print(self):
-        print(self.prompt)
+    def print(self, label=None, file=None):
+        fprint = lambda *args, **kwargs: print(*args, **kwargs, file=file)
+        prompt_str = (f"{label}. " if label is not None else "") + self.prompt
+        fprint(prompt_str)
         if self.answer_choices is None:
-            print("______")
+            fprint("<p>______</p>")
         else:
-            for i, a in enumerate(self.answer_choices):
-                letter = string.ascii_lowercase[i]
-                print(f"{letter}. {a}")
-        print()
+            fprint("<ol type='a'>")
+            for a in self.answer_choices:
+                fprint(f"<li>{a}</li>")
+            fprint("</ol>")
 
 
 class MultipleChoiceQuestion:
@@ -77,6 +86,7 @@ class MultipleChoiceQuestion:
         self.answer = answer
         self.distractors = distractors
         assert len(distractors) > 0, "need some distractors for multiple choice questions"
+        assert answer not in distractors, "answer cannot be in distractors"
 
     @staticmethod
     def from_object(d):
@@ -162,9 +172,10 @@ if __name__ == "__main__":
     try:
         args = sys.argv[1:]
         inp_fp = args[0]
-        n_versions = int(args[1])
+        out_dir = args[1]
+        n_versions = int(args[2])
     except (ValueError, IndexError):
-        print("usage: python TestShuffler.py [INPUT_JSON_FP:str] [N_EXAM_VERSIONS:int]")
+        print("usage: python TestShuffler.py [INPUT_JSON_FP:str] [OUTPUT_DIR:str] [N_EXAM_VERSIONS:int]")
         sys.exit()
 
     exam = Exam.from_json(inp_fp)
@@ -178,6 +189,8 @@ if __name__ == "__main__":
     version_names = random.sample(words, n_versions)
     versions = [exam.get_new_version(version_names[i]) for i in range(n_versions)]
     for i, v in enumerate(versions):
-        print(f"\n---- version {i}, codename {version_names[i]} ----")
-        v.print()
+        fp = os.path.join(out_dir, f"ExamVersion{i+1}.html")
+        with open(fp, "w") as f:
+            print(f"\n---- version {i+1}, codename {version_names[i]} ----", file=f)
+            v.print(file=f)
 
