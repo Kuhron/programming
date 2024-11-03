@@ -1,0 +1,32 @@
+{"questions": [
+    {
+        "type": "multiple-choice",
+        "prompt": "What is the capital of Assyria?",
+        "answer": "Nineveh",
+        "distractors": ["Washington", "Damascus", "Tokyo"]
+    },
+    {
+        "type": "multiple-choice",
+        "prompt": "Which of these numbers is prime?",
+        "answer": "59",
+        "distractors": ["57", "91", "51"]
+    },
+    {
+        "type": "true-or-false",
+        "prompt": "2 + 2 = 4",
+        "answer": "true"
+    },
+    {
+        "type": "true-or-false",
+        "prompt": "India borders Afghanistan",
+        "answer": "false"
+    },
+    {
+        "type": "short-answer",
+        "prompt": "What is your favorite color?"
+    },
+    {
+        "type": "short-answer",
+        "prompt": "Solve for x: 5x - 4 = 9"
+    }
+]}
