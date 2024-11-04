@@ -31,20 +31,29 @@ class Exam:
             if qtype not in self.questions_by_type:
                 continue
             questions_of_type = [x for x in self.questions_by_type[qtype]]
-            random.shuffle(questions_of_type)
+
+            if qtype == "transcription-and-parsing":
+                # hack to keep the parsing question at the end
+                assert len(questions_of_type) == 3
+                questions_of_type = (questions_of_type[:2])[::random.choice([-1, 1])] + [questions_of_type[-1]]
+            else:
+                random.shuffle(questions_of_type)
+
             new_questions_by_type[qtype] = []
             answers[qtype] = []
             for q in questions_of_type:
                 answer_choices = q.get_answer_choices()
                 answer = getattr(q, "answer", None)
-                answers_by_item = getattr(q, "answers", None)
+
+                if qtype == "transcription-and-parsing":
+                    items, answers_by_item = q.get_items_and_answers()
+                else:
+                    items, answers_by_item = None, None
+                
                 assert not (answer is not None and answers_by_item is not None), "question cannot have a single answer as well as answers for each of its items"
                 if answer is None:
                     answer = answers_by_item
 
-                items = getattr(q, "items", None)
-                if items is not None:
-                    assert answers_by_item is not None, "question has items but not answers for them"
                 image_fp = getattr(q, "image_fp", None)
                 new_q = QuestionToPrint(prompt=q.prompt, answer=answer, answer_choices=answer_choices, items=items, image_fp=image_fp)
                 new_questions_by_type[qtype].append(new_q)
@@ -223,6 +232,12 @@ class TranscriptionAndParsingQuestion:
         items = d["items"]
         answers = d["answers"]
         return TranscriptionAndParsingQuestion(prompt, items, answers)
+
+    def get_items_and_answers(self, shuffle=True):
+        indices = [i for i in range(len(self.items))]
+        if shuffle:
+            random.shuffle(indices)
+        return [self.items[i] for i in indices], [self.answers[i] for i in indices]
 
     def get_answer_choices(self):
         return None
