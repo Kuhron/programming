@@ -1,0 +1,43 @@
+<html>
+
+<head>
+    <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+    <style type="text/css">
+        /* https://stackoverflow.com/questions/907680/css-printing-avoiding-cut-in-half-divs-between-pages */
+        @media print {
+            div { break-inside: avoid; }
+        }
+
+        /* https://stackoverflow.com/questions/1664049/can-i-force-a-page-break-in-html-printing */
+        @media print {
+           .pagebreak { page-break-before: always; } /* page-break-after works, as well */
+        }
+
+        body {
+            font-size: 16;
+        }
+
+        h1 {
+            font-size: 24;
+        }
+
+        h2 {
+            font-size: 18;
+        }
+
+        .columns {
+            display: inline;
+            width: 50%;
+        }
+        
+        .right-aligned {
+            text-align: right;
+            font-size: 10;
+        }
+    </style>
+</head>
+<body>
+<h1 class="columns">Exam #1</h1>
+<%% codename %%>
+<h2>Ling 101 - Fall 2024</h2>
+<h2>Name:<hr></h2>
