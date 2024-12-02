@@ -195,7 +195,7 @@ alias ft="find . -printf '%T@ %Tc %p\\n' | sort -n"
 alias dry="python /home/kuhron/drybones/drybones.py"
 alias dark='gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark && gsettings set org.gnome.desktop.interface color-scheme prefer-dark'
 alias light='gsettings set org.gnome.desktop.interface gtk-theme Adwaita && gsettings set org.gnome.desktop.interface color-scheme prefer-light'
-alias lsg='/home/kuhron/lsg'
+alias lsg='/home/kuhron/lsg'  # ls with git repo information
 
 
 function nwc() {
