@@ -130,7 +130,7 @@ cultural_principles = [
     "A person must learn about others over time.",
     "A person can never truly understand others.",
     "Conceiving of something makes it more real, and creates potential for it to become physical.",
-    "Speaking about something makes it more real, and createse potential for it to become physical.",
+    "Speaking about something makes it more real, and creates potential for it to become physical.",
     "Animals can understand human communication.",
     "The world is static overall.",
     "The world is dynamic and can change drastically.",
@@ -414,7 +414,11 @@ cultural_principles = [
     "The best life is one with wisdom of the mind.",
     "Talking to people who are not like you is dangerous.",
     "Talking to people who are not like you is eye-opening.",
-
+    "Cleanliness is a virtue.",
+    "One should keep oneself clean, potentially at the expense of one's environment.",
+    "One should keep one's environment clean, potentially at the expense of oneself.",
+    "Cleanliness does not matter.",
+    
 ]
 
 
