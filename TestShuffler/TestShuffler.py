@@ -32,7 +32,7 @@ class Exam:
                 continue
             questions_of_type = [x for x in self.questions_by_type[qtype]]
 
-            if qtype == "transcription-and-parsing":
+            if False: #qtype == "transcription-and-parsing":
                 # hack to keep the parsing question at the end
                 assert len(questions_of_type) == 3
                 questions_of_type = (questions_of_type[:2])[::random.choice([-1, 1])] + [questions_of_type[-1]]
@@ -107,6 +107,7 @@ class QuestionToPrint:
         self.image_fp = image_fp
 
     def print(self, label=None, file=None, with_answers=False):
+        p = QuestionToPrint.get_answer_choice_string
         fprint = lambda *args, **kwargs: print(*args, **kwargs, file=file)
         fprint("<div>")
         prompt_str = "<p>" + (f"{label}. " if label is not None else "") + self.prompt + "</p>"
@@ -114,19 +115,21 @@ class QuestionToPrint:
         if self.image_fp is not None:
             fprint(f"<br><img src=\"{self.image_fp}\"/><br><br>")
         if self.answer_choices is None and self.items is None:
+            # short answer
+            n_breaks = 5
             if with_answers:
                 a = self.answer
-                fprint(f"<p><b>ANSWER: {a}</b></p><br>")
+                fprint(f"<p><b>ANSWER: {p(a)}</b></p>" + "<br>"*2)
             else:
-                fprint("<br><br>")
+                fprint("<br>" * n_breaks)
         else:
             if self.answer_choices is not None:
                 fprint("<ol type='a'>")
                 for a in self.answer_choices:
                     if with_answers and a == self.answer:
-                        fprint(f"<li><b>{a}</b> &lt;-- THIS IS THE ANSWER</li>")
+                        fprint(f"<li><b>{p(a)}</b> &lt;-- THIS IS THE ANSWER</li>")
                     else:
-                        fprint(f"<li>{a}</li>")
+                        fprint(f"<li>{p(a)}</li>")
                 fprint("</ol>")
             if self.items is not None:
                 fprint("<ul>")
@@ -134,12 +137,20 @@ class QuestionToPrint:
                     fprint(f"<li>{item}</li>")
                     if with_answers:
                         a = self.answer[item_i]
-                        fprint(f"<ul><li><b>ANSWER: {a}</b></li></ul>")
+                        fprint(f"<ul><li><b>ANSWER: {p(a)}</b></li></ul>")
                     else:
                         fprint("<br>")
                     fprint("<br><br>")
                 fprint("</ul>")
         fprint("</div>")
+    
+    def get_answer_choice_string(s):
+        if s == "<aabove>":
+            return "all of the above"
+        elif s == "<nabove>":
+            return "none of the above"
+        else:
+            return s
 
 
 class MultipleChoiceQuestion:
@@ -153,19 +164,28 @@ class MultipleChoiceQuestion:
         assert len(distractors) > 0, "need some distractors for multiple choice questions"
         assert answer not in distractors, "answer cannot be in distractors"
 
-    @staticmethod
-    def from_object(d):
-        assert d["type"] == MultipleChoiceQuestion.qtype
+    @classmethod
+    def from_object(cls, d):
+        assert d["type"] == cls.qtype
         prompt = d["prompt"]
         answer = d["answer"]
         distractors = d["distractors"]
-        return MultipleChoiceQuestion(prompt, answer, distractors)
+        return cls(prompt, answer, distractors)
 
     def get_answer_choices(self, shuffle=True):
+        aabove = "<aabove>"  # all of the above
+        nabove = "<nabove>"  # none of the above
         lst = [self.answer] + self.distractors
         if shuffle:
-            random.shuffle(lst)
-        return lst
+            ans_lst = [x for x in lst if x not in [aabove, nabove]]
+            random.shuffle(ans_lst)
+            if aabove in lst:
+                ans_lst.append(aabove)
+            if nabove in lst:
+                ans_lst.append(nabove)
+        else:
+            ans_lst = [x for x in lst]
+        return ans_lst
 
 
 class TrueOrFalseQuestion:
@@ -265,6 +285,12 @@ class ExtraCreditWithImageQuestion:
         return None
 
 
+# if I keep using this code or make it a repo for others to use, then I should split out the extra-creditness of questions as a separate variable for modularity / ease of use
+class ExtraCreditMultipleChoiceQuestion(MultipleChoiceQuestion):
+    qtype = "extra-credit-multiple-choice"
+    section_title = "Extra Credit"
+
+
 class Question:
     types = {cls.qtype : cls for cls in [
         MultipleChoiceQuestion,
@@ -272,6 +298,7 @@ class Question:
         ShortAnswerQuestion,
         TranscriptionAndParsingQuestion,
         ExtraCreditWithImageQuestion,
+        ExtraCreditMultipleChoiceQuestion,
     ]}
 
     @staticmethod
@@ -300,16 +327,19 @@ if __name__ == "__main__":
     exam = Exam.from_json(inp_fp)
 
     words = [
-        "maroon-jackalope",
-        "forest-sasquatch",
-        "yellow-macadamia",
-        "indigo-dachshund",
+        # "maroon-jackalope",
+        # "forest-sasquatch",
+        # "yellow-macadamia",
+        # "indigo-dachshund",
+        "加东叻沙",  # katong laksa
+        "印尼炒饭",  # nasi goreng
+        "加椰面包",  # kaya toast/bun
     ]
     version_names = random.sample(words, n_versions)
     versions = [exam.get_new_version(version_names[i]) for i in range(n_versions)]
     for i, v in enumerate(versions):
-        exam_fp = os.path.join(out_dir, f"ExamVersion{i+1}.html")
-        answer_fp = os.path.join(out_dir, f"ExamVersion{i+1}_Answers.html")
+        exam_fp = os.path.join(out_dir, f"FinalExamVersion{i+1}.html")
+        answer_fp = os.path.join(out_dir, f"FinalExamVersion{i+1}_Answers.html")
         with open(exam_fp, "w") as f:
             # print(f"\n---- version {i+1}, codename {version_names[i]} ----", file=f)
             v.print(file=f, with_answers=False)
