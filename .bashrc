@@ -91,6 +91,9 @@ fi
 # colored GCC warnings and errors
 #export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
+# changing colors for `ls`: https://askubuntu.com/questions/466198/how-do-i-change-the-color-for-directories-with-ls-in-the-console
+LS_COLORS=$LS_COLORS:'di=0;93:' ; export LS_COLORS
+
 # some more ls aliases
 alias ll='ls -alFv'
 alias la='ls -A'
@@ -192,7 +195,7 @@ alias gitsize="git status --porcelain | sed 's/^...//g;s/\"//g' | xargs -d '\n' 
 alias gephi="/home/wesley/gephi-0.9.2/bin/gephi"  # graph visualization program
 alias tmux="TERM=screen-256color-bce tmux"
 alias ft="find . -printf '%T@ %Tc %p\\n' | sort -n"
-alias dry="python /home/kuhron/drybones/drybones.py"
+alias dry="python /home/kuhron/drybones/src/drybones/main.py"
 alias dark='gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark && gsettings set org.gnome.desktop.interface color-scheme prefer-dark'
 alias light='gsettings set org.gnome.desktop.interface gtk-theme Adwaita && gsettings set org.gnome.desktop.interface color-scheme prefer-light'
 alias lsg='/home/kuhron/lsg'  # ls with git repo information
