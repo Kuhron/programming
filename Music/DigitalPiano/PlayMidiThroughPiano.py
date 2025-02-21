@@ -35,9 +35,10 @@ if __name__ == "__main__":
     # data = mu.load_data_from_fname_string(data_dir, "20231109-065457")
     # data = mu.load_data_from_fname_string(data_dir, "20231014-222344")
     # data = mu.load_data_from_fname_string(data_dir, "20231002-020531", "txt")  # name this one "Land of Ash", "Rivers of Ash" or something similar
-    data = mu.load_data_from_fname_string(data_dir, "20241210-215609", "txt")
+    # data = mu.load_data_from_fname_string(data_dir, "20241210-215609", "txt")
     # good one: 20231002-020531, either inverted or not; inverted +5 gives nice B/F# key in the second half
     # data = mu.load_data_from_fname_string(data_dir, "20231130-074300")
+    data = mu.load_data_from_fname_string(data_dir, "20250221-050829", "txt")
 
     if s is not None:
         data = mu.load_data_from_fname_string(data_dir, s)
@@ -71,7 +72,7 @@ if __name__ == "__main__":
     data = [[x, transform_time(t)] for x,t in data if t >= start_time_ms]
 
     # mess with it
-    invert, offset = True, 0
+    invert, offset = False, 0
     # invert, offset = True, 5
     # invert = random.random() < 0.5
     # offset = random.randint(-6, 6)

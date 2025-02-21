@@ -29,6 +29,8 @@ class MidiEvent:
         192: "instrument",  # Yamaha P125 does a lot of events for changing instrument
         999: "program_change",  # made-up value for this status name
         998: "unknown_control_change",  # made-up value for this status name
+        997: "unknown_control_change_channel_1",
+        899: "program_change_channel_1",
     }
     STATUS_NAME_TO_CODE = {v:k for k,v in STATUS_CODE_TO_NAME.items()}
 
@@ -61,8 +63,12 @@ class MidiEvent:
             self.event_name = "instrument"
         elif self.status_name == "program_change":
             self.event_name = "program change"
+        elif self.status_name.startswith("program_change_channel_"):
+            self.event_name = self.status_name
         elif self.status_name == "unknown_control_change":
             self.event_name = "unknown control change"
+        elif self.status_name.startswith("unknown_control_change_channel_"):
+            self.event_name = self.status_name
         else:
             self.event_name = "unknown event"
 
@@ -106,10 +112,25 @@ class MidiEvent:
                 "channel": 0,
                 "program": self.pitch,
             }
+        elif self.event_name.startswith("program_change_channel_"):
+            channel_number = int(self.event_name.replace("program_change_channel_", ""))
+            msg_type = "program_change"
+            msg_kwargs = {
+                "channel": channel_number,
+                "program": self.pitch,
+            }
         elif self.event_name == "unknown control change":
             msg_type = "control_change"
             msg_kwargs = {
                 "channel": 0,
+                "control": self.pitch,
+                "value": self.event,
+            }
+        elif self.event_name.startswith("unknown_control_change_channel_"):
+            channel_number = int(self.event_name.replace("unknown_control_change_channel_", ""))
+            msg_type = "control_change"
+            msg_kwargs = {
+                "channel": channel_number,
                 "control": self.pitch,
                 "value": self.event,
             }
@@ -178,9 +199,8 @@ def mido_message_to_data_list(msg):
                 raise ValueError(f"unknown {msg.value = }")
         else:
             channel = msg.channel
-            assert channel == 0, channel
             pitch = msg.control
-            status_name = "unknown_control_change"
+            status_name = "unknown_control_change" if channel == 0 else f"unknown_control_change_channel_{channel}"
             event_code = msg.value
     elif msg.type == "sysex":
         # instrument changes
@@ -192,9 +212,8 @@ def mido_message_to_data_list(msg):
     elif msg.type == "program_change":
         # I don't know what this is, just record the data
         channel = msg.channel
-        assert channel == 0, channel
         program = msg.program
-        status_name = "program_change"
+        status_name = "program_change" if channel == 0 else f"program_change_channel_{channel}"
         pitch = program
         event_code = 0
     else:
@@ -593,7 +612,8 @@ def transpose_data(data, offset):
     lst = MidiEvent.from_data_list(data)
     new_lst = []
     for x in lst:
-        x.pitch += offset
+        if x.is_note():
+            x.pitch += offset
         new_lst.append(x)
     data = [x.to_raw_data() for x in new_lst]
     print("got transposed data")
