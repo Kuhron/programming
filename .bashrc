@@ -285,6 +285,15 @@ function all-webp-to-png() {
     find -name "*.webp" | xargs -d "\n" -I "{}" python3 ~/programming/WebpToPng.py "{}"
 }
 
+function find-images() {
+    # https://stackoverflow.com/questions/16758105/list-all-graphic-image-files-with-find
+    find $1 -type f -exec file --mime-type {} \+ | awk -F: '{if ($2 ~/image\//) print $1}'
+}
+
+function rimg() {
+    find-images $1 | shuf | head -n 1 | xargs -d "\n" -I "{}" xdg-open "{}"
+}
+
 # COD MW2 controls
 function cod_without_mouse() {
     cp ~/Games/custom_configs/mw2_controls_without_mouse.cfg ~/.steam/steam/steamapps/common/Call\ of\ Duty\ Modern\ Warfare\ 2/players/config_mp.cfg
