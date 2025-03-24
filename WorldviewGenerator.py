@@ -418,6 +418,10 @@ cultural_principles = [
     "One should keep oneself clean, potentially at the expense of one's environment.",
     "One should keep one's environment clean, potentially at the expense of oneself.",
     "Cleanliness does not matter.",
+    "Everyone deserves a vote/voice.",
+    "Only those who know the most about something deserve a vote/voice about it.",
+    "Every problem has a solution.",
+    "Some problems cannot be solved.",
     
 ]
 

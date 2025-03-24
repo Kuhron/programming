@@ -230,16 +230,19 @@ def rgen(seed):
 
 
 if __name__ == "__main__":
-    cell = Cell(29)
+    cell = Cell(39)
     # cell.randomize("cataract32")
     print(cell)
     # print(cell.get_border())
 
     i = 0
+    last_i_printed = 0
+    r = rgen("cataract32")
     while True:
-        index = random.randrange(cell.border_size)
+        index = int(cell.border_size * next(r))
         cell.poke(index)
-        if i % 10000 == 0:
+        if i - last_i_printed >= 1e5 and random.random() < 1e-5:
             print(i)
             print(cell)
+            last_i_printed = i
         i += 1
