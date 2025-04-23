@@ -302,6 +302,17 @@ function cod_with_mouse() {
     cp ~/Games/custom_configs/mw2_controls_with_mouse.cfg ~/.steam/steam/steamapps/common/Call\ of\ Duty\ Modern\ Warfare\ 2/players/config_mp.cfg
 }
 
+# write symlink source and destination paths to a text file, for backing up to EHD filesystem that doesn't support symlinks
+function echo_symlink_source_and_destination() {
+    dest=$(readlink -f "$1")
+    src="$1"
+    echo "\"""$src""\" -> \"""$dest""\""
+}
+export -f echo_symlink_source_and_destination
+function echo_symlink_sources_and_destinations() {
+    find "$1" -type l | xargs -d "\n" -I "{}" bash -c 'echo_symlink_source_and_destination "{}"'
+}
+
 # clock format, for if you accidentally use the GUI to change date/time settings and lose the custom format
 gsettings set org.gnome.desktop.interface clock-show-seconds true
 # - in gnome, com.canonical.indicator.datetime doesn't work, need to use Gnome Shell Extension "Panel Date Format", but keeping these lines here in case of future switch back to Unity, and so I still have the format string
