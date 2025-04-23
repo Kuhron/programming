@@ -38,7 +38,8 @@ if __name__ == "__main__":
     # data = mu.load_data_from_fname_string(data_dir, "20241210-215609", "txt")
     # good one: 20231002-020531, either inverted or not; inverted +5 gives nice B/F# key in the second half
     # data = mu.load_data_from_fname_string(data_dir, "20231130-074300")
-    data = mu.load_data_from_fname_string(data_dir, "20250221-050829", "txt")
+    # data = mu.load_data_from_fname_string(data_dir, "20250221-050829", "txt")
+    data = mu.load_data_from_fname_string(data_dir, "20250420-190406", "txt")
 
     if s is not None:
         data = mu.load_data_from_fname_string(data_dir, s)
