@@ -1,0 +1,101 @@
+2025-07-09 22:14 UTC
+
+Hello,
+
+I am trying to set up a lexicon in ELAN so that I can use transcription mode.
+I have a database of ~3500 words in FLEx that I would like to use as the
+starting point. I exported the lexicon from FLEx into .LIFT format and
+successfully imported that file into ELAN.
+
+The problem is with the script used for the lexical items. The language I am
+documenting uses an Arabic-based script. In FLEx, I have the headwords
+written in both the Arabic-based orthography and in IPA. When I exported &
+imported the .LIFT file, the Arabic-based orthographic representation is what
+appears as the "Lexical Unit" in ELAN; however, I want the lexical unit to
+use the IPA transcription of each word so that I can parse texts transcribed
+in IPA.
+
+I do want to keep the orthographic transcription, but I would prefer to put
+that into a custom field called "Orthographic," which I have already created.
+
+So I have a few questions:
+1. Is it possible to configure the .LIFT export/import process to pull the
+IPA transcription rather than the orthographic one and display that as the
+lexical unit?
+2. If #1 is possible, is it also possible to configure the .LIFT
+export/import process to pull the orthographic transcription into my custom
+"orthographic" field for each entry?
+3. If #1 is not possible, is there a way to automatically copy the
+orthographic transcription from the "Lexical Unit" field into the
+"Orthographic" field for each entry so I don't have to do it manually for all
+3500+ entries?
+4. Is it possible to increase the font size for the lexicon like you can in
+other parts of ELAN? The default font is quite small, and the Arabic-based
+orthography is basically illegible.
+
+Thank you,
+Erin SanGregory
+
+----
+
+2025-07-11 06:52 local (Netherlands or Oregon?)
+
+Dear Erin,
+
+In ELAN, during the 'Import Lexicon" process, there is no option to map the fields of .LIFT to  ELAN.
+
+However if the LIFT file (before import ) has IPA as the first form in the lexical-unit, then ELAN imports it as the main lexical item. Maybe you need to edit manually or via script to swap the order of the arabic based orthography and IPA in the .LIFT file.
+
+Regarding question 2:   If you want the orthographic transcription imported then similar way, you need to add it as a custom filed in .LIFT file before importing it to ELAN, under filed type "Orthographic".
+
+You can use a python script to automate this for your entire LIFT file.
+
+I am afraid there is no font option for the lexical entries.
+
+Best,
+Divya
+
+----
+
+2025-07-11 16:18 UTC
+
+Hey Wesley,
+
+I heard back from one of the ELAN developers about my lexicon problem. They told me that I can accomplish the things I want by running a Python script on my .LIFT file to make the changes before I import it to ELAN. Would you be willing/able to help me with this? Here's what I need to do:
+
+    Switch the order in which the Arabic vs. IPA headwords appear
+    Map the Arabic headword to a custom field called "Orthographic."
+
+
+Since I know absolutely nothing about Python, I have no idea how hard or easy this might be...
+
+I'll be at the volunteer meeting at noon, and then I'll be free after that until my class at 2:30. Is there any chance you're free during that time period and interested in taking a look at the .LIFT to see what might need to be done?
+
+Thanks!
+Erin
+
+----
+
+2025-07-11 20:30 UTC
+
+Here's the email from the developer. I'm attaching the .LIFT file.
+
+Here's a sample snippet of the code:
+
+<lexical-unit>
+<form lang="wbl-Arab"><text>انقلاب</text></form>
+<form lang="wbl-fonipa"><text>ɪnqɪlɔb</text></form>
+</lexical-unit>
+
+First, most important task:
+I want the <form lang ="wbl-fonipa"> line to precede the <form lang="wbl-Arab"> line for all of the entries.
+
+Second, useful but not as necessary task:
+Take the text embedded inside <form lang="wbl-Arab"> (the stuff actually written in Arabic script) and put it inside a new field called Orthographic. I have already created this field in my ELAN lexicon. It appears in the Edit dialog box, as shown in the screenshot below:
+<image>
+
+If you have questions or need more info/clarification, please ask and I will do my best to provide answers!
+
+Erin
+
+

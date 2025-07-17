@@ -3,6 +3,8 @@
 # - Germany = germ any
 # - Myanmar = my an mar
 # - Madagascar = mad a gas car
+# - Kickapoo = kick a poo
+# - Lushootseed = (lu) shoot seed
 # likely many others I haven't noticed
 
 
